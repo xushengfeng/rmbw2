@@ -1,0 +1,23 @@
+{
+    "name": "rmbw2",
+    "author": {
+        "email": "xushengfeng_zg@163.com",
+        "name": "xsf"
+    },
+    "private": true,
+    "type": "module",
+    "scripts": {
+        "dev": "vite --host 0.0.0.0",
+        "build": "tsc && vite build",
+        "preview": "vite preview"
+    },
+    "version": "0.25.0",
+    "homepage": "https://github.com/xushengfeng/rmbw2/",
+    "license": "GPL-3.0",
+    "dependencies": {
+    },
+    "devDependencies": {
+        "typescript": "^5.0.2",
+        "vite": "^5.0.0"
+    }
+}

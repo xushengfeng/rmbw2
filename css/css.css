@@ -1,0 +1,264 @@
+:root {
+    --bg: #fff;
+    --hover-color: #dfdfdf;
+    --transition: 0.4s cubic-bezier(0.25, 1, 0.5, 1);
+    --border-radius: 8px;
+    --height: 40px;
+    --color: #000;
+    --font-size: 16px;
+    --main-bar-size: 24px;
+    --main-font: sans-serif;
+    --icon-color: none;
+    --icon-color1: invert(1);
+    --b-button: 32px;
+    --o-padding: 8px;
+}
+
+html,
+body {
+    margin: 0;
+    font-family: var(--main-font);
+    font-size: var(--font-size);
+    color: var(--color);
+}
+
+.icon {
+    position: absolute;
+    pointer-events: none;
+    left: 0;
+    top: 0;
+    filter: var(--icon-color);
+    user-select: none;
+}
+
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+::-webkit-scrollbar-thumb {
+    border-radius: 10px;
+    background: #ddd;
+}
+::-webkit-scrollbar-thumb:hover {
+    background: #ccc;
+}
+::-webkit-scrollbar-track {
+    background: #0000;
+}
+::-webkit-scrollbar-button {
+    height: 8px;
+    width: 8px;
+    background-color: #0000;
+}
+::-webkit-scrollbar-corner {
+    background-color: #0000;
+}
+
+button {
+    outline: none;
+    color: var(--color);
+    font-family: var(--main-font);
+    border-radius: var(--border-radius);
+    background-color: var(--bg);
+    height: var(--height);
+    border: none;
+    margin: 0px;
+    padding: 0;
+    transition: var(--transition);
+    width: var(--b-button);
+    height: var(--b-button);
+    position: relative;
+}
+button:hover {
+    background-color: var(--hover-color);
+}
+button > .icon {
+    width: var(--b-button);
+}
+
+input {
+    outline: none;
+    background-color: #0000;
+    color: var(--color);
+    border: none;
+    border-bottom: 1px solid var(--color);
+}
+
+select {
+    outline: none;
+    border-radius: var(--border-radius);
+    background-color: var(--bg);
+    height: var(--height);
+    border: none;
+    outline: none;
+    margin: 0px;
+    color: var(--color);
+    padding: 0 var(--o-padding) 0 var(--o-padding);
+    transition: var(--transition);
+    user-select: none;
+}
+
+select:hover {
+    background-color: var(--hover-color);
+}
+option {
+    background-color: var(--bg);
+}
+textarea {
+    outline: none;
+    background-color: #0000;
+    color: var(--color);
+}
+
+@media (prefers-color-scheme: dark) {
+    :root {
+        --bar-bg: rgba(0, 0, 0, var(--alpha));
+        --bar-hover-color: #fff2;
+        --bg: #000;
+        --bg2: #1f1f1f;
+        --hover-color: #333;
+        --m-color1: hsl(224deg 100% 38%);
+        --m-color2: hsl(0, 0%, 14%);
+        --shadow: #fff9 0 0 2px;
+        --color: #fff;
+        --color2: #aaa;
+        --border: 1px #fff solid;
+        --icon-color: var(--icon-color1) !important;
+    }
+    ::-webkit-scrollbar-thumb {
+        border-radius: 10px;
+        background: #444;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+        background: #555;
+    }
+    kbd {
+        box-shadow: 0 5px #fff4;
+        background: linear-gradient(315deg, #191919, #000);
+    }
+}
+
+body::-webkit-scrollbar {
+    display: none;
+}
+html,
+body {
+    margin: 0;
+    overflow: hidden;
+}
+
+body > #index {
+    display: flex;
+    overflow: hidden;
+    max-width: 100vw;
+    position: fixed;
+    z-index: 1;
+    right: 0;
+    transition: 0.4s;
+}
+body > #index > div {
+    position: relative;
+    width: var(--main-bar-size);
+    height: var(--main-bar-size);
+}
+body > #index > div > .icon {
+    width: var(--main-bar-size);
+    height: var(--main-bar-size);
+}
+
+.hiden {
+    transform: translateX(calc(100% - var(--main-bar-size)));
+}
+
+.main {
+    height: 100vh;
+    position: absolute;
+    top: 0;
+    display: flex;
+    transition: 0.4s;
+    overflow: hidden;
+}
+
+.main > div {
+    min-width: 100vw;
+    background-color: var(--bg);
+}
+
+#book_nav {
+    position: absolute;
+    top: 24px;
+    width: 20vw;
+    left: -20vw;
+    height: 100vh;
+    display: flex;
+}
+.book_nav_show {
+    left: 0 !important;
+}
+
+#book_buttons {
+    display: flex;
+}
+#book_buttons > div:has(.icon) {
+    height: 24px;
+    width: 24px;
+    position: relative;
+}
+#book_buttons > div > .icon {
+    height: 24px;
+    width: 24px;
+}
+#books > div {
+    width: 50px;
+    height: calc(50px * 1.414);
+    background-color: #dfdfdf;
+    border-radius: 4px;
+}
+
+#book {
+    display: flex;
+}
+#book > #sections {
+    width: 20px;
+}
+
+#dic {
+    position: absolute;
+    top: 24px;
+    left: 100vw;
+    width: 60vw;
+    height: 100vh;
+}
+
+.dic_show {
+    left: 40vw !important;
+}
+
+#review_l {
+    height: calc(100vh - 32px);
+    overflow: auto;
+}
+#review_l > div {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+#review_l > div > span:nth-child(1) {
+    display: flex;
+    overflow-x: auto;
+    gap: 4px;
+}
+
+#history {
+    overflow: scroll;
+}
+#history > div {
+    position: relative;
+}
+#history > div > div {
+    position: absolute;
+    height: 24px;
+}
+#setting {
+    overflow: scroll;
+}
