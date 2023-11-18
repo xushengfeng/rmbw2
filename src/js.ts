@@ -53,6 +53,7 @@ const bookContentEl = document.getElementById("book_content");
 const changeEditEl = document.getElementById("change_edit");
 const dicEl = document.getElementById("dic");
 const bookdicEl = document.getElementById("book_dic");
+const dicDetailsEl = document.getElementById("dic_details");
 type book = { name: string; sections: { title: string; text: string }[] };
 let books: book[] = [
     {
@@ -73,7 +74,6 @@ let books: book[] = [
 document.getElementById("book_sections").onclick = () => {
     bookNavEl.classList.toggle("book_nav_show");
 };
-
 
 let nowBook = {
     book: "test",
@@ -152,7 +152,7 @@ function changeEdit(b: boolean) {
     } else {
         let book = books.find((b) => b.name === nowBook.book);
         let section = book.sections[nowBook.sections];
-       if(editText) section.text = editText;
+        if (editText) section.text = editText;
         showBookContent(section);
         changeEditEl.innerHTML = icon(pen_svg);
     }
@@ -176,11 +176,43 @@ function setEdit() {
     bookContentEl.append(text);
 }
 
-bookdicEl.onclick=()=>{
+bookdicEl.onclick = () => {
     dicEl.classList.toggle("dic_show");
+};
 
-}
+// @ts-ignore
+import dic from "../lib/xout.json";
+console.log(dic);
+type dic = {
+    [word: string]: {
+        meta: string;
+        means: { dis: { text: string; tran: string }; sen: { text: string; tran: string }[]; pos: string }[];
+    };
+};
 
-function showDic(word) {
+function showDic(word: string) {
     dicEl.classList.add("dic_show");
+    console.log(dic[word]);
+    let x = dic[word] as dic[0];
+    dicDetailsEl.innerHTML = "";
+    for (let m of x.means) {
+        let div = document.createElement("div");
+        let check = document.createElement("input");
+        check.type = "checkbox";
+        let p = document.createElement("p");
+        p.innerText = m.dis.text;
+        let span = document.createElement("span");
+        span.innerText = m.dis.tran;
+        let sen = document.createElement("div");
+        for (let s of m.sen) {
+            let p = document.createElement("p");
+            p.innerText = s.text;
+            let span = document.createElement("span");
+            span.innerText = s.tran;
+            sen.append(p);
+            sen.append(span);
+        }
+        div.append(check, p, span, sen);
+        dicDetailsEl.append(div);
+    }
 }

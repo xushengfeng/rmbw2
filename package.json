@@ -15,8 +15,10 @@
     "homepage": "https://github.com/xushengfeng/rmbw2/",
     "license": "GPL-3.0",
     "dependencies": {
+        "localforage": "^1.10.0"
     },
     "devDependencies": {
+        "js-mdict": "^5.0.2",
         "typescript": "^5.0.2",
         "vite": "^5.0.0"
     }

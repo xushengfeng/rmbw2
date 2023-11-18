@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+
+<body>
+    <input type="text" id="i">
+    <textarea name="" id="js" cols="30" rows="10"></textarea>
+    <div id="s"></div>
+    <script src="./out.json"></script>
+    <script>
+        console.log(dic);
+        const i = document.getElementById('i');
+        const c = document.getElementById('s');
+        window['word'] = c
+        const js = document.getElementById('js');
+        i.oninput = () => {
+            c.innerHTML = dic[i.value]['definition'] || '';
+            eval(js.value);
+        }
+        js.onchange = () => {
+            eval(js.value); // 执行js代码
+        }
+
+        let xout = {}
+        for (let i in dic) {
+            let d = document.createElement('div')
+            d.innerHTML = dic[i]['definition']
+            try {
+                /**
+ * @type {HTMLDivElement}
+ */
+                let w = d;
+                let out = { meta: "", means: [{ dis: { text: "", tran: "" }, sen: [{ text: "", tran: "" }], pos: "" }] };
+                w.querySelectorAll("a").forEach((el) => {
+                    if (el.innerText === "") el.remove();
+                });
+                if (w.querySelector(".L_NOT")) {
+                    w.querySelectorAll(".L_NOT").forEach((el) => {
+                        add(el.nextElementSibling);
+                    });
+                } else {
+                    add(w.querySelector(".L_SYL"));
+                }
+                out.means = out.means.slice(1);
+                xout[i] = out;
+
+                /**
+                 *
+                 * @param el {HTMLElement}
+                 */
+                function add(el) {
+                    let hasabc = false;
+                    let pos = "";
+                    /**
+                     *
+                     * @param el1 {HTMLElement}
+                     */
+                    function x(el1) {
+                        if (el1.className === "L_POS") {
+                            pos = el1.innerText;
+                        }
+
+                        if (el1.className === "L_LI") {
+                            hasabc = false;
+                            out.means.push({
+                                dis: {
+                                    text: "",
+                                    tran: "",
+                                },
+                                pos,
+                                sen: [],
+                            });
+                        }
+                        if (el1.tagName === "FONT" && el1.className === "" && out.means.at(-1).dis.text === "") {
+                            el1.querySelector(".L_REG")?.remove();
+                            out.means.at(-1).dis.text = el1.innerText;
+                            out.means.at(-1).dis.tran = el1.nextElementSibling?.innerText || '';
+                        }
+                        if (el1.className === "L_DEG") {
+                            el1.querySelector(".L_REG")?.remove();
+                            out.means.at(-1).dis.text = el1.innerText;
+                            out.means.at(-1).dis.tran = el1.nextElementSibling?.innerText || '';
+                        }
+                        if (el1.className === "LM_LIA") {
+                            if (hasabc) {
+                                out.means.push({
+                                    dis: {
+                                        text: el1.nextElementSibling.innerText,
+                                        tran: el1.nextElementSibling.nextElementSibling?.innerText || '',
+                                    },
+                                    pos,
+                                    sen: [],
+                                });
+                            } else {
+                                if (out.means.at(-1).dis.tran === "") {
+                                    hasabc = true;
+                                    el1.querySelector(".L_REG")?.remove();
+                                    out.means.at(-1).dis.text = el1.nextElementSibling.innerText;
+                                    out.means.at(-1).dis.tran = el1.nextElementSibling.nextElementSibling?.innerText || '';
+                                }
+                            }
+                        }
+                        if (el1.className === "L_EX") {
+                            out.means.at(-1).sen.push({
+                                text: el1.querySelector(".L_EEX").textContent,
+                                tran: el1.querySelector(".L_CEX").textContent,
+                            });
+                        }
+                        if (el1.nextElementSibling && el1.nextElementSibling.tagName !== "HR") {
+                            x(el1.nextElementSibling);
+                        } else {
+                        }
+                    }
+                    if (el) x(el);
+                }
+
+            } catch {
+                console.log(dic[i]);
+            }
+        }
+        let d = document.createElement('button')
+        d.onclick = () => {
+            // 下载xout
+            let out = JSON.stringify(xout, null, 2)
+            let blob = new Blob([out], { type: 'text/plain' })
+            let a = document.createElement('a')
+            a.href = URL.createObjectURL(blob)
+            a.download = 'xout.json'
+            a.click()
+        }
+        document.body.appendChild(d)
+    </script>
+</body>
+
+</html>
