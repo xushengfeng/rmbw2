@@ -227,7 +227,7 @@ bookdicEl.onclick = () => {
 
 let dics: { [key: string]: LocalForage } = {};
 setting.getItem("dics").then((l: string[]) => {
-    for (let i of l) {
+    for (let i of l || []) {
         dics[i] = localforage.createInstance({
             name: `dic`,
             storeName: i,
