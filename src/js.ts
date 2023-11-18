@@ -397,6 +397,7 @@ let fsrs = new fsrsjs.FSRS();
 var cardsStore = localforage.createInstance({ name: "word", storeName: "cards" });
 var wordsStore = localforage.createInstance({ name: "word", storeName: "words" });
 var card2word = localforage.createInstance({ name: "word", storeName: "card2word" });
+var spellStore = localforage.createInstance({ name: "word", storeName: "spell" });
 
 async function addReviewCard(
     word: string,
@@ -449,6 +450,8 @@ async function addReviewCard(
         wordsStore.setItem(word, r);
         cardsStore.setItem(cardId, card);
         card2word.setItem(cardId, word);
+        let card2 = new fsrsjs.Card();
+        spellStore.setItem(word, card2);
     }
 }
 
