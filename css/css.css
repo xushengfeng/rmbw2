@@ -228,10 +228,16 @@ body > #index > div > .icon {
     left: 100vw;
     width: 60vw;
     height: 100vh;
+    display: flex;
+    flex-direction: column;
 }
 
 .dic_show {
     left: 40vw !important;
+}
+
+#dic_details {
+    overflow: scroll;
 }
 
 #review_l {

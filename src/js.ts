@@ -53,6 +53,7 @@ const bookContentEl = document.getElementById("book_content");
 const changeEditEl = document.getElementById("change_edit");
 const dicEl = document.getElementById("dic");
 const bookdicEl = document.getElementById("book_dic");
+const dicContextEl = document.getElementById("dic_context");
 const dicDetailsEl = document.getElementById("dic_details");
 type book = { name: string; sections: { title: string; text: string }[] };
 let books: book[] = [
@@ -124,21 +125,57 @@ function showBookSections(sections: book["sections"]) {
 function showBookContent(s: book["sections"][0]) {
     bookContentEl.innerHTML = "";
     editText = s.text;
-    for (let p of s.text.split("\n")) {
-        let pEl = document.createElement("p");
-        for (let sentence of p.split(".")) {
-            let sentenceEl = document.createElement("span");
-            for (let word of sentence.split(" ")) {
-                let wordEl = document.createElement("span");
-                wordEl.innerText = word;
-                sentenceEl.append(wordEl, " ");
-                wordEl.onclick = () => {
-                    showDic(word);
-                };
-            }
-            pEl.append(sentenceEl, ".");
+    let list = s.text.split(/\b/);
+    let i = 0;
+    let plist: { text: string; start: number; end: number }[][] = [[]];
+    for (let word of list) {
+        if (/\n+/.test(word)) {
+            plist.push([]);
+        } else {
+            plist.at(-1).push({ text: word, start: i, end: i + word.length });
         }
-        bookContentEl.append(pEl);
+        i += word.length;
+    }
+    console.log(plist);
+
+    for (let paragraph of plist) {
+        let p = document.createElement("p");
+        for (let i in paragraph) {
+            const word = paragraph[i];
+            if (/^[a-zA-Z]+$/.test(word.text)) {
+                let span = document.createElement("span");
+                span.innerText = word.text;
+                span.onclick = () => {
+                    let s = paragraph[0].start,
+                        e = paragraph.at(-1).end;
+                    let j = Number(i) - 1;
+                    while (j >= 0 && !paragraph[j].text.match(/[.?!]/)) {
+                        s = paragraph[j].start;
+                        j--;
+                    }
+                    j = Number(i);
+                    while (j < paragraph.length && !paragraph[j].text.match(/[.?!]/)) {
+                        e = paragraph[j].end;
+                        j++;
+                    }
+                    console.log(s);
+
+                    tmpRecord.push({
+                        dic: "l",
+                        key: word.text,
+                        dindex: 0,
+                        index: { start: word.start, end: word.end },
+                        pindex: { start: paragraph[0].start, end: paragraph.at(-1).end },
+                        cindex: { start: s, end: e },
+                    });
+                    showDic(tmpRecord.length - 1, true);
+                };
+                p.append(span);
+            } else {
+                p.append(word.text);
+            }
+        }
+        bookContentEl.append(p);
     }
 }
 let isEdit = false;
@@ -190,15 +227,55 @@ type dic = {
     };
 };
 
-function showDic(word: string) {
+let record: {
+    word: string;
+    means: {
+        dic: string;
+        key: string;
+        index: number;
+        contexts: {
+            text: string;
+            index: [number, number];
+            source: { book: string; sections: number }; // 原句通过对比计算
+        }[];
+    }[];
+}[] = [];
+
+let tmpRecord: {
+    dic: string;
+    key: string;
+    dindex: number;
+    index: { start: number; end: number };
+    pindex: { start: number; end: number };
+    cindex: { start: number; end: number };
+}[] = [];
+
+function showDic(i: number, isnew: boolean) {
     dicEl.classList.add("dic_show");
+    let v = tmpRecord[i];
+    let word = editText.slice(v.index.start, v.index.end);
+    let p = editText.slice(v.pindex.start, v.pindex.end);
+    let context = editText.slice(v.cindex.start, v.cindex.end);
+    dicContextEl.innerText = context;
+    console.log(tmpRecord);
+
     console.log(dic[word]);
     let x = dic[word] as dic[0];
+    if (!x) return;
     dicDetailsEl.innerHTML = "";
-    for (let m of x.means) {
+    for (let i in x.means) {
+        const m = x.means[i];
         let div = document.createElement("div");
-        let check = document.createElement("input");
-        check.type = "checkbox";
+        let radio = document.createElement("input");
+        radio.type = "radio";
+        radio.name = "dic_means";
+        radio.onclick = () => {
+            if (radio.checked) {
+                v.dindex = Number(i);
+            }
+        };
+        let num = document.createElement("span");
+        num.innerText = String(Number(i) + 1);
         let p = document.createElement("p");
         p.innerText = m.dis.text;
         let span = document.createElement("span");
@@ -212,7 +289,70 @@ function showDic(word: string) {
             sen.append(p);
             sen.append(span);
         }
-        div.append(check, p, span, sen);
+        div.append(radio, num, p, span, sen);
         dicDetailsEl.append(div);
     }
+
+    function set() {
+        let means = "";
+        for (let i in x.means) {
+            means += `${i}.${x.means[i].dis.text};\n`;
+        }
+        let c = `${context.slice(0, v.index.start - v.cindex.start)}**${word}**${context.slice(
+            v.index.end - v.cindex.start
+        )}`;
+        console.log(c);
+
+        ai([
+            {
+                role: "user",
+                content: `I have a bolded word '${word}' wrapped in double asterisks in the sentence:'${c}'.This is a dictionary's explanation of several interpretations:${means}.Please think carefully and select the most appropriate label for explanation, without providing any explanation.`,
+            },
+        ]).then((a) => {
+            console.log(a);
+            let n = Number(a.match(/^[0-9]+$/)[0]);
+            setcheck(n);
+            v.dindex = n;
+        });
+    }
+    function setcheck(i: number) {
+        (dicDetailsEl.querySelectorAll("input[name=dic_means]")[i] as HTMLInputElement).checked = true;
+    }
+    if (isnew) {
+        if (x.means.length > 1) {
+            set();
+        } else {
+            setcheck(0);
+        }
+    } else {
+        setcheck(v.dindex);
+    }
+}
+
+type aim = { role: "system" | "user" | "assistant"; content: string }[];
+
+function ai(m: aim) {
+    return new Promise((re: (text: string) => void) => {
+        fetch(`https://ai.fakeopen.com/v1/chat/completions`, {
+            method: "POST",
+            headers: {
+                Authorization: `Bearer pk-this-is-a-real-free-pool-token-for-everyone`,
+                "content-type": "application/json",
+            },
+            body: JSON.stringify({
+                model: "gpt-3.5-turbo",
+                temperature: 0.5,
+                top_p: 1,
+                frequency_penalty: 1,
+                presence_penalty: 1,
+                messages: m,
+            }),
+        })
+            .then((v) => v.json())
+            .then((t) => {
+                let answer = t.choices[0].message.content;
+                console.log(answer);
+                re(answer);
+            });
+    });
 }
