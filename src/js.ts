@@ -1,5 +1,7 @@
 /// <reference types="vite/client" />
 
+import localforage from "localforage";
+
 import pen_svg from "../assets/icons/pen.svg";
 import ok_svg from "../assets/icons/ok.svg";
 
@@ -38,6 +40,12 @@ class Store {
 }
 var store = new Store("rpi-config");
 var historyStore = new Store();
+
+var setting = localforage.createInstance({
+    name: "setting",
+    driver: localforage.LOCALSTORAGE,
+});
+
 /************************************UI */
 
 /************************************main */
@@ -217,9 +225,17 @@ bookdicEl.onclick = () => {
     dicEl.classList.toggle("dic_show");
 };
 
-// @ts-ignore
-import dic from "../lib/xout.json";
-console.log(dic);
+let dics: { [key: string]: LocalForage } = {};
+setting.getItem("dics").then((l: string[]) => {
+    for (let i of l) {
+        dics[i] = localforage.createInstance({
+            name: `dic`,
+            storeName: i,
+        });
+    }
+    console.log(dics);
+});
+
 type dic = {
     [word: string]: {
         meta: string;
@@ -250,7 +266,7 @@ let tmpRecord: {
     cindex: { start: number; end: number };
 }[] = [];
 
-function showDic(i: number, isnew: boolean) {
+async function showDic(i: number, isnew: boolean) {
     dicEl.classList.add("dic_show");
     let v = tmpRecord[i];
     let word = editText.slice(v.index.start, v.index.end);
@@ -259,8 +275,7 @@ function showDic(i: number, isnew: boolean) {
     dicContextEl.innerText = context;
     console.log(tmpRecord);
 
-    console.log(dic[word]);
-    let x = dic[word] as dic[0];
+    let x = (await dics["xout.json"].getItem(word)) as dic[0];
     if (!x) return;
     dicDetailsEl.innerHTML = "";
     for (let i in x.means) {
@@ -356,3 +371,25 @@ function ai(m: aim) {
             });
     });
 }
+
+//###### setting
+const uploadDicEl = document.getElementById("upload_dic") as HTMLInputElement;
+uploadDicEl.onchange = () => {
+    const file = uploadDicEl.files[0];
+    if (file) {
+        const reader = new FileReader();
+        reader.readAsText(file);
+        reader.onload = () => {
+            let dic = JSON.parse(reader.result as string);
+            console.log(dic);
+            let l = (dics[file.name] = localforage.createInstance({
+                name: `dic`,
+                storeName: file.name,
+            }));
+            setting.setItem("dics", Object.keys(dics));
+            for (let i in dic) {
+                l.setItem(i, dic[i]);
+            }
+        };
+    }
+};
