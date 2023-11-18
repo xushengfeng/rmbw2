@@ -5,6 +5,9 @@ settings:
   excludeLinksFromLockfile: false
 
 dependencies:
+  fsrs.js:
+    specifier: ^1.1.2
+    version: 1.1.2
   localforage:
     specifier: ^1.10.0
     version: 1.10.0
@@ -400,6 +403,11 @@ packages:
     requiresBuild: true
     dev: true
     optional: true
+
+  /fsrs.js@1.1.2:
+    resolution: {integrity: sha512-Bbvm5fWXjRoFzOQSs8SHLu2/wIwCjdNNENLGYDCNmaaM5eHmfOww57LiaYdp2+jTNX1VpDkI1qF87glZ9UZ5yA==}
+    engines: {node: '>=10'}
+    dev: false
 
   /immediate@3.0.6:
     resolution: {integrity: sha512-XXOFtyqDjNDAQxVfYxuF7g9Il/IbWmmlQg2MYKOH8ExIT1qg6xc4zyS3HaEEATgs1btfzxq15ciUiY7gjSXRGQ==}

@@ -61,6 +61,7 @@ const bookContentEl = document.getElementById("book_content");
 const changeEditEl = document.getElementById("change_edit");
 const dicEl = document.getElementById("dic");
 const bookdicEl = document.getElementById("book_dic");
+const dicContextSaveEl = document.getElementById("dic_save");
 const dicContextEl = document.getElementById("dic_context");
 const dicDetailsEl = document.getElementById("dic_details");
 type book = { name: string; sections: { title: string; text: string }[] };
@@ -243,19 +244,20 @@ type dic = {
     };
 };
 
-let record: {
+type record = {
     word: string;
     means: {
         dic: string;
-        key: string;
         index: number;
         contexts: {
             text: string;
-            index: [number, number];
+            index: [number, number]; // 文章定位
+            index2: number; // 语境定位
             source: { book: string; sections: number }; // 原句通过对比计算
         }[];
+        card_id: string;
     }[];
-}[] = [];
+};
 
 let tmpRecord: {
     dic: string;
@@ -342,6 +344,23 @@ async function showDic(i: number, isnew: boolean) {
     } else {
         setcheck(v.dindex);
     }
+
+    dicContextSaveEl.onclick = () => {
+        saveCard(v);
+    };
+}
+
+function saveCard(v: (typeof tmpRecord)[0]) {
+    addReviewCard(
+        v.key,
+        { dic: "xout.json", index: v.dindex },
+        {
+            text: editText.slice(v.cindex.start, v.cindex.end),
+            index: [v.index.start, v.index.end],
+            index2: v.index.start - v.cindex.start,
+            source: nowBook,
+        }
+    );
 }
 
 type aim = { role: "system" | "user" | "assistant"; content: string }[];
@@ -370,6 +389,67 @@ function ai(m: aim) {
                 re(answer);
             });
     });
+}
+
+import * as fsrsjs from "fsrs.js";
+let fsrs = new fsrsjs.FSRS();
+
+var cardsStore = localforage.createInstance({ name: "word", storeName: "cards" });
+var wordsStore = localforage.createInstance({ name: "word", storeName: "words" });
+var card2word = localforage.createInstance({ name: "word", storeName: "card2word" });
+
+async function addReviewCard(
+    word: string,
+    means: {
+        dic: string;
+        index: number;
+    },
+    context: {
+        text: string;
+        index: [number, number];
+        index2: number;
+        source: { book: string; sections: number }; // 原句通过对比计算
+    }
+) {
+    let w = (await wordsStore.getItem(word)) as record;
+    if (w) {
+        for (let i of w.means) {
+            if (i.dic === means.dic && i.index === means.index) {
+                if (!i.contexts.includes(context)) i.contexts.push(context);
+                let card = (await cardsStore.getItem(i.card_id)) as fsrsjs.Card;
+                let now = new Date();
+                let sCards = fsrs.repeat(card, now);
+                // 记过还查，那是忘了
+                cardsStore.setItem(i.card_id, sCards[fsrsjs.Rating.Hard].card);
+                wordsStore.setItem(word, w);
+                return;
+            }
+        }
+        let cardId = crypto.randomUUID();
+        let m = { ...means, contexts: [context], card_id: cardId };
+        w.means.push(m);
+        let card = new fsrsjs.Card();
+        cardsStore.setItem(cardId, card);
+        card2word.setItem(cardId, word);
+        wordsStore.setItem(word, w);
+    } else {
+        let cardId = crypto.randomUUID();
+        let r: record = {
+            word: word,
+            means: [
+                {
+                    dic: means.dic,
+                    index: means.index,
+                    contexts: [context],
+                    card_id: cardId,
+                },
+            ],
+        };
+        let card = new fsrsjs.Card();
+        wordsStore.setItem(word, r);
+        cardsStore.setItem(cardId, card);
+        card2word.setItem(cardId, word);
+    }
 }
 
 //###### setting

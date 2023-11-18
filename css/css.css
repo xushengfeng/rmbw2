@@ -236,6 +236,16 @@ body > #index > div > .icon {
     left: 40vw !important;
 }
 
+#dic_buttons > div:has(.icon) {
+    height: 24px;
+    width: 24px;
+    position: relative;
+}
+#dic_buttons > div > .icon {
+    height: 24px;
+    width: 24px;
+}
+
 #dic_details {
     overflow: scroll;
 }
