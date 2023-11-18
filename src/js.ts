@@ -373,6 +373,11 @@ function ai(m: aim) {
 }
 
 //###### setting
+const settingEl = document.getElementById("setting");
+document.getElementById("settingb").onclick = () => {
+    settingEl.showPopover();
+};
+
 const uploadDicEl = document.getElementById("upload_dic") as HTMLInputElement;
 uploadDicEl.onchange = () => {
     const file = uploadDicEl.files[0];
