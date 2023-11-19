@@ -455,6 +455,103 @@ async function addReviewCard(
     }
 }
 
+const reviewReflashEl = document.getElementById("review_reflash");
+const reviewViewEl = document.getElementById("review_view");
+
+async function getReviewDue() {
+    let now = new Date().getTime();
+    let list: { id: string; card: fsrsjs.Card; type: "mean" | "spell" }[] = [];
+    await cardsStore.iterate((value: fsrsjs.Card, key) => {
+        if (value.due.getTime() < now) {
+            list.push({ id: key, card: value, type: "mean" });
+        }
+    });
+    await spellStore.iterate((value: fsrsjs.Card, key) => {
+        if (value.due.getTime() < now) {
+            list.push({ id: key, card: value, type: "spell" });
+        }
+    });
+    list.sort((a, b) => a.card.due.getTime() - b.card.due.getTime());
+    return list;
+}
+
+let dueList: {
+    id: string;
+    card: fsrsjs.Card;
+    type: "mean" | "spell";
+}[] = [];
+let dueI = 0;
+
+async function nextDue(type: "mean" | "spell") {
+    dueI += 1;
+    if (dueI >= dueList.length) {
+        dueList = await getReviewDue();
+        dueI = 0;
+    }
+    if (dueList[dueI]) {
+        for (let i = dueI; i < dueList.length; i++) {
+            if (dueList[i].type === type) {
+                return dueList[i];
+            }
+        }
+    }
+    return null;
+}
+
+reviewReflashEl.onclick = async () => {
+    let l = await getReviewDue();
+    dueList = l;
+    dueI = 0;
+    console.log(l);
+    if (l[0]) showReview(l[0]);
+};
+
+async function showReview(x: { id: string; card: fsrsjs.Card; type: "mean" | "spell" }) {
+    if (x.type === "mean") {
+        let wordid = (await card2word.getItem(x.id)) as string;
+        let word = (await wordsStore.getItem(wordid)) as record;
+        let div = document.createElement("div");
+        let context = document.createElement("div");
+        for (let i of word.means) {
+            if (i.card_id === x.id) {
+                for (let c of i.contexts) {
+                    let p = document.createElement("p");
+                    p.innerText = c.text;
+                    context.append(p);
+                }
+            }
+        }
+        let b = (rating: fsrsjs.Rating, text: string) => {
+            let button = document.createElement("button");
+            button.innerText = text;
+            button.onclick = async () => {
+                setReviewCard(x.id, x.card, rating);
+                let next = await nextDue(x.type);
+                console.log(next);
+
+                if (next) showReview(next);
+            };
+            return button;
+        };
+        let againB = b(1, "x");
+        let hardB = b(2, "o");
+        let goodB = b(3, "v");
+        let esayB = b(4, "vv");
+        let buttons = document.createElement("div");
+        buttons.append(againB, hardB, goodB, esayB);
+
+        div.append(context, buttons);
+        reviewViewEl.innerHTML = "";
+        reviewViewEl.append(div);
+    }
+}
+
+function setReviewCard(id: string, card: fsrsjs.Card, rating: fsrsjs.Rating) {
+    let now = new Date();
+    let sCards = fsrs.repeat(card, now);
+    cardsStore.setItem(id, sCards[rating].card);
+}
+
 //###### setting
 const settingEl = document.getElementById("setting");
 document.getElementById("settingb").onclick = () => {

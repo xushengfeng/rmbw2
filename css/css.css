@@ -250,6 +250,16 @@ body > #index > div > .icon {
     overflow: scroll;
 }
 
+#review_buttons > div:has(.icon) {
+    height: 24px;
+    width: 24px;
+    position: relative;
+}
+#review_buttons > div > .icon {
+    height: 24px;
+    width: 24px;
+}
+
 #review_l {
     height: calc(100vh - 32px);
     overflow: auto;
