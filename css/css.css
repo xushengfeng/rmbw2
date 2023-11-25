@@ -306,7 +306,7 @@ body > #index > div > .icon {
     opacity: 0.6;
     margin: 0;
 }
-div:has(.translate) > :not(.translate) {
+div:has(> .translate) > :not(.translate) {
     margin: 4px 0;
 }
 
