@@ -225,6 +225,8 @@ let nowBook = {
     sections: NaN,
 };
 
+let isWordBook = false;
+
 showBooks();
 setBookS();
 
@@ -257,6 +259,7 @@ function showBook(book: book) {
     showBookSections(book.sections);
     showBookContent(book.sections[book.lastPosi]);
     setBookS();
+    isWordBook = book.type === "word";
 }
 async function showBookSections(sections: book["sections"]) {
     bookSectionsEl.innerHTML = "";
@@ -275,6 +278,33 @@ async function showBookSections(sections: book["sections"]) {
 async function showBookContent(id: string) {
     let s = (await sectionsStore.getItem(id)) as section;
     bookContentEl.innerHTML = "";
+
+    if (isWordBook) {
+        let l = s.text.trim().split("\n");
+        let keys = await wordsStore.keys();
+        let ll = document.createDocumentFragment();
+        let matchWords = 0;
+        for (let i of l) {
+            let p = document.createElement("p");
+            let t = i;
+            if (keys.includes(i)) {
+                t = `${t} *`;
+                matchWords++;
+            }
+            p.innerText = t;
+            ll.append(p);
+        }
+        let sum = document.createElement("p");
+        sum.innerText = `本章共有 ${l.length}个单词，已了解 ${matchWords}个，占 ${(
+            (matchWords / l.length) *
+            100
+        ).toFixed(2)}%`;
+
+        bookContentEl.append(sum, ll);
+
+        return;
+    }
+
     editText = s.text;
     let list = s.text.split(/\b/);
     let i = 0;
