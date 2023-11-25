@@ -284,6 +284,16 @@ body > #index > div > .icon {
     overflow: scroll;
 }
 
+#review {
+    position: absolute;
+    top: 100vh;
+    background-color: var(--bg1);
+    backdrop-filter: var(--blur);
+    transition: var(--transition);
+}
+.review_show {
+    top: 24px !important;
+}
 #review_buttons > div:has(.icon) {
     height: 24px;
     width: 24px;

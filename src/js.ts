@@ -771,6 +771,12 @@ async function addReviewCard(
     }
 }
 
+const reviewBEl = document.getElementById("reviewb");
+const reviewEl = document.getElementById("review");
+reviewBEl.onclick = () => {
+    reviewEl.classList.toggle("review_show");
+};
+
 const reviewReflashEl = document.getElementById("review_reflash");
 const reviewViewEl = document.getElementById("review_view");
 
