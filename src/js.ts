@@ -556,6 +556,8 @@ async function showDic(id: string) {
             oldWord = word;
             oldDic = dic;
             oldMean = i;
+            section.words[id].id = word;
+            await sectionsStore.setItem(sectionId, section);
         }
     }
 
