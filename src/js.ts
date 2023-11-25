@@ -35,7 +35,6 @@ const bookContentEl = document.getElementById("book_content");
 const changeEditEl = document.getElementById("change_edit");
 const dicEl = document.getElementById("dic");
 const bookdicEl = document.getElementById("book_dic");
-const dicContextSaveEl = document.getElementById("dic_save");
 const dicContextEl = document.getElementById("dic_context");
 const dicDetailsEl = document.getElementById("dic_details");
 
@@ -46,7 +45,7 @@ type book = { name: string; id: string; visitTime: number; sections: string[]; c
 type section = {
     title: string;
     text: string;
-    words: { [key: string]: { id: string; index: [number, number] } };
+    words: { [key: string]: { id: string; index: [number, number]; visit: boolean } };
     lastPosi: number;
 };
 
@@ -179,7 +178,7 @@ async function showBookContent(id: string) {
             if (/^[a-zA-Z]+$/.test(word.text)) {
                 let span = document.createElement("span");
                 span.innerText = word.text;
-                span.onclick = () => {
+                span.onclick = async () => {
                     let s = paragraph[0].start,
                         e = paragraph.at(-1).end;
                     let j = Number(i) - 1;
@@ -194,18 +193,15 @@ async function showBookContent(id: string) {
                     }
                     console.log(s);
 
-                    let id = uuid();
-
-                    tmpRecord.push({
+                    let id = await saveCard({
                         dic: "l",
                         key: word.text,
-                        dindex: 0,
-                        id: id,
+                        dindex: -1,
                         index: { start: word.start, end: word.end },
                         pindex: { start: paragraph[0].start, end: paragraph.at(-1).end },
                         cindex: { start: s, end: e },
                     });
-                    showDic(tmpRecord.length - 1, true);
+                    showDic(id);
                 };
                 p.append(span);
             } else {
@@ -349,26 +345,57 @@ type record = {
     }[];
 };
 
-let tmpRecord: {
-    dic: string;
-    key: string;
-    dindex: number;
-    id: string;
-    index: { start: number; end: number };
-    pindex: { start: number; end: number };
-    cindex: { start: number; end: number };
-}[] = [];
-
-async function showDic(i: number, isnew: boolean) {
+async function showDic(id: string) {
     dicEl.classList.add("dic_show");
-    let v = tmpRecord[i];
-    let word = editText.slice(v.index.start, v.index.end);
-    let p = editText.slice(v.pindex.start, v.pindex.end);
-    let context = editText.slice(v.cindex.start, v.cindex.end);
-    dicContextEl.innerText = context;
-    console.log(tmpRecord);
 
-    let x = (await dics["xout.json"].getItem(word)) as dic[0];
+    let book = await getBooksById(nowBook.book);
+    let sectionId = book.sections[nowBook.sections];
+    let section = await getSection(sectionId);
+
+    let wordx = section.words[id];
+    wordx.visit = true;
+    section.words[id] = wordx;
+    sectionsStore.setItem(sectionId, section);
+
+    let word = wordx.id;
+    let wordv = (await wordsStore.getItem(wordx.id)) as record;
+    let context = "";
+    let oldDic = "";
+    let oldMean = NaN;
+    let contextx: record["means"][0]["contexts"][0] = null;
+    for (let i of wordv.means) {
+        oldDic = i.dic;
+        oldMean = i.index;
+        for (let j of i.contexts) {
+            if (j.source.id === id) {
+                context = j.text;
+                contextx = j;
+            }
+        }
+    }
+
+    async function changeDicMean(word: string, dic: string, i: number) {
+        if (word != wordx.id || dic != oldDic || i != oldMean) {
+            for (let m of wordv.means) {
+                if (m.dic === oldDic && m.index === oldMean) {
+                    m.contexts = m.contexts.filter((c) => c.source.id != contextx.source.id);
+                    if (m.contexts.length === 0) wordv.means = wordv.means.filter((i) => i != m);
+                    if (wordv.means.length === 0) {
+                        await wordsStore.removeItem(wordx.id);
+                    } else {
+                        await wordsStore.setItem(wordx.id, wordv);
+                    }
+                    break;
+                }
+            }
+
+            addReviewCard(word, { dic, index: i }, contextx);
+        }
+    }
+
+    dicContextEl.innerText = context;
+
+    let x = (await dics[oldDic].getItem(word)) as dic[0];
     if (!x) return;
     dicDetailsEl.innerHTML = "";
     for (let i in x.means) {
@@ -379,7 +406,7 @@ async function showDic(i: number, isnew: boolean) {
         radio.name = "dic_means";
         radio.onclick = () => {
             if (radio.checked) {
-                v.dindex = Number(i);
+                changeDicMean(word, oldDic, Number(i));
             }
         };
         let num = document.createElement("span");
@@ -406,9 +433,7 @@ async function showDic(i: number, isnew: boolean) {
         for (let i in x.means) {
             means += `${i}.${x.means[i].dis.text};\n`;
         }
-        let c = `${context.slice(0, v.index.start - v.cindex.start)}**${word}**${context.slice(
-            v.index.end - v.cindex.start
-        )}`;
+        let c = `${context.slice(0, wordx.index[0])}**${word}**${context.slice(wordx.index[1])}`;
         console.log(c);
 
         ai([
@@ -418,44 +443,56 @@ async function showDic(i: number, isnew: boolean) {
             },
         ]).then((a) => {
             console.log(a);
-            let n = Number(a.match(/^[0-9]+$/)[0]);
+            let n = Number(a.match(/[0-9]+/)[0]);
             setcheck(n);
-            v.dindex = n;
+            changeDicMean(word, oldDic, n);
         });
     }
     function setcheck(i: number) {
         (dicDetailsEl.querySelectorAll("input[name=dic_means]")[i] as HTMLInputElement).checked = true;
     }
-    if (isnew) {
+    if (oldMean === -1) {
         if (x.means.length > 1) {
             set();
         } else {
             setcheck(0);
         }
     } else {
-        setcheck(v.dindex);
+        setcheck(oldMean);
     }
-
-    dicContextSaveEl.onclick = () => {
-        saveCard(v);
-    };
 }
 
-async function saveCard(v: (typeof tmpRecord)[0]) {
+async function saveCard(v: {
+    dic: string;
+    key: string;
+    dindex: number;
+    index: { start: number; end: number };
+    pindex: { start: number; end: number };
+    cindex: { start: number; end: number };
+}) {
+    let book = await getBooksById(nowBook.book);
+    let sectionId = book.sections[nowBook.sections];
+    let section = await getSection(sectionId);
+    for (let i in section.words) {
+        let index = section.words[i].index;
+        if (v.index.start === index[0] && v.index.end === index[1]) {
+            return i;
+        }
+    }
+    const id = uuid();
+    section.words[id] = { id: v.key, index: [v.index.start, v.index.end], visit: false };
+
+    sectionsStore.setItem(sectionId, section);
     addReviewCard(
         v.key,
         { dic: "xout.json", index: v.dindex },
         {
             text: editText.slice(v.cindex.start, v.cindex.end),
             index: [v.index.start - v.cindex.start, v.index.end - v.cindex.start],
-            source: { ...nowBook, id: v.id },
+            source: { ...nowBook, id: id },
         }
     );
-    let book = await getBooksById(nowBook.book);
-    let sectionId = book.sections[nowBook.sections];
-    let section = await getSection(sectionId);
-    section.words[v.id] = { id: v.key, index: [v.index.start, v.index.end] };
-    sectionsStore.setItem(sectionId, section);
+    return id;
 }
 
 type aim = { role: "system" | "user" | "assistant"; content: string }[];
