@@ -41,7 +41,18 @@ const dicDetailsEl = document.getElementById("dic_details");
 var bookshelfStore = localforage.createInstance({ name: "bookshelf" });
 var sectionsStore = localforage.createInstance({ name: "sections" });
 
-type book = { name: string; id: string; visitTime: number; sections: string[]; canEdit: boolean; lastPosi: number };
+type book = {
+    name: string;
+    id: string;
+    visitTime: number;
+    updateTime: number;
+    type: "word" | "text";
+    cover?: string;
+    author?: string;
+    sections: string[];
+    canEdit: boolean;
+    lastPosi: number;
+};
 type section = {
     title: string;
     text: string;
@@ -66,7 +77,16 @@ async function getSection(id: string) {
 async function newBook() {
     let id = uuid();
     let sid = uuid();
-    let book: book = { name: "新书", id: id, visitTime: 0, sections: [sid], canEdit: true, lastPosi: 0 };
+    let book: book = {
+        name: "新书",
+        id: id,
+        visitTime: 0,
+        updateTime: 0,
+        type: "text",
+        sections: [sid],
+        canEdit: true,
+        lastPosi: 0,
+    };
     let s = newSection();
     bookshelfStore.setItem(id, book);
     await sectionsStore.setItem(sid, s);
