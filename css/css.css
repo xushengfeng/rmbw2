@@ -1,5 +1,7 @@
 :root {
     --bg: #fff;
+    --bg1: #fff9;
+    --blur: blur(10px);
     --hover-color: #dfdfdf;
     --transition: 0.4s cubic-bezier(0.25, 1, 0.5, 1);
     --border-radius: 8px;
@@ -192,6 +194,9 @@ body > #index > div > .icon {
     height: 100vh;
     display: flex;
     z-index: 2;
+    background-color: var(--bg1);
+    backdrop-filter: var(--blur);
+    transition: var(--transition);
 }
 .book_nav_show {
     left: 0 !important;
@@ -199,6 +204,7 @@ body > #index > div > .icon {
 
 #book_buttons {
     display: flex;
+    width: 100%;
 }
 #book_buttons > div:has(.icon) {
     height: 24px;
@@ -209,6 +215,9 @@ body > #index > div > .icon {
     height: 24px;
     width: 24px;
 }
+#book_name {
+    flex-grow: 1;
+}
 #books > div {
     width: 50px;
     height: calc(50px * 1.414);
@@ -218,6 +227,7 @@ body > #index > div > .icon {
 
 #book {
     display: flex;
+    flex-direction: column;
 }
 #book > #sections {
     width: 20px;
@@ -240,6 +250,9 @@ body > #index > div > .icon {
     height: 100vh;
     display: flex;
     flex-direction: column;
+    background-color: var(--bg1);
+    backdrop-filter: var(--blur);
+    transition: var(--transition);
 }
 
 .dic_show {
@@ -297,4 +310,8 @@ body > #index > div > .icon {
 }
 #setting {
     overflow: scroll;
+    background-color: var(--bg1);
+    backdrop-filter: var(--blur);
+    transition: var(--transition);
+    border: none;
 }
