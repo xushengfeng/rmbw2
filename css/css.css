@@ -218,6 +218,13 @@ body > #index > div > .icon {
 #book_name {
     flex-grow: 1;
 }
+#book_content {
+    overflow: scroll;
+    height: calc(100svh - 24px);
+    box-sizing: border-box;
+    padding: 1rem 4rem;
+    font-family: serif;
+}
 #books > div {
     width: 50px;
     height: calc(50px * 1.414);
