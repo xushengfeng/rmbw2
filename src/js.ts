@@ -6,6 +6,9 @@ import { pipeline, env } from "@xenova/transformers";
 env.allowLocalModels = true;
 env.allowRemoteModels = false;
 
+import lemmatizer from "lemmatizer";
+console.log(lemmatizer("recruited"));
+
 import pen_svg from "../assets/icons/pen.svg";
 import ok_svg from "../assets/icons/ok.svg";
 
@@ -44,6 +47,7 @@ const dicEl = document.getElementById("dic");
 const bookdicEl = document.getElementById("book_dic");
 const dicContextEl = document.getElementById("dic_context");
 const dicWordEl = document.getElementById("dic_word") as HTMLInputElement;
+const moreWordsEl = document.getElementById("more_words");
 const dicDetailsEl = document.getElementById("dic_details");
 
 const MARKWORD = "mark_word";
@@ -600,6 +604,18 @@ async function showDic(id: string) {
         search(newWord);
         changeDicMean(newWord, oldDic, oldMean);
     };
+
+    let lword = lemmatizer(sourceWord);
+    moreWordsEl.innerHTML = "";
+    for (let w of Array.from(new Set([sourceWord, lword]))) {
+        let div = document.createElement("span");
+        div.innerText = w;
+        div.onclick = () => {
+            dicWordEl.value = w;
+            search(w);
+        };
+        moreWordsEl.append(div);
+    }
 
     async function search(word: string) {
         let x = (await dics[oldDic].getItem(word)) as dic[0];
