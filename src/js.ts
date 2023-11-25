@@ -97,8 +97,8 @@ async function getSection(id: string) {
 }
 
 async function newBook() {
-    let id = crypto.randomUUID();
-    let sid = crypto.randomUUID();
+    let id = uuid();
+    let sid = uuid();
     let book: book = { name: "新书", id: id, visitTime: 0, sections: [sid], canEdit: true, lastPosi: 0 };
     let s = newSection();
     bookshelfStore.setItem(id, book);
@@ -121,7 +121,7 @@ addBookEl.onclick = async () => {
 addSectionEL.onclick = async () => {
     if (!nowBook.book) nowBook = await newBook();
     let book = await getBooksById(nowBook.book);
-    let sid = crypto.randomUUID();
+    let sid = uuid();
     book.sections.push(sid);
     book.lastPosi = book.sections.length - 1;
     let s = newSection();
@@ -552,7 +552,7 @@ async function addReviewCard(
                 return;
             }
         }
-        let cardId = crypto.randomUUID();
+        let cardId = uuid();
         let m = { ...means, contexts: [context], card_id: cardId };
         w.means.push(m);
         let card = new fsrsjs.Card();
@@ -560,7 +560,7 @@ async function addReviewCard(
         card2word.setItem(cardId, word);
         wordsStore.setItem(word, w);
     } else {
-        let cardId = crypto.randomUUID();
+        let cardId = uuid();
         let r: record = {
             word: word,
             means: [
