@@ -39,6 +39,7 @@ const changeEditEl = document.getElementById("change_edit");
 const dicEl = document.getElementById("dic");
 const bookdicEl = document.getElementById("book_dic");
 const dicContextEl = document.getElementById("dic_context");
+const dicWordEl = document.getElementById("dic_word") as HTMLInputElement;
 const dicDetailsEl = document.getElementById("dic_details");
 
 var bookshelfStore = localforage.createInstance({ name: "bookshelf" });
@@ -513,7 +514,7 @@ async function showDic(id: string) {
     section.words[id] = wordx;
     sectionsStore.setItem(sectionId, section);
 
-    let word = wordx.id;
+    let oldWord = wordx.id;
     let wordv = (await wordsStore.getItem(wordx.id)) as record;
     let context = "";
     let oldDic = "";
@@ -531,90 +532,103 @@ async function showDic(id: string) {
     }
 
     async function changeDicMean(word: string, dic: string, i: number) {
-        if (word != wordx.id || dic != oldDic || i != oldMean) {
+        if (word != oldWord || dic != oldDic || i != oldMean) {
             for (let m of wordv.means) {
                 if (m.dic === oldDic && m.index === oldMean) {
                     m.contexts = m.contexts.filter((c) => c.source.id != contextx.source.id);
                     if (m.contexts.length === 0) wordv.means = wordv.means.filter((i) => i != m);
                     if (wordv.means.length === 0) {
-                        await wordsStore.removeItem(wordx.id);
+                        await wordsStore.removeItem(oldWord);
                     } else {
-                        await wordsStore.setItem(wordx.id, wordv);
+                        await wordsStore.setItem(oldWord, wordv);
                     }
                     break;
                 }
             }
 
             addReviewCard(word, { dic, index: i }, contextx);
+
+            oldWord = word;
+            oldDic = dic;
+            oldMean = i;
         }
     }
 
     dicContextEl.innerText = context;
 
-    let x = (await dics[oldDic].getItem(word)) as dic[0];
-    if (!x) return;
-    dicDetailsEl.innerHTML = "";
-    for (let i in x.means) {
-        const m = x.means[i];
-        let div = document.createElement("div");
-        let radio = document.createElement("input");
-        radio.type = "radio";
-        radio.name = "dic_means";
-        radio.onclick = () => {
-            if (radio.checked) {
-                changeDicMean(word, oldDic, Number(i));
-            }
-        };
-        let num = document.createElement("span");
-        num.innerText = String(Number(i) + 1);
-        let p = document.createElement("p");
-        p.innerText = m.dis.text;
-        let span = document.createElement("span");
-        span.innerText = m.dis.tran;
-        let sen = document.createElement("div");
-        for (let s of m.sen) {
-            let p = document.createElement("p");
-            p.innerText = s.text;
-            let span = document.createElement("span");
-            span.innerText = s.tran;
-            sen.append(p);
-            sen.append(span);
-        }
-        div.append(radio, num, p, span, sen);
-        dicDetailsEl.append(div);
-    }
+    search(oldWord);
+    dicWordEl.value = oldWord;
+    dicWordEl.onchange = () => {
+        let newWord = dicWordEl.value.trim();
+        search(newWord);
+        changeDicMean(newWord, oldDic, oldMean);
+    };
 
-    function set() {
-        let means = "";
+    async function search(word: string) {
+        let x = (await dics[oldDic].getItem(word)) as dic[0];
+        if (!x) return;
+        dicDetailsEl.innerHTML = "";
         for (let i in x.means) {
-            means += `${i}.${x.means[i].dis.text};\n`;
+            const m = x.means[i];
+            let div = document.createElement("div");
+            let radio = document.createElement("input");
+            radio.type = "radio";
+            radio.name = "dic_means";
+            radio.onclick = () => {
+                if (radio.checked) {
+                    changeDicMean(word, oldDic, Number(i));
+                }
+            };
+            let num = document.createElement("span");
+            num.innerText = String(Number(i) + 1);
+            let p = document.createElement("p");
+            p.innerText = m.dis.text;
+            let span = document.createElement("span");
+            span.innerText = m.dis.tran;
+            let sen = document.createElement("div");
+            for (let s of m.sen) {
+                let p = document.createElement("p");
+                p.innerText = s.text;
+                let span = document.createElement("span");
+                span.innerText = s.tran;
+                sen.append(p);
+                sen.append(span);
+            }
+            div.append(radio, num, p, span, sen);
+            dicDetailsEl.append(div);
         }
-        let c = `${context.slice(0, wordx.index[0])}**${word}**${context.slice(wordx.index[1])}`;
-        console.log(c);
+        function set() {
+            let means = "";
+            for (let i in x.means) {
+                means += `${i}.${x.means[i].dis.text};\n`;
+            }
+            let c = `${context.slice(0, wordx.index[0])}**${word}**${context.slice(wordx.index[1])}`;
+            console.log(c);
 
-        ai([
-            {
-                role: "user",
-                content: `I have a bolded word '${word}' wrapped in double asterisks in the sentence:'${c}'.This is a dictionary's explanation of several interpretations:${means}.Please think carefully and select the most appropriate label for explanation, without providing any explanation.`,
-            },
-        ]).then((a) => {
-            console.log(a);
-            let n = Number(a.match(/[0-9]+/)[0]);
-            setcheck(n);
-            changeDicMean(word, oldDic, n);
-        });
-    }
-    function setcheck(i: number) {
-        (dicDetailsEl.querySelectorAll("input[name=dic_means]")[i] as HTMLInputElement).checked = true;
-    }
-    if (oldMean === -1) {
-        if (x.means.length > 1) {
-            set();
-        } else {
-            setcheck(0);
+            ai([
+                {
+                    role: "user",
+                    content: `I have a bolded word '${word}' wrapped in double asterisks in the sentence:'${c}'.This is a dictionary's explanation of several interpretations:${means}.Please think carefully and select the most appropriate label for explanation, without providing any explanation.`,
+                },
+            ]).then((a) => {
+                console.log(a);
+                let n = Number(a.match(/[0-9]+/)[0]);
+                setcheck(n);
+                changeDicMean(word, oldDic, n);
+            });
         }
-    } else {
-        setcheck(oldMean);
+        function setcheck(i: number) {
+            (dicDetailsEl.querySelectorAll("input[name=dic_means]")[i] as HTMLInputElement).checked = true;
+        }
+        if (oldMean === -1) {
+            if (x.means.length > 1) {
+                set();
+            } else {
+                setcheck(0);
+            }
+        } else {
+            setcheck(oldMean);
+        }
     }
 }
 
