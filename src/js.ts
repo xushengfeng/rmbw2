@@ -326,6 +326,12 @@ async function showBookContent(id: string) {
             if (/^[a-zA-Z]+$/.test(word.text)) {
                 let span = document.createElement("span");
                 span.innerText = word.text;
+                for (let i in s.words) {
+                    let index = s.words[i].index;
+                    if (index[0] === word.start && index[1] === word.end) {
+                        span.classList.add("mark_word"); // TODO CSS.highlights
+                    }
+                }
                 span.onclick = async () => {
                     let s = paragraph[0].start,
                         e = paragraph.at(-1).end;
@@ -350,6 +356,8 @@ async function showBookContent(id: string) {
                         cindex: { start: s, end: e },
                     });
                     showDic(id);
+
+                    span.classList.add("mark_word");
                 };
                 p.append(span);
             } else {

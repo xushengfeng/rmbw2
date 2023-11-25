@@ -225,6 +225,10 @@ body > #index > div > .icon {
     padding: 1rem 4rem;
     font-family: serif;
 }
+.mark_word {
+    text-decoration: underline wavy #999;
+}
+
 #books > div {
     width: 50px;
     height: calc(50px * 1.414);
