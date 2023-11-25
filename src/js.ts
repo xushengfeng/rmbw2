@@ -47,6 +47,7 @@ const dicWordEl = document.getElementById("dic_word") as HTMLInputElement;
 const dicDetailsEl = document.getElementById("dic_details");
 
 const MARKWORD = "mark_word";
+const TRANSLATE = "translate";
 
 var bookshelfStore = localforage.createInstance({ name: "bookshelf" });
 var sectionsStore = localforage.createInstance({ name: "sections" });
@@ -570,8 +571,8 @@ async function showDic(id: string) {
         }
     }
 
-    let dicC = document.createElement("div");
-    let dicCTr = document.createElement("div");
+    let dicC = document.createElement("p");
+    let dicCTr = document.createElement("p");
     dicContextEl.innerHTML = "";
     dicContextEl.append(dicC, dicCTr);
 
@@ -581,6 +582,7 @@ async function showDic(id: string) {
     dicC.append(context.slice(0, sourceIndex[0]), mainWord, context.slice(sourceIndex[1]));
 
     dicCTr.innerText = "点击翻译";
+    dicCTr.classList.add(TRANSLATE);
     dicCTr.onclick = async () => {
         let translator = await pipeline("translation", "Xenova/nllb-200-distilled-600M");
         let output = await translator(context, {
@@ -614,22 +616,26 @@ async function showDic(id: string) {
                     changeDicMean(word, oldDic, Number(i));
                 }
             };
-            let num = document.createElement("span");
-            num.innerText = String(Number(i) + 1);
+            let disEl = document.createElement("div");
             let p = document.createElement("p");
             p.innerText = m.dis.text;
-            let span = document.createElement("span");
+            let span = document.createElement("p");
             span.innerText = m.dis.tran;
+            span.classList.add(TRANSLATE);
+            disEl.append(p, span);
             let sen = document.createElement("div");
+            sen.classList.add("dic_sen");
             for (let s of m.sen) {
+                let div = document.createElement("div");
                 let p = document.createElement("p");
                 p.innerText = s.text;
-                let span = document.createElement("span");
+                let span = document.createElement("p");
                 span.innerText = s.tran;
-                sen.append(p);
-                sen.append(span);
+                span.classList.add(TRANSLATE);
+                div.append(p, span);
+                sen.append(div);
             }
-            div.append(radio, num, p, span, sen);
+            div.append(radio, disEl, sen);
             dicDetailsEl.append(div);
         }
         function set() {

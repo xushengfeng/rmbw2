@@ -288,8 +288,37 @@ body > #index > div > .icon {
 
 #dic_details {
     overflow: scroll;
+    gap: 1rem;
+    display: flex;
+    flex-direction: column;
 }
 
+.translate {
+    opacity: 0.6;
+    margin: 0;
+}
+div:has(.translate) > :not(.translate) {
+    margin: 4px 0;
+}
+
+.dic_sen {
+    padding-left: 1rem;
+}
+
+#dic_details > div {
+    border-radius: 0.4rem;
+    padding: 4px;
+    border: solid 1px transparent;
+}
+#dic_details > div:hover {
+    border: dashed 1px #000;
+}
+#dic_details > div:has(input[type="radio"]:checked) {
+    border: dashed 1px #000;
+}
+#dic_details > div > input[type="radio"] {
+    display: none;
+}
 #review {
     position: absolute;
     top: 100vh;
