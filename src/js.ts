@@ -920,7 +920,10 @@ async function showReview(x: { id: string; card: fsrsjs.Card }, type: review) {
             if (i.card_id === x.id) {
                 for (let c of i.contexts) {
                     let p = document.createElement("p");
-                    p.innerText = c.text;
+                    let span = document.createElement("span");
+                    span.classList.add(MARKWORD);
+                    span.innerText = c.text.slice(c.index[0], c.index[1]);
+                    p.append(c.text.slice(0, c.index[0]), span, c.text.slice(c.index[1]));
                     context.append(p);
                 }
             }
