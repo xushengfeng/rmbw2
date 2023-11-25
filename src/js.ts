@@ -782,54 +782,77 @@ const reviewViewEl = document.getElementById("review_view");
 
 async function getReviewDue() {
     let now = new Date().getTime();
-    let list: { id: string; card: fsrsjs.Card; type: "mean" | "spell" }[] = [];
+    let wordList: { id: string; card: fsrsjs.Card }[] = [];
+    let spellList: { id: string; card: fsrsjs.Card }[] = [];
     await cardsStore.iterate((value: fsrsjs.Card, key) => {
         if (value.due.getTime() < now) {
-            list.push({ id: key, card: value, type: "mean" });
+            wordList.push({ id: key, card: value });
         }
     });
     await spellStore.iterate((value: fsrsjs.Card, key) => {
         if (value.due.getTime() < now) {
-            list.push({ id: key, card: value, type: "spell" });
+            spellList.push({ id: key, card: value });
         }
     });
-    list.sort((a, b) => a.card.due.getTime() - b.card.due.getTime());
-    return list;
+    wordList.sort((a, b) => a.card.due.getTime() - b.card.due.getTime());
+    spellList.sort((a, b) => a.card.due.getTime() - b.card.due.getTime());
+    return { word: wordList, spell: spellList };
 }
 
-let dueList: {
-    id: string;
-    card: fsrsjs.Card;
-    type: "mean" | "spell";
-}[] = [];
-let dueI = 0;
+let due: {
+    word: {
+        list: {
+            id: string;
+            card: fsrsjs.Card;
+        }[];
+        i: number;
+    };
+    spell: {
+        list: {
+            id: string;
+            card: fsrsjs.Card;
+        }[];
+        i: number;
+    };
+} = {
+    word: {
+        list: [],
+        i: 0,
+    },
+    spell: {
+        list: [],
+        i: 0,
+    },
+};
 
-async function nextDue(type: "mean" | "spell") {
-    dueI += 1;
-    if (dueI >= dueList.length) {
-        dueList = await getReviewDue();
-        dueI = 0;
+type review = "word" | "spell";
+var reviewType: review = "word";
+
+async function nextDue(type: review) {
+    let x = due[type];
+    x.i += 1;
+    if (x.i >= x.list.length) {
+        x.list = (await getReviewDue())[type];
+        x.i = 0;
     }
-    if (dueList[dueI]) {
-        for (let i = dueI; i < dueList.length; i++) {
-            if (dueList[i].type === type) {
-                return dueList[i];
-            }
-        }
+    if (x.list[x.i]) {
+        return x.list[x.i];
     }
     return null;
 }
 
 reviewReflashEl.onclick = async () => {
     let l = await getReviewDue();
-    dueList = l;
-    dueI = 0;
+    due.word.list = l.word;
+    due.word.i = 0;
+    due.spell.list = l.spell;
+    due.spell.i = 0;
     console.log(l);
-    if (l[0]) showReview(l[0]);
+    if (due[reviewType].list[0]) showReview(due[reviewType].list[0], reviewType);
 };
 
-async function showReview(x: { id: string; card: fsrsjs.Card; type: "mean" | "spell" }) {
-    if (x.type === "mean") {
+async function showReview(x: { id: string; card: fsrsjs.Card }, type: review) {
+    if (type === "word") {
         let wordid = (await card2word.getItem(x.id)) as string;
         let word = (await wordsStore.getItem(wordid)) as record;
         let div = document.createElement("div");
@@ -848,10 +871,10 @@ async function showReview(x: { id: string; card: fsrsjs.Card; type: "mean" | "sp
             button.innerText = text;
             button.onclick = async () => {
                 setReviewCard(x.id, x.card, rating);
-                let next = await nextDue(x.type);
+                let next = await nextDue(reviewType);
                 console.log(next);
 
-                if (next) showReview(next);
+                if (next) showReview(next, reviewType);
             };
             return button;
         };
