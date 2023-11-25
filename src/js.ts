@@ -826,7 +826,7 @@ let due: {
 };
 
 type review = "word" | "spell";
-var reviewType: review = "word";
+var reviewType: review = "spell";
 
 async function nextDue(type: review) {
     let x = due[type];
@@ -889,12 +889,67 @@ async function showReview(x: { id: string; card: fsrsjs.Card }, type: review) {
         reviewViewEl.innerHTML = "";
         reviewViewEl.append(div);
     }
+    if (type === "spell") {
+        let input = document.createElement("input");
+        let wordEl = document.createElement("div");
+        let spellNum = 3;
+        const word = x.id;
+        input.oninput = async () => {
+            let inputWord = input.value;
+            wordEl.innerHTML = "";
+            switch (inputWord) {
+                case "~": // 暂时展示
+                    input.value = "";
+                    play(word);
+                    wordEl.innerText = word;
+                    setSpellCard(x.id, x.card, 2);
+                    break;
+                case "!": // 发音
+                    play(word);
+                    input.value = "";
+                    break;
+                case word: // 正确
+                    if (spellNum === 1) {
+                        setSpellCard(x.id, x.card, 4);
+                        let next = await nextDue(reviewType);
+                        if (next) showReview(next, reviewType);
+                    } else {
+                        spellNum--;
+                        input.value = "";
+                        input.placeholder = `Good! ${spellNum} time(s) left`;
+                    }
+                    break;
+            }
+            //错误归位
+            if (inputWord.length === word.length && inputWord != word) {
+                input.value = "";
+                input.placeholder = `"${inputWord}" is wrong! ${spellNum} time(s) left`;
+                play(word);
+                setSpellCard(x.id, x.card, 1);
+            }
+        };
+        const div = document.createElement("div");
+        div.append(input, wordEl);
+        reviewViewEl.innerHTML = "";
+        reviewViewEl.append(div);
+    }
+}
+
+function play(word: string) {
+    let audio = <HTMLAudioElement>document.getElementById("audio");
+    audio.src = "https://dict.youdao.com/dictvoice?le=eng&type=1&audio=" + word;
+    audio.play();
 }
 
 function setReviewCard(id: string, card: fsrsjs.Card, rating: fsrsjs.Rating) {
     let now = new Date();
     let sCards = fsrs.repeat(card, now);
     cardsStore.setItem(id, sCards[rating].card);
+}
+function setSpellCard(id: string, card: fsrsjs.Card, rating: fsrsjs.Rating) {
+    let now = new Date();
+    let sCards = fsrs.repeat(card, now);
+    spellStore.setItem(id, sCards[rating].card);
 }
 
 //###### setting
