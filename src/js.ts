@@ -616,6 +616,7 @@ async function showDic(id: string) {
                     changeDicMean(word, oldDic, Number(i));
                 }
             };
+            div.onclick = () => radio.click();
             let disEl = document.createElement("div");
             let p = document.createElement("p");
             p.innerText = m.dis.text;
@@ -659,7 +660,9 @@ async function showDic(id: string) {
             });
         }
         function setcheck(i: number) {
-            (dicDetailsEl.querySelectorAll("input[name=dic_means]")[i] as HTMLInputElement).checked = true;
+            let el = dicDetailsEl.querySelectorAll("input[name=dic_means]")[i] as HTMLInputElement;
+            el.checked = true;
+            dicDetailsEl.scrollTo({ top: el.parentElement.offsetTop, behavior: "smooth" });
         }
         if (oldMean === -1) {
             if (x.means.length > 1) {
