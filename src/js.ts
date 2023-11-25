@@ -536,9 +536,14 @@ async function showDic(id: string) {
             for (let m of wordv.means) {
                 if (m.dic === oldDic && m.index === oldMean) {
                     m.contexts = m.contexts.filter((c) => c.source.id != contextx.source.id);
-                    if (m.contexts.length === 0) wordv.means = wordv.means.filter((i) => i != m);
+                    if (m.contexts.length === 0) {
+                        await card2word.removeItem(m.card_id);
+                        await cardsStore.removeItem(m.card_id);
+                        wordv.means = wordv.means.filter((i) => i != m);
+                    }
                     if (wordv.means.length === 0) {
                         await wordsStore.removeItem(oldWord);
+                        await spellStore.removeItem(oldWord);
                     } else {
                         await wordsStore.setItem(oldWord, wordv);
                     }
