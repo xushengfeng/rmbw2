@@ -13,38 +13,6 @@ function uuid() {
     return crypto.randomUUID().slice(0, 8);
 }
 
-class Store {
-    constructor(name?: string) {
-        this.storeName = name;
-        this.xstore = JSON.parse(localStorage.getItem(name) ?? "{}");
-    }
-    xstore = {};
-    storeName = "";
-    setStore(obj: Object) {
-        this.xstore = obj;
-    }
-    get store() {
-        return this.xstore;
-    }
-    set(path: string, value: any) {
-        let pathx = path.split(".");
-        const lastp = pathx.pop();
-        const lastobj = pathx.reduce((p, c) => (p[c] = p[c] || {}), this.xstore);
-        lastobj[lastp] = value;
-        if (this.storeName) {
-            localStorage.setItem(this.storeName, JSON.stringify(this.xstore));
-        }
-    }
-    get(path: string) {
-        let pathx = path.split(".");
-        const lastp = pathx.pop();
-        const lastobj = pathx.reduce((p, c) => (p[c] = p[c] || {}), this.xstore);
-        return lastobj[lastp];
-    }
-}
-var store = new Store("rpi-config");
-var historyStore = new Store();
-
 var setting = localforage.createInstance({
     name: "setting",
     driver: localforage.LOCALSTORAGE,
