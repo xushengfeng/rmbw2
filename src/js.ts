@@ -42,6 +42,8 @@ const dicContextEl = document.getElementById("dic_context");
 const dicWordEl = document.getElementById("dic_word") as HTMLInputElement;
 const dicDetailsEl = document.getElementById("dic_details");
 
+const MARKWORD = "mark_word";
+
 var bookshelfStore = localforage.createInstance({ name: "bookshelf" });
 var sectionsStore = localforage.createInstance({ name: "sections" });
 
@@ -330,7 +332,7 @@ async function showBookContent(id: string) {
                 for (let i in s.words) {
                     let index = s.words[i].index;
                     if (index[0] === word.start && index[1] === word.end) {
-                        span.classList.add("mark_word"); // TODO CSS.highlights
+                        span.classList.add(MARKWORD); // TODO CSS.highlights
                     }
                 }
                 span.onclick = async () => {
@@ -358,7 +360,7 @@ async function showBookContent(id: string) {
                     });
                     showDic(id);
 
-                    span.classList.add("mark_word");
+                    span.classList.add(MARKWORD);
                 };
                 p.append(span);
             } else {
@@ -517,6 +519,8 @@ async function showDic(id: string) {
     let oldWord = wordx.id;
     let wordv = (await wordsStore.getItem(wordx.id)) as record;
     let context = "";
+    let sourceIndex = [0, 0];
+    const sourceWord = oldWord;
     let oldDic = "";
     let oldMean = NaN;
     let contextx: record["means"][0]["contexts"][0] = null;
@@ -526,6 +530,7 @@ async function showDic(id: string) {
         for (let j of i.contexts) {
             if (j.source.id === id) {
                 context = j.text;
+                sourceIndex = j.index;
                 contextx = j;
             }
         }
@@ -561,7 +566,10 @@ async function showDic(id: string) {
         }
     }
 
-    dicContextEl.innerText = context;
+    let mainWord = document.createElement("span");
+    mainWord.classList.add(MARKWORD);
+    mainWord.innerText = sourceWord;
+    dicContextEl.append(context.slice(0, sourceIndex[0]), mainWord, context.slice(sourceIndex[1]));
 
     search(oldWord);
     dicWordEl.value = oldWord;
@@ -609,13 +617,13 @@ async function showDic(id: string) {
             for (let i in x.means) {
                 means += `${i}.${x.means[i].dis.text};\n`;
             }
-            let c = `${context.slice(0, wordx.index[0])}**${word}**${context.slice(wordx.index[1])}`;
+            let c = `${context.slice(0, sourceIndex[0])}**${sourceWord}**${context.slice(sourceIndex[1])}`;
             console.log(c);
 
             ai([
                 {
                     role: "user",
-                    content: `I have a bolded word '${word}' wrapped in double asterisks in the sentence:'${c}'.This is a dictionary's explanation of several interpretations:${means}.Please think carefully and select the most appropriate label for explanation, without providing any explanation.`,
+                    content: `I have a bolded word '${sourceWord}' wrapped in double asterisks in the sentence:'${c}'.This is a dictionary's explanation of several interpretations:${means}.Please think carefully and select the most appropriate label for explanation, without providing any explanation.`,
                 },
             ]).then((a) => {
                 console.log(a);
