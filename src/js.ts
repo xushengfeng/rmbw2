@@ -9,6 +9,10 @@ function icon(src: string) {
     return `<img src="${src}" class="icon">`;
 }
 
+function uuid() {
+    return crypto.randomUUID().slice(0, 8);
+}
+
 class Store {
     constructor(name?: string) {
         this.storeName = name;
@@ -71,7 +75,12 @@ var bookshelfStore = localforage.createInstance({ name: "bookshelf" });
 var sectionsStore = localforage.createInstance({ name: "sections" });
 
 type book = { name: string; id: string; visitTime: number; sections: string[]; canEdit: boolean; lastPosi: number };
-type section = { title: string; text: string; words: string[]; lastPosi: number };
+type section = {
+    title: string;
+    text: string;
+    words: { [key: string]: { id: string; index: [number, number] } };
+    lastPosi: number;
+};
 
 function getBooksById(id: string) {
     return new Promise((re: (a: book) => void) => {
@@ -98,7 +107,7 @@ async function newBook() {
 }
 
 function newSection() {
-    let s: section = { title: "新章节", lastPosi: 0, text: "", words: [] };
+    let s: section = { title: "新章节", lastPosi: 0, text: "", words: {} };
     return s;
 }
 
@@ -217,10 +226,13 @@ async function showBookContent(id: string) {
                     }
                     console.log(s);
 
+                    let id = uuid();
+
                     tmpRecord.push({
                         dic: "l",
                         key: word.text,
                         dindex: 0,
+                        id: id,
                         index: { start: word.start, end: word.end },
                         pindex: { start: paragraph[0].start, end: paragraph.at(-1).end },
                         cindex: { start: s, end: e },
@@ -249,6 +261,7 @@ async function changeEdit(b: boolean) {
             let sectionId = book.sections[nowBook.sections];
             let section = await getSection(sectionId);
             if (editText) {
+                section = changePosi(section, editText);
                 section.text = editText;
                 await sectionsStore.setItem(sectionId, section);
             }
@@ -261,6 +274,61 @@ changeEditEl.onclick = () => {
     isEdit = !isEdit;
     changeEdit(isEdit);
 };
+
+function changePosi(section: section, text: string) {
+    let diff = dmp.diff_main(section.text, text);
+    console.log(diff);
+    let source: number[] = [];
+    let map: number[] = [];
+    let p0 = 0,
+        p1 = 0;
+    for (let i = 0; i < diff.length; i++) {
+        let d = diff[i];
+        if (d[0] === -1 && diff[i + 1] && diff[i + 1][0] === 1) {
+            p0 += d[1].length;
+            p1 += d[1].length;
+            source.push(p0);
+            map.push(p1);
+            continue;
+        } else {
+            if (d[0] === 0) {
+                p0 += d[1].length;
+                p1 += d[1].length;
+                source.push(p0);
+                map.push(p1);
+            } else if (d[0] === 1) {
+                p1 += d[1].length;
+                source.push(p0);
+                map.push(p1);
+            } else if (d[0] === -1) {
+                p0 += d[1].length;
+                source.push(p0);
+                map.push(p1);
+            }
+        }
+    }
+    map.push(text.length);
+    console.log(source, map);
+    for (let w in section.words) {
+        let start = section.words[w].index[0];
+        let end = section.words[w].index[1];
+        let Start = 0,
+            End = 0;
+        for (let i = 0; i < source.length; i++) {
+            if (source[i] <= start && start <= source[i + 1]) {
+                Start = Math.min(map[i] + (start - source[i]), map[i + 1]);
+            }
+            if (source[i] <= end && end <= source[i + 1]) {
+                End = Math.min(map[i] + (end - source[i]), map[i + 1]);
+            }
+        }
+        section.words[w].index = [Start, End];
+    }
+    return section;
+}
+
+import diff_match_patch from "diff-match-patch";
+var dmp = new diff_match_patch();
 
 changeEdit(false);
 
@@ -306,9 +374,8 @@ type record = {
         index: number;
         contexts: {
             text: string;
-            index: [number, number]; // 文章定位
-            index2: number; // 语境定位
-            source: { book: string; sections: number }; // 原句通过对比计算
+            index: [number, number]; // 语境定位
+            source: { book: string; sections: number; id: string }; // 原句通过对比计算
         }[];
         card_id: string;
     }[];
@@ -318,6 +385,7 @@ let tmpRecord: {
     dic: string;
     key: string;
     dindex: number;
+    id: string;
     index: { start: number; end: number };
     pindex: { start: number; end: number };
     cindex: { start: number; end: number };
@@ -405,17 +473,21 @@ async function showDic(i: number, isnew: boolean) {
     };
 }
 
-function saveCard(v: (typeof tmpRecord)[0]) {
+async function saveCard(v: (typeof tmpRecord)[0]) {
     addReviewCard(
         v.key,
         { dic: "xout.json", index: v.dindex },
         {
             text: editText.slice(v.cindex.start, v.cindex.end),
-            index: [v.index.start, v.index.end],
-            index2: v.index.start - v.cindex.start,
-            source: nowBook,
+            index: [v.index.start - v.cindex.start, v.index.end - v.cindex.start],
+            source: { ...nowBook, id: v.id },
         }
     );
+    let book = await getBooksById(nowBook.book);
+    let sectionId = book.sections[nowBook.sections];
+    let section = await getSection(sectionId);
+    section.words[v.id] = { id: v.key, index: [v.index.start, v.index.end] };
+    sectionsStore.setItem(sectionId, section);
 }
 
 type aim = { role: "system" | "user" | "assistant"; content: string }[];
@@ -463,8 +535,7 @@ async function addReviewCard(
     context: {
         text: string;
         index: [number, number];
-        index2: number;
-        source: { book: string; sections: number }; // 原句通过对比计算
+        source: { book: string; sections: number; id: string }; // 原句通过对比计算
     }
 ) {
     let w = (await wordsStore.getItem(word)) as record;

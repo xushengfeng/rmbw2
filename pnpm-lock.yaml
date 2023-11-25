@@ -5,6 +5,12 @@ settings:
   excludeLinksFromLockfile: false
 
 dependencies:
+  '@types/diff-match-patch':
+    specifier: ^1.0.36
+    version: 1.0.36
+  diff-match-patch:
+    specifier: ^1.0.5
+    version: 1.0.5
   fsrs.js:
     specifier: ^1.1.2
     version: 1.1.2
@@ -330,6 +336,10 @@ packages:
     dev: true
     optional: true
 
+  /@types/diff-match-patch@1.0.36:
+    resolution: {integrity: sha512-xFdR6tkm0MWvBfO8xXCSsinYxHcqkQUlcHeSpMC2ukzOb6lwQAfDmW+Qt0AvlGd8HpsS28qKsB+oPeJn9I39jg==}
+    dev: false
+
   /@xmldom/xmldom@0.8.10:
     resolution: {integrity: sha512-2WALfTl4xo2SkGCYRt6rDTFfk9R1czmBvUQy12gK2KuRKIpWEhcbbzy8EZXtz/jkRqHX8bFEc6FC1HjX4TUWYw==}
     engines: {node: '>=10.0.0'}
@@ -349,6 +359,10 @@ packages:
   /core-util-is@1.0.3:
     resolution: {integrity: sha512-ZQBvi1DcpJ4GDqanjucZ2Hj3wEO5pZDS89BWbkcrvdxksJorwUDDZamX9ldFkp9aw2lmBDLgkObEA4DWNJ9FYQ==}
     dev: true
+
+  /diff-match-patch@1.0.5:
+    resolution: {integrity: sha512-IayShXAgj/QMXgB0IWmKx+rOPuGMhqm5w6jvFxmVenXKIzRqTAAsbBPT3kWQeGANj3jGgvcvv4yK6SxqYmikgw==}
+    dev: false
 
   /en-inflectors@1.0.12:
     resolution: {integrity: sha512-G9wwJMx9DQQzwom8J8e8ErVpI6h/Z5BpYusJCE2Q/2NfgBNYCesyNaCOOskZAhOrw2nmR4D8nYAv4Xv/INIbzw==}
