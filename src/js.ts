@@ -28,6 +28,9 @@ var setting = localforage.createInstance({
 const booksEl = document.getElementById("books");
 const bookEl = document.getElementById("book");
 const bookSectionsEl = document.getElementById("sections");
+const addOnlineBookEl = document.getElementById("add_online_book");
+const onlineBooksEl = document.getElementById("online_books");
+const onlineBooksListEl = document.getElementById("online_books_list");
 const addBookEl = document.getElementById("add_book");
 const addSectionEL = document.getElementById("add_section");
 const bookNavEl = document.getElementById("book_nav");
@@ -96,6 +99,101 @@ async function newBook() {
 function newSection() {
     let s: section = { title: "新章节", lastPosi: 0, text: "", words: {} };
     return s;
+}
+
+addOnlineBookEl.onclick = () => {
+    getOnlineBooks();
+    onlineBooksEl.showPopover();
+};
+
+function getOnlineBooks() {
+    fetch("https://raw.githubusercontent.com/xushengfeng/rmbw-book/master/index.json")
+        .then((v) => v.json())
+        .then((j) => {
+            showOnlineBooks(j);
+            console.log(j);
+        });
+}
+
+function showOnlineBooks(books: {
+    [key: string]: {
+        name: string;
+        id: string;
+        type: "word" | "text";
+        updateTime: number;
+        sections: {
+            id: string;
+            title: string;
+            path: string;
+        }[];
+    };
+}) {
+    onlineBooksListEl.innerHTML = "";
+    for (let i in books) {
+        const book = books[i];
+        let div = document.createElement("div");
+        let title = document.createElement("span");
+        title.innerText = book.name;
+        div.append(title);
+        div.onclick = async () => {
+            console.log(i);
+            let xbook = (await bookshelfStore.getItem(book.id)) as book;
+            if (xbook) {
+                if (xbook.updateTime < book.updateTime) {
+                    saveBook();
+                }
+            } else {
+                xbook = {
+                    name: book.name,
+                    id: book.id,
+                    visitTime: 0,
+                    updateTime: 0,
+                    type: book.type,
+                    sections: [],
+                    canEdit: false,
+                    lastPosi: 0,
+                };
+                saveBook();
+            }
+            function saveBook() {
+                let s = [];
+                const fetchPromises = book.sections.map(async (item) => {
+                    const { id, path, title } = item;
+                    const response = await fetch(
+                        "https://raw.githubusercontent.com/xushengfeng/rmbw-book/master/source/" + path
+                    );
+                    const content = await response.text();
+                    return { id, content, title };
+                });
+                Promise.all(fetchPromises)
+                    .then(async (results) => {
+                        console.log(results);
+                        for (let i of results) {
+                            s.push(i.id);
+                            let section = (await sectionsStore.getItem(i.id)) as section;
+                            if (section) {
+                                sectionsStore.setItem(i.id, changePosi(section, i.content));
+                            } else {
+                                sectionsStore.setItem(i.id, {
+                                    title: i.title,
+                                    lastPosi: 0,
+                                    text: i.content,
+                                    words: {},
+                                } as section);
+                            }
+                        }
+                        xbook.sections = s;
+                        await bookshelfStore.setItem(book.id, xbook);
+                        showBooks();
+                    })
+                    .catch((error) => {
+                        console.error(error);
+                    });
+            }
+        };
+        onlineBooksListEl.append(div);
+        console.log(onlineBooksListEl);
+    }
 }
 
 addBookEl.onclick = async () => {
