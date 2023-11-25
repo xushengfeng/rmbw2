@@ -56,6 +56,8 @@ var setting = localforage.createInstance({
 const booksEl = document.getElementById("books");
 const bookEl = document.getElementById("book");
 const bookSectionsEl = document.getElementById("sections");
+const addBookEl = document.getElementById("add_book");
+const addSectionEL = document.getElementById("add_section");
 const bookNavEl = document.getElementById("book_nav");
 const bookContentEl = document.getElementById("book_content");
 const changeEditEl = document.getElementById("change_edit");
@@ -64,44 +66,87 @@ const bookdicEl = document.getElementById("book_dic");
 const dicContextSaveEl = document.getElementById("dic_save");
 const dicContextEl = document.getElementById("dic_context");
 const dicDetailsEl = document.getElementById("dic_details");
-type book = { name: string; sections: { title: string; text: string }[] };
-let books: book[] = [
-    {
-        name: "test",
-        sections: [
-            {
-                title: "section 1",
-                text: "hi\nthis is a paragraph. this is x",
-            },
-            {
-                title: "section 2",
-                text: "hi\nthis is another paragraph. this is x",
-            },
-        ],
-    },
-];
+
+var bookshelfStore = localforage.createInstance({ name: "bookshelf" });
+var sectionsStore = localforage.createInstance({ name: "sections" });
+
+type book = { name: string; id: string; visitTime: number; sections: string[]; canEdit: boolean; lastPosi: number };
+type section = { title: string; text: string; words: string[]; lastPosi: number };
+
+function getBooksById(id: string) {
+    return new Promise((re: (a: book) => void) => {
+        bookshelfStore.iterate((b: book, k) => {
+            if (b.id === id) {
+                return re(b);
+            }
+        });
+        return null;
+    });
+}
+async function getSection(id: string) {
+    return (await sectionsStore.getItem(id)) as section;
+}
+
+async function newBook() {
+    let id = crypto.randomUUID();
+    let sid = crypto.randomUUID();
+    let book: book = { name: "新书", id: id, visitTime: 0, sections: [sid], canEdit: true, lastPosi: 0 };
+    let s = newSection();
+    bookshelfStore.setItem(id, book);
+    await sectionsStore.setItem(sid, s);
+    return { book: id, sections: 0 };
+}
+
+function newSection() {
+    let s: section = { title: "新章节", lastPosi: 0, text: "", words: [] };
+    return s;
+}
+
+addBookEl.onclick = async () => {
+    let b = await newBook();
+    nowBook = b;
+    setBookS();
+    changeEdit(true);
+};
+
+addSectionEL.onclick = async () => {
+    if (!nowBook.book) nowBook = await newBook();
+    let book = await getBooksById(nowBook.book);
+    let sid = crypto.randomUUID();
+    book.sections.push(sid);
+    book.lastPosi = book.sections.length - 1;
+    let s = newSection();
+    await sectionsStore.setItem(sid, s);
+    await bookshelfStore.setItem(nowBook.book, book);
+    nowBook.sections = book.lastPosi;
+    showBook(book);
+};
 
 document.getElementById("book_sections").onclick = () => {
     bookNavEl.classList.toggle("book_nav_show");
 };
 
 let nowBook = {
-    book: "test",
-    sections: 0,
+    book: "",
+    sections: NaN,
 };
 
-showBooks(books);
+showBooks();
 setBookS();
 
-function setBookS() {
-    document.getElementById("book_name").innerText = `${nowBook.book} - ${
-        books.find((b) => b.name === nowBook.book).sections[nowBook.sections].title
-    }`;
+async function setBookS() {
+    if (nowBook.book) {
+        let sectionId = (await getBooksById(nowBook.book)).sections[nowBook.sections];
+        let section = await getSection(sectionId);
+        document.getElementById("book_name").innerText = `${(await getBooksById(nowBook.book)).name} - ${
+            section.title
+        }`;
+    }
 }
 
-function showBooks(books: book[]) {
+function showBooks() {
     booksEl.innerHTML = "";
-    for (let book of books) {
+    bookshelfStore.iterate((book: book) => {
         let bookIEl = document.createElement("div");
         let titleEl = document.createElement("h2");
         titleEl.innerText = book.name;
@@ -110,19 +155,21 @@ function showBooks(books: book[]) {
         bookIEl.onclick = () => {
             showBook(book);
         };
-    }
+    });
 }
 function showBook(book: book) {
-    nowBook.book = book.name;
+    nowBook.book = book.id;
+    nowBook.sections = book.lastPosi;
     showBookSections(book.sections);
-    showBookContent(book.sections[0]);
+    showBookContent(book.sections[book.lastPosi]);
     setBookS();
 }
-function showBookSections(sections: book["sections"]) {
+async function showBookSections(sections: book["sections"]) {
     bookSectionsEl.innerHTML = "";
     for (let i in sections) {
         let sEl = document.createElement("div"); // TODO 虚拟列表
-        sEl.innerText = sections[i].title || `章节${Number(i) + 1}`;
+        let s = await getSection(sections[i]);
+        sEl.innerText = s.title || `章节${Number(i) + 1}`;
         bookSectionsEl.append(sEl);
         sEl.onclick = () => {
             nowBook.sections = Number(i);
@@ -131,7 +178,8 @@ function showBookSections(sections: book["sections"]) {
         };
     }
 }
-function showBookContent(s: book["sections"][0]) {
+async function showBookContent(id: string) {
+    let s = (await sectionsStore.getItem(id)) as section;
     bookContentEl.innerHTML = "";
     editText = s.text;
     let list = s.text.split(/\b/);
@@ -190,16 +238,22 @@ function showBookContent(s: book["sections"][0]) {
 let isEdit = false;
 let editText = "";
 
-function changeEdit(b: boolean) {
+async function changeEdit(b: boolean) {
     isEdit = b;
     if (isEdit) {
         setEdit();
         changeEditEl.innerHTML = icon(ok_svg);
     } else {
-        let book = books.find((b) => b.name === nowBook.book);
-        let section = book.sections[nowBook.sections];
-        if (editText) section.text = editText;
-        showBookContent(section);
+        if (nowBook.book) {
+            let book = await getBooksById(nowBook.book);
+            let sectionId = book.sections[nowBook.sections];
+            let section = await getSection(sectionId);
+            if (editText) {
+                section.text = editText;
+                await sectionsStore.setItem(sectionId, section);
+            }
+            showBookContent(sectionId);
+        }
         changeEditEl.innerHTML = icon(pen_svg);
     }
 }
@@ -210,9 +264,10 @@ changeEditEl.onclick = () => {
 
 changeEdit(false);
 
-function setEdit() {
-    let book = books.find((b) => b.name === nowBook.book);
-    let section = book.sections[nowBook.sections];
+async function setEdit() {
+    let book = await getBooksById(nowBook.book);
+    let sectionId = book.sections[nowBook.sections];
+    let section = await getSection(sectionId);
     bookContentEl.innerHTML = "";
     let text = document.createElement("textarea");
     text.value = section.text;

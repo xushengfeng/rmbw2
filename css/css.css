@@ -191,6 +191,7 @@ body > #index > div > .icon {
     left: -20vw;
     height: 100vh;
     display: flex;
+    z-index: 2;
 }
 .book_nav_show {
     left: 0 !important;
@@ -222,6 +223,15 @@ body > #index > div > .icon {
     width: 20px;
 }
 
+#book_add > div:has(.icon) {
+    height: 24px;
+    width: 24px;
+    position: relative;
+}
+#book_add > div > .icon {
+    height: 24px;
+    width: 24px;
+}
 #dic {
     position: absolute;
     top: 24px;
