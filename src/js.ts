@@ -871,7 +871,21 @@ let due: {
 };
 
 type review = "word" | "spell";
-var reviewType: review = "spell";
+var reviewType: review = "word";
+const reviewModeEl = document.getElementById("review_mode");
+const reviewWordEl = document.getElementById("review_word") as HTMLInputElement;
+const reviewSpellEl = document.getElementById("review_spell") as HTMLInputElement;
+reviewWordEl.checked = true;
+reviewModeEl.onclick = () => {
+    if (reviewWordEl.checked) {
+        reviewType = "word";
+    }
+    if (reviewSpellEl.checked) {
+        reviewType = "spell";
+    }
+
+    reviewReflashEl.click();
+};
 
 async function nextDue(type: review) {
     let x = due[type];

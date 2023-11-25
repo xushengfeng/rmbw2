@@ -338,6 +338,20 @@ div:has(> .translate) > :not(.translate) {
 .review_show {
     top: 24px !important;
 }
+#review_buttons {
+    display: flex;
+}
+#review_mode input {
+    display: none;
+}
+#review_mode > label {
+    border-radius: 4px;
+    border: dashed 1px transparent;
+}
+#review_mode > label:has(input:checked) {
+    border: dashed 1px #000;
+}
+
 #review_buttons > div:has(.icon) {
     height: 24px;
     width: 24px;
