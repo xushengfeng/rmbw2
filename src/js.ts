@@ -1,6 +1,10 @@
 /// <reference types="vite/client" />
 
 import localforage from "localforage";
+import { pipeline, env } from "@xenova/transformers";
+
+env.allowLocalModels = true;
+env.allowRemoteModels = false;
 
 import pen_svg from "../assets/icons/pen.svg";
 import ok_svg from "../assets/icons/ok.svg";
@@ -566,10 +570,26 @@ async function showDic(id: string) {
         }
     }
 
+    let dicC = document.createElement("div");
+    let dicCTr = document.createElement("div");
+    dicContextEl.innerHTML = "";
+    dicContextEl.append(dicC, dicCTr);
+
     let mainWord = document.createElement("span");
     mainWord.classList.add(MARKWORD);
     mainWord.innerText = sourceWord;
-    dicContextEl.append(context.slice(0, sourceIndex[0]), mainWord, context.slice(sourceIndex[1]));
+    dicC.append(context.slice(0, sourceIndex[0]), mainWord, context.slice(sourceIndex[1]));
+
+    dicCTr.innerText = "点击翻译";
+    dicCTr.onclick = async () => {
+        let translator = await pipeline("translation", "Xenova/nllb-200-distilled-600M");
+        let output = await translator(context, {
+            src_lang: "eng_Latn",
+            tgt_lang: "zho_Hans",
+        });
+        console.log(output);
+        dicCTr.innerText = output[0].translation_text;
+    };
 
     search(oldWord);
     dicWordEl.value = oldWord;
