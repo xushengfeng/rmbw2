@@ -204,6 +204,7 @@ function showOnlineBooks(books: {
                             }
                         }
                         xbook.sections = s;
+                        xbook.updateTime = book.updateTime;
                         await bookshelfStore.setItem(book.id, xbook);
                         showBooks();
                     })
