@@ -29,8 +29,8 @@ devDependencies:
     specifier: ^5.0.2
     version: 5.0.2
   typescript:
-    specifier: ^5.0.2
-    version: 5.0.2
+    specifier: ^5.3.2
+    version: 5.3.2
   vite:
     specifier: ^5.0.0
     version: 5.0.0
@@ -990,9 +990,9 @@ packages:
       safe-buffer: 5.2.1
     dev: false
 
-  /typescript@5.0.2:
-    resolution: {integrity: sha512-wVORMBGO/FAs/++blGNeAVdbNKtIh1rbBL2EyQ1+J9lClJ93KiiKe8PmFIVdXhHcyv44SL9oglmfeSsndo0jRw==}
-    engines: {node: '>=12.20'}
+  /typescript@5.3.2:
+    resolution: {integrity: sha512-6l+RyNy7oAHDfxC4FzSJcz9vnjTKxrLpDG5M2Vu4SHRVNg6xzqZp6LYSR9zjqQTu8DU/f5xwxUdADOkbrIX2gQ==}
+    engines: {node: '>=14.17'}
     hasBin: true
     dev: true
 

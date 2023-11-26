@@ -24,7 +24,7 @@
     },
     "devDependencies": {
         "js-mdict": "^5.0.2",
-        "typescript": "^5.0.2",
+        "typescript": "^5.3.2",
         "vite": "^5.0.0"
     }
 }
