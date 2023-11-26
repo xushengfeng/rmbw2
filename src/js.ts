@@ -9,6 +9,15 @@ env.allowRemoteModels = false;
 import lemmatizer from "lemmatizer";
 console.log(lemmatizer("recruited"));
 
+var Segmenter = Intl.Segmenter;
+if (!Segmenter) {
+    console.warn("no support Intl.Segmenter");
+    import("intl-segmenter-polyfill/dist/bundled").then(async (v) => {
+        // @ts-ignore
+        Segmenter = await v.createIntlSegmenterPolyfill();
+    });
+}
+
 import pen_svg from "../assets/icons/pen.svg";
 import ok_svg from "../assets/icons/ok.svg";
 
@@ -314,7 +323,7 @@ async function showBookContent(id: string) {
     }
 
     editText = s.text;
-    const segmenter = new Intl.Segmenter("en", { granularity: "word" });
+    const segmenter = new Segmenter("en", { granularity: "word" });
     let segments = segmenter.segment(s.text);
     let list = Array.from(segments);
     let plist: { text: string; start: number; end: number; isWord: boolean }[][] = [[]];
