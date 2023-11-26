@@ -664,26 +664,7 @@ async function showDic(id: string) {
                 }
             };
             div.onclick = () => radio.click();
-            let disEl = document.createElement("div");
-            let p = document.createElement("p");
-            p.innerText = m.dis.text;
-            let span = document.createElement("p");
-            span.innerText = m.dis.tran;
-            span.classList.add(TRANSLATE);
-            disEl.append(p, span);
-            let sen = document.createElement("div");
-            sen.classList.add("dic_sen");
-            for (let s of m.sen) {
-                let div = document.createElement("div");
-                let p = document.createElement("p");
-                p.innerText = s.text;
-                let span = document.createElement("p");
-                span.innerText = s.tran;
-                span.classList.add(TRANSLATE);
-                div.append(p, span);
-                sen.append(div);
-            }
-            div.append(radio, disEl, sen);
+            div.append(radio, disCard(m));
             dicDetailsEl.append(div);
         }
         function set() {
@@ -721,6 +702,31 @@ async function showDic(id: string) {
             setcheck(oldMean);
         }
     }
+}
+
+function disCard(m: dic[0]["means"][0]) {
+    let div = document.createDocumentFragment();
+    let disEl = document.createElement("div");
+    let p = document.createElement("p");
+    p.innerText = m.dis.text;
+    let span = document.createElement("p");
+    span.innerText = m.dis.tran;
+    span.classList.add(TRANSLATE);
+    disEl.append(p, span);
+    let sen = document.createElement("div");
+    sen.classList.add("dic_sen");
+    for (let s of m.sen) {
+        let div = document.createElement("div");
+        let p = document.createElement("p");
+        p.innerText = s.text;
+        let span = document.createElement("p");
+        span.innerText = s.tran;
+        span.classList.add(TRANSLATE);
+        div.append(p, span);
+        sen.append(div);
+    }
+    div.append(disEl, sen);
+    return div;
 }
 
 async function saveCard(v: {
@@ -959,6 +965,22 @@ async function showReview(x: { id: string; card: fsrsjs.Card }, type: review) {
                 }
             }
         }
+        context.onclick = async () => {
+            let word = (await card2word.getItem(x.id)) as string;
+            let d = (await wordsStore.getItem(word)) as record;
+            for (let i of d.means) {
+                if (i.card_id === x.id) {
+                    let x = (await dics[i.dic].getItem(word)) as dic[0];
+                    let m = x.means[i.index];
+
+                    let div = document.createElement("div");
+                    div.append(disCard(m));
+                    dic.innerHTML = "";
+                    dic.append(div);
+                }
+            }
+        };
+        let dic = document.createElement("div");
         let b = (rating: fsrsjs.Rating, text: string) => {
             let button = document.createElement("button");
             button.innerText = text;
@@ -978,7 +1000,7 @@ async function showReview(x: { id: string; card: fsrsjs.Card }, type: review) {
         let buttons = document.createElement("div");
         buttons.append(againB, hardB, goodB, esayB);
 
-        div.append(context, buttons);
+        div.append(context, dic, buttons);
         reviewViewEl.innerHTML = "";
         reviewViewEl.append(div);
     }
