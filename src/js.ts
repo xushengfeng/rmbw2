@@ -378,6 +378,8 @@ async function showBookContent(id: string) {
         }
         bookContentEl.append(p);
     }
+
+    bookContentEl.scrollTop = s.lastPosi * (bookContentEl.scrollHeight - bookContentEl.offsetHeight);
 }
 let isEdit = false;
 let editText = "";
@@ -476,6 +478,15 @@ async function setEdit() {
     };
     bookContentEl.append(text);
 }
+
+bookContentEl.onscroll = async () => {
+    let n = bookContentEl.scrollTop / (bookContentEl.scrollHeight - bookContentEl.offsetHeight);
+    let book = await getBooksById(nowBook.book);
+    let sectionId = book.sections[nowBook.sections];
+    let section = await getSection(sectionId);
+    section.lastPosi = n;
+    sectionsStore.setItem(sectionId, section);
+};
 
 bookdicEl.onclick = () => {
     dicEl.classList.toggle("dic_show");
