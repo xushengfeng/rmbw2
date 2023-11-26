@@ -191,7 +191,9 @@ function showOnlineBooks(books: {
                             s.push(i.id);
                             let section = (await sectionsStore.getItem(i.id)) as section;
                             if (section) {
-                                sectionsStore.setItem(i.id, changePosi(section, i.content));
+                                let s = changePosi(section, i.content);
+                                s.text = i.content;
+                                sectionsStore.setItem(i.id, s);
                             } else {
                                 sectionsStore.setItem(i.id, {
                                     title: i.title,
