@@ -28,10 +28,6 @@ var setting = localforage.createInstance({
 /************************************UI */
 
 /************************************main */
-// import MarkdownIt from "markdown-it";
-// var md = MarkdownIt({
-//     html: true,
-// })
 const booksEl = document.getElementById("books");
 const bookEl = document.getElementById("book");
 const bookSectionsEl = document.getElementById("sections");
@@ -332,8 +328,11 @@ async function showBookContent(id: string) {
     console.log(plist);
 
     for (let paragraph of plist) {
-        let p = document.createElement("p");
+        let el: HTMLElement = document.createElement("p");
+        let t = paragraph[0]?.text.match(/#+ $/);
+        if (t) el = document.createElement("h" + paragraph[0].text.trim().length);
         for (let i in paragraph) {
+            if (t && i === "0") continue;
             const word = paragraph[i];
             if (/^[a-zA-Z]+$/.test(word.text)) {
                 let span = document.createElement("span");
@@ -371,12 +370,12 @@ async function showBookContent(id: string) {
 
                     span.classList.add(MARKWORD);
                 };
-                p.append(span);
+                el.append(span);
             } else {
-                p.append(word.text);
+                el.append(word.text);
             }
         }
-        bookContentEl.append(p);
+        bookContentEl.append(el);
     }
 
     bookContentEl.scrollTop = s.lastPosi * (bookContentEl.scrollHeight - bookContentEl.offsetHeight);
