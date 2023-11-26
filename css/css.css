@@ -213,6 +213,11 @@ body > #index > div > .icon {
     width: 24px;
     position: relative;
 }
+#change_edit {
+    height: 24px;
+    width: 24px;
+    position: relative;
+}
 #book_buttons > div > .icon {
     height: 24px;
     width: 24px;
