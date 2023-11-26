@@ -383,7 +383,9 @@ async function showBookContent(id: string) {
                         pindex: { start: paragraph[0].start, end: paragraph.at(-1).end },
                         cindex: { start: s, end: e },
                     });
-                    showDic(id);
+                    if (span.classList.contains(MARKWORD)) {
+                        showDic(id);
+                    }
 
                     span.classList.add(MARKWORD);
                 };
