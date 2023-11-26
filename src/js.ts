@@ -948,10 +948,7 @@ reviewReflashEl.onclick = async () => {
 };
 
 async function showReview(x: { id: string; card: fsrsjs.Card }, type: review) {
-    if (type === "word") {
-        let wordid = (await card2word.getItem(x.id)) as string;
-        let word = (await wordsStore.getItem(wordid)) as record;
-        let div = document.createElement("div");
+    function crContext(word: record) {
         let context = document.createElement("div");
         for (let i of word.means) {
             if (i.card_id === x.id) {
@@ -965,6 +962,13 @@ async function showReview(x: { id: string; card: fsrsjs.Card }, type: review) {
                 }
             }
         }
+        return context;
+    }
+    if (type === "word") {
+        let wordid = (await card2word.getItem(x.id)) as string;
+        let wordRecord = (await wordsStore.getItem(wordid)) as record;
+        let div = document.createElement("div");
+        let context = crContext(wordRecord);
         context.onclick = async () => {
             let word = (await card2word.getItem(x.id)) as string;
             let d = (await wordsStore.getItem(word)) as record;
@@ -1043,8 +1047,9 @@ async function showReview(x: { id: string; card: fsrsjs.Card }, type: review) {
                 setSpellCard(x.id, x.card, 1);
             }
         };
+        let context = crContext((await wordsStore.getItem(word)) as record);
         const div = document.createElement("div");
-        div.append(input, wordEl);
+        div.append(input, context, wordEl);
         reviewViewEl.innerHTML = "";
         reviewViewEl.append(div);
     }
