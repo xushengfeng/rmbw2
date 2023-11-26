@@ -285,10 +285,13 @@ async function showBookSections(sections: book["sections"]) {
         let s = await getSection(sections[i]);
         sEl.innerText = s.title || `章节${Number(i) + 1}`;
         bookSectionsEl.append(sEl);
-        sEl.onclick = () => {
+        sEl.onclick = async () => {
             nowBook.sections = Number(i);
             showBookContent(sections[i]);
             setBookS();
+            let book = await getBooksById(nowBook.book);
+            book.lastPosi = nowBook.sections;
+            bookshelfStore.setItem(nowBook.book, book);
         };
     }
 }
