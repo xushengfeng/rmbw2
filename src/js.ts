@@ -314,16 +314,21 @@ async function showBookContent(id: string) {
     }
 
     editText = s.text;
-    let list = s.text.split(/\b/);
-    let i = 0;
-    let plist: { text: string; start: number; end: number }[][] = [[]];
+    const segmenter = new Intl.Segmenter("en", { granularity: "word" });
+    let segments = segmenter.segment(s.text);
+    let list = Array.from(segments);
+    let plist: { text: string; start: number; end: number; isWord: boolean }[][] = [[]];
     for (let word of list) {
-        if (/\n+/.test(word)) {
+        if (/\n+/.test(word.segment)) {
             plist.push([]);
         } else {
-            plist.at(-1).push({ text: word, start: i, end: i + word.length });
+            plist.at(-1).push({
+                text: word.segment,
+                start: word.index,
+                end: word.index + word.segment.length,
+                isWord: word.isWordLike,
+            });
         }
-        i += word.length;
     }
     console.log(plist);
 
@@ -334,7 +339,7 @@ async function showBookContent(id: string) {
         for (let i in paragraph) {
             if (t && i === "0") continue;
             const word = paragraph[i];
-            if (/^[a-zA-Z]+$/.test(word.text)) {
+            if (word.isWord) {
                 let span = document.createElement("span");
                 span.innerText = word.text;
                 for (let i in s.words) {
