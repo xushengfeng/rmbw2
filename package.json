@@ -15,6 +15,7 @@
     "homepage": "https://github.com/xushengfeng/rmbw2/",
     "license": "GPL-3.0",
     "dependencies": {
+        "@oddbird/popover-polyfill": "^0.3.2",
         "@types/diff-match-patch": "^1.0.36",
         "@xenova/transformers": "^2.9.0",
         "diff-match-patch": "^1.0.5",

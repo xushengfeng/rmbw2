@@ -18,6 +18,8 @@ if (!Segmenter) {
     });
 }
 
+import "@oddbird/popover-polyfill";
+
 import pen_svg from "../assets/icons/pen.svg";
 import ok_svg from "../assets/icons/ok.svg";
 

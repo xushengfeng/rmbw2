@@ -5,6 +5,9 @@ settings:
   excludeLinksFromLockfile: false
 
 dependencies:
+  '@oddbird/popover-polyfill':
+    specifier: ^0.3.2
+    version: 0.3.2
   '@types/diff-match-patch':
     specifier: ^1.0.36
     version: 1.0.36
@@ -244,6 +247,10 @@ packages:
     requiresBuild: true
     dev: true
     optional: true
+
+  /@oddbird/popover-polyfill@0.3.2:
+    resolution: {integrity: sha512-H0Q8JcFkXrOt2FrP0cUz2qomU5O+Dfc51UYLk5GtDWmVhdmvtV2FhgaCUh3TA6U5dogMZOFAf3QbwiGXhe9LXQ==}
+    dev: false
 
   /@protobufjs/aspromise@1.1.2:
     resolution: {integrity: sha512-j+gKExEuLmKwvz3OgROXtrJ2UG2x8Ch2YZUxahh+s1F2HZ+wAceUNLkvy6zKCPVRkU++ZWQrdxsUeQXmcg4uoQ==}
