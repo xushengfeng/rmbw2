@@ -343,7 +343,7 @@ async function showBookContent(id: string) {
 
     for (let paragraph of plist) {
         let el: HTMLElement = document.createElement("p");
-        let t = paragraph[0]?.text.match(/#+ $/);
+        let t = paragraph[0]?.text.match(/#+$/) && paragraph[1]?.text === " ";
         if (t) el = document.createElement("h" + paragraph[0].text.trim().length);
         for (let i in paragraph) {
             if (t && i === "0") continue;
