@@ -667,7 +667,7 @@ async function showDic(id: string) {
 
     let mainWord = document.createElement("span");
     mainWord.classList.add(MARKWORD);
-    mainWord.innerText = sourceWord;
+    mainWord.innerText = context.slice(sourceIndex[0], sourceIndex[1]);
     dicC.append(context.slice(0, sourceIndex[0]), mainWord, context.slice(sourceIndex[1]));
 
     dicCTr.innerText = "点击翻译";
