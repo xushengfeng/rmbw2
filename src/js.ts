@@ -248,6 +248,7 @@ addSectionEL.onclick = async () => {
     await bookshelfStore.setItem(nowBook.book, book);
     nowBook.sections = book.lastPosi;
     showBook(book);
+    changeEdit(true);
 };
 
 document.getElementById("book_sections").onclick = () => {
