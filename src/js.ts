@@ -453,17 +453,20 @@ changeEditEl.onclick = () => {
 function changePosi(section: section, text: string) {
     let diff = dmp.diff_main(section.text, text);
     console.log(diff);
-    let source: number[] = [];
-    let map: number[] = [];
+    let source: number[] = [0];
+    let map: number[] = [0];
+    if (diff.at(-1)[0] === 1) diff.push([0, ""]);
     let p0 = 0,
         p1 = 0;
     for (let i = 0; i < diff.length; i++) {
         let d = diff[i];
-        if (d[0] === -1 && diff[i + 1] && diff[i + 1][0] === 1) {
+        let dn = diff[i + 1];
+        if (d[0] === -1 && dn && dn[0] === 1) {
             p0 += d[1].length;
-            p1 += d[1].length;
+            p1 += dn[1].length;
             source.push(p0);
             map.push(p1);
+            i++;
             continue;
         } else {
             if (d[0] === 0) {
@@ -482,6 +485,7 @@ function changePosi(section: section, text: string) {
             }
         }
     }
+    source.push(section.text.length);
     map.push(text.length);
     console.log(source, map);
     for (let w in section.words) {
