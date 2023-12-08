@@ -235,12 +235,19 @@ div > .icon {
 #book_name {
     flex-grow: 1;
 }
-#book_content {
+#book_content,
+#book_content > textarea {
     overflow: scroll;
     height: calc(100svh - 24px);
+    width: 100%;
     box-sizing: border-box;
     padding: 1rem 4rem;
     font-family: serif;
+}
+#book_content > textarea {
+    height: calc(100vh - 96px);
+    border: none;
+    padding: 0;
 }
 .mark_word {
     text-decoration: underline wavy #999;
