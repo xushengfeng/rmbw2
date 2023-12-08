@@ -538,6 +538,46 @@ async function setEdit() {
     text.onchange = () => {
         editText = text.value;
     };
+    text.onkeyup = async (e) => {
+        if (e.key === "Enter" && !e.shiftKey) {
+            let l = text.value.split("\n");
+            let hasAi = false;
+            let aiM: aim = [];
+            let sourceText = "";
+            for (let i of l) {
+                if (i === "=ai=") {
+                    hasAi = true;
+                    continue;
+                }
+                if (hasAi) {
+                    if (i.startsWith("ai:")) {
+                        aiM.push({ role: "assistant", content: i.replace("ai:", "").trim() });
+                    } else if (i.startsWith(">>>")) {
+                        aiM.push({ role: "user", content: i.replace(">>>", "").trim() });
+                    } else if (i === "====") {
+                        hasAi = false;
+                    } else if (i.startsWith("//")) {
+                        continue;
+                    } else {
+                        if (aiM.length) aiM.at(-1).content += "\n" + i;
+                    }
+                } else {
+                    sourceText += i + "\n";
+                }
+            }
+            if (aiM.length === 0) return;
+            aiM.unshift({ role: "system", content: `This is a passage: ${sourceText}` });
+            console.log(aiM);
+            let start = text.selectionStart;
+            let end = text.selectionEnd;
+            let aitext = await ai(aiM);
+            let addText = `ai:${aitext}`;
+            let changeText = text.value.slice(0, start) + addText + text.value.slice(end);
+            text.value = changeText;
+            editText = changeText;
+            end += addText.length;
+        }
+    };
     bookContentEl.append(text);
     let upel = document.createElement("input");
     upel.type = "file";
