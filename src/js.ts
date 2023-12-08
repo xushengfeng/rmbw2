@@ -52,6 +52,8 @@ const addSectionEL = document.getElementById("add_section");
 const bookNavEl = document.getElementById("book_nav");
 const bookContentEl = document.getElementById("book_content");
 const changeEditEl = document.getElementById("change_edit");
+const lastMarkEl = document.getElementById("last_mark");
+const nextMarkEl = document.getElementById("next_mark");
 const dicEl = document.getElementById("dic");
 const bookdicEl = document.getElementById("book_dic");
 const dicContextEl = document.getElementById("dic_context");
@@ -668,12 +670,47 @@ type record = {
     }[];
 };
 
+async function getAllMarks() {
+    let book = await getBooksById(nowBook.book);
+    let sectionId = book.sections[nowBook.sections];
+    let section = await getSection(sectionId);
+    let list: { id: string; word: string; index: [number, number] }[] = [];
+    for (let i in section.words) {
+        list.push({ id: i, word: section.words[i].id, index: section.words[i].index });
+    }
+    list = list.toSorted((a, b) => a.index[0] - b.index[0]);
+    return list;
+}
+
+lastMarkEl.onclick = async () => {
+    if (!nowDicId) return;
+    let list = await getAllMarks();
+    let index = list.findIndex((i) => i.id === nowDicId);
+    index--;
+    index = index < 0 ? 0 : index;
+    let id = list[index].id;
+    showDic(id);
+};
+nextMarkEl.onclick = async () => {
+    if (!nowDicId) return;
+    let list = await getAllMarks();
+    let index = list.findIndex((i) => i.id === nowDicId);
+    index++;
+    index = index >= list.length ? list.length - 1 : index;
+    let id = list[index].id;
+    showDic(id);
+};
+
 dicMinEl.onclick = () => {
     dicDetailsEl.classList.toggle(HIDEMEANS);
 };
 
+let nowDicId = "";
+
 async function showDic(id: string) {
     dicEl.classList.add("dic_show");
+
+    nowDicId = id;
 
     let book = await getBooksById(nowBook.book);
     let sectionId = book.sections[nowBook.sections];
