@@ -291,7 +291,16 @@ function showBooks() {
     booksEl.innerHTML = "";
     bookshelfStore.iterate((book: book) => {
         let bookIEl = document.createElement("div");
-        let titleEl = document.createElement("h2");
+        let titleEl = document.createElement("span");
+        if (book.cover) {
+            let bookCover = document.createElement("img");
+            bookCover.src = book.cover;
+            bookIEl.append(bookCover);
+        } else {
+            let bookCover = document.createElement("div");
+            bookCover.innerText = book.name;
+            bookIEl.append(bookCover);
+        }
         titleEl.innerText = book.name;
         bookIEl.append(titleEl);
         booksEl.append(bookIEl);
