@@ -704,7 +704,10 @@ async function showDic(id: string) {
 
     async function search(word: string) {
         let x = (await dics[oldDic].get(word)) as dic[0];
-        if (!x) return;
+        if (!x) {
+            dicDetailsEl.innerText = "none";
+            return;
+        }
         dicDetailsEl.innerHTML = "";
         for (let i in x.means) {
             const m = x.means[i];
