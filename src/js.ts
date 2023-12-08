@@ -522,6 +522,21 @@ async function setEdit() {
         editText = text.value;
     };
     bookContentEl.append(text);
+    let upel = document.createElement("input");
+    upel.type = "file";
+    upel.onchange = () => {
+        const file = upel.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.readAsText(file);
+            reader.onload = () => {
+                let t = reader.result as string;
+                text.value = t;
+                editText = t;
+            };
+        }
+    };
+    bookContentEl.append(upel);
     return text;
 }
 
