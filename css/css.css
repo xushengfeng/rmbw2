@@ -168,6 +168,16 @@ body > #index > div > .icon {
     height: var(--main-bar-size);
 }
 
+div:has(> .icon) {
+    height: 24px;
+    width: 24px;
+    position: relative;
+}
+div > .icon {
+    height: 24px;
+    width: 24px;
+}
+
 .hiden {
     transform: translateX(calc(100% - var(--main-bar-size)));
 }
@@ -251,15 +261,6 @@ body > #index > div > .icon {
     width: 20px;
 }
 
-#book_add > div:has(.icon) {
-    height: 24px;
-    width: 24px;
-    position: relative;
-}
-#book_add > div > .icon {
-    height: 24px;
-    width: 24px;
-}
 #dic {
     position: absolute;
     top: 24px;
@@ -281,15 +282,6 @@ body > #index > div > .icon {
     box-shadow: 0 0 4px #0002;
 }
 
-#dic_buttons > div:has(.icon) {
-    height: 24px;
-    width: 24px;
-    position: relative;
-}
-#dic_buttons > div > .icon {
-    height: 24px;
-    width: 24px;
-}
 #more_words {
     display: flex;
     gap: 4px;
@@ -299,7 +291,9 @@ body > #index > div > .icon {
     border-radius: 4px;
     border: dashed 1px #000;
 }
-
+#dic_min {
+    min-height: 24px;
+}
 #dic_details {
     overflow: scroll;
     gap: 1rem;
