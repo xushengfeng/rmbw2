@@ -6,8 +6,8 @@ settings:
 
 dependencies:
   '@oddbird/popover-polyfill':
-    specifier: ^0.3.2
-    version: 0.3.2
+    specifier: ^0.3.7
+    version: 0.3.7
   '@types/diff-match-patch':
     specifier: ^1.0.36
     version: 1.0.36
@@ -38,11 +38,11 @@ devDependencies:
     specifier: ^5.0.2
     version: 5.0.2
   typescript:
-    specifier: ^5.3.2
-    version: 5.3.2
+    specifier: ^5.3.3
+    version: 5.3.3
   vite:
-    specifier: ^5.0.0
-    version: 5.0.0
+    specifier: ^5.0.7
+    version: 5.0.7
 
 packages:
 
@@ -251,8 +251,8 @@ packages:
     dev: true
     optional: true
 
-  /@oddbird/popover-polyfill@0.3.2:
-    resolution: {integrity: sha512-H0Q8JcFkXrOt2FrP0cUz2qomU5O+Dfc51UYLk5GtDWmVhdmvtV2FhgaCUh3TA6U5dogMZOFAf3QbwiGXhe9LXQ==}
+  /@oddbird/popover-polyfill@0.3.7:
+    resolution: {integrity: sha512-WNthEIPPXnFQkumLby6yVxhyOcA/GtMnlByHwEglMO9WZckoaqidnpLp2JFzAh2RDOZxn+Xt3ffSMKId9cPjOQ==}
     dev: false
 
   /@protobufjs/aspromise@1.1.2:
@@ -846,8 +846,8 @@ packages:
     resolution: {integrity: sha512-fnWVljUchTro6RiCFvCXBbNhJc2NijN7oIQxbwsyL0buWJPG85v81ehlHI9fXrJsMNgTofEoWIQeClKpgxFLrg==}
     dev: false
 
-  /postcss@8.4.31:
-    resolution: {integrity: sha512-PS08Iboia9mts/2ygV3eLpY5ghnUcfLV/EXTOW1E2qYxJKGGBUtNjN76FYHnMs36RmARn41bC0AZmn+rR0OVpQ==}
+  /postcss@8.4.32:
+    resolution: {integrity: sha512-D/kj5JNu6oo2EIy+XL/26JEDTlIbB8hw85G8StOE6L74RQAVVP5rej6wxCNqyMbR4RkPfqvezVbPw81Ngd6Kcw==}
     engines: {node: ^10 || ^12 || >=14}
     dependencies:
       nanoid: 3.3.7
@@ -1089,8 +1089,8 @@ packages:
       safe-buffer: 5.2.1
     dev: false
 
-  /typescript@5.3.2:
-    resolution: {integrity: sha512-6l+RyNy7oAHDfxC4FzSJcz9vnjTKxrLpDG5M2Vu4SHRVNg6xzqZp6LYSR9zjqQTu8DU/f5xwxUdADOkbrIX2gQ==}
+  /typescript@5.3.3:
+    resolution: {integrity: sha512-pXWcraxM0uxAS+tN0AG/BF2TyqmHO014Z070UsJ+pFvYuRSq8KH8DmWpnbXe0pEPDHXZV3FcAbJkijJ5oNEnWw==}
     engines: {node: '>=14.17'}
     hasBin: true
     dev: true
@@ -1106,8 +1106,8 @@ packages:
   /util-deprecate@1.0.2:
     resolution: {integrity: sha512-EPD5q1uXyFxJpCrLnCc1nHnq3gOa6DZBocAIiI2TaSCA7VCJ1UJDMagCzIkXNsUYfD1daK//LTEQ8xiIbrHtcw==}
 
-  /vite@5.0.0:
-    resolution: {integrity: sha512-ESJVM59mdyGpsiNAeHQOR/0fqNoOyWPYesFto8FFZugfmhdHx8Fzd8sF3Q/xkVhZsyOxHfdM7ieiVAorI9RjFw==}
+  /vite@5.0.7:
+    resolution: {integrity: sha512-B4T4rJCDPihrQo2B+h1MbeGL/k/GMAHzhQ8S0LjQ142s6/+l3hHTT095ORvsshj4QCkoWu3Xtmob5mazvakaOw==}
     engines: {node: ^18.0.0 || >=20.0.0}
     hasBin: true
     peerDependencies:
@@ -1135,7 +1135,7 @@ packages:
         optional: true
     dependencies:
       esbuild: 0.19.5
-      postcss: 8.4.31
+      postcss: 8.4.32
       rollup: 4.4.1
     optionalDependencies:
       fsevents: 2.3.3
