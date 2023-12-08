@@ -462,7 +462,7 @@ div:has(> .translate) > :not(.translate) {
     position: fixed;
     bottom: 16px;
     right: 16px;
-    width: 80px;
+    min-width: 100px;
     display: flex;
     flex-direction: column;
 }
