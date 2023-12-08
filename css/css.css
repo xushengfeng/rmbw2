@@ -252,6 +252,9 @@ div > .icon {
 .mark_word {
     text-decoration: underline wavy #999;
 }
+.flash_word {
+    text-decoration: underline wavy #2735bb;
+}
 
 #books > div {
     width: 50px;

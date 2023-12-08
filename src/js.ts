@@ -690,6 +690,7 @@ lastMarkEl.onclick = async () => {
     index = index < 0 ? 0 : index;
     let id = list[index].id;
     showDic(id);
+    jumpToMark(list[index].index[0]);
 };
 nextMarkEl.onclick = async () => {
     if (!nowDicId) return;
@@ -699,7 +700,16 @@ nextMarkEl.onclick = async () => {
     index = index >= list.length ? list.length - 1 : index;
     let id = list[index].id;
     showDic(id);
+    jumpToMark(list[index].index[0]);
 };
+function jumpToMark(start: number) {
+    let span = bookContentEl.querySelector(`span[data-s="${start}"]`);
+    span.scrollIntoView({ behavior: "smooth" });
+    span.classList.add("flash_word");
+    setTimeout(() => {
+        span.classList.remove("flash_word");
+    }, 1200);
+}
 
 dicMinEl.onclick = () => {
     dicDetailsEl.classList.toggle(HIDEMEANS);
