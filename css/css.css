@@ -333,6 +333,11 @@ div:has(> .translate) > :not(.translate) {
 #dic_details > div > input[type="radio"] {
     display: none;
 }
+
+.hide_means > div:not(:has(input[type="radio"]:checked)) {
+    display: none;
+}
+
 #review {
     position: absolute;
     top: 100vh;

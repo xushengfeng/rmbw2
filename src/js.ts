@@ -55,10 +55,12 @@ const bookdicEl = document.getElementById("book_dic");
 const dicContextEl = document.getElementById("dic_context");
 const dicWordEl = document.getElementById("dic_word") as HTMLInputElement;
 const moreWordsEl = document.getElementById("more_words");
+const dicMinEl = document.getElementById("dic_min");
 const dicDetailsEl = document.getElementById("dic_details");
 
 const MARKWORD = "mark_word";
 const TRANSLATE = "translate";
+const HIDEMEANS = "hide_means";
 
 var bookshelfStore = localforage.createInstance({ name: "bookshelf" });
 var sectionsStore = localforage.createInstance({ name: "sections" });
@@ -598,6 +600,10 @@ type record = {
     }[];
 };
 
+dicMinEl.onclick = () => {
+    dicDetailsEl.classList.toggle(HIDEMEANS);
+};
+
 async function showDic(id: string) {
     dicEl.classList.add("dic_show");
 
@@ -747,7 +753,7 @@ async function showDic(id: string) {
         function setcheck(i: number) {
             let el = dicDetailsEl.querySelectorAll("input[name=dic_means]")[i] as HTMLInputElement;
             el.checked = true;
-            dicDetailsEl.scrollTo({ top: el.parentElement.offsetTop, behavior: "smooth" });
+            dicDetailsEl.classList.add(HIDEMEANS);
         }
         if (oldMean === -1) {
             if (x.means.length > 1) {
