@@ -78,6 +78,7 @@ type book = {
     sections: string[];
     canEdit: boolean;
     lastPosi: number;
+    language: string;
 };
 type section = {
     title: string;
@@ -112,6 +113,7 @@ async function newBook() {
         sections: [sid],
         canEdit: true,
         lastPosi: 0,
+        language: "en",
     };
     let s = newSection();
     bookshelfStore.setItem(id, book);
@@ -175,6 +177,7 @@ function showOnlineBooks(books: {
                     sections: [],
                     canEdit: false,
                     lastPosi: 0,
+                    language: "en",
                 };
                 saveBook();
             }
@@ -252,6 +255,7 @@ let nowBook = {
 };
 
 let isWordBook = false;
+let bookLan = "";
 
 showBooks();
 setBookS();
@@ -301,6 +305,7 @@ function showBook(book: book) {
     showBookContent(book.sections[book.lastPosi]);
     setBookS();
     isWordBook = book.type === "word";
+    bookLan = book.language;
 }
 async function showBookSections(sections: book["sections"]) {
     bookSectionsEl.innerHTML = "";
@@ -350,7 +355,7 @@ async function showBookContent(id: string) {
     }
 
     editText = s.text;
-    const segmenter = new Segmenter("en", { granularity: "word" });
+    const segmenter = new Segmenter(bookLan, { granularity: "word" });
     let segments = segmenter.segment(s.text);
     let list = Array.from(segments);
     let plist: { text: string; start: number; end: number; isWord: boolean }[][] = [[]];
