@@ -139,13 +139,13 @@ function getOnlineBooks() {
     fetch("https://raw.githubusercontent.com/xushengfeng/rmbw-book/master/index.json")
         .then((v) => v.json())
         .then((j) => {
-            showOnlineBooks(j);
+            showOnlineBooks(j.books);
             console.log(j);
         });
 }
 
-function showOnlineBooks(books: {
-    [key: string]: {
+function showOnlineBooks(
+    books: {
         name: string;
         id: string;
         type: "word" | "text";
@@ -155,17 +155,17 @@ function showOnlineBooks(books: {
             title: string;
             path: string;
         }[];
-    };
-}) {
+        language: string;
+    }[]
+) {
     onlineBooksListEl.innerHTML = "";
-    for (let i in books) {
-        const book = books[i];
+    for (let book of books) {
         let div = document.createElement("div");
         let title = document.createElement("span");
         title.innerText = book.name;
         div.append(title);
         div.onclick = async () => {
-            console.log(i);
+            console.log(book);
             let xbook = (await bookshelfStore.getItem(book.id)) as book;
             if (xbook) {
                 if (xbook.updateTime < book.updateTime) {
