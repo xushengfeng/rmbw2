@@ -703,7 +703,7 @@ async function showDic(id: string) {
     }
 
     async function search(word: string) {
-        let x = (await dics[oldDic].get(word)) as dic[0];
+        let x = dics[oldDic].get(word) as dic[0];
         if (!x) {
             dicDetailsEl.innerText = "none";
             return;
@@ -1031,7 +1031,7 @@ async function showReview(x: { id: string; card: fsrsjs.Card }, type: review) {
             let d = (await wordsStore.getItem(word)) as record;
             for (let i of d.means) {
                 if (i.card_id === x.id) {
-                    let x = (await dics[i.dic].get(word)) as dic[0];
+                    let x = dics[i.dic].get(word) as dic[0];
                     let m = x.means[i.index];
 
                     let div = document.createElement("div");
