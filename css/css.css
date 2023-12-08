@@ -422,3 +422,12 @@ div:has(> .translate) > :not(.translate) {
     transition: var(--transition);
     border: none;
 }
+
+#toast {
+    position: fixed;
+    bottom: 16px;
+    right: 16px;
+    width: 80px;
+    display: flex;
+    flex-direction: column;
+}

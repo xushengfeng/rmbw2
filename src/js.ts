@@ -61,6 +61,7 @@ const dicWordEl = document.getElementById("dic_word") as HTMLInputElement;
 const moreWordsEl = document.getElementById("more_words");
 const dicMinEl = document.getElementById("dic_min");
 const dicDetailsEl = document.getElementById("dic_details");
+const toastEl = document.getElementById("toast");
 
 const MARKWORD = "mark_word";
 const TRANSLATE = "translate";
