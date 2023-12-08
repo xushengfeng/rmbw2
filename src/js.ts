@@ -6,6 +6,8 @@ import { pipeline, env } from "@xenova/transformers";
 env.allowLocalModels = true;
 env.allowRemoteModels = false;
 
+import mammoth from "mammoth";
+
 import lemmatizer from "lemmatizer";
 console.log(lemmatizer("recruited"));
 
@@ -584,10 +586,29 @@ async function setEdit() {
     upel.onchange = () => {
         const file = upel.files[0];
         if (file) {
+            let fileType: "text" | "docx";
+            console.log(file.type);
+
+            if (file.name.endsWith("doc") || file.name.endsWith("docx")) {
+                fileType = "docx";
+            }
+            if (file.type === "text/plain") {
+                fileType = "text";
+            }
             const reader = new FileReader();
-            reader.readAsText(file);
-            reader.onload = () => {
-                let t = reader.result as string;
+            if (fileType === "docx") {
+                reader.readAsArrayBuffer(file);
+            } else if (fileType === "text") {
+                reader.readAsText(file);
+            }
+            reader.onload = async () => {
+                let t = "";
+                if (fileType === "text") {
+                    t = reader.result as string;
+                } else if (fileType === "docx") {
+                    let result = await mammoth.extractRawText({ arrayBuffer: reader.result as ArrayBuffer });
+                    t = result.value;
+                }
                 text.value = t;
                 editText = t;
             };
