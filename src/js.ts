@@ -62,6 +62,7 @@ const moreWordsEl = document.getElementById("more_words");
 const dicMinEl = document.getElementById("dic_min");
 const dicDetailsEl = document.getElementById("dic_details");
 const toastEl = document.getElementById("toast");
+const changeContextEl = document.getElementById("change_context");
 
 const MARKWORD = "mark_word";
 const TRANSLATE = "translate";
@@ -728,7 +729,8 @@ dicMinEl.onclick = () => {
 let nowDicId = "";
 
 async function showDic(id: string) {
-    dicEl.classList.add("dic_show");
+    const showClass = "dic_show";
+    dicEl.classList.add(showClass);
 
     nowDicId = id;
 
@@ -889,6 +891,97 @@ async function showDic(id: string) {
         } else {
             setcheck(oldMean);
         }
+    }
+
+    changeContextEl.onclick = () => {
+        changeContext();
+    };
+
+    function changeContext() {
+        dicEl.classList.remove(showClass);
+        let contextStart = wordx.index[0] - sourceIndex[0];
+        let contextEnd = wordx.index[1] + (context.length - sourceIndex[1]);
+        let startEl = document.createElement("div");
+        let endEl = document.createElement("div");
+        startEl.classList.add("context_start");
+        endEl.classList.add("context_end");
+        bookContentEl.append(startEl, endEl);
+        function setElPosi(el: HTMLElement, left: boolean) {
+            if (left) {
+                if (Number(el.getAttribute("data-s")) > wordx.index[0]) {
+                    el = bookContentEl.querySelector(`span[data-s="${wordx.index[0]}"]`);
+                }
+                startEl.style.left = el.offsetLeft + "px";
+                startEl.style.top = el.offsetTop + "px";
+            } else {
+                if (Number(el.getAttribute("data-s")) < wordx.index[0]) {
+                    el = bookContentEl.querySelector(`span[data-s="${wordx.index[0]}"]`);
+                }
+                endEl.style.left = el.offsetLeft + el.offsetWidth + "px";
+                endEl.style.top = el.offsetTop + el.offsetHeight + "px";
+            }
+        }
+        setElPosi(bookContentEl.querySelector(`span[data-s="${contextStart}"]`), true);
+        setElPosi(bookContentEl.querySelector(`span[data-e="${contextEnd}"]`), false);
+        let down = { start: false, end: false };
+        let index = { start: contextStart, end: contextEnd };
+        startEl.onpointerdown = (e) => {
+            down.start = true;
+        };
+        endEl.onpointerdown = (e) => {
+            down.end = true;
+        };
+        document.onpointermove = (e) => {
+            if (down.start) {
+                let x = e.clientX,
+                    y = e.clientY + 8;
+                let list = document.elementsFromPoint(x, y);
+                for (let i of list) {
+                    if (i.getAttribute("data-i")) {
+                        setElPosi(i as HTMLElement, true);
+                        index.start = Number(i.getAttribute("data-s"));
+                    }
+                }
+            }
+            if (down.end) {
+                let x = e.clientX,
+                    y = e.clientY - 8;
+                let list = document.elementsFromPoint(x, y);
+                for (let i of list) {
+                    if (i.getAttribute("data-i")) {
+                        setElPosi(i as HTMLElement, false);
+                        index.end = Number(i.getAttribute("data-e"));
+                    }
+                }
+            }
+        };
+        document.onpointerup = (e) => {
+            down.start = false;
+            down.end = false;
+            console.log(editText.slice(index.start, index.end));
+        };
+        let stopEl = document.createElement("div");
+        stopEl.onclick = async () => {
+            let text = editText.slice(index.start, index.end);
+            for (let i of wordv.means) {
+                for (let j of i.contexts) {
+                    if (j.source.id === id) {
+                        j.index = [wordx.index[0] - index.start, wordx.index[1] - index.start];
+                        j.text = text;
+                        await wordsStore.setItem(oldWord, wordv);
+                        div.remove();
+                        startEl.remove();
+                        endEl.remove();
+                        showDic(id);
+                        break;
+                    }
+                }
+            }
+        };
+        stopEl.innerText = "ok";
+        let div = document.createElement("div");
+        div.append(stopEl);
+        toastEl.append(div);
     }
 }
 

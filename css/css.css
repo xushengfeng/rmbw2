@@ -235,6 +235,12 @@ div > .icon {
 #book_name {
     flex-grow: 1;
 }
+#book_content {
+    position: relative;
+}
+#book_content > :not(textarea) {
+    user-select: none;
+}
 #book_content,
 #book_content > textarea {
     overflow: scroll;
@@ -254,6 +260,35 @@ div > .icon {
 }
 .flash_word {
     text-decoration: underline wavy #2735bb;
+}
+
+.context_start,
+.context_end {
+    position: absolute;
+    width: 10px;
+    height: 10px;
+    background-color: #fff;
+    border-radius: 50%;
+    border: #000 1px solid;
+    transform: translate(-50%, -50%);
+}
+.context_start::after {
+    content: "";
+    position: absolute;
+    top: 10px;
+    left: 4px;
+    width: 2px;
+    height: 1em;
+    background-color: #000;
+}
+.context_end::after {
+    content: "";
+    position: absolute;
+    top: -16px;
+    left: 4px;
+    width: 2px;
+    height: 1em;
+    background-color: #000;
 }
 
 #books {
