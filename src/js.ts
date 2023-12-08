@@ -459,10 +459,12 @@ async function changeEdit(b: boolean) {
             let book = await getBooksById(nowBook.book);
             let sectionId = book.sections[nowBook.sections];
             let section = await getSection(sectionId);
+            book.updateTime = new Date().getTime();
             if (editText) {
                 section = changePosi(section, editText);
                 section.text = editText;
                 await sectionsStore.setItem(sectionId, section);
+                await bookshelfStore.setItem(nowBook.book, book);
             }
             showBookContent(sectionId);
         }
