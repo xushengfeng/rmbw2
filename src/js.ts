@@ -252,6 +252,7 @@ let isWordBook = false;
 showBooks();
 setBookS();
 
+const bookNameEl = document.getElementById("book_name");
 async function setBookS() {
     if (nowBook.book) {
         let sectionId = (await getBooksById(nowBook.book)).sections[nowBook.sections];
@@ -259,6 +260,20 @@ async function setBookS() {
         document.getElementById("book_name").innerText = `${(await getBooksById(nowBook.book)).name} - ${
             section.title
         }`;
+        bookNameEl.onclick = () => {
+            let titleEl = document.createElement("input");
+            titleEl.value = section.title;
+            bookNameEl.innerHTML = "";
+            bookNameEl.append(titleEl);
+            titleEl.focus();
+            titleEl.onchange = async () => {
+                let sectionId = (await getBooksById(nowBook.book)).sections[nowBook.sections];
+                let section = await getSection(sectionId);
+                section.title = titleEl.value;
+                sectionsStore.setItem(sectionId, section);
+                setBookS();
+            };
+        };
     }
 }
 
