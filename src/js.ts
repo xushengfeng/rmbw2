@@ -405,6 +405,18 @@ async function showBookContent(id: string) {
 
             span.classList.add(MARKWORD);
         };
+        el.oncontextmenu = async (ev) => {
+            ev.preventDefault();
+            const span = ev.target as HTMLSpanElement;
+            if (span.tagName != "SPAN") return;
+            let start = Number(span.getAttribute("data-s"));
+            let end = Number(span.getAttribute("data-e"));
+            let text = await changeEdit(true);
+            text.selectionStart = start;
+            text.selectionEnd = end;
+            text.focus();
+        };
+
         bookContentEl.append(el);
     }
 
@@ -416,8 +428,8 @@ let editText = "";
 async function changeEdit(b: boolean) {
     isEdit = b;
     if (isEdit) {
-        setEdit();
         changeEditEl.innerHTML = icon(ok_svg);
+        return setEdit();
     } else {
         if (nowBook.book) {
             let book = await getBooksById(nowBook.book);
@@ -506,6 +518,7 @@ async function setEdit() {
         editText = text.value;
     };
     bookContentEl.append(text);
+    return text;
 }
 
 bookContentEl.onscroll = async () => {
