@@ -214,6 +214,9 @@ div > .icon {
     box-shadow: 0 0 4px #0002;
 }
 
+#book_nav > #sections {
+    overflow: scroll;
+}
 #book_buttons {
     display: flex;
     width: 100%;
