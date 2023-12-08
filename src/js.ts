@@ -381,7 +381,7 @@ async function showBookContent(id: string) {
                     console.log(s);
 
                     let id = await saveCard({
-                        dic: "l",
+                        dic: "lw",
                         key: word.text,
                         dindex: -1,
                         index: { start: word.start, end: word.end },
@@ -515,13 +515,11 @@ bookdicEl.onclick = () => {
     dicEl.classList.toggle("dic_show");
 };
 
-let dics: { [key: string]: LocalForage } = {};
-setting.getItem("dics").then((l: string[]) => {
+let dics: { [key: string]: Map<string, dic[0]> } = {};
+var dicStore = localforage.createInstance({ name: "dic" });
+setting.getItem("dics").then(async (l: string[]) => {
     for (let i of l || []) {
-        dics[i] = localforage.createInstance({
-            name: `dic`,
-            storeName: i,
-        });
+        dics[i] = (await dicStore.getItem(i)) as Map<string, dic[0]>;
     }
     console.log(dics);
 });
@@ -652,7 +650,7 @@ async function showDic(id: string) {
     }
 
     async function search(word: string) {
-        let x = (await dics[oldDic].getItem(word)) as dic[0];
+        let x = (await dics[oldDic].get(word)) as dic[0];
         if (!x) return;
         dicDetailsEl.innerHTML = "";
         for (let i in x.means) {
@@ -755,7 +753,7 @@ async function saveCard(v: {
     sectionsStore.setItem(sectionId, section);
     addReviewCard(
         v.key,
-        { dic: "xout.json", index: v.dindex },
+        { dic: "lw", index: v.dindex },
         {
             text: editText.slice(v.cindex.start, v.cindex.end),
             index: [v.index.start - v.cindex.start, v.index.end - v.cindex.start],
@@ -977,7 +975,7 @@ async function showReview(x: { id: string; card: fsrsjs.Card }, type: review) {
             let d = (await wordsStore.getItem(word)) as record;
             for (let i of d.means) {
                 if (i.card_id === x.id) {
-                    let x = (await dics[i.dic].getItem(word)) as dic[0];
+                    let x = (await dics[i.dic].get(word)) as dic[0];
                     let m = x.means[i.index];
 
                     let div = document.createElement("div");
@@ -1090,14 +1088,13 @@ uploadDicEl.onchange = () => {
         reader.onload = () => {
             let dic = JSON.parse(reader.result as string);
             console.log(dic);
-            let l = (dics[file.name] = localforage.createInstance({
-                name: `dic`,
-                storeName: file.name,
-            }));
-            setting.setItem("dics", Object.keys(dics));
-            for (let i in dic) {
-                l.setItem(i, dic[i]);
+            const id = dic.id;
+            let l = (dics[id] = new Map());
+            for (let i in dic.dics) {
+                l.set(i, dic.dics[i]);
             }
+            dicStore.setItem(id, l);
+            setting.setItem("dics", Object.keys(dics));
         };
     }
 };
