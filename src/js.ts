@@ -365,40 +365,46 @@ async function showBookContent(id: string) {
                         span.classList.add(MARKWORD); // TODO CSS.highlights
                     }
                 }
-                span.onclick = async () => {
-                    let s = paragraph[0].start,
-                        e = paragraph.at(-1).end;
-                    let j = Number(i) - 1;
-                    while (j >= 0 && !paragraph[j].text.match(/[.?!]/)) {
-                        s = paragraph[j].start;
-                        j--;
-                    }
-                    j = Number(i);
-                    while (j < paragraph.length && !paragraph[j].text.match(/[.?!]/)) {
-                        e = paragraph[j].end;
-                        j++;
-                    }
-                    console.log(s);
-
-                    let id = await saveCard({
-                        dic: "lw",
-                        key: word.text,
-                        dindex: -1,
-                        index: { start: word.start, end: word.end },
-                        pindex: { start: paragraph[0].start, end: paragraph.at(-1).end },
-                        cindex: { start: s, end: e },
-                    });
-                    if (span.classList.contains(MARKWORD)) {
-                        showDic(id);
-                    }
-
-                    span.classList.add(MARKWORD);
-                };
+                span.setAttribute("data-s", String(word.start));
+                span.setAttribute("data-e", String(word.end));
+                span.setAttribute("data-i", i);
                 el.append(span);
             } else {
                 el.append(word.text);
             }
         }
+        el.onclick = async (ev) => {
+            const span = ev.target as HTMLSpanElement;
+            if (span.tagName != "SPAN") return;
+            const i = span.getAttribute("data-i");
+            let s = paragraph[0].start,
+                e = paragraph.at(-1).end;
+            let j = Number(i) - 1;
+            while (j >= 0 && !paragraph[j].text.match(/[.?!]/)) {
+                s = paragraph[j].start;
+                j--;
+            }
+            j = Number(i);
+            while (j < paragraph.length && !paragraph[j].text.match(/[.?!]/)) {
+                e = paragraph[j].end;
+                j++;
+            }
+            console.log(s);
+
+            let id = await saveCard({
+                dic: "lw",
+                key: span.innerText,
+                dindex: -1,
+                index: { start: Number(span.getAttribute("data-s")), end: Number(span.getAttribute("data-e")) },
+                pindex: { start: paragraph[0].start, end: paragraph.at(-1).end },
+                cindex: { start: s, end: e },
+            });
+            if (span.classList.contains(MARKWORD)) {
+                showDic(id);
+            }
+
+            span.classList.add(MARKWORD);
+        };
         bookContentEl.append(el);
     }
 
