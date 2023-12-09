@@ -737,7 +737,7 @@ nextMarkEl.onclick = async () => {
 };
 function jumpToMark(start: number) {
     let span = bookContentEl.querySelector(`span[data-s="${start}"]`);
-    span.scrollIntoView({ behavior: "smooth" });
+    span.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "nearest" });
     span.classList.add("flash_word");
     setTimeout(() => {
         span.classList.remove("flash_word");
