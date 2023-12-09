@@ -57,6 +57,7 @@ const nextMarkEl = document.getElementById("next_mark");
 const dicEl = document.getElementById("dic");
 const bookdicEl = document.getElementById("book_dic");
 const dicContextEl = document.getElementById("dic_context");
+const toSentenceEl = document.getElementById("to_sentence");
 const dicWordEl = document.getElementById("dic_word") as HTMLInputElement;
 const moreWordsEl = document.getElementById("more_words");
 const dicMinEl = document.getElementById("dic_min");
@@ -87,7 +88,7 @@ type book = {
 type section = {
     title: string;
     text: string;
-    words: { [key: string]: { id: string; index: [number, number]; visit: boolean } };
+    words: { [key: string]: { id: string; index: [number, number]; visit: boolean; type: "word" | "sentence" } };
     lastPosi: number;
 };
 
@@ -687,6 +688,12 @@ type record = {
         card_id: string;
     }[];
 };
+type record2 = {
+    text: string;
+    trans: string;
+    source: { book: string; sections: number; id: string }; // 原句通过对比计算
+    card_id: string;
+};
 
 async function getAllMarks() {
     let book = await getBooksById(nowBook.book);
@@ -753,6 +760,7 @@ async function showDic(id: string) {
     let oldWord = wordx.id;
     let wordv = (await wordsStore.getItem(wordx.id)) as record;
     let context = "";
+    let isSentence = wordx.type === "sentence";
     let sourceIndex = [0, 0];
     const sourceWord = oldWord;
     let oldDic = "";
@@ -820,6 +828,32 @@ async function showDic(id: string) {
         });
         console.log(output);
         dicCTr.innerText = output[0].translation_text;
+    };
+
+    toSentenceEl.onclick = () => {
+        if (isSentence) return;
+        let contextStart = wordx.index[0] - sourceIndex[0];
+        let contextEnd = wordx.index[1] + (context.length - sourceIndex[1]);
+        wordx.index[0] = contextStart;
+        wordx.index[1] = contextEnd;
+        wordx.type = "sentence";
+        wordx.id = id; // 句子id用uuid而不是单词
+        section.words[id] = wordx;
+        sectionsStore.setItem(sectionId, section);
+
+        let r: record2 = { text: context, card_id: "", source: null, trans: "" };
+
+        for (let i of wordv.means) {
+            for (let j of i.contexts) {
+                if (j.source.id === id) {
+                    r.source = j.source;
+                    r.card_id = i.card_id;
+                    break;
+                }
+            }
+        }
+        card2sentence.setItem(id, r);
+        // TODO remove word
     };
 
     search(oldWord);
@@ -1035,7 +1069,7 @@ async function saveCard(v: {
         }
     }
     const id = uuid();
-    section.words[id] = { id: v.key, index: [v.index.start, v.index.end], visit: false };
+    section.words[id] = { id: v.key, index: [v.index.start, v.index.end], visit: false, type: "word" };
 
     sectionsStore.setItem(sectionId, section);
     addReviewCard(
@@ -1085,6 +1119,7 @@ var cardsStore = localforage.createInstance({ name: "word", storeName: "cards" }
 var wordsStore = localforage.createInstance({ name: "word", storeName: "words" });
 var card2word = localforage.createInstance({ name: "word", storeName: "card2word" });
 var spellStore = localforage.createInstance({ name: "word", storeName: "spell" });
+var card2sentence = localforage.createInstance({ name: "word", storeName: "card2sentence" });
 
 async function addReviewCard(
     word: string,
