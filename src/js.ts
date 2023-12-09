@@ -964,8 +964,15 @@ async function showDic(id: string) {
 
     function changeContext() {
         dicEl.classList.remove(showClass);
-        let contextStart = wordx.index[0] - sourceIndex[0];
-        let contextEnd = wordx.index[1] + (context.length - sourceIndex[1]);
+        let contextStart = 0;
+        let contextEnd = 0;
+        if (isSentence) {
+            contextStart = wordx.index[0];
+            contextEnd = wordx.index[1];
+        } else {
+            contextStart = wordx.index[0] - sourceIndex[0];
+            contextEnd = wordx.index[1] + (context.length - sourceIndex[1]);
+        }
         let startEl = document.createElement("div");
         let endEl = document.createElement("div");
         startEl.classList.add("context_start");
@@ -973,13 +980,13 @@ async function showDic(id: string) {
         bookContentEl.append(startEl, endEl);
         function setElPosi(el: HTMLElement, left: boolean) {
             if (left) {
-                if (Number(el.getAttribute("data-s")) > wordx.index[0]) {
+                if (!isSentence && Number(el.getAttribute("data-s")) > wordx.index[0]) {
                     el = bookContentEl.querySelector(`span[data-s="${wordx.index[0]}"]`);
                 }
                 startEl.style.left = el.offsetLeft + "px";
                 startEl.style.top = el.offsetTop + "px";
             } else {
-                if (Number(el.getAttribute("data-s")) < wordx.index[0]) {
+                if (!isSentence && Number(el.getAttribute("data-s")) < wordx.index[0]) {
                     el = bookContentEl.querySelector(`span[data-s="${wordx.index[0]}"]`);
                 }
                 endEl.style.left = el.offsetLeft + el.offsetWidth + "px";
@@ -1028,19 +1035,31 @@ async function showDic(id: string) {
         let stopEl = document.createElement("div");
         stopEl.onclick = async () => {
             let text = editText.slice(index.start, index.end);
-            for (let i of wordv.means) {
-                for (let j of i.contexts) {
-                    if (j.source.id === id) {
-                        j.index = [wordx.index[0] - index.start, wordx.index[1] - index.start];
-                        j.text = text;
-                        await wordsStore.setItem(oldWord, wordv);
-                        div.remove();
-                        startEl.remove();
-                        endEl.remove();
-                        showDic(id);
-                        break;
+            if (isSentence) {
+                section.words[id].index = [index.start, index.end];
+                sectionsStore.setItem(sectionId, section);
+                let r = (await card2sentence.getItem(id)) as record2;
+                r.text = text;
+                card2sentence.setItem(id, r);
+                exit();
+            } else {
+                for (let i of wordv.means) {
+                    for (let j of i.contexts) {
+                        if (j.source.id === id) {
+                            j.index = [wordx.index[0] - index.start, wordx.index[1] - index.start];
+                            j.text = text;
+                            await wordsStore.setItem(oldWord, wordv);
+                            exit();
+                            break;
+                        }
                     }
                 }
+            }
+            function exit() {
+                div.remove();
+                startEl.remove();
+                endEl.remove();
+                showDic(id);
             }
         };
         stopEl.innerText = "ok";
