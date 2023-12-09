@@ -135,8 +135,15 @@ addOnlineBookEl.onclick = () => {
     onlineBooksEl.showPopover();
 };
 
-function getOnlineBooks() {
-    fetch("https://raw.githubusercontent.com/xushengfeng/rmbw-book/master/index.json")
+async function getOnlineBooksUrl() {
+    return (
+        ((await setting.getItem("onlineBooks.url")) as string) ||
+        "https://raw.githubusercontent.com/xushengfeng/rmbw-book/master"
+    ).replace(/\/$/, "");
+}
+
+async function getOnlineBooks() {
+    fetch((await getOnlineBooksUrl()) + "/index.json")
         .then((v) => v.json())
         .then((j) => {
             showOnlineBooks(j.books);
@@ -189,9 +196,7 @@ function showOnlineBooks(
                 let s = [];
                 const fetchPromises = book.sections.map(async (item) => {
                     const { id, path, title } = item;
-                    const response = await fetch(
-                        "https://raw.githubusercontent.com/xushengfeng/rmbw-book/master/source/" + path
-                    );
+                    const response = await fetch((await getOnlineBooksUrl()) + "/source/" + path);
                     const content = await response.text();
                     return { id, content, title };
                 });
@@ -1382,3 +1387,37 @@ uploadDicEl.onchange = () => {
         };
     }
 };
+
+settingEl.querySelectorAll("[data-path]").forEach(async (el: HTMLElement) => {
+    const path = el.getAttribute("data-path");
+    let value = await setting.getItem(path);
+    if (el.tagName === "INPUT") {
+        let iel = el as HTMLInputElement;
+        if (iel.type === "checkbox") {
+            iel.checked = value as boolean;
+            iel.addEventListener("input", () => {
+                setting.setItem(path, iel.checked);
+                setUi();
+            });
+        } else if (iel.type === "range") {
+            iel.value = value as string;
+            iel.addEventListener("input", () => {
+                setting.setItem(path, Number(iel.value));
+                setUi();
+            });
+        } else {
+            iel.value = value as string;
+            iel.addEventListener("input", () => {
+                setting.setItem(path, iel.value);
+                setUi();
+            });
+        }
+    } else if (el.tagName === "SELECT") {
+        (el as HTMLSelectElement).value = value as string;
+        el.onchange = () => {
+            setting.setItem(path, (el as HTMLSelectElement).value);
+            setUi();
+        };
+    }
+});
+function setUi() {}
