@@ -58,6 +58,7 @@ const dicEl = document.getElementById("dic");
 const bookdicEl = document.getElementById("book_dic");
 const dicContextEl = document.getElementById("dic_context");
 const toSentenceEl = document.getElementById("to_sentence");
+const rmCardEl = document.getElementById("rm_card");
 const dicWordEl = document.getElementById("dic_word") as HTMLInputElement;
 const moreWordsEl = document.getElementById("more_words");
 const dicMinEl = document.getElementById("dic_min");
@@ -789,6 +790,17 @@ async function showDic(id: string) {
     } else {
         context = ((await card2sentence.getItem(id)) as record2).text;
     }
+
+    rmCardEl.onclick = () => {
+        if (isSentence) {
+            card2sentence.removeItem(id);
+        } else {
+            rm(oldWord, oldDic, oldMean);
+        }
+        delete section.words[id];
+        sectionsStore.setItem(sectionId, section);
+        nextMarkEl.click();
+    };
 
     async function rm(word: string, dic: string, i: number) {
         for (let m of wordv.means) {
