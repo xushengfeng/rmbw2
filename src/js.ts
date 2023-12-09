@@ -869,7 +869,7 @@ async function showDic(id: string) {
                 }
             }
         }
-        card2sentence.setItem(r.card_id, r);
+        card2sentence.setItem(id, r);
 
         rm(oldWord, oldDic, oldMean);
     };
