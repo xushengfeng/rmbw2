@@ -765,7 +765,7 @@ async function showDic(id: string) {
     sectionsStore.setItem(sectionId, section);
 
     let oldWord = wordx.id;
-    let wordv = (await wordsStore.getItem(wordx.id)) as record;
+    let wordv: record;
     let context = "";
     let isSentence = wordx.type === "sentence";
     let sourceIndex = [0, 0];
@@ -773,16 +773,21 @@ async function showDic(id: string) {
     let oldDic = "";
     let oldMean = NaN;
     let contextx: record["means"][0]["contexts"][0] = null;
-    for (let i of wordv.means) {
-        oldDic = i.dic;
-        oldMean = i.index;
-        for (let j of i.contexts) {
-            if (j.source.id === id) {
-                context = j.text;
-                sourceIndex = j.index;
-                contextx = j;
+    if (!isSentence) {
+        wordv = (await wordsStore.getItem(wordx.id)) as record;
+        for (let i of wordv.means) {
+            oldDic = i.dic;
+            oldMean = i.index;
+            for (let j of i.contexts) {
+                if (j.source.id === id) {
+                    context = j.text;
+                    sourceIndex = j.index;
+                    contextx = j;
+                }
             }
         }
+    } else {
+        context = ((await card2sentence.getItem(id)) as record2).text;
     }
 
     async function rm(word: string, dic: string, i: number) {
