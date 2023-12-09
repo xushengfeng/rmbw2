@@ -1288,6 +1288,7 @@ async function showReview(x: { id: string; card: fsrsjs.Card }, type: review) {
         buttons.append(againB, hardB, goodB, esayB);
 
         div.append(context, dic, buttons);
+        div.classList.add("review_word");
         reviewViewEl.innerHTML = "";
         reviewViewEl.append(div);
     }
@@ -1333,6 +1334,7 @@ async function showReview(x: { id: string; card: fsrsjs.Card }, type: review) {
         let context = crContext((await wordsStore.getItem(word)) as record);
         const div = document.createElement("div");
         div.append(input, context, wordEl);
+        div.classList.add("review_spell");
         reviewViewEl.innerHTML = "";
         reviewViewEl.append(div);
     }

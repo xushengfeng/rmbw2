@@ -428,6 +428,35 @@ div:has(> .translate) > :not(.translate) {
     width: 24px;
 }
 
+#review {
+    width: 100vw;
+    height: calc(100vh - 24px);
+    display: flex;
+    flex-direction: column;
+}
+#review_list {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+}
+#review_view {
+    flex-grow: 1;
+    display: flex;
+}
+.review_word {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+}
+.review_word > :first-child {
+    flex-grow: 1;
+    overflow: scroll;
+}
+.review_word > :last-child {
+    display: flex;
+    justify-content: center;
+}
+
 #review_l {
     height: calc(100vh - 32px);
     overflow: auto;
