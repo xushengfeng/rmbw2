@@ -868,83 +868,89 @@ async function showDic(id: string) {
 
         rm(oldWord, oldDic, oldMean);
     };
-
-    search(oldWord);
-    dicWordEl.value = oldWord;
-    dicWordEl.onchange = () => {
-        let newWord = dicWordEl.value.trim();
-        search(newWord);
-        changeDicMean(newWord, oldDic, oldMean);
-    };
-
-    let lword = lemmatizer(sourceWord);
-    moreWordsEl.innerHTML = "";
-    for (let w of Array.from(new Set([sourceWord, lword]))) {
-        let div = document.createElement("span");
-        div.innerText = w;
-        div.onclick = () => {
-            dicWordEl.value = w;
-            search(w);
+    if (!isSentence) {
+        search(oldWord);
+        dicWordEl.value = oldWord;
+        dicWordEl.onchange = () => {
+            let newWord = dicWordEl.value.trim();
+            search(newWord);
+            changeDicMean(newWord, oldDic, oldMean);
         };
-        moreWordsEl.append(div);
-    }
 
-    async function search(word: string) {
-        let x = dics[oldDic].get(word) as dic[0];
-        if (!x) {
-            dicDetailsEl.innerText = "none";
-            return;
-        }
-        dicDetailsEl.innerHTML = "";
-        for (let i in x.means) {
-            const m = x.means[i];
-            let div = document.createElement("div");
-            let radio = document.createElement("input");
-            radio.type = "radio";
-            radio.name = "dic_means";
-            radio.onclick = () => {
-                if (radio.checked) {
-                    changeDicMean(word, oldDic, Number(i));
-                }
+        let lword = lemmatizer(sourceWord);
+        moreWordsEl.innerHTML = "";
+        for (let w of Array.from(new Set([sourceWord, lword]))) {
+            let div = document.createElement("span");
+            div.innerText = w;
+            div.onclick = () => {
+                dicWordEl.value = w;
+                search(w);
             };
-            div.onclick = () => radio.click();
-            div.append(radio, disCard(m));
-            dicDetailsEl.append(div);
+            moreWordsEl.append(div);
         }
-        function set() {
-            let means = "";
-            for (let i in x.means) {
-                means += `${i}.${x.means[i].dis.text};\n`;
-            }
-            let c = `${context.slice(0, sourceIndex[0])}**${sourceWord}**${context.slice(sourceIndex[1])}`;
-            console.log(c);
 
-            ai([
-                {
-                    role: "user",
-                    content: `I have a bolded word '${sourceWord}' wrapped in double asterisks in the sentence:'${c}'.This is a dictionary's explanation of several interpretations:${means}.Please think carefully and select the most appropriate label for explanation, without providing any explanation.`,
-                },
-            ]).then((a) => {
-                console.log(a);
-                let n = Number(a.match(/[0-9]+/)[0]);
-                setcheck(n);
-                changeDicMean(word, oldDic, n);
-            });
-        }
-        function setcheck(i: number) {
-            let el = dicDetailsEl.querySelectorAll("input[name=dic_means]")[i] as HTMLInputElement;
-            el.checked = true;
-            dicDetailsEl.classList.add(HIDEMEANS);
-        }
-        if (oldMean === -1) {
-            if (x.means.length > 1) {
-                set();
-            } else {
-                setcheck(0);
+        async function search(word: string) {
+            let x = dics[oldDic].get(word) as dic[0];
+            if (!x) {
+                dicDetailsEl.innerText = "none";
+                return;
             }
-        } else {
-            setcheck(oldMean);
+            dicDetailsEl.innerHTML = "";
+            for (let i in x.means) {
+                const m = x.means[i];
+                let div = document.createElement("div");
+                let radio = document.createElement("input");
+                radio.type = "radio";
+                radio.name = "dic_means";
+                radio.onclick = () => {
+                    if (radio.checked) {
+                        changeDicMean(word, oldDic, Number(i));
+                    }
+                };
+                div.onclick = () => radio.click();
+                div.append(radio, disCard(m));
+                dicDetailsEl.append(div);
+            }
+            function set() {
+                let means = "";
+                for (let i in x.means) {
+                    means += `${i}.${x.means[i].dis.text};\n`;
+                }
+                let c = `${context.slice(0, sourceIndex[0])}**${sourceWord}**${context.slice(sourceIndex[1])}`;
+                console.log(c);
+
+                ai([
+                    {
+                        role: "user",
+                        content: `I have a bolded word '${sourceWord}' wrapped in double asterisks in the sentence:'${c}'.This is a dictionary's explanation of several interpretations:${means}.Please think carefully and select the most appropriate label for explanation, without providing any explanation.`,
+                    },
+                ]).then((a) => {
+                    console.log(a);
+                    let n = Number(a.match(/[0-9]+/)[0]);
+                    setcheck(n);
+                    changeDicMean(word, oldDic, n);
+                });
+            }
+            function setcheck(i: number) {
+                let el = dicDetailsEl.querySelectorAll("input[name=dic_means]")[i] as HTMLInputElement;
+                el.checked = true;
+                dicDetailsEl.classList.add(HIDEMEANS);
+            }
+            if (oldMean === -1) {
+                if (x.means.length > 1) {
+                    set();
+                } else {
+                    setcheck(0);
+                }
+            } else {
+                setcheck(oldMean);
+            }
         }
+    } else {
+        dicWordEl.value = "";
+        moreWordsEl.innerHTML = "";
+        dicContextEl.innerText = dicContextEl.innerText;
+        dicDetailsEl.innerHTML = "";
     }
 
     changeContextEl.onclick = () => {
