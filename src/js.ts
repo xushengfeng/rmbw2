@@ -785,25 +785,29 @@ async function showDic(id: string) {
         }
     }
 
+    async function rm(word: string, dic: string, i: number) {
+        for (let m of wordv.means) {
+            if (m.dic === dic && m.index === i) {
+                m.contexts = m.contexts.filter((c) => c.source.id != contextx.source.id);
+                if (m.contexts.length === 0) {
+                    await card2word.removeItem(m.card_id);
+                    await cardsStore.removeItem(m.card_id);
+                    wordv.means = wordv.means.filter((i) => i != m);
+                }
+                if (wordv.means.length === 0) {
+                    await wordsStore.removeItem(word);
+                    await spellStore.removeItem(word);
+                } else {
+                    await wordsStore.setItem(word, wordv);
+                }
+                break;
+            }
+        }
+    }
+
     async function changeDicMean(word: string, dic: string, i: number) {
         if (word != oldWord || dic != oldDic || i != oldMean) {
-            for (let m of wordv.means) {
-                if (m.dic === oldDic && m.index === oldMean) {
-                    m.contexts = m.contexts.filter((c) => c.source.id != contextx.source.id);
-                    if (m.contexts.length === 0) {
-                        await card2word.removeItem(m.card_id);
-                        await cardsStore.removeItem(m.card_id);
-                        wordv.means = wordv.means.filter((i) => i != m);
-                    }
-                    if (wordv.means.length === 0) {
-                        await wordsStore.removeItem(oldWord);
-                        await spellStore.removeItem(oldWord);
-                    } else {
-                        await wordsStore.setItem(oldWord, wordv);
-                    }
-                    break;
-                }
-            }
+            rm(oldWord, oldDic, oldMean);
 
             addReviewCard(word, { dic, index: i }, contextx);
 
@@ -837,7 +841,7 @@ async function showDic(id: string) {
         dicCTr.innerText = output[0].translation_text;
     };
 
-    toSentenceEl.onclick = () => {
+    toSentenceEl.onclick = async () => {
         if (isSentence) return;
         let contextStart = wordx.index[0] - sourceIndex[0];
         let contextEnd = wordx.index[1] + (context.length - sourceIndex[1]);
@@ -848,19 +852,21 @@ async function showDic(id: string) {
         section.words[id] = wordx;
         sectionsStore.setItem(sectionId, section);
 
-        let r: record2 = { text: context, card_id: "", source: null, trans: "" };
+        let r: record2 = { text: context, card_id: uuid(), source: null, trans: "" };
 
         for (let i of wordv.means) {
             for (let j of i.contexts) {
                 if (j.source.id === id) {
                     r.source = j.source;
-                    r.card_id = i.card_id;
+                    cardsStore.setItem(r.card_id, await cardsStore.getItem(i.card_id));
+                    await cardsStore.removeItem(i.card_id);
                     break;
                 }
             }
         }
-        card2sentence.setItem(id, r);
-        // TODO remove word
+        card2sentence.setItem(r.card_id, r);
+
+        rm(oldWord, oldDic, oldMean);
     };
 
     search(oldWord);
