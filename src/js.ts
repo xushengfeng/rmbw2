@@ -463,14 +463,14 @@ async function showBookContent(id: string) {
             text.focus();
         };
 
-        let list = await getAllMarks();
-        if (list[0]) {
-            nowDicId = list[0].id;
-            showDic(nowDicId);
-            dicEl.classList.remove("dic_show");
-        }
-
         bookContentEl.append(el);
+    }
+
+    let markList = await getAllMarks();
+    if (markList[0]) {
+        nowDicId = markList[0].id;
+        showDic(nowDicId);
+        dicEl.classList.remove("dic_show");
     }
 
     bookContentEl.scrollTop = s.lastPosi * (bookContentEl.scrollHeight - bookContentEl.offsetHeight);
