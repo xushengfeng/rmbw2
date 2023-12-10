@@ -294,6 +294,14 @@ div > .icon {
     background-color: #000;
 }
 
+#book_content .words_sum {
+    position: sticky;
+    top: 0;
+    background-color: var(--bg1);
+    backdrop-filter: var(--blur);
+    z-index: 1;
+}
+
 #books {
     display: flex;
     flex-direction: column;

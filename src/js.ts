@@ -346,32 +346,45 @@ async function showBookSections(sections: book["sections"]) {
         };
     }
 }
+
+let wordList: { text: string; c: record }[] = [];
+
 async function showBookContent(id: string) {
     let s = (await sectionsStore.getItem(id)) as section;
     bookContentEl.innerHTML = "";
 
+    wordList = [];
     if (isWordBook) {
         let l = s.text.trim().split("\n");
         let keys = await wordsStore.keys();
-        let ll = document.createDocumentFragment();
         let matchWords = 0;
         for (let i of l) {
-            let p = document.createElement("p");
             let t = i;
+            let c: record;
             if (keys.includes(i)) {
+                c = (await wordsStore.getItem(i)) as record;
                 t = `${t} *`;
                 matchWords++;
             }
-            p.innerText = t;
-            ll.append(p);
+            wordList.push({ text: t, c: c });
         }
         let sum = document.createElement("p");
         sum.innerText = `本章共有 ${l.length}个单词，已了解 ${matchWords}个，占 ${(
             (matchWords / l.length) *
             100
         ).toFixed(2)}%`;
+        sum.classList.add("words_sum");
 
-        bookContentEl.append(sum, ll);
+        bookContentEl.append(sum);
+
+        reflashContentScroll();
+
+        let h = document.createElement("div");
+        h.style.height = 64 + wordList.length * (24 + 8) + 8 + "px";
+        h.style.width = "1px";
+        h.style.position = "absolute";
+        h.style.top = "0px";
+        bookContentEl.append(h);
 
         return;
     }
@@ -475,6 +488,31 @@ async function showBookContent(id: string) {
 
     bookContentEl.scrollTop = s.lastPosi * (bookContentEl.scrollHeight - bookContentEl.offsetHeight);
 }
+
+function reflashContentScroll() {
+    for (let i = 0; i < wordList.length; i++) {
+        const h = 24;
+        const gap = 8;
+        const buffer = 64;
+        let t = 64 + i * (h + gap);
+        let b = 64 + (i + 1) * (gap + h);
+        if (
+            b >= bookContentEl.scrollTop - buffer &&
+            t <= bookContentEl.scrollTop + bookContentEl.offsetHeight + buffer
+        ) {
+            if (bookContentEl.querySelector(`p[data-i='${i}']`)) continue;
+            let p = document.createElement("p");
+            p.setAttribute("data-i", String(i));
+            p.innerText = wordList[i].text;
+            p.style.top = t + "px";
+            p.style.position = "absolute";
+            bookContentEl.append(p);
+        } else {
+            bookContentEl.querySelector(`p[data-i='${i}']`)?.remove();
+        }
+    }
+}
+
 let isEdit = false;
 let editText = "";
 
@@ -661,6 +699,8 @@ bookContentEl.onscroll = async () => {
     let section = await getSection(sectionId);
     section.lastPosi = n;
     sectionsStore.setItem(sectionId, section);
+
+    if (wordList.length) reflashContentScroll();
 };
 
 bookdicEl.onclick = () => {
