@@ -358,6 +358,9 @@ async function showBookContent(id: string) {
         let l = s.text.trim().split("\n");
         let keys = await wordsStore.keys();
         let matchWords = 0;
+        let means = 0;
+        let means1 = 0;
+        const maxMeans = 3;
         for (let i of l) {
             let t = i;
             let c: record;
@@ -365,14 +368,43 @@ async function showBookContent(id: string) {
                 c = (await wordsStore.getItem(i)) as record;
                 t = `${t} *`;
                 matchWords++;
+                means += Math.min(c.means.length / maxMeans, 1);
+                let r = 0;
+                for (let j of c.means) {
+                    let x = (await cardsStore.getItem(j.card_id)) as fsrsjs.Card;
+                    let retrievability = Math.pow(1 + x.elapsed_days / (9 * x.stability), -1) || 0;
+                    r += retrievability;
+                }
+                means1 += r / c.means.length;
             }
             wordList.push({ text: t, c: c });
         }
-        let sum = document.createElement("p");
-        sum.innerText = `本章共有 ${l.length}个单词，已了解 ${matchWords}个，占 ${(
-            (matchWords / l.length) *
-            100
-        ).toFixed(2)}%`;
+        let sum = document.createElement("table");
+        function p(name: string, number: number) {
+            let t = document.createElement("tr");
+            let nEl = document.createElement("td");
+            let numEl = document.createElement("td");
+            let pEl = document.createElement("td");
+            nEl.innerText = name;
+            numEl.innerText = number.toFixed(1);
+            pEl.innerText = ((number / l.length) * 100).toFixed(2) + "%";
+            t.append(nEl, numEl, pEl);
+            return t;
+        }
+        let t = document.createElement("tr");
+        let nEl = document.createElement("th");
+        let numEl = document.createElement("th");
+        let pEl = document.createElement("th");
+        nEl.innerText = "词";
+        numEl.innerText = String(l.length);
+        pEl.innerText = "100%";
+        t.append(nEl, numEl, pEl);
+
+        sum.append(t);
+        sum.append(p("了解", matchWords));
+        sum.append(p("有效", means));
+        sum.append(p("记忆", means1));
+
         sum.classList.add("words_sum");
 
         bookContentEl.append(sum);
@@ -380,7 +412,7 @@ async function showBookContent(id: string) {
         reflashContentScroll();
 
         let h = document.createElement("div");
-        h.style.height = 64 + wordList.length * (24 + 8) + 8 + "px";
+        h.style.height = 120 + wordList.length * (24 + 8) + 8 + "px";
         h.style.width = "1px";
         h.style.position = "absolute";
         h.style.top = "0px";
@@ -494,8 +526,8 @@ function reflashContentScroll() {
         const h = 24;
         const gap = 8;
         const buffer = 64;
-        let t = 64 + i * (h + gap);
-        let b = 64 + (i + 1) * (gap + h);
+        let t = 120 + i * (h + gap);
+        let b = 120 + (i + 1) * (gap + h);
         if (
             b >= bookContentEl.scrollTop - buffer &&
             t <= bookContentEl.scrollTop + bookContentEl.offsetHeight + buffer
