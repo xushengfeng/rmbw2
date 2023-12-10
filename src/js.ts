@@ -1312,8 +1312,10 @@ reviewBEl.onclick = () => {
 const reviewReflashEl = document.getElementById("review_reflash");
 const reviewViewEl = document.getElementById("review_view");
 
-async function getReviewDue() {
+async function getFutureReviewDue(days: number) {
     let now = new Date().getTime();
+    now += days * 24 * 60 * 60 * 1000;
+    now = Math.round(now);
     let wordList: { id: string; card: fsrsjs.Card }[] = [];
     let spellList: { id: string; card: fsrsjs.Card }[] = [];
     await cardsStore.iterate((value: fsrsjs.Card, key) => {
@@ -1326,35 +1328,51 @@ async function getReviewDue() {
             spellList.push({ id: key, card: value });
         }
     });
+    return { word: wordList, spell: spellList };
+}
+async function getReviewDue(type: review) {
+    for (let i of due.word) {
+        let card = (await cardsStore.getItem(i.id)) as fsrsjs.Card;
+        i.card = card;
+    }
+    for (let i of due.spell) {
+        let card = (await cardsStore.getItem(i.id)) as fsrsjs.Card;
+        i.card = card;
+    }
+    let now = new Date().getTime();
+    let wordList: { id: string; card: fsrsjs.Card }[] = [];
+    let spellList: { id: string; card: fsrsjs.Card }[] = [];
+    for (let i of due.word) {
+        if (i.card.due.getTime() > now) {
+            wordList.push(i);
+        }
+    }
+    for (let i of due.spell) {
+        if (i.card.due.getTime() > now) {
+            spellList.push(i);
+        }
+    }
     wordList.sort((a, b) => a.card.due.getTime() - b.card.due.getTime());
     spellList.sort((a, b) => a.card.due.getTime() - b.card.due.getTime());
-    return { word: wordList, spell: spellList };
+    if (type === "word") {
+        return wordList[0];
+    } else {
+        return spellList[0];
+    }
 }
 
 let due: {
     word: {
-        list: {
-            id: string;
-            card: fsrsjs.Card;
-        }[];
-        i: number;
-    };
+        id: string;
+        card: fsrsjs.Card;
+    }[];
     spell: {
-        list: {
-            id: string;
-            card: fsrsjs.Card;
-        }[];
-        i: number;
-    };
+        id: string;
+        card: fsrsjs.Card;
+    }[];
 } = {
-    word: {
-        list: [],
-        i: 0,
-    },
-    spell: {
-        list: [],
-        i: 0,
-    },
+    word: [],
+    spell: [],
 };
 
 type review = "word" | "spell";
@@ -1375,31 +1393,21 @@ reviewModeEl.onclick = () => {
 };
 
 async function nextDue(type: review) {
-    let x = due[type];
-    x.i += 1;
-    if (x.i >= x.list.length) {
-        x.list = (await getReviewDue())[type];
-        x.i = 0;
-    }
-    if (x.list[x.i]) {
-        return x.list[x.i];
-    }
-    return null;
+    let x = await getReviewDue(type);
+    return x;
 }
 
 reviewReflashEl.onclick = async () => {
-    let l = await getReviewDue();
-    due.word.list = l.word;
-    due.word.i = 0;
-    due.spell.list = l.spell;
-    due.spell.i = 0;
+    due = await getFutureReviewDue(0.1);
+    let l = await getReviewDue(reviewType);
     console.log(l);
-    if (due[reviewType].list[0]) showReview(due[reviewType].list[0], reviewType);
+    showReview(l, reviewType);
 };
 
 async function showReview(x: { id: string; card: fsrsjs.Card }, type: review) {
     function crContext(word: record) {
         let context = document.createElement("div");
+        if (!word) return context;
         for (let i of word.means) {
             if (i.card_id === x.id) {
                 for (let c of i.contexts) {
@@ -1413,6 +1421,10 @@ async function showReview(x: { id: string; card: fsrsjs.Card }, type: review) {
             }
         }
         return context;
+    }
+    if (!x) {
+        reviewEl.innerText = "暂无复习🎉";
+        return;
     }
     if (type === "word") {
         let wordid = (await card2word.getItem(x.id)) as string;
@@ -1441,9 +1453,7 @@ async function showReview(x: { id: string; card: fsrsjs.Card }, type: review) {
             button.onclick = async () => {
                 setReviewCard(x.id, x.card, rating);
                 let next = await nextDue(reviewType);
-                console.log(next);
-
-                if (next) showReview(next, reviewType);
+                showReview(next, reviewType);
             };
             return button;
         };
@@ -1482,7 +1492,7 @@ async function showReview(x: { id: string; card: fsrsjs.Card }, type: review) {
                     if (spellNum === 1) {
                         setSpellCard(x.id, x.card, 4);
                         let next = await nextDue(reviewType);
-                        if (next) showReview(next, reviewType);
+                        showReview(next, reviewType);
                     } else {
                         spellNum--;
                         input.value = "";
