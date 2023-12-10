@@ -1593,3 +1593,55 @@ settingEl.querySelectorAll("[data-path]").forEach(async (el: HTMLElement) => {
     }
 });
 function setUi() {}
+
+const exportEl = document.getElementById("data_export");
+let exBook = document.createElement("div");
+exBook.onclick = async () => {
+    let l: { bookshelf: { [key: string]: any }; sections: { [key: string]: any } } = { bookshelf: {}, sections: {} };
+    await bookshelfStore.iterate((v, k) => {
+        l.bookshelf[k] = v;
+    });
+    await sectionsStore.iterate((v, k) => {
+        l.sections[k] = v;
+    });
+    let blob = new Blob([JSON.stringify(l)], { type: "text/plain;charset=utf-8" });
+    let a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = "rmbw_book.json";
+    a.click();
+};
+exBook.innerText = "书籍";
+exportEl.append(exBook);
+
+let exWord = document.createElement("div");
+exWord.onclick = async () => {
+    let l: { cards: Object; words: Object; spell: Object; card2word: Object; card2sentence: Object } = {
+        cards: {},
+        words: {},
+        spell: {},
+        card2word: {},
+        card2sentence: {},
+    };
+    await cardsStore.iterate((v, k) => {
+        l.cards[k] = v;
+    });
+    await wordsStore.iterate((v, k) => {
+        l.words[k] = v;
+    });
+    await spellStore.iterate((v, k) => {
+        l.spell[k] = v;
+    });
+    await card2word.iterate((v, k) => {
+        l.card2word[k] = v;
+    });
+    await card2sentence.iterate((v, k) => {
+        l.card2sentence[k] = v;
+    });
+    let blob = new Blob([JSON.stringify(l)], { type: "text/plain;charset=utf-8" });
+    let a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = "rmbw_word.json";
+    a.click();
+};
+exWord.innerText = "单词卡片";
+exportEl.append(exWord);
