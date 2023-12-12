@@ -898,9 +898,9 @@ async function showDic(id: string) {
 
     async function changeDicMean(word: string, dic: string, i: number) {
         if (word != oldWord || dic != oldDic || i != oldMean) {
-            rm(oldWord, oldDic, oldMean);
+            await rm(oldWord, oldDic, oldMean);
 
-            addReviewCard(word, { dic, index: i }, contextx);
+            await addReviewCard(word, { dic, index: i }, contextx);
 
             oldWord = word;
             oldDic = dic;
@@ -1285,8 +1285,8 @@ async function addReviewCard(
                 let now = new Date();
                 let sCards = fsrs.repeat(card, now);
                 // 记过还查，那是忘了
-                cardsStore.setItem(i.card_id, sCards[fsrsjs.Rating.Hard].card);
-                wordsStore.setItem(word, w);
+                await cardsStore.setItem(i.card_id, sCards[fsrsjs.Rating.Hard].card);
+                await wordsStore.setItem(word, w);
                 return;
             }
         }
@@ -1294,9 +1294,9 @@ async function addReviewCard(
         let m = { ...means, contexts: [context], card_id: cardId };
         w.means.push(m);
         let card = new fsrsjs.Card();
-        cardsStore.setItem(cardId, card);
-        card2word.setItem(cardId, word);
-        wordsStore.setItem(word, w);
+        await cardsStore.setItem(cardId, card);
+        await card2word.setItem(cardId, word);
+        await wordsStore.setItem(word, w);
     } else {
         let cardId = uuid();
         let r: record = {
@@ -1311,11 +1311,11 @@ async function addReviewCard(
             ],
         };
         let card = new fsrsjs.Card();
-        wordsStore.setItem(word, r);
-        cardsStore.setItem(cardId, card);
-        card2word.setItem(cardId, word);
+        await wordsStore.setItem(word, r);
+        await cardsStore.setItem(cardId, card);
+        await card2word.setItem(cardId, word);
         let card2 = new fsrsjs.Card();
-        spellStore.setItem(word, card2);
+        await spellStore.setItem(word, card2);
     }
 }
 
