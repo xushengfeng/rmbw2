@@ -833,9 +833,6 @@ async function showDic(id: string) {
     let section = await getSection(sectionId);
 
     let wordx = section.words[id];
-    wordx.visit = true;
-    section.words[id] = wordx;
-    sectionsStore.setItem(sectionId, section);
 
     let oldWord = wordx.id;
     let wordv: record;
@@ -978,6 +975,12 @@ async function showDic(id: string) {
             moreWordsEl.append(div);
         }
 
+        function visit(t: boolean) {
+            wordx.visit = t;
+            section.words[id] = wordx;
+            sectionsStore.setItem(sectionId, section);
+        }
+
         async function search(word: string) {
             let x = dics[oldDic].get(word) as dic[0];
             if (!x) {
@@ -994,6 +997,8 @@ async function showDic(id: string) {
                 radio.onclick = () => {
                     if (radio.checked) {
                         changeDicMean(word, oldDic, Number(i));
+
+                        visit(true);
                     }
                 };
                 div.onclick = () => radio.click();
@@ -1016,8 +1021,11 @@ async function showDic(id: string) {
                 ]).then((a) => {
                     console.log(a);
                     let n = Number(a.match(/[0-9]+/)[0]);
+                    if (isNaN(n)) return;
                     setcheck(n);
                     changeDicMean(word, oldDic, n);
+
+                    visit(true);
                 });
             }
             function setcheck(i: number) {
@@ -1028,8 +1036,10 @@ async function showDic(id: string) {
             if (oldMean === -1) {
                 if (x.means.length > 1) {
                     set();
+                    dicDetailsEl.classList.remove(HIDEMEANS);
                 } else {
                     setcheck(0);
+                    visit(true);
                 }
             } else {
                 setcheck(oldMean);
