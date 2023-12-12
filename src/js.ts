@@ -971,6 +971,7 @@ async function showDic(id: string) {
             div.onclick = () => {
                 dicWordEl.value = w;
                 search(w);
+                changeDicMean(w, oldDic, oldMean);
             };
             moreWordsEl.append(div);
         }
