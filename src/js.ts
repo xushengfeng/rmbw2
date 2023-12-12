@@ -845,6 +845,11 @@ async function showDic(id: string) {
     let contextx: record["means"][0]["contexts"][0] = null;
     if (!isSentence) {
         wordv = (await wordsStore.getItem(wordx.id)) as record;
+        if (!wordv) {
+            delete section.words[id];
+            sectionsStore.setItem(sectionId, section);
+            nextMarkEl.click();
+        }
         for (let i of wordv.means) {
             oldDic = i.dic;
             oldMean = i.index;
