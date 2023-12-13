@@ -1352,19 +1352,19 @@ async function getReviewDue(type: review) {
         i.card = card;
     }
     for (let i of due.spell) {
-        let card = (await cardsStore.getItem(i.id)) as fsrsjs.Card;
+        let card = (await spellStore.getItem(i.id)) as fsrsjs.Card;
         i.card = card;
     }
     let now = new Date().getTime();
     let wordList: { id: string; card: fsrsjs.Card }[] = [];
     let spellList: { id: string; card: fsrsjs.Card }[] = [];
     for (let i of due.word) {
-        if (i.card.due.getTime() > now) {
+        if (i.card.due.getTime() < now) {
             wordList.push(i);
         }
     }
     for (let i of due.spell) {
-        if (i.card.due.getTime() > now) {
+        if (i.card.due.getTime() < now) {
             spellList.push(i);
         }
     }
