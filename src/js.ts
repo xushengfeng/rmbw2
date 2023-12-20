@@ -1396,6 +1396,20 @@ async function getReviewDue(type: review) {
     }
     wordList.sort((a, b) => a.card.due.getTime() - b.card.due.getTime());
     spellList.sort((a, b) => a.card.due.getTime() - b.card.due.getTime());
+    wordList.filter(async (x) => {
+        let wordid = (await card2word.getItem(x.id)) as string;
+        let wordRecord = (await wordsStore.getItem(wordid)) as record;
+        for (let i of wordRecord.means) {
+            if (i.card_id === x.id) {
+                if (i.index === -1) {
+                    return false;
+                } else {
+                    return true;
+                }
+            }
+        }
+        return true;
+    });
     if (type === "word") {
         return wordList[0];
     } else {
