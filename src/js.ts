@@ -884,6 +884,7 @@ async function showDic(id: string) {
                     await card2word.removeItem(m.card_id);
                     await cardsStore.removeItem(m.card_id);
                     wordv.means = wordv.means.filter((i) => i != m);
+                    await wordsStore.setItem(word, wordv);
                 }
                 if (wordv.means.length === 0) {
                     await wordsStore.removeItem(word);
