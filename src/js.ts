@@ -69,6 +69,7 @@ const toastEl = document.getElementById("toast");
 const MARKWORD = "mark_word";
 const TRANSLATE = "translate";
 const HIDEMEANS = "hide_means";
+const DISABLECHANGE = "disable_change";
 
 var bookshelfStore = localforage.createInstance({ name: "bookshelf" });
 var sectionsStore = localforage.createInstance({ name: "sections" });
@@ -324,6 +325,11 @@ async function showBooks() {
             showBook(book);
             book.visitTime = new Date().getTime();
             bookshelfStore.setItem(book.id, book);
+            if (book.canEdit) {
+                changeEditEl.classList.remove(DISABLECHANGE);
+            } else {
+                changeEditEl.classList.add(DISABLECHANGE);
+            }
         };
     }
 }
@@ -558,6 +564,7 @@ let isEdit = false;
 let editText = "";
 
 async function changeEdit(b: boolean) {
+    if (changeEditEl.classList.contains(DISABLECHANGE)) return;
     isEdit = b;
     if (isEdit) {
         changeEditEl.innerHTML = icon(ok_svg);

@@ -231,6 +231,9 @@ div > .icon {
     width: 24px;
     position: relative;
 }
+.disable_change {
+    cursor: not-allowed;
+}
 #book_buttons > div > .icon {
     height: 24px;
     width: 24px;
