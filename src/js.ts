@@ -465,22 +465,19 @@ async function showBookContent(id: string) {
         for (let i in paragraph) {
             if (t && i === "0") continue;
             const word = paragraph[i];
-            if (word.isWord) {
-                let span = document.createElement("span");
-                span.innerText = word.text;
-                for (let i in s.words) {
-                    let index = s.words[i].index;
-                    if (index[0] === word.start && index[1] === word.end) {
-                        span.classList.add(MARKWORD); // TODO CSS.highlights
-                    }
+
+            let span = document.createElement("span");
+            span.innerText = word.text;
+            for (let i in s.words) {
+                let index = s.words[i].index;
+                if (index[0] === word.start && index[1] === word.end) {
+                    span.classList.add(MARKWORD); // TODO CSS.highlights
                 }
-                span.setAttribute("data-s", String(word.start));
-                span.setAttribute("data-e", String(word.end));
-                span.setAttribute("data-i", i);
-                el.append(span);
-            } else {
-                el.append(word.text);
             }
+            span.setAttribute("data-s", String(word.start));
+            span.setAttribute("data-e", String(word.end));
+            span.setAttribute("data-i", i);
+            el.append(span);
         }
         el.onclick = async (ev) => {
             const span = ev.target as HTMLSpanElement;
