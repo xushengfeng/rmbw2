@@ -59,12 +59,12 @@ const bookdicEl = document.getElementById("book_dic");
 const dicContextEl = document.getElementById("dic_context");
 const toSentenceEl = document.getElementById("to_sentence");
 const rmCardEl = document.getElementById("rm_card");
+const hideDicEl = document.getElementById("hide_dic");
 const dicWordEl = document.getElementById("dic_word") as HTMLInputElement;
 const moreWordsEl = document.getElementById("more_words");
 const dicMinEl = document.getElementById("dic_min");
 const dicDetailsEl = document.getElementById("dic_details");
 const toastEl = document.getElementById("toast");
-const changeContextEl = document.getElementById("change_context");
 
 const MARKWORD = "mark_word";
 const TRANSLATE = "translate";
@@ -526,6 +526,8 @@ async function showBookContent(id: string) {
     }
 
     bookContentEl.scrollTop = s.lastPosi * (bookContentEl.scrollHeight - bookContentEl.offsetHeight);
+
+    bookContentEl.append(dicEl);
 }
 
 function reflashContentScroll() {
@@ -827,6 +829,10 @@ dicMinEl.onclick = () => {
     dicDetailsEl.classList.toggle(HIDEMEANS);
 };
 
+function setDicPosi(el: HTMLElement) {
+    dicEl.style.top = `${el.offsetTop + bookContentEl.offsetTop}px`;
+}
+
 let nowDicId = "";
 
 async function showDic(id: string) {
@@ -870,6 +876,17 @@ async function showDic(id: string) {
         }
     } else {
         context = ((await card2sentence.getItem(id)) as record2).text;
+    }
+
+    {
+        let contextEnd = 0;
+        if (isSentence) {
+            contextEnd = wordx.index[1];
+        } else {
+            contextEnd = wordx.index[1] + (context.length - sourceIndex[1]);
+        }
+        setDicPosi(bookContentEl.querySelector(`span[data-e="${contextEnd}"]`));
+        changeContext();
     }
 
     rmCardEl.onclick = () => {
@@ -918,15 +935,13 @@ async function showDic(id: string) {
         }
     }
 
-    let dicC = document.createElement("p");
     let dicCTr = document.createElement("p");
     dicContextEl.innerHTML = "";
-    dicContextEl.append(dicC, dicCTr);
+    dicContextEl.append(dicCTr);
 
     let mainWord = document.createElement("span");
     mainWord.classList.add(MARKWORD);
     mainWord.innerText = context.slice(sourceIndex[0], sourceIndex[1]);
-    dicC.append(context.slice(0, sourceIndex[0]), mainWord, context.slice(sourceIndex[1]));
 
     dicCTr.innerText = "点击翻译";
     dicCTr.classList.add(TRANSLATE);
@@ -1066,10 +1081,6 @@ async function showDic(id: string) {
         dicDetailsEl.innerHTML = "";
     }
 
-    changeContextEl.onclick = () => {
-        changeContext();
-    };
-
     function changeContext() {
         dicEl.classList.remove(showClass);
         let contextStart = 0;
@@ -1140,8 +1151,7 @@ async function showDic(id: string) {
             down.end = false;
             console.log(editText.slice(index.start, index.end));
         };
-        let stopEl = document.createElement("div");
-        stopEl.onclick = async () => {
+        hideDicEl.onclick = async () => {
             let text = editText.slice(index.start, index.end);
             if (isSentence) {
                 section.words[id].index = [index.start, index.end];
@@ -1164,16 +1174,12 @@ async function showDic(id: string) {
                 }
             }
             function exit() {
-                div.remove();
                 startEl.remove();
                 endEl.remove();
-                showDic(id);
             }
+
+            dicEl.classList.remove(showClass);
         };
-        stopEl.innerText = "ok";
-        let div = document.createElement("div");
-        div.append(stopEl);
-        toastEl.append(div);
     }
 }
 

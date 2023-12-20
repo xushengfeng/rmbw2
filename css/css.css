@@ -335,22 +335,25 @@ div > .icon {
 #dic {
     position: absolute;
     top: 24px;
-    left: 100vw;
-    width: 60vw;
-    height: calc(100vh - 24px);
+    left: 1rem;
+    width: calc(100vw - 2rem);
+    max-height: 60vh;
     display: flex;
     flex-direction: column;
     background-color: var(--bg1);
     backdrop-filter: var(--blur);
     transition: var(--transition);
-    border-radius: 1rem 0 0 1rem;
+    border-radius: 1rem;
     padding: 1rem;
     box-sizing: border-box;
+    opacity: 0;
+    visibility: hidden;
+    box-shadow: 0 0 4px #0002;
 }
 
 .dic_show {
-    left: 40vw !important;
-    box-shadow: 0 0 4px #0002;
+    opacity: 1 !important;
+    visibility: visible !important;
 }
 
 #more_words {
