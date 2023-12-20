@@ -298,9 +298,14 @@ async function setBookS() {
     }
 }
 
-function showBooks() {
+async function showBooks() {
     booksEl.innerHTML = "";
-    bookshelfStore.iterate((book: book) => {
+    let bookList: book[] = [];
+    await bookshelfStore.iterate((book: book) => {
+        bookList.push(book);
+    });
+    bookList = bookList.toSorted((a, b) => b.visitTime - a.visitTime);
+    for (let book of bookList) {
         let bookIEl = document.createElement("div");
         let titleEl = document.createElement("span");
         if (book.cover) {
@@ -317,8 +322,10 @@ function showBooks() {
         booksEl.append(bookIEl);
         bookIEl.onclick = () => {
             showBook(book);
+            book.visitTime = new Date().getTime();
+            bookshelfStore.setItem(book.id, book);
         };
-    });
+    }
 }
 function showBook(book: book) {
     nowBook.book = book.id;
