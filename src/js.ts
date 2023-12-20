@@ -443,12 +443,17 @@ async function showBookContent(id: string) {
         if (/\n+/.test(word.segment)) {
             plist.push([]);
         } else {
-            plist.at(-1).push({
-                text: word.segment,
-                start: word.index,
-                end: word.index + word.segment.length,
-                isWord: word.isWordLike,
-            });
+            if (word.segment === "#" && plist.at(-1)?.at(-1)?.text === "#") {
+                plist.at(-1).at(-1).text += "#";
+                plist.at(-1).at(-1).end += 1;
+            } else {
+                plist.at(-1).push({
+                    text: word.segment,
+                    start: word.index,
+                    end: word.index + word.segment.length,
+                    isWord: word.isWordLike,
+                });
+            }
         }
     }
     console.log(plist);
