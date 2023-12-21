@@ -585,13 +585,6 @@ async function showBookContent(id: string) {
         bookContentEl.append(el);
     }
 
-    let markList = await getAllMarks();
-    if (markList[0]) {
-        nowDicId = markList[0].id;
-        showDic(nowDicId);
-        dicEl.classList.remove("dic_show");
-    }
-
     bookContentEl.scrollTop = s.lastPosi * (bookContentEl.scrollHeight - bookContentEl.offsetHeight);
 
     bookContentEl.append(dicEl);
@@ -812,8 +805,12 @@ bookContentEl.onscroll = async () => {
     if (wordList.length) reflashContentScroll();
 };
 
-bookdicEl.onclick = () => {
-    dicEl.classList.toggle("dic_show");
+bookdicEl.onclick = async () => {
+    let markList = await getAllMarks();
+    if (markList[0]) {
+        nowDicId = markList[0].id;
+        showDic(nowDicId);
+    }
 };
 
 let dics: { [key: string]: Map<string, dic[0]> } = {};
@@ -1150,7 +1147,6 @@ async function showDic(id: string) {
     }
 
     function changeContext() {
-        dicEl.classList.remove(showClass);
         let contextStart = 0;
         let contextEnd = 0;
         if (isSentence) {
