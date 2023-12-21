@@ -191,7 +191,7 @@ div > .icon {
     overflow: hidden;
 }
 
-#main > div {
+#main {
     min-width: 100vw;
     background-color: var(--bg);
 }
