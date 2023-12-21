@@ -486,12 +486,12 @@ async function showBookContent(id: string) {
             let s = paragraph[0].start,
                 e = paragraph.at(-1).end;
             let j = Number(i) - 1;
-            while (j >= 0 && !paragraph[j].text.match(/[.?!]/)) {
+            while (j >= 0 && !paragraph[j].text.match(/[.?!\n]/)) {
                 s = paragraph[j].start;
                 j--;
             }
             j = Number(i);
-            while (j < paragraph.length && !paragraph[j].text.match(/[.?!]/)) {
+            while (j < paragraph.length && !paragraph[j].text.match(/[.?!\n]/)) {
                 e = paragraph[j].end;
                 j++;
             }
