@@ -7,13 +7,12 @@
    id="svg5"
    sodipodi:docname="logo.svg"
    version="1.1"
-   inkscape:version="1.2 (dc2aedaf03, 2022-05-15)"
+   inkscape:version="1.3.2 (091e20ef0f, 2023-11-25, custom)"
    inkscape:export-filename="logo.png"
    inkscape:export-xdpi="122.88"
    inkscape:export-ydpi="122.88"
    xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
    xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
-   xmlns:xlink="http://www.w3.org/1999/xlink"
    xmlns="http://www.w3.org/2000/svg"
    xmlns:svg="http://www.w3.org/2000/svg">
   <sodipodi:namedview
@@ -28,11 +27,11 @@
      showgrid="true"
      units="px"
      width="512px"
-     inkscape:zoom="3.2"
-     inkscape:cx="48.28125"
-     inkscape:cy="122.03125"
+     inkscape:zoom="1.2300254"
+     inkscape:cx="79.67315"
+     inkscape:cy="2.8454697"
      inkscape:window-width="1920"
-     inkscape:window-height="1031"
+     inkscape:window-height="1032"
      inkscape:window-x="0"
      inkscape:window-y="0"
      inkscape:window-maximized="1"
@@ -45,22 +44,14 @@
        id="grid907"
        spacingx="10"
        spacingy="10"
-       empspacing="4" />
+       empspacing="4"
+       originx="0"
+       originy="0"
+       units="px"
+       visible="true" />
   </sodipodi:namedview>
   <defs
      id="defs2">
-    <linearGradient
-       inkscape:collect="always"
-       id="linearGradient1055">
-      <stop
-         style="stop-color:#000000;stop-opacity:1;"
-         offset="0"
-         id="stop1051" />
-      <stop
-         style="stop-color:#666666;stop-opacity:1;"
-         offset="1"
-         id="stop1053" />
-    </linearGradient>
     <inkscape:path-effect
        effect="bspline"
        id="path-effect1133"
@@ -83,15 +74,6 @@
        apply_no_weight="true"
        apply_with_weight="true"
        only_selected="false" />
-    <linearGradient
-       inkscape:collect="always"
-       xlink:href="#linearGradient1055"
-       id="linearGradient1057"
-       x1="40"
-       y1="200"
-       x2="200"
-       y2="40"
-       gradientUnits="userSpaceOnUse" />
   </defs>
   <g
      inkscape:label="图层 1"
@@ -105,25 +87,26 @@
        x="0"
        y="0"
        ry="20" />
+    <circle
+       style="fill:none;stroke:#000000;stroke-width:15;stroke-linecap:round;stroke-linejoin:round"
+       id="path1"
+       cx="60"
+       cy="60"
+       r="20" />
+    <circle
+       style="fill:none;stroke:#000000;stroke-width:15;stroke-linecap:round;stroke-linejoin:round"
+       id="path2"
+       cx="180"
+       cy="180"
+       r="20" />
     <path
-       style="fill:url(#linearGradient1057);fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
-       d="m 40,200 c 0,0 27.376519,-74.91768 80,-110 30,-20 80,-50 80,-50 0,0 -10,50 -50,90 -35.35534,35.35534 -40,40 -110,70"
-       id="path750"
-       sodipodi:nodetypes="cscsc" />
+       style="fill:none;stroke:#000000;stroke-width:15;stroke-linecap:round;stroke-linejoin:miter;stroke-opacity:1;stroke-dasharray:none"
+       d="M 60,80 V 200"
+       id="path3" />
     <path
-       style="fill:none;stroke:#000000;stroke-width:20;stroke-linecap:round;stroke-linejoin:miter;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
-       d="m 50,60 c 0,0 50,-20 70,60 20,80 70,60 70,60"
-       id="path859"
-       sodipodi:nodetypes="czc" />
-    <path
-       style="fill:none;stroke:#000000;stroke-width:20;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:none;stroke-opacity:1"
-       d="M 70,50 50,60 70,70"
-       id="path3490"
-       sodipodi:nodetypes="ccc" />
-    <path
-       style="fill:none;stroke:#000000;stroke-width:20;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:none;stroke-opacity:1"
-       d="m 170,170 20,10 -20,10"
-       id="path3492"
-       sodipodi:nodetypes="ccc" />
+       style="fill:none;stroke:#000000;stroke-width:15;stroke-linecap:round;stroke-linejoin:miter;stroke-dasharray:none;stroke-opacity:1"
+       d="M 180,160 V 40"
+       id="path4"
+       sodipodi:nodetypes="cc" />
   </g>
 </svg>
