@@ -191,7 +191,7 @@ div > .icon {
     overflow: hidden;
 }
 
-.main > div {
+#main > div {
     min-width: 100vw;
     background-color: var(--bg);
 }
@@ -503,6 +503,54 @@ div:has(> .translate) > :not(.translate) {
     backdrop-filter: var(--blur);
     transition: var(--transition);
     border: none;
+}
+
+#menu {
+    position: fixed;
+    background-color: var(--bg1);
+    backdrop-filter: var(--blur);
+    transition: var(--transition);
+    padding: 4px;
+    margin: 0;
+    max-width: 64px !important;
+    min-width: none !important;
+    border: none;
+    box-shadow: 0 0 4px #0002;
+    border-radius: 4px;
+}
+#menu > * {
+    cursor: pointer;
+    user-select: none;
+}
+
+#prompt {
+    position: fixed;
+    background-color: var(--bg1);
+    backdrop-filter: var(--blur);
+    transition: var(--transition);
+    padding: 1rem;
+    border: none;
+    box-shadow: 0 0 4px #0002;
+    border-radius: 1rem;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    grid-template-rows: repeat(3, 1fr);
+    gap: 4px;
+}
+
+#prompt > span {
+    grid-area: 1 / 1 / 2 / 3;
+}
+#prompt > input {
+    grid-area: 2 / 1 / 3 / 3;
+}
+#prompt > .cancel_b {
+    grid-area: 3 / 1 / 4 / 2;
+    width: 100%;
+}
+#prompt > .ok_b {
+    grid-area: 3 / 2 / 4 / 3;
+    width: 100%;
 }
 
 #toast {

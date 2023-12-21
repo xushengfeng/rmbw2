@@ -40,6 +40,44 @@ var setting = localforage.createInstance({
 
 /************************************UI */
 
+function showMenu(x: number, y: number) {
+    menuEl.style.left = x + "px";
+    menuEl.style.top = y + "px";
+    menuEl.showPopover();
+}
+
+function prompt(message?: string, defaultValue?: string) {
+    let dialog = document.createElement("dialog");
+    dialog.id = "prompt";
+    let me = document.createElement("span");
+    let input = document.createElement("input");
+    let cancelEl = document.createElement("button");
+    cancelEl.innerText = "取消";
+    cancelEl.classList.add("cancel_b");
+    let okEl = document.createElement("button");
+    okEl.innerText = "确定";
+    okEl.classList.add("ok_b");
+    me.innerText = message ?? "";
+    input.value = defaultValue ?? "";
+    dialog.append(me, input, cancelEl, okEl);
+    document.body.append(dialog);
+    dialog.showModal();
+    return new Promise((re: (name: string) => void, rj) => {
+        okEl.onclick = () => {
+            re(input.value);
+            dialog.close();
+        };
+        cancelEl.onclick = () => {
+            rj();
+            dialog.close();
+        };
+        dialog.onclose = () => {
+            rj();
+            dialog.remove();
+        };
+    });
+}
+
 /************************************main */
 const booksEl = document.getElementById("books");
 const bookEl = document.getElementById("book");
@@ -65,6 +103,7 @@ const moreWordsEl = document.getElementById("more_words");
 const dicMinEl = document.getElementById("dic_min");
 const dicDetailsEl = document.getElementById("dic_details");
 const toastEl = document.getElementById("toast");
+const menuEl = document.getElementById("menu");
 
 const MARKWORD = "mark_word";
 const TRANSLATE = "translate";
@@ -330,6 +369,26 @@ async function showBooks() {
             } else {
                 changeEditEl.classList.add(DISABLECHANGE);
             }
+        };
+        bookIEl.oncontextmenu = (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            menuEl.innerHTML = "";
+            let renameEl = document.createElement("div");
+            renameEl.innerText = "重命名";
+            renameEl.onclick = async () => {
+                let name = await prompt("更改书名", book.name);
+                if (name) {
+                    titleEl.innerText = name;
+                    if (bookIEl.innerText) bookIEl.querySelector("div").innerText = name;
+                    book.name = name;
+                    bookshelfStore.setItem(book.id, book);
+                }
+            };
+            menuEl.append(renameEl);
+            setTimeout(() => {
+                showMenu(e.clientX, e.clientY);
+            }, 100);
         };
     }
 }
