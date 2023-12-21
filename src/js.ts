@@ -1121,8 +1121,22 @@ async function showDic(id: string) {
                 endEl.style.top = el.offsetTop + el.offsetHeight + "px";
             }
         }
-        setElPosi(bookContentEl.querySelector(`span[data-s="${contextStart}"]`), true);
-        setElPosi(bookContentEl.querySelector(`span[data-e="${contextEnd}"]`), false);
+        function matchRangeEl(n: number, left: boolean) {
+            for (let i = 0; i < editText.length - n + 1; i++) {
+                for (let ii of [-1, 1]) {
+                    let el = bookContentEl.querySelector(
+                        `span[data-${left ? "s" : "e"}="${n + i * ii}"]`
+                    ) as HTMLElement;
+                    if (el) {
+                        return el;
+                    }
+                }
+            }
+        }
+        let contextStartEl = matchRangeEl(contextStart, true);
+        let contextEndEl = matchRangeEl(contextEnd, false);
+        setElPosi(contextStartEl, true);
+        setElPosi(contextEndEl, false);
         let down = { start: false, end: false };
         let index = { start: contextStart, end: contextEnd };
         startEl.onpointerdown = (e) => {
