@@ -1158,8 +1158,12 @@ async function showDic(id: string) {
         }
         let startEl = document.createElement("div");
         let endEl = document.createElement("div");
-        startEl.classList.add("context_start");
-        endEl.classList.add("context_end");
+        const startClass = "context_start";
+        const endClass = "context_end";
+        startEl.classList.add(startClass);
+        endEl.classList.add(endClass);
+        bookContentEl.querySelector("." + startClass)?.remove();
+        bookContentEl.querySelector("." + endClass)?.remove();
         bookContentEl.append(startEl, endEl);
         function setElPosi(el: HTMLElement, left: boolean) {
             if (left) {
