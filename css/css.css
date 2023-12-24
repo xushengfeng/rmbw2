@@ -457,6 +457,7 @@ div:has(> .translate) > :not(.translate) {
 #review_view {
     flex-grow: 1;
     display: flex;
+    max-height: calc(100vh - 2 * 24px);
 }
 .review_word {
     flex-grow: 1;
@@ -465,6 +466,9 @@ div:has(> .translate) > :not(.translate) {
 }
 .review_word > :first-child {
     flex-grow: 1;
+    overflow: scroll;
+}
+.review_word > :nth-child(2) {
     overflow: scroll;
 }
 .review_word > :last-child {
