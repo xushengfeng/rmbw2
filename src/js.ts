@@ -1536,7 +1536,7 @@ async function showReview(x: { id: string; card: fsrsjs.Card }, type: review) {
         if (!word) return context;
         for (let i of word.means) {
             if (i.card_id === x.id) {
-                for (let c of i.contexts) {
+                for (let c of i.contexts.toReversed()) {
                     let p = document.createElement("p");
                     let span = document.createElement("span");
                     span.classList.add(MARKWORD);
