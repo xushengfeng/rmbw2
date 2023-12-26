@@ -1134,6 +1134,7 @@ async function showDic(id: string) {
                 } else {
                     setcheck(0);
                     visit(true);
+                    changeDicMean(word, oldDic, 0);
                 }
             } else {
                 setcheck(oldMean);
