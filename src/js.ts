@@ -1050,10 +1050,11 @@ async function showDic(id: string) {
     if (!isSentence) {
         search(oldWord);
         dicWordEl.value = oldWord;
-        dicWordEl.onchange = () => {
+        dicWordEl.onchange = async () => {
             let newWord = dicWordEl.value.trim();
+            await visit(false);
+            await changeDicMean(newWord, oldDic, -1);
             search(newWord);
-            changeDicMean(newWord, oldDic, oldMean);
         };
 
         let lword = lemmatizer(sourceWord);
@@ -1061,18 +1062,19 @@ async function showDic(id: string) {
         for (let w of Array.from(new Set([sourceWord, lword]))) {
             let div = document.createElement("span");
             div.innerText = w;
-            div.onclick = () => {
+            div.onclick = async () => {
                 dicWordEl.value = w;
+                await visit(false);
+                await changeDicMean(w, oldDic, -1);
                 search(w);
-                changeDicMean(w, oldDic, oldMean);
             };
             moreWordsEl.append(div);
         }
 
-        function visit(t: boolean) {
+        async function visit(t: boolean) {
             wordx.visit = t;
             section.words[id] = wordx;
-            sectionsStore.setItem(sectionId, section);
+            await sectionsStore.setItem(sectionId, section);
         }
 
         async function search(word: string) {
@@ -1327,7 +1329,7 @@ async function saveCard(v: {
 type aim = { role: "system" | "user" | "assistant"; content: string }[];
 
 function ai(m: aim) {
-    return new Promise((re: (text: string) => void) => {
+    return new Promise((re: (text: string) => void, rj: (err: Error) => void) => {
         fetch(`https://ai.fakeopen.com/v1/chat/completions`, {
             method: "POST",
             headers: {
@@ -1348,7 +1350,8 @@ function ai(m: aim) {
                 let answer = t.choices[0].message.content;
                 console.log(answer);
                 re(answer);
-            });
+            })
+            .catch(rj);
     });
 }
 
