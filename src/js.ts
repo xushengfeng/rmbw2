@@ -1547,7 +1547,7 @@ async function showReview(x: { id: string; card: fsrsjs.Card }, type: review) {
         return context;
     }
     if (!x) {
-        reviewEl.innerText = "暂无复习🎉";
+        reviewViewEl.innerText = "暂无复习🎉";
         return;
     }
     if (type === "word") {
