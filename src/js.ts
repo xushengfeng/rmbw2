@@ -1436,20 +1436,17 @@ async function getFutureReviewDue(days: number) {
             wordList.push({ id: key, card: value });
         }
     });
-    wordList.filter(async (x) => {
+    let l: typeof wordList = [];
+    for (let x of wordList) {
         let wordid = (await card2word.getItem(x.id)) as string;
         let wordRecord = (await wordsStore.getItem(wordid)) as record;
         for (let i of wordRecord.means) {
-            if (i.card_id === x.id) {
-                if (i.index === -1) {
-                    return false;
-                } else {
-                    return true;
-                }
+            if (i.card_id === x.id && i.index != -1) {
+                l.push(x);
             }
         }
-        return false;
-    });
+    }
+    wordList = l;
     await spellStore.iterate((value: fsrsjs.Card, key) => {
         if (value.due.getTime() < now) {
             spellList.push({ id: key, card: value });
