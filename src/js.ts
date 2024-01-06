@@ -1012,13 +1012,14 @@ async function showDic(id: string) {
     dicCTr.innerText = "点击翻译";
     dicCTr.classList.add(TRANSLATE);
     dicCTr.onclick = async () => {
-        let translator = await pipeline("translation", "Xenova/nllb-200-distilled-600M");
-        let output = await translator(context, {
-            src_lang: "eng_Latn",
-            tgt_lang: "zho_Hans",
-        });
-        console.log(output);
-        dicCTr.innerText = output[0].translation_text;
+        let output = await ai([
+            {
+                role: "system",
+                content: `您是一个翻译引擎，只能将用户的输入文本翻译为${navigator.language}，无法解释。`,
+            },
+            { role: "user", content: context },
+        ]);
+        dicCTr.innerText = output;
     };
 
     toSentenceEl.onclick = async () => {
