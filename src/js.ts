@@ -972,7 +972,7 @@ async function showDic(id: string) {
                 if (m.contexts.length === 0) {
                     await card2word.removeItem(m.card_id);
                     await cardsStore.removeItem(m.card_id);
-                    wordv.means = wordv.means.filter((i) => i != m);
+                    wordv.means = wordv.means.filter((i) => i.index != m.index);
                     await wordsStore.setItem(word, wordv);
                 }
                 if (wordv.means.length === 0) {
@@ -997,6 +997,7 @@ async function showDic(id: string) {
             oldMean = i;
             section.words[id].id = word;
             await sectionsStore.setItem(sectionId, section);
+            wordv = (await wordsStore.getItem(wordx.id)) as record;
         }
     }
 
