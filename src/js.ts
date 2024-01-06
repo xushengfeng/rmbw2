@@ -1329,22 +1329,30 @@ async function saveCard(v: {
 
 type aim = { role: "system" | "user" | "assistant"; content: string }[];
 
-function ai(m: aim) {
-    return new Promise((re: (text: string) => void, rj: (err: Error) => void) => {
-        fetch(`https://ai.fakeopen.com/v1/chat/completions`, {
+async function ai(m: aim) {
+    let config = {
+        model: "gpt-3.5-turbo",
+        temperature: 0.5,
+        top_p: 1,
+        frequency_penalty: 1,
+        presence_penalty: 1,
+        messages: m,
+    };
+    let userConfig = (await setting.getItem("ai.config")) as string;
+    if (userConfig) {
+        let c = (JSON.parse(userConfig).messages = m);
+        userConfig = JSON.stringify(c);
+    } else {
+        userConfig = JSON.stringify(config);
+    }
+    return new Promise(async (re: (text: string) => void, rj: (err: Error) => void) => {
+        fetch(((await setting.getItem("ai.url")) as string) || `https://api.openai.com/v1/chat/completions`, {
             method: "POST",
             headers: {
-                Authorization: `Bearer pk-this-is-a-real-free-pool-token-for-everyone`,
+                Authorization: `Bearer ${(await setting.getItem("ai.key")) as string}`,
                 "content-type": "application/json",
             },
-            body: JSON.stringify({
-                model: "gpt-3.5-turbo",
-                temperature: 0.5,
-                top_p: 1,
-                frequency_penalty: 1,
-                presence_penalty: 1,
-                messages: m,
-            }),
+            body: userConfig,
         })
             .then((v) => v.json())
             .then((t) => {
