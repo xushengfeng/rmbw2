@@ -1,10 +1,6 @@
 /// <reference types="vite/client" />
 
 import localforage from "localforage";
-import { pipeline, env } from "@xenova/transformers";
-
-env.allowLocalModels = true;
-env.allowRemoteModels = false;
 
 import mammoth from "mammoth";
 
