@@ -1,5 +1,7 @@
 /// <reference types="vite/client" />
 
+import { el } from "redom";
+
 import localforage from "localforage";
 
 import mammoth from "mammoth";
@@ -20,6 +22,7 @@ import "@oddbird/popover-polyfill";
 
 import pen_svg from "../assets/icons/pen.svg";
 import ok_svg from "../assets/icons/ok.svg";
+import translate_svg from "../assets/icons/translate.svg";
 
 function icon(src: string) {
     return `<img src="${src}" class="icon">`;
@@ -75,6 +78,11 @@ function prompt(message?: string, defaultValue?: string) {
 }
 
 /************************************main */
+const MARKWORD = "mark_word";
+const TRANSLATE = "translate";
+const HIDEMEANS = "hide_means";
+const DISABLECHANGE = "disable_change";
+
 const booksEl = document.getElementById("books");
 const bookEl = document.getElementById("book");
 const bookSectionsEl = document.getElementById("sections");
@@ -90,7 +98,15 @@ const lastMarkEl = document.getElementById("last_mark");
 const nextMarkEl = document.getElementById("next_mark");
 const dicEl = document.getElementById("dic");
 const bookdicEl = document.getElementById("book_dic");
-const dicContextEl = document.getElementById("dic_context");
+const dicTransEl = document.getElementById("dic_trans");
+const dicTransB = el("button");
+dicTransB.innerHTML = icon(translate_svg);
+const dicTransContent = el("input", {
+    alt: "语境翻译",
+    class: TRANSLATE,
+    style: { border: "none", width: "100%", fontSize: "1rem" },
+});
+dicTransEl.append(dicTransB, dicTransContent);
 const toSentenceEl = document.getElementById("to_sentence");
 const rmCardEl = document.getElementById("rm_card");
 const hideDicEl = document.getElementById("hide_dic");
@@ -100,11 +116,6 @@ const dicMinEl = document.getElementById("dic_min");
 const dicDetailsEl = document.getElementById("dic_details");
 const toastEl = document.getElementById("toast");
 const menuEl = document.getElementById("menu");
-
-const MARKWORD = "mark_word";
-const TRANSLATE = "translate";
-const HIDEMEANS = "hide_means";
-const DISABLECHANGE = "disable_change";
 
 var bookshelfStore = localforage.createInstance({ name: "bookshelf" });
 var sectionsStore = localforage.createInstance({ name: "sections" });
@@ -997,17 +1008,7 @@ async function showDic(id: string) {
         }
     }
 
-    let dicCTr = document.createElement("p");
-    dicContextEl.innerHTML = "";
-    dicContextEl.append(dicCTr);
-
-    let mainWord = document.createElement("span");
-    mainWord.classList.add(MARKWORD);
-    mainWord.innerText = context.slice(sourceIndex[0], sourceIndex[1]);
-
-    dicCTr.innerText = "点击翻译";
-    dicCTr.classList.add(TRANSLATE);
-    dicCTr.onclick = async () => {
+    dicTransB.onclick = async () => {
         let output = await ai([
             {
                 role: "system",
@@ -1015,7 +1016,12 @@ async function showDic(id: string) {
             },
             { role: "user", content: context },
         ]);
-        dicCTr.innerText = output;
+        dicTransContent.value = output;
+        if (isSentence) {
+            let r = (await card2sentence.getItem(id)) as record2;
+            r.trans = output;
+            await card2sentence.setItem(id, r);
+        }
     };
 
     toSentenceEl.onclick = async () => {
@@ -1046,6 +1052,8 @@ async function showDic(id: string) {
         rm(oldWord, oldDic, oldMean);
     };
     if (!isSentence) {
+        dicTransContent.value = "";
+
         search(oldWord);
         dicWordEl.value = oldWord;
         dicWordEl.onchange = async () => {
@@ -1143,8 +1151,14 @@ async function showDic(id: string) {
     } else {
         dicWordEl.value = "";
         moreWordsEl.innerHTML = "";
-        dicContextEl.innerText = dicContextEl.innerText;
+        dicTransContent.value = ((await card2sentence.getItem(id)) as record2).trans;
         dicDetailsEl.innerHTML = "";
+
+        dicTransContent.onchange = async () => {
+            let r = (await card2sentence.getItem(id)) as record2;
+            r.trans = dicTransContent.value;
+            await card2sentence.setItem(id, r);
+        };
     }
 
     function changeContext() {
