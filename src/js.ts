@@ -29,6 +29,7 @@ import sentence_svg from "../assets/icons/sentence.svg";
 import clear_svg from "../assets/icons/clear.svg";
 import close_svg from "../assets/icons/close.svg";
 import more_svg from "../assets/icons/more.svg";
+import reload_svg from "../assets/icons/reload.svg";
 
 function icon(src: string) {
     return `<img src="${src}" class="icon">`;
@@ -797,7 +798,7 @@ async function setEdit() {
             console.log(aiM);
             let start = text.selectionStart;
             let end = text.selectionEnd;
-            let aitext = await ai(aiM);
+            let aitext = await ai(aiM, "对话");
             let addText = `ai:\n${aitext}`;
             let changeText = text.value.slice(0, start) + addText + text.value.slice(end);
             text.value = changeText;
@@ -1052,13 +1053,16 @@ async function showDic(id: string) {
     }
 
     dicTransB.onclick = async () => {
-        let output = await ai([
-            {
-                role: "system",
-                content: `您是一个翻译引擎，只能将用户的输入文本翻译为${navigator.language}，无法解释。`,
-            },
-            { role: "user", content: context },
-        ]);
+        let output = await ai(
+            [
+                {
+                    role: "system",
+                    content: `您是一个翻译引擎，只能将用户的输入文本翻译为${navigator.language}，无法解释。`,
+                },
+                { role: "user", content: context },
+            ],
+            "翻译"
+        );
         dicTransContent.value = output;
         if (isSentence) {
             let r = (await card2sentence.getItem(id)) as record2;
@@ -1158,12 +1162,15 @@ async function showDic(id: string) {
                 let c = `${context.slice(0, sourceIndex[0])}**${sourceWord}**${context.slice(sourceIndex[1])}`;
                 console.log(c);
 
-                ai([
-                    {
-                        role: "user",
-                        content: `I have a bolded word '${sourceWord}' wrapped in double asterisks in the sentence:'${c}'.This is a dictionary's explanation of several interpretations:${means}.Please think carefully and select the most appropriate label for explanation, without providing any explanation.`,
-                    },
-                ]).then((a) => {
+                ai(
+                    [
+                        {
+                            role: "user",
+                            content: `I have a bolded word '${sourceWord}' wrapped in double asterisks in the sentence:'${c}'.This is a dictionary's explanation of several interpretations:${means}.Please think carefully and select the most appropriate label for explanation, without providing any explanation.`,
+                        },
+                    ],
+                    "选择义项"
+                ).then((a) => {
                     console.log(a);
                     let n = Number(a.match(/[0-9]+/)[0]);
                     if (isNaN(n)) return;
@@ -1383,7 +1390,7 @@ async function saveCard(v: {
 
 type aim = { role: "system" | "user" | "assistant"; content: string }[];
 
-async function ai(m: aim) {
+async function ai(m: aim, text?: string) {
     let config = {
         model: "gpt-3.5-turbo",
         temperature: 0.5,
@@ -1399,6 +1406,14 @@ async function ai(m: aim) {
     } else {
         userConfig = JSON.stringify(config);
     }
+    let abort = new AbortController();
+    let stopEl = el("button", iconEl(close_svg));
+    stopEl.onclick = () => {
+        abort.abort();
+        pel.remove();
+    };
+    let pel = el("div", [el("p", `AI正在思考${text || ""}`), stopEl]);
+    toastEl.append(pel);
     return new Promise(async (re: (text: string) => void, rj: (err: Error) => void) => {
         fetch(((await setting.getItem("ai.url")) as string) || `https://api.openai.com/v1/chat/completions`, {
             method: "POST",
@@ -1407,14 +1422,31 @@ async function ai(m: aim) {
                 "content-type": "application/json",
             },
             body: userConfig,
+            signal: abort.signal,
         })
-            .then((v) => v.json())
+            .then((v) => {
+                pel.remove();
+                return v.json();
+            })
             .then((t) => {
                 let answer = t.choices[0].message.content;
                 console.log(answer);
                 re(answer);
             })
-            .catch(rj);
+            .catch(() => {
+                pel.innerHTML = "";
+                let reloadEl = el("button", iconEl(reload_svg));
+                let escEl = el("button", iconEl(close_svg));
+                reloadEl.onclick = () => {
+                    ai(m, text);
+                    pel.remove();
+                };
+                escEl.onclick = () => {
+                    pel.remove();
+                };
+                pel.append(el("p", `AI处理${text || ""}时出现错误`), el("div", [reloadEl, escEl]));
+                rj;
+            });
     });
 }
 
