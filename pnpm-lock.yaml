@@ -29,6 +29,9 @@ dependencies:
   mammoth:
     specifier: ^1.6.0
     version: 1.6.0
+  redom:
+    specifier: ^4.0.0
+    version: 4.0.0
 
 devDependencies:
   js-mdict:
@@ -623,6 +626,10 @@ packages:
       safe-buffer: 5.1.2
       string_decoder: 1.1.1
       util-deprecate: 1.0.2
+
+  /redom@4.0.0:
+    resolution: {integrity: sha512-+UwnK/sKnjqtzQRANQw3gKJsxAO45ZdeF7VNQky7iGirc0nx6IQL9otv6KJwNAJJ/tQ75k42NZUuJPVV5ehVSg==}
+    dev: false
 
   /regenerator-runtime@0.14.0:
     resolution: {integrity: sha512-srw17NI0TUWHuGa5CFGGmhfNIeja30WMBfbslPNhf6JrqQlLN5gcrvig1oqPxiVaXb0oW0XRKtH6Nngs5lKCIA==}

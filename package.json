@@ -22,7 +22,8 @@
         "intl-segmenter-polyfill": "^0.4.4",
         "lemmatizer": "^0.0.1",
         "localforage": "^1.10.0",
-        "mammoth": "^1.6.0"
+        "mammoth": "^1.6.0",
+        "redom": "^4.0.0"
     },
     "devDependencies": {
         "js-mdict": "^5.0.2",
