@@ -23,9 +23,18 @@ import "@oddbird/popover-polyfill";
 import pen_svg from "../assets/icons/pen.svg";
 import ok_svg from "../assets/icons/ok.svg";
 import translate_svg from "../assets/icons/translate.svg";
+import left_svg from "../assets/icons/left.svg";
+import right_svg from "../assets/icons/right.svg";
+import sentence_svg from "../assets/icons/sentence.svg";
+import clear_svg from "../assets/icons/clear.svg";
+import close_svg from "../assets/icons/close.svg";
+import more_svg from "../assets/icons/more.svg";
 
 function icon(src: string) {
     return `<img src="${src}" class="icon">`;
+}
+function iconEl(src: string) {
+    return el("img", { src, class: "icon", alt: "按钮图标" });
 }
 
 function uuid() {
@@ -94,26 +103,43 @@ const addSectionEL = document.getElementById("add_section");
 const bookNavEl = document.getElementById("book_nav");
 const bookContentEl = document.getElementById("book_content");
 const changeEditEl = document.getElementById("change_edit");
-const lastMarkEl = document.getElementById("last_mark");
-const nextMarkEl = document.getElementById("next_mark");
 const dicEl = document.getElementById("dic");
 const bookdicEl = document.getElementById("book_dic");
-const dicTransEl = document.getElementById("dic_trans");
-const dicTransB = el("button");
-dicTransB.innerHTML = icon(translate_svg);
+const lastMarkEl = el("button", iconEl(left_svg));
+const nextMarkEl = el("button", iconEl(right_svg));
+const toSentenceEl = el("button", iconEl(sentence_svg));
+const rmCardEl = el("button", iconEl(clear_svg));
+const hideDicEl = el("button", iconEl(close_svg));
+const dicWordEl = el("input", { alt: "单词" });
+const moreWordsEl = el("div", { class: "more_words" });
+const dicTransB = el("button", iconEl(translate_svg));
 const dicTransContent = el("input", {
     alt: "语境翻译",
     class: TRANSLATE,
     style: { border: "none", width: "100%", fontSize: "1rem" },
 });
-dicTransEl.append(dicTransB, dicTransContent);
-const toSentenceEl = document.getElementById("to_sentence");
-const rmCardEl = document.getElementById("rm_card");
-const hideDicEl = document.getElementById("hide_dic");
-const dicWordEl = document.getElementById("dic_word") as HTMLInputElement;
-const moreWordsEl = document.getElementById("more_words");
-const dicMinEl = document.getElementById("dic_min");
-const dicDetailsEl = document.getElementById("dic_details");
+const dicMinEl = el("button", { style: { minHeight: "24px" } }, iconEl(more_svg));
+const dicDetailsEl = el("div", {
+    style: {
+        overflow: "scroll",
+        gap: "1rem",
+        display: "flex",
+        flexDirection: "column",
+    },
+    class: "dic_details",
+});
+
+dicEl.append(
+    el("div", [
+        el("div", { style: { display: "flex" } }, [lastMarkEl, nextMarkEl, toSentenceEl, rmCardEl, hideDicEl]),
+        dicWordEl,
+        moreWordsEl,
+    ]),
+    el("div", [dicTransB, dicTransContent]),
+    dicMinEl,
+    dicDetailsEl
+);
+
 const toastEl = document.getElementById("toast");
 const menuEl = document.getElementById("menu");
 

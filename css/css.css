@@ -168,12 +168,12 @@ body > #index > div > .icon {
     height: var(--main-bar-size);
 }
 
-div:has(> .icon) {
+:is(div, button):has(> .icon) {
     height: 24px;
     width: 24px;
     position: relative;
 }
-div > .icon {
+:is(div, button) > .icon {
     height: 24px;
     width: 24px;
 }
@@ -331,10 +331,6 @@ div > .icon {
     width: 20px;
 }
 
-#mark_nav {
-    display: flex;
-}
-
 #dic {
     position: absolute;
     top: 24px;
@@ -359,23 +355,14 @@ div > .icon {
     visibility: visible !important;
 }
 
-#more_words {
+.more_words {
     display: flex;
     gap: 4px;
 }
-#more_words > span {
+.more_words > span {
     cursor: pointer;
     border-radius: 4px;
     border: dashed 1px #000;
-}
-#dic_min {
-    min-height: 24px;
-}
-#dic_details {
-    overflow: scroll;
-    gap: 1rem;
-    display: flex;
-    flex-direction: column;
 }
 
 .translate {
@@ -390,18 +377,18 @@ div:has(> .translate) > :not(.translate) {
     padding-left: 1rem;
 }
 
-#dic_details > div {
+.dic_details > div {
     border-radius: 0.4rem;
     padding: 4px;
     border: solid 1px transparent;
 }
-#dic_details > div:hover {
+.dic_details > div:hover {
     border: dashed 1px #000;
 }
-#dic_details > div:has(input[type="radio"]:checked) {
+.dic_details > div:has(input[type="radio"]:checked) {
     border: dashed 1px #000;
 }
-#dic_details > div > input[type="radio"] {
+.dic_details > div > input[type="radio"] {
     display: none;
 }
 
