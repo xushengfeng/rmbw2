@@ -752,22 +752,33 @@ async function setEdit() {
     text.onkeyup = async (e) => {
         if (e.key === "Enter" && !e.shiftKey) {
             let l = text.value.split("\n");
+            let index = 0;
+            let aiRange: { s: number; e: number }[] = [];
+            const startMark = "=ai=";
+            const endMark = "====";
+            const ignoreMark = "//";
+            const userMark = ">";
+            const aiMark = "ai:";
             let hasAi = false;
             let aiM: aim = [];
             let sourceText = "";
             for (let i of l) {
-                if (i === "=ai=") {
+                if (i === startMark) {
                     hasAi = true;
+                    aiRange.push({ s: index + startMark.length, e: index + startMark.length });
+                    index += i.length + 1;
                     continue;
                 }
                 if (hasAi) {
-                    if (i.startsWith("ai:")) {
-                        aiM.push({ role: "assistant", content: i.replace("ai:", "").trim() });
-                    } else if (i.startsWith(">>>")) {
-                        aiM.push({ role: "user", content: i.replace(">>>", "").trim() });
-                    } else if (i === "====") {
+                    if (i.startsWith(aiMark)) {
+                        aiM.push({ role: "assistant", content: i.replace(aiMark, "").trim() });
+                    } else if (i.startsWith(userMark)) {
+                        aiM.push({ role: "user", content: i.replace(userMark, "").trim() });
+                    } else if (i === endMark) {
                         hasAi = false;
-                    } else if (i.startsWith("//")) {
+                        aiRange.at(-1).e = index;
+                    } else if (i.startsWith(ignoreMark)) {
+                        index += i.length + 1;
                         continue;
                     } else {
                         if (aiM.length) aiM.at(-1).content += "\n" + i;
@@ -775,18 +786,24 @@ async function setEdit() {
                 } else {
                     sourceText += i + "\n";
                 }
+                index += i.length + 1;
             }
             if (aiM.length === 0) return;
+            if (aiM.at(-1).role !== "user") return;
+            for (let r of aiRange) {
+                if (!(r.s <= text.selectionStart && text.selectionEnd <= r.e)) return;
+            }
             aiM.unshift({ role: "system", content: `This is a passage: ${sourceText}` });
             console.log(aiM);
             let start = text.selectionStart;
             let end = text.selectionEnd;
             let aitext = await ai(aiM);
-            let addText = `ai:${aitext}`;
+            let addText = `ai:\n${aitext}`;
             let changeText = text.value.slice(0, start) + addText + text.value.slice(end);
             text.value = changeText;
             editText = changeText;
-            end += addText.length;
+            text.selectionStart = start;
+            text.selectionEnd = start + addText.length;
         }
     };
     bookContentEl.append(text);
