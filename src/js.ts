@@ -1,6 +1,6 @@
 /// <reference types="vite/client" />
 
-import { el } from "redom";
+import { el, text } from "redom";
 
 import localforage from "localforage";
 
@@ -19,6 +19,9 @@ if (!Segmenter) {
 }
 
 import "@oddbird/popover-polyfill";
+
+import Keyboard from "simple-keyboard";
+import "simple-keyboard/build/css/index.css";
 
 import pen_svg from "../assets/icons/pen.svg";
 import ok_svg from "../assets/icons/ok.svg";
@@ -1523,6 +1526,33 @@ reviewBEl.onclick = () => {
 const reviewReflashEl = document.getElementById("review_reflash");
 const reviewViewEl = document.getElementById("review_view");
 
+const keyboardEl = el("div", { class: "simple-keyboard" });
+const handwriterEl = el("div");
+const spellInputEl = el("div", { style: { display: "none" } }, [keyboardEl, handwriterEl]);
+reviewEl.append(spellInputEl);
+
+let keyboard = new Keyboard(keyboardEl, {
+    onChange: (text) => spellCheckF(text),
+    onKeyPress: (button) => {
+        if (button === "{shift}") {
+            let currentLayout = keyboard.options.layoutName;
+            let shiftToggle = currentLayout === "default" ? "shift" : "default";
+
+            keyboard.setOptions({
+                layoutName: shiftToggle,
+            });
+        }
+
+        spellF(button);
+    },
+    layout: {
+        default: ["q w e r t y u i o p", "a s d f g h j k l", "{shift} z x c v b n m {bksp}", "tip {space} audio"],
+        shift: ["Q W E R T Y U I O P", "A S D F G H J K L", "{shift} Z X C V B N M {bksp}", "tip {space} audio"],
+        handwrite: ["tip {space} audio"],
+    },
+    display: { "{space}": "__", "{shift}": "Shift", "{bksp}": "<-", tip: "🫣", audio: "📣" },
+});
+
 async function getFutureReviewDue(days: number) {
     let now = new Date().getTime();
     now += days * 24 * 60 * 60 * 1000;
@@ -1606,9 +1636,13 @@ reviewWordEl.checked = true;
 reviewModeEl.onclick = () => {
     if (reviewWordEl.checked) {
         reviewType = "word";
+
+        spellInputEl.style.display = "none";
     }
     if (reviewSpellEl.checked) {
         reviewType = "spell";
+
+        spellInputEl.style.display = "";
     }
 
     reviewReflashEl.click();
@@ -1625,6 +1659,12 @@ reviewReflashEl.onclick = async () => {
     console.log(l);
     showReview(l, reviewType);
 };
+
+var spellCheckF: (text: string) => void = (text) => console.log(text);
+var spellF: (text: string) => void = (text) => console.log(text);
+function clearKeyboard() {
+    keyboard.clearInput();
+}
 
 async function showReview(x: { id: string; card: fsrsjs.Card }, type: review) {
     function crContext(word: record) {
@@ -1692,42 +1732,49 @@ async function showReview(x: { id: string; card: fsrsjs.Card }, type: review) {
         reviewViewEl.append(div);
     }
     if (type === "spell") {
-        let input = document.createElement("input");
+        let input = el("div");
+        clearKeyboard();
         let wordEl = document.createElement("div");
         let spellNum = 3;
         const word = x.id;
-        input.oninput = async () => {
-            let inputWord = input.value;
+        spellCheckF = async (inputValue: string) => {
+            let inputWord = inputValue;
             wordEl.innerHTML = "";
-            switch (inputWord) {
-                case "~": // 暂时展示
-                    input.value = "";
-                    play(word);
-                    wordEl.innerText = word;
-                    setSpellCard(x.id, x.card, 2);
-                    break;
-                case "!": // 发音
-                    play(word);
-                    input.value = "";
-                    break;
-                case word: // 正确
-                    if (spellNum === 1) {
-                        setSpellCard(x.id, x.card, 4);
-                        let next = await nextDue(reviewType);
-                        showReview(next, reviewType);
-                    } else {
-                        spellNum--;
-                        input.value = "";
-                        input.placeholder = `Good! ${spellNum} time(s) left`;
-                    }
-                    break;
+            if (inputWord === word) {
+                // 正确
+                if (spellNum === 1) {
+                    setSpellCard(x.id, x.card, 4);
+                    let next = await nextDue(reviewType);
+                    showReview(next, reviewType);
+                } else {
+                    spellNum--;
+                    inputValue = "";
+                    input.innerText = `Good! ${spellNum} time(s) left`;
+                }
             }
             //错误归位
             if (inputWord.length === word.length && inputWord != word) {
-                input.value = "";
-                input.placeholder = `"${inputWord}" is wrong! ${spellNum} time(s) left`;
+                inputValue = "";
+                input.innerText = `"${inputWord}" is wrong! ${spellNum} time(s) left`;
                 play(word);
                 setSpellCard(x.id, x.card, 1);
+            }
+        };
+        spellF = (button) => {
+            console.log(button);
+            if (button === "tip") {
+                // 暂时展示
+                input.innerText = "";
+                clearKeyboard();
+                play(word);
+                wordEl.innerText = word;
+                setSpellCard(x.id, x.card, 2);
+            }
+            if (button === "audio") {
+                // 发音
+                play(word);
+                input.innerText = "";
+                clearKeyboard();
             }
         };
         let context = crContext((await wordsStore.getItem(word)) as record);

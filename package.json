@@ -23,7 +23,8 @@
         "lemmatizer": "^0.0.1",
         "localforage": "^1.10.0",
         "mammoth": "^1.6.0",
-        "redom": "^4.0.0"
+        "redom": "^4.0.0",
+        "simple-keyboard": "^3.7.45"
     },
     "devDependencies": {
         "js-mdict": "^5.0.2",

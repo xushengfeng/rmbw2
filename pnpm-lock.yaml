@@ -32,6 +32,9 @@ dependencies:
   redom:
     specifier: ^4.0.0
     version: 4.0.0
+  simple-keyboard:
+    specifier: ^3.7.45
+    version: 3.7.45
 
 devDependencies:
   js-mdict:
@@ -664,6 +667,10 @@ packages:
 
   /setimmediate@1.0.5:
     resolution: {integrity: sha512-MATJdZp8sLqDl/68LfQmbP8zKPLQNV6BIZoIgrscFDQ+RsvK/BxeDQOgyxKKoh0y/8h3BqVFnCqQ/gd+reiIXA==}
+    dev: false
+
+  /simple-keyboard@3.7.45:
+    resolution: {integrity: sha512-53BSay9h99V8GuHvBmiUiNesG4oFwTJpMcE/nf3VXWYX95njPJeLdhDzgFljIITjZ6nKXe8E2Lp7OMArI+R/Cw==}
     dev: false
 
   /source-map-js@1.0.2:
