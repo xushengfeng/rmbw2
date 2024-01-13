@@ -1777,7 +1777,15 @@ async function showReview(x: { id: string; card: fsrsjs.Card }, type: review) {
                 clearKeyboard();
             }
         };
-        let context = crContext((await wordsStore.getItem(word)) as record);
+        let context = el("div");
+        let r = (await wordsStore.getItem(word)) as record;
+        for (let i of r.means) {
+            if (i.index === -1) continue;
+            let x = dics[i.dic].get(word) as dic[0];
+            let m = x.means[i.index];
+
+            context.append(el("div", [el("p", m.dis.text), el("p", { class: TRANSLATE }, m.dis.tran)]));
+        }
         const div = document.createElement("div");
         div.append(input, context, wordEl);
         div.classList.add("review_spell");
