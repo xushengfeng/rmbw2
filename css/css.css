@@ -196,6 +196,20 @@ body > #index > div > .icon {
     background-color: var(--bg);
 }
 
+.to_visit {
+    position: relative;
+}
+.to_visit::after {
+    content: "";
+    position: absolute;
+    width: 6px;
+    height: 6px;
+    top: 0px;
+    right: 0px;
+    background-color: #2735bb;
+    border-radius: 50%;
+}
+
 #book_nav {
     position: absolute;
     top: 24px;

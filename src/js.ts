@@ -95,6 +95,7 @@ const MARKWORD = "mark_word";
 const TRANSLATE = "translate";
 const HIDEMEANS = "hide_means";
 const DISABLECHANGE = "disable_change";
+const TODOMARK = "to_visit";
 
 const booksEl = document.getElementById("books");
 const bookEl = document.getElementById("book");
@@ -445,7 +446,15 @@ async function showBookSections(sections: book["sections"]) {
         let s = await getSection(sections[i]);
         sEl.innerText = s.title || `章节${Number(i) + 1}`;
         bookSectionsEl.append(sEl);
+        for (let i in s.words) {
+            if (!s.words[i].visit) {
+                sEl.classList.add(TODOMARK);
+                break;
+            }
+        }
         sEl.onclick = async () => {
+            sEl.classList.remove(TODOMARK);
+
             nowBook.sections = Number(i);
             showBookContent(sections[i]);
             setBookS();
@@ -1535,10 +1544,18 @@ async function addReviewCard(
     }
 }
 
+setTimeout(async () => {
+    let d = await getFutureReviewDue(0.1);
+    let c = 0;
+    c += Object.keys(d.word).length + Object.keys(d.spell).length;
+    if (c > 0) reviewBEl.classList.add(TODOMARK);
+}, 10);
+
 const reviewBEl = document.getElementById("reviewb");
 const reviewEl = document.getElementById("review");
 reviewBEl.onclick = () => {
     reviewEl.classList.toggle("review_show");
+    reviewBEl.classList.remove(TODOMARK);
 };
 
 const reviewReflashEl = document.getElementById("review_reflash");
