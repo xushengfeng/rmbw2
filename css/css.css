@@ -478,6 +478,16 @@ div:has(> .translate) > :not(.translate) {
     gap: 4px;
 }
 
+.review_spell {
+    flex-grow: 1;
+}
+
+.spell_input {
+    font-size: 2rem;
+    width: 100%;
+    text-align: center;
+}
+
 #history {
     overflow: scroll;
 }

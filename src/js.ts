@@ -1732,12 +1732,13 @@ async function showReview(x: { id: string; card: fsrsjs.Card }, type: review) {
         reviewViewEl.append(div);
     }
     if (type === "spell") {
-        let input = el("div");
+        let input = el("div", { class: "spell_input" }, "|");
         clearKeyboard();
         let wordEl = document.createElement("div");
         let spellNum = 3;
         const word = x.id;
         spellCheckF = async (inputValue: string) => {
+            input.innerText = inputValue;
             let inputWord = inputValue;
             wordEl.innerHTML = "";
             if (inputWord === word) {
@@ -1751,6 +1752,7 @@ async function showReview(x: { id: string; card: fsrsjs.Card }, type: review) {
                     inputValue = "";
                     input.innerText = `Good! ${spellNum} time(s) left`;
                 }
+                clearKeyboard();
             }
             //错误归位
             if (inputWord.length === word.length && inputWord != word) {
@@ -1758,6 +1760,7 @@ async function showReview(x: { id: string; card: fsrsjs.Card }, type: review) {
                 input.innerText = `"${inputWord}" is wrong! ${spellNum} time(s) left`;
                 play(word);
                 setSpellCard(x.id, x.card, 1);
+                clearKeyboard();
             }
         };
         spellF = (button) => {
