@@ -952,9 +952,17 @@ function setDicPosi(el: HTMLElement) {
     dicEl.style.top = `${el.offsetTop + bookContentEl.offsetTop}px`;
 }
 
+let dicMeansAi: AbortController;
+let dicTransAi: AbortController;
+
 let nowDicId = "";
 
 async function showDic(id: string) {
+    dicMeansAi?.abort();
+    dicTransAi?.abort();
+    dicMeansAi = null;
+    dicTransAi = null;
+
     const showClass = "dic_show";
     dicEl.classList.add(showClass);
 
@@ -1056,7 +1064,7 @@ async function showDic(id: string) {
     }
 
     dicTransB.onclick = async () => {
-        let output = await ai(
+        let output = ai(
             [
                 {
                     role: "system",
@@ -1066,10 +1074,11 @@ async function showDic(id: string) {
             ],
             "翻译"
         );
-        dicTransContent.value = output;
+        dicTransAi = output.stop;
+        dicTransContent.value = await output.text;
         if (isSentence) {
             let r = (await card2sentence.getItem(id)) as record2;
-            r.trans = output;
+            r.trans = await output.text;
             await card2sentence.setItem(id, r);
         }
     };
@@ -1165,7 +1174,7 @@ async function showDic(id: string) {
                 let c = `${context.slice(0, sourceIndex[0])}**${sourceWord}**${context.slice(sourceIndex[1])}`;
                 console.log(c);
 
-                ai(
+                let AI = ai(
                     [
                         {
                             role: "user",
@@ -1173,7 +1182,9 @@ async function showDic(id: string) {
                         },
                     ],
                     "选择义项"
-                ).then((a) => {
+                );
+                dicMeansAi = AI.stop;
+                AI.text.then((a) => {
                     console.log(a);
                     let n = Number(a.match(/[0-9]+/)[0]);
                     if (isNaN(n)) return;
@@ -1329,6 +1340,11 @@ async function showDic(id: string) {
             }
 
             dicEl.classList.remove(showClass);
+
+            dicMeansAi?.abort();
+            dicTransAi?.abort();
+            dicMeansAi = null;
+            dicTransAi = null;
         };
     }
 }
@@ -1393,7 +1409,7 @@ async function saveCard(v: {
 
 type aim = { role: "system" | "user" | "assistant"; content: string }[];
 
-async function ai(m: aim, text?: string) {
+function ai(m: aim, text?: string) {
     let config = {
         model: "gpt-3.5-turbo",
         temperature: 0.5,
@@ -1402,7 +1418,7 @@ async function ai(m: aim, text?: string) {
         presence_penalty: 1,
         messages: m,
     };
-    let userConfig = (await setting.getItem("ai.config")) as string;
+    let userConfig = localStorage.getItem("setting/ai.config");
     if (userConfig) {
         let c = (JSON.parse(userConfig).messages = m);
         userConfig = JSON.stringify(c);
@@ -1417,40 +1433,42 @@ async function ai(m: aim, text?: string) {
     };
     let pel = el("div", [el("p", `AI正在思考${text || ""}`), stopEl]);
     toastEl.append(pel);
-    return new Promise(async (re: (text: string) => void, rj: (err: Error) => void) => {
-        fetch(((await setting.getItem("ai.url")) as string) || `https://api.openai.com/v1/chat/completions`, {
-            method: "POST",
-            headers: {
-                Authorization: `Bearer ${(await setting.getItem("ai.key")) as string}`,
-                "content-type": "application/json",
-            },
-            body: userConfig,
-            signal: abort.signal,
-        })
-            .then((v) => {
-                pel.remove();
-                return v.json();
+    return {
+        stop: abort,
+        text: new Promise(async (re: (text: string) => void, rj: (err: Error) => void) => {
+            fetch(((await setting.getItem("ai.url")) as string) || `https://api.openai.com/v1/chat/completions`, {
+                method: "POST",
+                headers: {
+                    Authorization: `Bearer ${(await setting.getItem("ai.key")) as string}`,
+                    "content-type": "application/json",
+                },
+                body: userConfig,
+                signal: abort.signal,
             })
-            .then((t) => {
-                let answer = t.choices[0].message.content;
-                console.log(answer);
-                re(answer);
-            })
-            .catch(() => {
-                pel.innerHTML = "";
-                let reloadEl = el("button", iconEl(reload_svg));
-                let escEl = el("button", iconEl(close_svg));
-                reloadEl.onclick = () => {
-                    ai(m, text);
+                .then((v) => {
                     pel.remove();
-                };
-                escEl.onclick = () => {
-                    pel.remove();
-                };
-                pel.append(el("p", `AI处理${text || ""}时出现错误`), el("div", [reloadEl, escEl]));
-                rj;
-            });
-    });
+                    return v.json();
+                })
+                .then((t) => {
+                    let answer = t.choices[0].message.content;
+                    console.log(answer);
+                    re(answer);
+                })
+                .catch((e) => {
+                    if (e.name === "AbortError") {
+                        pel.remove();
+                        return;
+                    }
+                    pel.innerHTML = "";
+                    let escEl = el("button", iconEl(close_svg));
+                    escEl.onclick = () => {
+                        pel.remove();
+                    };
+                    pel.append(el("p", `AI处理${text || ""}时出现错误`), el("div", [escEl]));
+                    rj;
+                });
+        }),
+    };
 }
 
 import * as fsrsjs from "fsrs.js";
