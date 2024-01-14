@@ -345,6 +345,16 @@ body > #index > div > .icon {
     width: 20px;
 }
 
+#online_books {
+    background-color: var(--bg1);
+    backdrop-filter: var(--blur);
+    transition: var(--transition);
+    border: none;
+    box-shadow: 0 0 4px #0002;
+    padding: 4px;
+    border-radius: 4px;
+}
+
 #dic {
     position: absolute;
     top: 24px;
