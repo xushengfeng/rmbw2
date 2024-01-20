@@ -1537,6 +1537,7 @@ var spellStore = localforage.createInstance({ name: "word", storeName: "spell" }
 var card2sentence = localforage.createInstance({ name: "word", storeName: "card2sentence" });
 
 var transCache = localforage.createInstance({ name: "aiCache", storeName: "trans" });
+var ttsCache = localforage.createInstance({ name: "aiCache", storeName: "tts" });
 
 async function addReviewCard(
     word: string,
@@ -1888,7 +1889,14 @@ function play(word: string) {
     audioEl.play();
 }
 
-function runTTS(text: string) {
+async function runTTS(text: string) {
+    let b = (await ttsCache.getItem(text)) as Blob;
+    if (b) {
+        audioEl.src = URL.createObjectURL(b);
+        audioEl.play();
+        return;
+    }
+
     const readable = tts.toStream(text);
     let base = Buffer.from("");
     readable.on("data", (data: Uint8Array) => {
@@ -1900,6 +1908,7 @@ function runTTS(text: string) {
     readable.on("end", () => {
         console.log("STREAM end");
         let blob = new Blob([base], { type: "audio/webm" });
+        ttsCache.setItem(text, blob);
         audioEl.src = URL.createObjectURL(blob);
         audioEl.play();
     });
