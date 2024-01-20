@@ -23,6 +23,12 @@ import "@oddbird/popover-polyfill";
 import Keyboard from "simple-keyboard";
 import "simple-keyboard/build/css/index.css";
 
+import { MsEdgeTTS, OUTPUT_FORMAT } from "msedge-tts";
+import { Buffer } from "buffer";
+
+const tts = new MsEdgeTTS();
+await tts.setMetadata("en-IE-ConnorNeural", OUTPUT_FORMAT.WEBM_24KHZ_16BIT_MONO_OPUS);
+
 import pen_svg from "../assets/icons/pen.svg";
 import ok_svg from "../assets/icons/ok.svg";
 import translate_svg from "../assets/icons/translate.svg";
@@ -117,6 +123,8 @@ const rmCardEl = el("button", iconEl(clear_svg));
 const hideDicEl = el("button", iconEl(close_svg));
 const dicWordEl = el("input", { alt: "单词" });
 const moreWordsEl = el("div", { class: "more_words" });
+const ttsWordEl = el("button", "play w");
+const ttsContextEl = el("button", "play c");
 const dicTransB = el("button", iconEl(translate_svg));
 const dicTransContent = el("input", {
     alt: "语境翻译",
@@ -140,6 +148,7 @@ dicEl.append(
         dicWordEl,
         moreWordsEl,
     ]),
+    el("div", [ttsWordEl, ttsContextEl]),
     el("div", [dicTransB, dicTransContent]),
     dicMinEl,
     dicDetailsEl
@@ -1148,6 +1157,14 @@ async function showDic(id: string) {
 
         rm(oldWord, oldDic, oldMean);
     };
+
+    ttsWordEl.onclick = () => {
+        play(oldWord);
+    };
+    ttsContextEl.onclick = () => {
+        runTTS(context);
+    };
+
     if (!isSentence) {
         dicTransContent.value = "";
 
@@ -1864,10 +1881,31 @@ async function showReview(x: { id: string; card: fsrsjs.Card }, type: review) {
     }
 }
 
+let audioEl = <HTMLAudioElement>document.getElementById("audio");
+
 function play(word: string) {
-    let audio = <HTMLAudioElement>document.getElementById("audio");
-    audio.src = "https://dict.youdao.com/dictvoice?le=eng&type=1&audio=" + word;
-    audio.play();
+    audioEl.src = "https://dict.youdao.com/dictvoice?le=eng&type=1&audio=" + word;
+    audioEl.play();
+}
+
+function runTTS(text: string) {
+    const readable = tts.toStream(text);
+    let base = Buffer.from("");
+    readable.on("data", (data: Uint8Array) => {
+        console.log("DATA RECEIVED", data);
+        // raw audio file data
+        base = Buffer.concat([Buffer.from(base), Buffer.from(data)]);
+    });
+
+    readable.on("end", () => {
+        console.log("STREAM end");
+        let blob = new Blob([base], { type: "audio/webm" });
+        audioEl.src = URL.createObjectURL(blob);
+        audioEl.play();
+    });
+    readable.on("closed", () => {
+        console.log("STREAM CLOSED");
+    });
 }
 
 function setReviewCard(id: string, card: fsrsjs.Card, rating: fsrsjs.Rating) {
