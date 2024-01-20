@@ -1073,6 +1073,14 @@ async function showDic(id: string) {
     }
 
     dicTransB.onclick = async () => {
+        if (!isSentence && !dicTransContent.value) {
+            // 单词模式且无翻译（意味着无需重新翻译，只需读取缓存）
+            let text = (await transCache.getItem(context)) as string;
+            if (text) {
+                dicTransContent.value = text;
+                return;
+            }
+        }
         let output = ai(
             [
                 {
@@ -1084,12 +1092,15 @@ async function showDic(id: string) {
             "翻译"
         );
         dicTransAi = output.stop;
-        dicTransContent.value = await output.text;
+        let text = await output.text;
+        dicTransContent.value = text;
         if (isSentence) {
             let r = (await card2sentence.getItem(id)) as record2;
-            r.trans = await output.text;
+            r.trans = text;
             await card2sentence.setItem(id, r);
         }
+
+        transCache.setItem(context, text);
     };
 
     toSentenceEl.onclick = async () => {
@@ -1489,6 +1500,8 @@ var wordsStore = localforage.createInstance({ name: "word", storeName: "words" }
 var card2word = localforage.createInstance({ name: "word", storeName: "card2word" });
 var spellStore = localforage.createInstance({ name: "word", storeName: "spell" });
 var card2sentence = localforage.createInstance({ name: "word", storeName: "card2sentence" });
+
+var transCache = localforage.createInstance({ name: "aiCache", storeName: "trans" });
 
 async function addReviewCard(
     word: string,
