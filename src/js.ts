@@ -25,9 +25,6 @@ import "simple-keyboard/build/css/index.css";
 
 import { MsEdgeTTS, OUTPUT_FORMAT } from "msedge-tts";
 
-const tts = new MsEdgeTTS();
-await tts.setMetadata("en-IE-ConnorNeural", OUTPUT_FORMAT.WEBM_24KHZ_16BIT_MONO_OPUS);
-
 import pen_svg from "../assets/icons/pen.svg";
 import ok_svg from "../assets/icons/ok.svg";
 import translate_svg from "../assets/icons/translate.svg";
@@ -1888,6 +1885,10 @@ function play(word: string) {
     audioEl.play();
 }
 
+const tts = new MsEdgeTTS();
+const ttsVoiceConfig = "tts.voice";
+tts.setMetadata(await setting.getItem(ttsVoiceConfig), OUTPUT_FORMAT.WEBM_24KHZ_16BIT_MONO_OPUS);
+
 async function runTTS(text: string) {
     let b = (await ttsCache.getItem(text)) as Blob;
     if (b) {
@@ -2048,7 +2049,6 @@ exportEl.append(exWord);
 let loadTTSVoicesEl = el("button", "load");
 let voicesListEl = el("select");
 loadTTSVoicesEl.onclick = async () => {
-    const ttsVoicePath = "tts.voice";
     voicesListEl.innerHTML = "";
     let list = await tts.getVoices();
     for (let v of list) {
@@ -2059,11 +2059,11 @@ loadTTSVoicesEl.onclick = async () => {
         let op = el("option", text, { value: v.ShortName });
         voicesListEl.append(op);
     }
-    voicesListEl.value = await setting.getItem(ttsVoicePath);
+    voicesListEl.value = await setting.getItem(ttsVoiceConfig);
     voicesListEl.onchange = () => {
         let name = voicesListEl.value;
         tts.setMetadata(name, OUTPUT_FORMAT.WEBM_24KHZ_16BIT_MONO_OPUS);
-        setting.setItem(ttsVoicePath, name);
+        setting.setItem(ttsVoiceConfig, name);
     };
 };
 
