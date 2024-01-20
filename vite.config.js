@@ -9,7 +9,7 @@ export default defineConfig({
     plugins: [
         nodePolyfills({
             // To add only specific polyfills, add them here. If no option is passed, adds all polyfills
-            include: ["buffer", "crypto", "stream"],
+            include: ["crypto", "stream"],
             exclude: ["fs"],
             // Whether to polyfill specific globals.
             globals: {

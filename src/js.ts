@@ -24,7 +24,6 @@ import Keyboard from "simple-keyboard";
 import "simple-keyboard/build/css/index.css";
 
 import { MsEdgeTTS, OUTPUT_FORMAT } from "msedge-tts";
-import { Buffer } from "buffer";
 
 const tts = new MsEdgeTTS();
 await tts.setMetadata("en-IE-ConnorNeural", OUTPUT_FORMAT.WEBM_24KHZ_16BIT_MONO_OPUS);
@@ -1898,12 +1897,18 @@ async function runTTS(text: string) {
     }
 
     const readable = tts.toStream(text);
-    let base = Buffer.from("");
+    let base = new Uint8Array();
     readable.on("data", (data: Uint8Array) => {
         console.log("DATA RECEIVED", data);
         // raw audio file data
-        base = Buffer.concat([Buffer.from(base), Buffer.from(data)]);
+        base = concat(base, data);
     });
+    function concat(array1: Uint8Array, array2: Uint8Array) {
+        let mergedArray = new Uint8Array(array1.length + array2.length);
+        mergedArray.set(array1);
+        mergedArray.set(array2, array1.length);
+        return mergedArray;
+    }
 
     readable.on("end", () => {
         console.log("STREAM end");
