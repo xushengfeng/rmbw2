@@ -1166,6 +1166,7 @@ async function showDic(id: string) {
                 radio.name = "dic_means";
                 radio.onclick = () => {
                     if (radio.checked) {
+                        dicMeansAi?.abort();
                         changeDicMean(word, oldDic, Number(i));
 
                         visit(true);
