@@ -631,9 +631,19 @@ async function showBookContent(id: string) {
         bookContentEl.append(el);
     }
 
-    bookContentEl.scrollTop = s.lastPosi * (bookContentEl.scrollHeight - bookContentEl.offsetHeight);
+    contentScrollPosi = s.lastPosi;
+    setScrollPosi(bookContentEl, contentScrollPosi);
 
     bookContentEl.append(dicEl);
+}
+
+let contentScrollPosi = 0;
+function setScrollPosi(el: HTMLElement, posi: number) {
+    el.scrollTop = posi * (el.scrollHeight - el.offsetHeight);
+}
+function getScrollPosi(el: HTMLElement) {
+    let n = el.scrollTop / (el.scrollHeight - el.offsetHeight);
+    return n;
 }
 
 function reflashContentScroll() {
@@ -675,6 +685,7 @@ async function changeEdit(b: boolean) {
             let sectionId = book.sections[nowBook.sections];
             let section = await getSection(sectionId);
             book.updateTime = new Date().getTime();
+            section.lastPosi = contentScrollPosi;
             if (editText) {
                 section = changePosi(section, editText);
                 section.text = editText;
@@ -759,6 +770,7 @@ async function setEdit() {
     bookContentEl.innerHTML = "";
     let text = document.createElement("textarea");
     text.value = section.text;
+    setScrollPosi(text, contentScrollPosi);
     text.onchange = () => {
         editText = text.value;
     };
@@ -854,11 +866,17 @@ async function setEdit() {
         }
     };
     bookContentEl.append(upel);
+
+    text.onscroll = () => {
+        contentScrollPosi = getScrollPosi(text);
+    };
+
     return text;
 }
 
 bookContentEl.onscroll = async () => {
-    let n = bookContentEl.scrollTop / (bookContentEl.scrollHeight - bookContentEl.offsetHeight);
+    let n = getScrollPosi(bookContentEl);
+    contentScrollPosi = n;
     let book = await getBooksById(nowBook.book);
     let sectionId = book.sections[nowBook.sections];
     let section = await getSection(sectionId);
