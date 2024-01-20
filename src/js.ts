@@ -2039,3 +2039,27 @@ exWord.onclick = async () => {
 };
 exWord.innerText = "单词卡片";
 exportEl.append(exWord);
+
+let loadTTSVoicesEl = el("button", "load");
+let voicesListEl = el("select");
+loadTTSVoicesEl.onclick = async () => {
+    const ttsVoicePath = "tts.voice";
+    voicesListEl.innerHTML = "";
+    let list = await tts.getVoices();
+    for (let v of list) {
+        let text = `${v.Gender === "Male" ? "♂️" : "♀️"} ${v.FriendlyName.replace(
+            /Microsoft (\w+) Online \(Natural\)/,
+            "$1"
+        )}`;
+        let op = el("option", text, { value: v.ShortName });
+        voicesListEl.append(op);
+    }
+    voicesListEl.value = await setting.getItem(ttsVoicePath);
+    voicesListEl.onchange = () => {
+        let name = voicesListEl.value;
+        tts.setMetadata(name, OUTPUT_FORMAT.WEBM_24KHZ_16BIT_MONO_OPUS);
+        setting.setItem(ttsVoicePath, name);
+    };
+};
+
+settingEl.append(el("div", [el("h2", "tts"), loadTTSVoicesEl, voicesListEl]));
