@@ -29,6 +29,9 @@ dependencies:
   mammoth:
     specifier: ^1.6.0
     version: 1.6.0
+  msedge-tts-browserify:
+    specifier: ^1.3.4
+    version: 1.3.4
   redom:
     specifier: ^4.0.0
     version: 4.0.0
@@ -391,6 +394,13 @@ packages:
     resolution: {integrity: sha512-i/ndmmCF5QC1D75QCO1EPwYRPIVRVs2yLwkl2bc8R5P1ORHGZZAbTwmYM/vpXt7KzCe+Y57E8YPGTJywgWBNRw==}
     dev: true
 
+  /buffer@6.0.3:
+    resolution: {integrity: sha512-FTiCpNxtwiZZHEZbcbTIcZjERVICn9yq/pDFkTl95/AxzD1naBctN7YO68riM/gLSDY7sdrMby8hofADYuuqOA==}
+    dependencies:
+      base64-js: 1.5.1
+      ieee754: 1.2.1
+    dev: false
+
   /core-util-is@1.0.3:
     resolution: {integrity: sha512-ZQBvi1DcpJ4GDqanjucZ2Hj3wEO5pZDS89BWbkcrvdxksJorwUDDZamX9ldFkp9aw2lmBDLgkObEA4DWNJ9FYQ==}
 
@@ -466,6 +476,10 @@ packages:
   /fsrs.js@1.1.2:
     resolution: {integrity: sha512-Bbvm5fWXjRoFzOQSs8SHLu2/wIwCjdNNENLGYDCNmaaM5eHmfOww57LiaYdp2+jTNX1VpDkI1qF87glZ9UZ5yA==}
     engines: {node: '>=10'}
+    dev: false
+
+  /ieee754@1.2.1:
+    resolution: {integrity: sha512-dcyqhDvX1C46lXZcVqCpK+FtMRQVdIMN6/Df5js2zouUsqG7I6sFxitIC+7KYK29KdXOLHdu9zL4sFnoVQnqaA==}
     dev: false
 
   /immediate@3.0.6:
@@ -559,6 +573,12 @@ packages:
       path-is-absolute: 1.0.1
       underscore: 1.13.6
       xmlbuilder: 10.1.1
+    dev: false
+
+  /msedge-tts-browserify@1.3.4:
+    resolution: {integrity: sha512-KusiO1FP2M8q6/UxaL4LLUJoqp0STlPfTFnWRCcV/AhQX53O8rDcq5fle4vKlQ9UzTKbwTSHz4DZ1gnOx6rtCg==}
+    dependencies:
+      buffer: 6.0.3
     dev: false
 
   /nanoid@3.3.7:
