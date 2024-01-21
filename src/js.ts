@@ -834,7 +834,7 @@ async function setEdit() {
             console.log(aiM);
             let start = text.selectionStart;
             let end = text.selectionEnd;
-            let aitext = await ai(aiM, "对话");
+            let aitext = await ai(aiM, "对话").text;
             let addText = `ai:\n${aitext}`;
             let changeText = text.value.slice(0, start) + addText + text.value.slice(end);
             text.value = changeText;
