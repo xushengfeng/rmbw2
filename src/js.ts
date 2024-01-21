@@ -1128,6 +1128,7 @@ async function showDic(id: string) {
 
     toSentenceEl.onclick = async () => {
         if (isSentence) return;
+        isSentence = true;
         let contextStart = wordx.index[0] - sourceIndex[0];
         let contextEnd = wordx.index[1] + (context.length - sourceIndex[1]);
         wordx.index[0] = contextStart;
