@@ -479,9 +479,22 @@ async function showBookSections(sections: book["sections"]) {
 
 let wordList: { text: string; c: record }[] = [];
 
+let contentP: string[] = [];
+
 async function showBookContent(id: string) {
     let s = (await sectionsStore.getItem(id)) as section;
     bookContentEl.innerHTML = "";
+
+    bookContentEl.append(
+        el("div", "play", {
+            onclick: () => {
+                autoPlay = true;
+                pTTS(0);
+            },
+        })
+    );
+
+    contentP = [];
 
     wordList = [];
     if (isWordBook) {
@@ -576,9 +589,17 @@ async function showBookContent(id: string) {
     console.log(plist);
 
     for (let paragraph of plist) {
-        let el: HTMLElement = document.createElement("p");
+        let pel: HTMLElement = document.createElement("p");
         let t = paragraph[0]?.text.match(/#+$/) && paragraph[1]?.text === " ";
-        if (t) el = document.createElement("h" + paragraph[0].text.trim().length);
+        if (t) pel = document.createElement("h" + paragraph[0].text.trim().length);
+
+        let pText = editText.slice(paragraph[0]?.start ?? null, paragraph.at(-1)?.end ?? null);
+
+        if (pText) {
+            let playEl = el("div", "play", { "data-play": String(contentP.length) });
+            pel.append(playEl);
+        }
+
         for (let i in paragraph) {
             if (t && i === "0") continue;
             const word = paragraph[i];
@@ -594,9 +615,14 @@ async function showBookContent(id: string) {
             span.setAttribute("data-s", String(word.start));
             span.setAttribute("data-e", String(word.end));
             span.setAttribute("data-i", i);
-            el.append(span);
+            pel.append(span);
         }
-        el.onclick = async (ev) => {
+        pel.onclick = async (ev) => {
+            let playEl = ev.target as HTMLElement;
+            if (playEl.getAttribute("data-play")) {
+                pTTS(Number(playEl.getAttribute("data-play")));
+                return;
+            }
             const span = ev.target as HTMLSpanElement;
             if (span.tagName != "SPAN") return;
             const i = span.getAttribute("data-i");
@@ -628,7 +654,7 @@ async function showBookContent(id: string) {
 
             span.classList.add(MARKWORD);
         };
-        el.oncontextmenu = async (ev) => {
+        pel.oncontextmenu = async (ev) => {
             ev.preventDefault();
             const span = ev.target as HTMLSpanElement;
             if (span.tagName != "SPAN") return;
@@ -640,7 +666,7 @@ async function showBookContent(id: string) {
             text.focus();
         };
 
-        bookContentEl.append(el);
+        bookContentEl.append(pel);
     }
 
     contentScrollPosi = s.lastPosi;
@@ -1924,6 +1950,7 @@ async function showReview(x: { id: string; card: fsrsjs.Card }, type: review) {
 }
 
 let audioEl = <HTMLAudioElement>document.getElementById("audio");
+let pTTSEl = <HTMLAudioElement>document.getElementById("pTTS");
 
 function play(word: string) {
     audioEl.src = "https://dict.youdao.com/dictvoice?le=eng&type=1&audio=" + word;
@@ -1937,12 +1964,10 @@ tts.setMetadata(
     OUTPUT_FORMAT.WEBM_24KHZ_16BIT_MONO_OPUS
 );
 
-async function runTTS(text: string) {
+async function getTTS(text: string) {
     let b = (await ttsCache.getItem(text)) as Blob;
     if (b) {
-        audioEl.src = URL.createObjectURL(b);
-        audioEl.play();
-        return;
+        return URL.createObjectURL(b);
     }
 
     const readable = tts.toStream(text);
@@ -1959,16 +1984,44 @@ async function runTTS(text: string) {
         return mergedArray;
     }
 
-    readable.on("end", () => {
-        console.log("STREAM end");
-        let blob = new Blob([base], { type: "audio/webm" });
-        ttsCache.setItem(text, blob);
-        audioEl.src = URL.createObjectURL(blob);
-        audioEl.play();
-    });
     readable.on("closed", () => {
         console.log("STREAM CLOSED");
     });
+
+    return new Promise((re: (url: string) => void, rj) => {
+        readable.on("end", () => {
+            console.log("STREAM end");
+            let blob = new Blob([base], { type: "audio/webm" });
+            ttsCache.setItem(text, blob);
+            re(URL.createObjectURL(blob));
+        });
+    });
+}
+
+async function runTTS(text: string) {
+    audioEl.src = await getTTS(text);
+    audioEl.play();
+}
+
+let autoPlay = false;
+
+async function pTTS(index: number) {
+    let text = contentP.at(index);
+    let nextplay = () => {
+        if (autoPlay) {
+            if (index + 1 < contentP.length) {
+                pTTS(index + 1);
+            }
+        }
+    };
+    if (!text) {
+        nextplay();
+        return;
+    }
+    let url = await getTTS(text);
+    pTTSEl.src = url;
+    pTTSEl.play();
+    pTTSEl.onended = nextplay;
 }
 
 function setReviewCard(id: string, card: fsrsjs.Card, rating: fsrsjs.Rating) {
