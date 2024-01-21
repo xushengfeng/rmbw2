@@ -172,7 +172,14 @@ type book = {
 type section = {
     title: string;
     text: string;
-    words: { [key: string]: { id: string; index: [number, number]; visit: boolean; type: "word" | "sentence" } };
+    words: {
+        [key: string]: {
+            id: string;
+            index: [number, number]; // 文章绝对定位
+            visit: boolean;
+            type: "word" | "sentence";
+        };
+    };
     lastPosi: number;
 };
 
@@ -1006,35 +1013,40 @@ async function showDic(id: string) {
 
     let wordx = section.words[id];
 
-    let oldWord = wordx.id;
-    let wordv: record;
-    let context = "";
+    let Word = {
+        word: wordx.id,
+        record: null as record,
+        dic: "",
+        mean: NaN,
+        contextx: null as record["means"][0]["contexts"][0],
+    };
+
+    let Share = {
+        context: "",
+        sourceIndex: [0, 0],
+    };
     let isSentence = wordx.type === "sentence";
-    let sourceIndex = [0, 0];
-    const sourceWord = oldWord;
-    let oldDic = "";
-    let oldMean = NaN;
-    let contextx: record["means"][0]["contexts"][0] = null;
+    const sourceWord = Word.word;
     if (!isSentence) {
-        wordv = (await wordsStore.getItem(wordx.id)) as record;
-        if (!wordv) {
+        Word.record = (await wordsStore.getItem(wordx.id)) as record;
+        if (!Word.record) {
             delete section.words[id];
             sectionsStore.setItem(sectionId, section);
             nextMarkEl.click();
         }
-        for (let i of wordv.means) {
-            oldDic = i.dic;
-            oldMean = i.index;
+        for (let i of Word.record.means) {
+            Word.dic = i.dic;
+            Word.mean = i.index;
             for (let j of i.contexts) {
                 if (j.source.id === id) {
-                    context = j.text;
-                    sourceIndex = j.index;
-                    contextx = j;
+                    Share.context = j.text;
+                    Share.sourceIndex = j.index;
+                    Word.contextx = j;
                 }
             }
         }
     } else {
-        context = ((await card2sentence.getItem(id)) as record2).text;
+        Share.context = ((await card2sentence.getItem(id)) as record2).text;
     }
 
     {
@@ -1042,7 +1054,7 @@ async function showDic(id: string) {
         if (isSentence) {
             contextEnd = wordx.index[1];
         } else {
-            contextEnd = wordx.index[1] + (context.length - sourceIndex[1]);
+            contextEnd = wordx.index[1] + (Share.context.length - Share.sourceIndex[1]);
         }
         setDicPosi(bookContentEl.querySelector(`span[data-e="${contextEnd}"]`));
         changeContext();
@@ -1052,7 +1064,7 @@ async function showDic(id: string) {
         if (isSentence) {
             card2sentence.removeItem(id);
         } else {
-            rm(oldWord, oldDic, oldMean);
+            rm(Word.word, Word.dic, Word.mean);
         }
         delete section.words[id];
         sectionsStore.setItem(sectionId, section);
@@ -1060,20 +1072,20 @@ async function showDic(id: string) {
     };
 
     async function rm(word: string, dic: string, i: number) {
-        for (let m of wordv.means) {
+        for (let m of Word.record.means) {
             if (m.dic === dic && m.index === i) {
-                m.contexts = m.contexts.filter((c) => c.source.id != contextx.source.id);
+                m.contexts = m.contexts.filter((c) => c.source.id != Word.contextx.source.id);
                 if (m.contexts.length === 0) {
                     await card2word.removeItem(m.card_id);
                     await cardsStore.removeItem(m.card_id);
-                    wordv.means = wordv.means.filter((i) => i.index != m.index);
-                    await wordsStore.setItem(word, wordv);
+                    Word.record.means = Word.record.means.filter((i) => i.index != m.index);
+                    await wordsStore.setItem(word, Word.record);
                 }
-                if (wordv.means.length === 0) {
+                if (Word.record.means.length === 0) {
                     await wordsStore.removeItem(word);
                     await spellStore.removeItem(word);
                 } else {
-                    await wordsStore.setItem(word, wordv);
+                    await wordsStore.setItem(word, Word.record);
                 }
                 break;
             }
@@ -1081,24 +1093,24 @@ async function showDic(id: string) {
     }
 
     async function changeDicMean(word: string, dic: string, i: number) {
-        if (word != oldWord || dic != oldDic || i != oldMean) {
-            await rm(oldWord, oldDic, oldMean);
+        if (word != Word.word || dic != Word.dic || i != Word.mean) {
+            await rm(Word.word, Word.dic, Word.mean);
 
-            await addReviewCard(word, { dic, index: i }, contextx);
+            await addReviewCard(word, { dic, index: i }, Word.contextx);
 
-            oldWord = word;
-            oldDic = dic;
-            oldMean = i;
+            Word.word = word;
+            Word.dic = dic;
+            Word.mean = i;
             section.words[id].id = word;
             await sectionsStore.setItem(sectionId, section);
-            wordv = (await wordsStore.getItem(wordx.id)) as record;
+            Word.record = (await wordsStore.getItem(wordx.id)) as record;
         }
     }
 
     dicTransB.onclick = async () => {
         if (!isSentence && !dicTransContent.value) {
             // 单词模式且无翻译（意味着无需重新翻译，只需读取缓存）
-            let text = (await transCache.getItem(context)) as string;
+            let text = (await transCache.getItem(Share.context)) as string;
             if (text) {
                 dicTransContent.value = text;
                 return;
@@ -1110,7 +1122,7 @@ async function showDic(id: string) {
                     role: "system",
                     content: `您是一个翻译引擎，只能将用户的输入文本翻译为${navigator.language}，无法解释。`,
                 },
-                { role: "user", content: context },
+                { role: "user", content: Share.context },
             ],
             "翻译"
         );
@@ -1123,14 +1135,14 @@ async function showDic(id: string) {
             await card2sentence.setItem(id, r);
         }
 
-        transCache.setItem(context, text);
+        transCache.setItem(Share.context, text);
     };
 
     toSentenceEl.onclick = async () => {
         if (isSentence) return;
         isSentence = true;
-        let contextStart = wordx.index[0] - sourceIndex[0];
-        let contextEnd = wordx.index[1] + (context.length - sourceIndex[1]);
+        let contextStart = wordx.index[0] - Share.sourceIndex[0];
+        let contextEnd = wordx.index[1] + (Share.context.length - Share.sourceIndex[1]);
         wordx.index[0] = contextStart;
         wordx.index[1] = contextEnd;
         wordx.type = "sentence";
@@ -1138,9 +1150,9 @@ async function showDic(id: string) {
         section.words[id] = wordx;
         sectionsStore.setItem(sectionId, section);
 
-        let r: record2 = { text: context, card_id: uuid(), source: null, trans: "" };
+        let r: record2 = { text: Share.context, card_id: uuid(), source: null, trans: "" };
 
-        for (let i of wordv.means) {
+        for (let i of Word.record.means) {
             for (let j of i.contexts) {
                 if (j.source.id === id) {
                     r.source = j.source;
@@ -1152,27 +1164,27 @@ async function showDic(id: string) {
         }
         card2sentence.setItem(id, r);
 
-        rm(oldWord, oldDic, oldMean);
+        rm(Word.word, Word.dic, Word.mean);
 
         showSentence();
     };
 
     ttsWordEl.onclick = () => {
-        play(oldWord);
+        play(Word.word);
     };
     ttsContextEl.onclick = () => {
-        runTTS(context);
+        runTTS(Share.context);
     };
 
     function showWord() {
         dicTransContent.value = "";
 
-        search(oldWord);
-        dicWordEl.value = oldWord;
+        search(Word.word);
+        dicWordEl.value = Word.word;
         dicWordEl.onchange = async () => {
             let newWord = dicWordEl.value.trim();
             await visit(false);
-            await changeDicMean(newWord, oldDic, -1);
+            await changeDicMean(newWord, Word.dic, -1);
             search(newWord);
         };
 
@@ -1184,7 +1196,7 @@ async function showDic(id: string) {
             div.onclick = async () => {
                 dicWordEl.value = w;
                 await visit(false);
-                await changeDicMean(w, oldDic, -1);
+                await changeDicMean(w, Word.dic, -1);
                 search(w);
             };
             moreWordsEl.append(div);
@@ -1197,7 +1209,7 @@ async function showDic(id: string) {
         }
 
         async function search(word: string) {
-            let x = dics[oldDic].get(word) as dic[0];
+            let x = dics[Word.dic].get(word) as dic[0];
             if (!x) {
                 dicDetailsEl.innerText = "none";
                 return;
@@ -1212,7 +1224,7 @@ async function showDic(id: string) {
                 radio.onclick = () => {
                     if (radio.checked) {
                         dicMeansAi?.abort();
-                        changeDicMean(word, oldDic, Number(i));
+                        changeDicMean(word, Word.dic, Number(i));
 
                         visit(true);
                     }
@@ -1226,7 +1238,9 @@ async function showDic(id: string) {
                 for (let i in x.means) {
                     means += `${i}.${x.means[i].dis.text};\n`;
                 }
-                let c = `${context.slice(0, sourceIndex[0])}**${sourceWord}**${context.slice(sourceIndex[1])}`;
+                let c = `${Share.context.slice(0, Share.sourceIndex[0])}**${sourceWord}**${Share.context.slice(
+                    Share.sourceIndex[1]
+                )}`;
                 console.log(c);
 
                 let AI = ai(
@@ -1244,7 +1258,7 @@ async function showDic(id: string) {
                     let n = Number(a.match(/[0-9]+/)[0]);
                     if (isNaN(n)) return;
                     setcheck(n);
-                    changeDicMean(word, oldDic, n);
+                    changeDicMean(word, Word.dic, n);
 
                     visit(true);
                 });
@@ -1254,17 +1268,17 @@ async function showDic(id: string) {
                 el.checked = true;
                 dicDetailsEl.classList.add(HIDEMEANS);
             }
-            if (oldMean === -1) {
+            if (Word.mean === -1) {
                 if (x.means.length > 1) {
                     set();
                     dicDetailsEl.classList.remove(HIDEMEANS);
                 } else {
                     setcheck(0);
                     visit(true);
-                    changeDicMean(word, oldDic, 0);
+                    changeDicMean(word, Word.dic, 0);
                 }
             } else {
-                setcheck(oldMean);
+                setcheck(Word.mean);
             }
         }
     }
@@ -1294,8 +1308,8 @@ async function showDic(id: string) {
             contextStart = wordx.index[0];
             contextEnd = wordx.index[1];
         } else {
-            contextStart = wordx.index[0] - sourceIndex[0];
-            contextEnd = wordx.index[1] + (context.length - sourceIndex[1]);
+            contextStart = wordx.index[0] - Share.sourceIndex[0];
+            contextEnd = wordx.index[1] + (Share.context.length - Share.sourceIndex[1]);
         }
         let startEl = document.createElement("div");
         let endEl = document.createElement("div");
@@ -1377,7 +1391,7 @@ async function showDic(id: string) {
         };
         async function saveChange() {
             let text = editText.slice(index.start, index.end);
-            context = text;
+            Share.context = text;
             if (isSentence) {
                 section.words[id].index = [index.start, index.end];
                 sectionsStore.setItem(sectionId, section);
@@ -1385,14 +1399,14 @@ async function showDic(id: string) {
                 r.text = text;
                 card2sentence.setItem(id, r);
             } else {
-                for (let i of wordv.means) {
+                for (let i of Word.record.means) {
                     for (let j of i.contexts) {
                         if (j.source.id === id) {
                             j.index = [wordx.index[0] - index.start, wordx.index[1] - index.start];
                             j.text = text;
-                            contextx = j;
-                            sourceIndex = j.index;
-                            await wordsStore.setItem(oldWord, wordv);
+                            Word.contextx = j;
+                            Share.sourceIndex = j.index;
+                            await wordsStore.setItem(Word.word, Word.record);
                             break;
                         }
                     }
