@@ -1066,11 +1066,16 @@ async function showDic(id: string) {
             card2sentence.removeItem(id);
         } else {
             rm(Word.word, Word.dic, Word.mean);
+            rmStyle();
         }
         delete section.words[id];
         sectionsStore.setItem(sectionId, section);
         nextMarkEl.click();
     };
+
+    function rmStyle() {
+        bookContentEl.querySelector(`span[data-s="${wordx.index[0]}"]`)?.classList?.remove(MARKWORD);
+    }
 
     async function rm(word: string, dic: string, i: number) {
         for (let m of Word.record.means) {
@@ -1168,6 +1173,8 @@ async function showDic(id: string) {
         rm(Word.word, Word.dic, Word.mean);
 
         showSentence();
+
+        rmStyle();
     };
 
     ttsWordEl.onclick = () => {
