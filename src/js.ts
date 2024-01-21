@@ -1152,17 +1152,22 @@ async function showDic(id: string) {
         wordx.index[0] = contextStart;
         wordx.index[1] = contextEnd;
         wordx.type = "sentence";
-        wordx.id = id; // 句子id用uuid而不是单词
+        wordx.id = id;
         section.words[id] = wordx;
         sectionsStore.setItem(sectionId, section);
 
-        let r: record2 = { text: Share.context, card_id: uuid(), source: null, trans: "" };
+        let r: record2 = {
+            text: Share.context,
+            card_id: uuid(), // 句子卡片id用uuid而不是单词
+            source: null,
+            trans: "",
+        };
 
         for (let i of Word.record.means) {
             for (let j of i.contexts) {
                 if (j.source.id === id) {
                     r.source = j.source;
-                    cardsStore.setItem(r.card_id, await cardsStore.getItem(i.card_id));
+                    sentenceStore.setItem(r.card_id, await cardsStore.getItem(i.card_id));
                     await cardsStore.removeItem(i.card_id);
                     break;
                 }
@@ -1564,6 +1569,7 @@ var cardsStore = localforage.createInstance({ name: "word", storeName: "cards" }
 var wordsStore = localforage.createInstance({ name: "word", storeName: "words" });
 var card2word = localforage.createInstance({ name: "word", storeName: "card2word" });
 var spellStore = localforage.createInstance({ name: "word", storeName: "spell" });
+var sentenceStore = localforage.createInstance({ name: "word", storeName: "sentence" });
 var card2sentence = localforage.createInstance({ name: "word", storeName: "card2sentence" });
 
 var transCache = localforage.createInstance({ name: "aiCache", storeName: "trans" });
@@ -1674,6 +1680,7 @@ async function getFutureReviewDue(days: number) {
     now = Math.round(now);
     let wordList: { id: string; card: fsrsjs.Card }[] = [];
     let spellList: { id: string; card: fsrsjs.Card }[] = [];
+    // todo sentence
     await cardsStore.iterate((value: fsrsjs.Card, key) => {
         if (value.due.getTime() < now) {
             wordList.push({ id: key, card: value });
