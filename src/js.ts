@@ -23,7 +23,7 @@ import "@oddbird/popover-polyfill";
 import Keyboard from "simple-keyboard";
 import "simple-keyboard/build/css/index.css";
 
-import { MsEdgeTTS, OUTPUT_FORMAT } from "msedge-tts";
+import { MsEdgeTTS, OUTPUT_FORMAT } from "msedge-tts-browserify";
 
 import pen_svg from "../assets/icons/pen.svg";
 import ok_svg from "../assets/icons/ok.svg";
