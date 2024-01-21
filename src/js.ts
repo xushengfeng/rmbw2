@@ -1153,6 +1153,8 @@ async function showDic(id: string) {
         card2sentence.setItem(id, r);
 
         rm(oldWord, oldDic, oldMean);
+
+        showSentence();
     };
 
     ttsWordEl.onclick = () => {
@@ -1162,7 +1164,7 @@ async function showDic(id: string) {
         runTTS(context);
     };
 
-    if (!isSentence) {
+    function showWord() {
         dicTransContent.value = "";
 
         search(oldWord);
@@ -1265,7 +1267,8 @@ async function showDic(id: string) {
                 setcheck(oldMean);
             }
         }
-    } else {
+    }
+    async function showSentence() {
         dicWordEl.value = "";
         moreWordsEl.innerHTML = "";
         dicTransContent.value = ((await card2sentence.getItem(id)) as record2).trans;
@@ -1276,6 +1279,12 @@ async function showDic(id: string) {
             r.trans = dicTransContent.value;
             await card2sentence.setItem(id, r);
         };
+    }
+
+    if (!isSentence) {
+        showWord();
+    } else {
+        showSentence();
     }
 
     function changeContext() {
