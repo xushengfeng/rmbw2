@@ -1026,7 +1026,7 @@ async function showDic(id: string) {
         sourceIndex: [0, 0],
     };
     let isSentence = wordx.type === "sentence";
-    const sourceWord = Word.word;
+    let sourceWord = "";
     if (!isSentence) {
         Word.record = (await wordsStore.getItem(wordx.id)) as record;
         if (!Word.record) {
@@ -1041,6 +1041,7 @@ async function showDic(id: string) {
                 if (j.source.id === id) {
                     Share.context = j.text;
                     Share.sourceIndex = j.index;
+                    sourceWord = j.text.slice(...j.index);
                     Word.contextx = j;
                 }
             }
