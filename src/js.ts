@@ -1887,7 +1887,10 @@ function play(word: string) {
 
 const tts = new MsEdgeTTS();
 const ttsVoiceConfig = "tts.voice";
-tts.setMetadata(await setting.getItem(ttsVoiceConfig), OUTPUT_FORMAT.WEBM_24KHZ_16BIT_MONO_OPUS);
+tts.setMetadata(
+    (await setting.getItem(ttsVoiceConfig)) || "en-GB-LibbyNeural",
+    OUTPUT_FORMAT.WEBM_24KHZ_16BIT_MONO_OPUS
+);
 
 async function runTTS(text: string) {
     let b = (await ttsCache.getItem(text)) as Blob;
