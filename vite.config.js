@@ -3,6 +3,7 @@ import { nodePolyfills } from "vite-plugin-node-polyfills";
 
 export default defineConfig({
     base: "./",
+    build: { target: "esnext" },
     esbuild: {
         pure: ["console.log"],
     },
