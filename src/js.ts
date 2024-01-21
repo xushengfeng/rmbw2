@@ -2101,6 +2101,7 @@ loadTTSVoicesEl.onclick = async () => {
         let name = voicesListEl.value;
         tts.setMetadata(name, OUTPUT_FORMAT.WEBM_24KHZ_16BIT_MONO_OPUS);
         setting.setItem(ttsVoiceConfig, name);
+        ttsCache.clear();
     };
 };
 
