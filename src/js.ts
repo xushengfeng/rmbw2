@@ -1160,7 +1160,7 @@ async function showDic(id: string) {
             text: Share.context,
             card_id: uuid(), // 句子卡片id用uuid而不是单词
             source: null,
-            trans: "",
+            trans: dicTransContent.value,
         };
 
         for (let i of Word.record.means) {
@@ -1300,6 +1300,10 @@ async function showDic(id: string) {
         moreWordsEl.innerHTML = "";
         dicTransContent.value = ((await card2sentence.getItem(id)) as record2).trans;
         dicDetailsEl.innerHTML = "";
+
+        if (!dicTransContent.value) {
+            dicTransB.click();
+        }
 
         dicTransContent.onchange = async () => {
             let r = (await card2sentence.getItem(id)) as record2;
