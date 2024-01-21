@@ -1364,33 +1364,35 @@ async function showDic(id: string) {
             down.start = false;
             down.end = false;
             console.log(editText.slice(index.start, index.end));
+            saveChange();
         };
-        hideDicEl.onclick = async () => {
+        async function saveChange() {
             let text = editText.slice(index.start, index.end);
+            context = text;
             if (isSentence) {
                 section.words[id].index = [index.start, index.end];
                 sectionsStore.setItem(sectionId, section);
                 let r = (await card2sentence.getItem(id)) as record2;
                 r.text = text;
                 card2sentence.setItem(id, r);
-                exit();
             } else {
                 for (let i of wordv.means) {
                     for (let j of i.contexts) {
                         if (j.source.id === id) {
                             j.index = [wordx.index[0] - index.start, wordx.index[1] - index.start];
                             j.text = text;
+                            contextx = j;
+                            sourceIndex = j.index;
                             await wordsStore.setItem(oldWord, wordv);
-                            exit();
                             break;
                         }
                     }
                 }
             }
-            function exit() {
-                startEl.remove();
-                endEl.remove();
-            }
+        }
+        hideDicEl.onclick = () => {
+            startEl.remove();
+            endEl.remove();
 
             dicEl.classList.remove(showClass);
 
