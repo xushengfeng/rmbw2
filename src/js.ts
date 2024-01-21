@@ -2106,3 +2106,19 @@ loadTTSVoicesEl.onclick = async () => {
 };
 
 settingEl.append(el("div", [el("h2", "tts"), loadTTSVoicesEl, voicesListEl]));
+
+settingEl.append(
+    el("div", [
+        el("h2", "缓存"),
+        el("button", "tts", {
+            onclick: () => {
+                ttsCache.clear();
+            },
+        }),
+        el("button", "trans", {
+            onclick: () => {
+                transCache.clear();
+            },
+        }),
+    ])
+);
