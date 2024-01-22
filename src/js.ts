@@ -928,11 +928,11 @@ bookContentEl.onscroll = async () => {
     if (wordList.length) reflashContentScroll();
 };
 
+const SHOWMARKLIST = "show_mark_word_list";
 bookdicEl.onclick = async () => {
-    let markList = await getAllMarks();
-    if (markList[0]) {
-        nowDicId = markList[0].id;
-        showDic(nowDicId);
+    markListEl.classList.toggle(SHOWMARKLIST);
+    if (markListEl.classList.contains(SHOWMARKLIST)) {
+        showMarkList();
     }
 };
 
@@ -972,15 +972,32 @@ type record2 = {
     card_id: string;
 };
 
+const markListEl = document.getElementById("mark_word_list");
+
+async function showMarkList() {
+    // todo vlist
+    markListEl.innerHTML = "";
+    let list = await getAllMarks();
+    list = list.filter((i) => i.s.type === "word");
+    for (let i of list) {
+        let item = el("div", i.s.id, { class: i.s.visit ? "" : TODOMARK });
+        item.onclick = () => {
+            showDic(i.id);
+            jumpToMark(i.s.index[0]);
+        };
+        markListEl.append(item);
+    }
+}
+
 async function getAllMarks() {
     let book = await getBooksById(nowBook.book);
     let sectionId = book.sections[nowBook.sections];
     let section = await getSection(sectionId);
-    let list: { id: string; word: string; index: [number, number] }[] = [];
+    let list: { id: string; s: section["words"][0] }[] = [];
     for (let i in section.words) {
-        list.push({ id: i, word: section.words[i].id, index: section.words[i].index });
+        list.push({ id: i, s: section.words[i] });
     }
-    list = list.toSorted((a, b) => a.index[0] - b.index[0]);
+    list = list.toSorted((a, b) => a.s.index[0] - b.s.index[0]);
     return list;
 }
 
@@ -992,7 +1009,7 @@ lastMarkEl.onclick = async () => {
     index = index < 0 ? 0 : index;
     let id = list[index].id;
     showDic(id);
-    jumpToMark(list[index].index[0]);
+    jumpToMark(list[index].s.index[0]);
 };
 nextMarkEl.onclick = async () => {
     if (!nowDicId) return;
@@ -1002,7 +1019,7 @@ nextMarkEl.onclick = async () => {
     index = index >= list.length ? list.length - 1 : index;
     let id = list[index].id;
     showDic(id);
-    jumpToMark(list[index].index[0]);
+    jumpToMark(list[index].s.index[0]);
 };
 function jumpToMark(start: number) {
     let span = bookContentEl.querySelector(`span[data-s="${start}"]`);

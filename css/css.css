@@ -454,6 +454,24 @@ div:has(> .translate) > :not(.translate) {
     display: none;
 }
 
+#mark_word_list {
+    position: fixed;
+    overflow: scroll;
+    right: -100%;
+    top: 24px;
+    height: calc(100vh - 24px);
+    width: 40vw;
+    border-radius: 1rem 0 0 1rem;
+    background: var(--bar-bg);
+    backdrop-filter: var(--blur);
+    transition: var(--transition);
+}
+
+.show_mark_word_list {
+    right: 0 !important;
+    box-shadow: var(--shadow);
+}
+
 #review {
     position: absolute;
     top: 100vh;
