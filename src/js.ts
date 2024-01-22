@@ -600,6 +600,8 @@ async function showBookContent(id: string) {
             pel.append(playEl);
         }
 
+        contentP.push(pText);
+
         for (let i in paragraph) {
             if (t && i === "0") continue;
             const word = paragraph[i];
