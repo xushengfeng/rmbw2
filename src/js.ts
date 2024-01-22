@@ -114,7 +114,6 @@ const bookdicEl = document.getElementById("book_dic");
 const lastMarkEl = el("button", iconEl(left_svg));
 const nextMarkEl = el("button", iconEl(right_svg));
 const toSentenceEl = el("button", iconEl(sentence_svg));
-const rmCardEl = el("button", iconEl(clear_svg));
 const hideDicEl = el("button", iconEl(close_svg));
 const dicWordEl = el("input", { alt: "单词" });
 const moreWordsEl = el("div", { class: "more_words" });
@@ -138,14 +137,7 @@ const dicDetailsEl = el("div", {
 });
 
 dicEl.append(
-    el("div", { style: { display: "flex" } }, [
-        lastMarkEl,
-        nextMarkEl,
-        toSentenceEl,
-        rmCardEl,
-        ttsContextEl,
-        hideDicEl,
-    ]),
+    el("div", { style: { display: "flex" } }, [lastMarkEl, nextMarkEl, toSentenceEl, ttsContextEl, hideDicEl]),
     el("div", { style: { display: "flex" } }, [dicWordEl, ttsWordEl, moreWordsEl]),
     el("div", { style: { display: "flex" } }, [dicTransB, dicTransContent]),
     dicMinEl,
@@ -985,6 +977,35 @@ async function showMarkList() {
             showDic(i.id);
             jumpToMark(i.s.index[0]);
         };
+        item.oncontextmenu = (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            menuEl.innerHTML = "";
+            menuEl.append(
+                el("div", "删除", {
+                    style: { color: "red" },
+                    onclick: async () => {
+                        let book = await getBooksById(nowBook.book);
+                        let sectionId = book.sections[nowBook.sections];
+                        let section = await getSection(sectionId);
+                        if (i.s.type === "sentence") {
+                            card2sentence.removeItem(i.s.id);
+                        } else {
+                            // todo
+                            let record = (await wordsStore.getItem(i.s.id)) as record;
+                            rmWord(record, i.id, i.s.id, null, null);
+                            rmStyle(i.s.index[0]);
+                        }
+                        delete section.words[i.id];
+                        sectionsStore.setItem(sectionId, section);
+                        item.remove();
+                    },
+                })
+            );
+            setTimeout(() => {
+                showMenu(e.clientX, e.clientY);
+            }, 100);
+        };
         markListEl.append(item);
     }
 }
@@ -1108,46 +1129,9 @@ async function showDic(id: string) {
         changeContext();
     }
 
-    rmCardEl.onclick = () => {
-        if (isSentence) {
-            card2sentence.removeItem(id);
-        } else {
-            rm(Word.word, Word.dic, Word.mean);
-            rmStyle();
-        }
-        delete section.words[id];
-        sectionsStore.setItem(sectionId, section);
-        nextMarkEl.click();
-    };
-
-    function rmStyle() {
-        bookContentEl.querySelector(`span[data-s="${wordx.index[0]}"]`)?.classList?.remove(MARKWORD);
-    }
-
-    async function rm(word: string, dic: string, i: number) {
-        for (let m of Word.record.means) {
-            if (m.dic === dic && m.index === i) {
-                m.contexts = m.contexts.filter((c) => c.source.id != Word.contextx.source.id);
-                if (m.contexts.length === 0) {
-                    await card2word.removeItem(m.card_id);
-                    await cardsStore.removeItem(m.card_id);
-                    Word.record.means = Word.record.means.filter((i) => i.index != m.index);
-                    await wordsStore.setItem(word, Word.record);
-                }
-                if (Word.record.means.length === 0) {
-                    await wordsStore.removeItem(word);
-                    await spellStore.removeItem(word);
-                } else {
-                    await wordsStore.setItem(word, Word.record);
-                }
-                break;
-            }
-        }
-    }
-
     async function changeDicMean(word: string, dic: string, i: number) {
         if (word != Word.word || dic != Word.dic || i != Word.mean) {
-            await rm(Word.word, Word.dic, Word.mean);
+            await rmWord(Word.record, Word.contextx.source.id, Word.word, Word.dic, Word.mean);
 
             await addReviewCard(word, { dic, index: i }, Word.contextx);
 
@@ -1222,11 +1206,11 @@ async function showDic(id: string) {
         }
         card2sentence.setItem(id, r);
 
-        rm(Word.word, Word.dic, Word.mean);
+        rmWord(Word.record, Word.contextx.source.id, Word.word, Word.dic, Word.mean);
 
         showSentence();
 
-        rmStyle();
+        rmStyle(wordx.index[0]);
     };
 
     ttsWordEl.onclick = () => {
@@ -1553,6 +1537,31 @@ async function saveCard(v: {
         }
     );
     return id;
+}
+
+async function rmWord(record: record, sourceId: string, word: string, dic: string, i: number) {
+    for (let m of record.means) {
+        if (m.dic === dic && m.index === i) {
+            m.contexts = m.contexts.filter((c) => c.source.id != sourceId);
+            if (m.contexts.length === 0) {
+                await card2word.removeItem(m.card_id);
+                await cardsStore.removeItem(m.card_id);
+                record.means = record.means.filter((i) => i.index != m.index);
+                await wordsStore.setItem(word, record);
+            }
+            if (record.means.length === 0) {
+                await wordsStore.removeItem(word);
+                await spellStore.removeItem(word);
+            } else {
+                await wordsStore.setItem(word, record);
+            }
+            break;
+        }
+    }
+}
+
+function rmStyle(start: number) {
+    bookContentEl.querySelector(`span[data-s="${start}"]`)?.classList?.remove(MARKWORD);
 }
 
 type aim = { role: "system" | "user" | "assistant"; content: string }[];
