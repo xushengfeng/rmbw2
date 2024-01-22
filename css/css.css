@@ -319,6 +319,21 @@ body > #index > div > .icon {
     z-index: 1;
 }
 
+#book_content > :has([data-play]) {
+    position: relative;
+    &:hover {
+        > [data-play] {
+            opacity: 1;
+        }
+    }
+}
+#book_content > * > [data-play] {
+    position: absolute;
+    left: -30px;
+    opacity: 0.2;
+    transition: var(--transition);
+}
+
 #books {
     display: flex;
     flex-direction: column;
