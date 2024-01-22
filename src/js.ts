@@ -2112,8 +2112,9 @@ function setUi() {}
 
 const exportEl = document.getElementById("data_export");
 let exBook = document.createElement("div");
-exBook.onclick = async () => {
-    let l: { bookshelf: { [key: string]: any }; sections: { [key: string]: any } } = { bookshelf: {}, sections: {} };
+type allDataBook = { bookshelf: { [key: string]: any }; sections: { [key: string]: any } };
+async function getDataBook() {
+    let l: allDataBook = { bookshelf: {}, sections: {} };
     await bookshelfStore.iterate((v, k) => {
         l.bookshelf[k] = v;
     });
@@ -2121,6 +2122,10 @@ exBook.onclick = async () => {
         l.sections[k] = v;
     });
     let blob = new Blob([JSON.stringify(l)], { type: "text/plain;charset=utf-8" });
+    return blob;
+}
+exBook.onclick = async () => {
+    let blob = await getDataBook();
     let a = document.createElement("a");
     a.href = URL.createObjectURL(blob);
     a.download = "rmbw_book.json";
@@ -2129,14 +2134,22 @@ exBook.onclick = async () => {
 exBook.innerText = "书籍";
 exportEl.append(exBook);
 
-let exWord = document.createElement("div");
-exWord.onclick = async () => {
-    let l: { cards: Object; words: Object; spell: Object; card2word: Object; card2sentence: Object } = {
+type allDataWord = {
+    cards: Object;
+    words: Object;
+    spell: Object;
+    card2word: Object;
+    card2sentence: Object;
+    sentence: Object;
+};
+async function getDataWord() {
+    let l: allDataWord = {
         cards: {},
         words: {},
         spell: {},
         card2word: {},
         card2sentence: {},
+        sentence: {},
     };
     await cardsStore.iterate((v, k) => {
         l.cards[k] = v;
@@ -2153,7 +2166,16 @@ exWord.onclick = async () => {
     await card2sentence.iterate((v, k) => {
         l.card2sentence[k] = v;
     });
+    await sectionsStore.iterate((v, k) => {
+        l.sentence[k] = v;
+    });
     let blob = new Blob([JSON.stringify(l)], { type: "text/plain;charset=utf-8" });
+    return blob;
+}
+
+let exWord = document.createElement("div");
+exWord.onclick = async () => {
+    let blob = await getDataWord();
     let a = document.createElement("a");
     a.href = URL.createObjectURL(blob);
     a.download = "rmbw_word.json";
@@ -2161,6 +2183,58 @@ exWord.onclick = async () => {
 };
 exWord.innerText = "单词卡片";
 exportEl.append(exWord);
+
+function setBookData(data: string) {
+    let json = JSON.parse(data) as allDataBook;
+}
+
+function setWordData(data: string) {
+    let json = JSON.parse(data) as allDataWord;
+}
+
+async function getDAV(name: string) {
+    const baseurl = (await setting.getItem("webStore.dav.url")) as string;
+    const username = (await setting.getItem("webStore.dav.user")) as string;
+    const passwd = (await setting.getItem("webStore.dav.passwd")) as string;
+    let url = new URL(baseurl);
+    url.username = username;
+    url.password = passwd;
+    let data = (
+        await fetch(url, {
+            method: "get",
+        })
+    ).arrayBuffer();
+    return data;
+}
+
+async function setDAV(data: Blob, name: string) {
+    const baseurl = (await setting.getItem("webStore.dav.url")) as string;
+    const username = (await setting.getItem("webStore.dav.user")) as string;
+    const passwd = (await setting.getItem("webStore.dav.passwd")) as string;
+    let url = new URL(baseurl);
+    url.username = username;
+    url.password = passwd;
+    fetch(url, {
+        method: "post",
+    }).then();
+}
+
+let asyncEl = el("h2", "数据", [
+    el("div", [
+        el("button", "get", {
+            onclick: async () => {
+                let bookData = await getDAV("");
+                let wordData = await getDAV("");
+            },
+        }),
+        el("button", "set", {
+            onclick: async () => {
+                let bookData = await getDataBook();
+                let wordData = await getDataWord();
+            },
+        }),
+    ]),
+]);
 
 let loadTTSVoicesEl = el("button", "load");
 let voicesListEl = el("select");
