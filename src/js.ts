@@ -7,7 +7,6 @@ import localforage from "localforage";
 import mammoth from "mammoth";
 
 import lemmatizer from "lemmatizer";
-console.log(lemmatizer("recruited"));
 
 var Segmenter = Intl.Segmenter;
 if (!Segmenter) {
@@ -1975,7 +1974,7 @@ async function getTTS(text: string) {
     const readable = tts.toStream(text);
     let base = new Uint8Array();
     readable.on("data", (data: Uint8Array) => {
-        console.log("DATA RECEIVED", data);
+        console.log("DATA RECEIVED");
         // raw audio file data
         base = concat(base, data);
     });
