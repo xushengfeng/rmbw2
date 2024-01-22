@@ -2005,6 +2005,16 @@ async function runTTS(text: string) {
     audioEl.play();
 }
 
+const pttsEl = document.getElementById("pTTSp");
+const SHOWPTTS = "pTTS_show";
+const autoPlayTTSEl = el("input", {
+    type: "checkbox",
+    onchange: () => {
+        autoPlay = autoPlayTTSEl.checked;
+    },
+});
+pttsEl.append(autoPlayTTSEl);
+
 let autoPlay = false;
 
 async function pTTS(index: number) {
@@ -2013,13 +2023,17 @@ async function pTTS(index: number) {
         if (autoPlay) {
             if (index + 1 < contentP.length) {
                 pTTS(index + 1);
+                return;
             }
         }
+        pttsEl.classList.remove(SHOWPTTS);
     };
     if (!text) {
         nextplay();
         return;
     }
+    pttsEl.classList.add(SHOWPTTS);
+
     let url = await getTTS(text);
     pTTSEl.src = url;
     pTTSEl.play();

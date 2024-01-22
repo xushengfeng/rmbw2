@@ -334,6 +334,25 @@ body > #index > div > .icon {
     transition: var(--transition);
 }
 
+#pTTSp {
+    position: fixed;
+    bottom: 24px;
+    margin: auto 0;
+    background: var(--bar-bg);
+    backdrop-filter: var(--blur);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    & > audio {
+        height: 24px;
+        display: block;
+    }
+}
+
+.pTTS_show {
+    display: flex !important;
+}
+
 #books {
     display: flex;
     flex-direction: column;
