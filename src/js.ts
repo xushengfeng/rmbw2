@@ -2193,6 +2193,17 @@ async function setDAV(data: Blob, name: string) {
     }).then();
 }
 
+let uploadDataEl = el("input", "上传数据", {
+    type: "file",
+    onchange: () => {
+        let reader = new FileReader();
+        reader.readAsText(uploadDataEl.files[0]);
+        reader.onload = () => {
+            setAllData(reader.result as string);
+        };
+    },
+});
+
 let asyncEl = el("h2", "数据", [
     el("div", [
         el("button", "导出数据", {
@@ -2204,6 +2215,7 @@ let asyncEl = el("h2", "数据", [
                 a.click();
             },
         }),
+        uploadDataEl,
     ]),
     el("div", [
         el("button", "get", {
