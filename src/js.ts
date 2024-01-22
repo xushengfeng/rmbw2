@@ -138,13 +138,16 @@ const dicDetailsEl = el("div", {
 });
 
 dicEl.append(
-    el("div", [
-        el("div", { style: { display: "flex" } }, [lastMarkEl, nextMarkEl, toSentenceEl, rmCardEl, hideDicEl]),
-        dicWordEl,
-        moreWordsEl,
+    el("div", { style: { display: "flex" } }, [
+        lastMarkEl,
+        nextMarkEl,
+        toSentenceEl,
+        rmCardEl,
+        ttsContextEl,
+        hideDicEl,
     ]),
-    el("div", [ttsWordEl, ttsContextEl]),
-    el("div", [dicTransB, dicTransContent]),
+    el("div", { style: { display: "flex" } }, [dicWordEl, ttsWordEl, moreWordsEl]),
+    el("div", { style: { display: "flex" } }, [dicTransB, dicTransContent]),
     dicMinEl,
     dicDetailsEl
 );
