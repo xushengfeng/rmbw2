@@ -1015,7 +1015,7 @@ dicMinEl.onclick = () => {
 };
 
 function setDicPosi(el: HTMLElement) {
-    dicEl.style.top = `${el.offsetTop + bookContentEl.offsetTop}px`;
+    dicEl.style.top = `${el.getBoundingClientRect().top}px`;
 }
 
 let dicMeansAi: AbortController;
@@ -1365,18 +1365,24 @@ async function showDic(id: string) {
         bookContentEl.querySelector("." + endClass)?.remove();
         bookContentEl.append(startEl, endEl);
         function setElPosi(el: HTMLElement, left: boolean) {
+            function getOffset(el: HTMLElement) {
+                let pel = bookContentEl;
+                let r = el.getBoundingClientRect();
+                let r0 = pel.getBoundingClientRect();
+                return { left: r.left - r0.left, top: r.top - r0.top };
+            }
             if (left) {
                 if (!isSentence && Number(el.getAttribute("data-s")) > wordx.index[0]) {
                     el = bookContentEl.querySelector(`span[data-s="${wordx.index[0]}"]`);
                 }
-                startEl.style.left = el.offsetLeft + "px";
-                startEl.style.top = el.offsetTop + "px";
+                startEl.style.left = getOffset(el).left + "px";
+                startEl.style.top = getOffset(el).top + "px";
             } else {
                 if (!isSentence && Number(el.getAttribute("data-s")) < wordx.index[0]) {
                     el = bookContentEl.querySelector(`span[data-s="${wordx.index[0]}"]`);
                 }
-                endEl.style.left = el.offsetLeft + el.offsetWidth + "px";
-                endEl.style.top = el.offsetTop + el.offsetHeight + "px";
+                endEl.style.left = getOffset(el).left + el.offsetWidth + "px";
+                endEl.style.top = getOffset(el).top + el.offsetHeight + "px";
             }
         }
         function matchRangeEl(n: number, left: boolean) {
