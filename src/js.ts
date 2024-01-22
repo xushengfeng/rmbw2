@@ -2110,31 +2110,12 @@ settingEl.querySelectorAll("[data-path]").forEach(async (el: HTMLElement) => {
 });
 function setUi() {}
 
-const exportEl = document.getElementById("data_export");
-let exBook = document.createElement("div");
-type allDataBook = { bookshelf: { [key: string]: any }; sections: { [key: string]: any } };
-async function getDataBook() {
-    let l: allDataBook = { bookshelf: {}, sections: {} };
-    await bookshelfStore.iterate((v, k) => {
-        l.bookshelf[k] = v;
-    });
-    await sectionsStore.iterate((v, k) => {
-        l.sections[k] = v;
-    });
-    let blob = new Blob([JSON.stringify(l)], { type: "text/plain;charset=utf-8" });
-    return blob;
-}
-exBook.onclick = async () => {
-    let blob = await getDataBook();
-    let a = document.createElement("a");
-    a.href = URL.createObjectURL(blob);
-    a.download = "rmbw_book.json";
-    a.click();
-};
-exBook.innerText = "书籍";
-exportEl.append(exBook);
+const rmbwJsonName = "rmbw.json";
+const rmbwZipName = "rmbw.zip";
 
-type allDataWord = {
+type allData = {
+    bookshelf: { [key: string]: any };
+    sections: { [key: string]: any };
     cards: Object;
     words: Object;
     spell: Object;
@@ -2142,8 +2123,10 @@ type allDataWord = {
     card2sentence: Object;
     sentence: Object;
 };
-async function getDataWord() {
-    let l: allDataWord = {
+async function getAllData() {
+    let l: allData = {
+        bookshelf: {},
+        sections: {},
         cards: {},
         words: {},
         spell: {},
@@ -2151,6 +2134,12 @@ async function getDataWord() {
         card2sentence: {},
         sentence: {},
     };
+    await bookshelfStore.iterate((v, k) => {
+        l.bookshelf[k] = v;
+    });
+    await sectionsStore.iterate((v, k) => {
+        l.sections[k] = v;
+    });
     await cardsStore.iterate((v, k) => {
         l.cards[k] = v;
     });
@@ -2173,23 +2162,8 @@ async function getDataWord() {
     return blob;
 }
 
-let exWord = document.createElement("div");
-exWord.onclick = async () => {
-    let blob = await getDataWord();
-    let a = document.createElement("a");
-    a.href = URL.createObjectURL(blob);
-    a.download = "rmbw_word.json";
-    a.click();
-};
-exWord.innerText = "单词卡片";
-exportEl.append(exWord);
-
-function setBookData(data: string) {
-    let json = JSON.parse(data) as allDataBook;
-}
-
-function setWordData(data: string) {
-    let json = JSON.parse(data) as allDataWord;
+function setAllData(data: string) {
+    let json = JSON.parse(data) as allData;
 }
 
 async function getDAV(name: string) {
@@ -2221,20 +2195,31 @@ async function setDAV(data: Blob, name: string) {
 
 let asyncEl = el("h2", "数据", [
     el("div", [
+        el("button", "导出数据", {
+            onclick: async () => {
+                let blob = await getAllData();
+                let a = document.createElement("a");
+                a.href = URL.createObjectURL(blob);
+                a.download = rmbwJsonName;
+                a.click();
+            },
+        }),
+    ]),
+    el("div", [
         el("button", "get", {
             onclick: async () => {
-                let bookData = await getDAV("");
-                let wordData = await getDAV("");
+                let data = await getDAV(rmbwZipName);
             },
         }),
         el("button", "set", {
             onclick: async () => {
-                let bookData = await getDataBook();
-                let wordData = await getDataWord();
+                let data = await getAllData();
             },
         }),
     ]),
 ]);
+
+settingEl.append(asyncEl);
 
 let loadTTSVoicesEl = el("button", "load");
 let voicesListEl = el("select");
