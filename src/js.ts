@@ -991,9 +991,8 @@ async function showMarkList() {
                         if (i.s.type === "sentence") {
                             card2sentence.removeItem(i.s.id);
                         } else {
-                            // todo
                             let record = (await wordsStore.getItem(i.s.id)) as record;
-                            rmWord(record, i.id, i.s.id, null, null);
+                            rmWord(record, i.id);
                             rmStyle(i.s.index[0]);
                         }
                         delete section.words[i.id];
@@ -1117,7 +1116,7 @@ async function showDic(id: string) {
 
     async function changeDicMean(word: string, dic: string, i: number) {
         if (word != Word.word || dic != Word.dic || i != Word.index) {
-            await rmWord(Word.record, Word.context.source.id, Word.word, Word.dic, Word.index);
+            await rmWord(Word.record, Word.context.source.id);
 
             await addReviewCard(word, { dic, index: i }, Word.context);
 
@@ -1192,7 +1191,7 @@ async function showDic(id: string) {
         }
         card2sentence.setItem(id, r);
 
-        rmWord(Word.record, Word.context.source.id, Word.word, Word.dic, Word.index);
+        rmWord(Word.record, Word.context.source.id);
 
         showSentence();
 
@@ -1525,7 +1524,11 @@ async function saveCard(v: {
     return id;
 }
 
-async function rmWord(record: record, sourceId: string, word: string, dic: string, i: number) {
+async function rmWord(record: record, sourceId: string) {
+    let Word = flatWordCard(record, sourceId);
+    let word = record.word;
+    let dic = Word.dic;
+    let i = Word.index;
     for (let m of record.means) {
         if (m.dic === dic && m.index === i) {
             m.contexts = m.contexts.filter((c) => c.source.id != sourceId);
