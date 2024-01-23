@@ -91,6 +91,14 @@ function prompt(message?: string, defaultValue?: string) {
     });
 }
 
+function dialogX(el: HTMLDialogElement) {
+    document.body.append(el);
+    el.showModal();
+    el.addEventListener("close", () => {
+        el.remove();
+    });
+}
+
 function vlist(
     pel: HTMLElement,
     list: any[],
@@ -494,7 +502,34 @@ async function showBooks() {
                     bookshelfStore.setItem(book.id, book);
                 }
             };
-            menuEl.append(renameEl);
+            let editMetaEl = el("div", "元数据", {
+                onclick: () => {
+                    let formEl = el("form", [
+                        el("input", { name: "name", value: book.name }),
+                        el("input", { name: "language", value: book.language }),
+                        el("label", [
+                            "词书",
+                            el("input", { type: "radio", name: "type", value: "word", checked: book.type === "word" }),
+                        ]),
+                        el("label", [
+                            "书",
+                            el("input", { type: "radio", name: "type", value: "text", checked: book.type === "text" }),
+                        ]),
+                    ]);
+                    let submitEl = el("button", "确定");
+                    let metaEl = el("dialog", [el("div", `id: ${book.id}`), formEl, submitEl]) as HTMLDialogElement;
+                    submitEl.onclick = () => {
+                        let data = new FormData(formEl);
+                        data.forEach((v, k) => {
+                            book[k] = v;
+                        });
+                        bookshelfStore.setItem(book.id, book);
+                        metaEl.close();
+                    };
+                    dialogX(metaEl);
+                },
+            });
+            menuEl.append(renameEl, editMetaEl);
             setTimeout(() => {
                 showMenu(e.clientX, e.clientY);
             }, 100);
