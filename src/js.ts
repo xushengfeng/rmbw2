@@ -53,11 +53,20 @@ var setting = localforage.createInstance({
 
 /************************************UI */
 
+const menuEl = document.getElementById("menu");
+let willShowMenu = false;
 function showMenu(x: number, y: number) {
     menuEl.style.left = x + "px";
     menuEl.style.top = y + "px";
-    menuEl.showPopover();
+    willShowMenu = true;
 }
+
+document.body.addEventListener("pointerup", (e) => {
+    if (willShowMenu) {
+        menuEl.showPopover();
+        willShowMenu = false;
+    }
+});
 
 function prompt(message?: string, defaultValue?: string) {
     let dialog = document.createElement("dialog");
@@ -218,7 +227,6 @@ dicEl.append(
 );
 
 const toastEl = document.getElementById("toast");
-const menuEl = document.getElementById("menu");
 
 var bookshelfStore = localforage.createInstance({ name: "bookshelf" });
 var sectionsStore = localforage.createInstance({ name: "sections" });
@@ -530,9 +538,7 @@ async function showBooks() {
                 },
             });
             menuEl.append(renameEl, editMetaEl);
-            setTimeout(() => {
-                showMenu(e.clientX, e.clientY);
-            }, 100);
+            showMenu(e.clientX, e.clientY);
         };
     }
 }
@@ -1073,9 +1079,7 @@ async function showMarkList() {
                     },
                 })
             );
-            setTimeout(() => {
-                showMenu(e.clientX, e.clientY);
-            }, 100);
+            showMenu(e.clientX, e.clientY);
         };
         return item;
     });
