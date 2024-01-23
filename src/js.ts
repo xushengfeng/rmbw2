@@ -144,14 +144,14 @@ function vlist(
             oldRangeList.push(Number(el.getAttribute(dataI)));
         });
         for (let i of oldRangeList) {
-            if (i < startI || endI < i) pel.querySelector(`:scope > [${dataI}=${i}]`).remove();
+            if (i < startI || endI < i) pel.querySelector(`:scope > [${dataI}="${i}"]`).remove();
         }
         for (let i = startI; i <= endI; i++) {
             if (oldRangeList.includes(i)) continue;
             let iel = f(i, () => {
                 iel.remove();
                 for (let ii = i + 1; ii <= endI; i++) {
-                    let afterEl = pel.querySelector(`:scope > [${dataI}=${ii}]`) as HTMLElement;
+                    let afterEl = pel.querySelector(`:scope > [${dataI}="${ii}"]`) as HTMLElement;
                     afterEl.setAttribute(dataI, String(ii - 1));
                     afterEl.style.top = Number(afterEl.style.top.slice(0, -2)) - iHeight - gap + "px";
                 }
