@@ -1006,7 +1006,9 @@ async function showMarkList() {
     markListEl.innerHTML = "";
     let list = await getAllMarks();
     list = list.filter((i) => i.s.type === "word");
-    for (let i of list) {
+    vlist(markListEl, list, { iHeight: 24, gap: 4, paddingTop: 16, paddingLeft: 16 }, (index, remove) => {
+        const i = list[index];
+
         let item = el("div", i.s.id, { class: i.s.visit ? "" : TODOMARK });
         item.onclick = () => {
             showDic(i.id);
@@ -1032,7 +1034,7 @@ async function showMarkList() {
                         }
                         delete section.words[i.id];
                         sectionsStore.setItem(sectionId, section);
-                        item.remove();
+                        remove();
                     },
                 })
             );
@@ -1040,8 +1042,8 @@ async function showMarkList() {
                 showMenu(e.clientX, e.clientY);
             }, 100);
         };
-        markListEl.append(item);
-    }
+        return item;
+    });
 }
 
 async function getAllMarks() {
