@@ -1,6 +1,6 @@
 /// <reference types="vite/client" />
 
-import { el, text } from "redom";
+import { el, text, setStyle } from "redom";
 
 import localforage from "localforage";
 
@@ -89,6 +89,71 @@ function prompt(message?: string, defaultValue?: string) {
             dialog.remove();
         };
     });
+}
+
+function vlist(
+    pel: HTMLElement,
+    list: any[],
+    style: {
+        iHeight: number;
+        gap?: number;
+        paddingTop?: number;
+        paddingLeft?: number;
+        paddingBotton?: number;
+        paddingRight?: number;
+        width?: number;
+    },
+    f: (index: number, remove: () => void) => HTMLElement
+) {
+    let iHeight = style.iHeight;
+    let gap = style.gap ?? 0;
+    // padding 还需要pel自己设定
+    let paddingTop = style.paddingTop ?? 0;
+    let paddingLeft = style.paddingLeft ?? 0;
+
+    let blankEl = el("div", { style: { width: `${style.width || "1"}px` } });
+    blankEl.style.height = iHeight * list.length + gap * list.length - 1 + "px";
+    pel.append(blankEl);
+    const dataI = "data-v-i";
+    function show() {
+        let startI = Math.ceil((pel.scrollTop - paddingTop) / (iHeight + gap));
+        let endI = Math.floor((pel.scrollTop - paddingTop + pel.offsetHeight) / (iHeight + gap));
+        startI -= 15;
+        endI += 15;
+        startI = Math.max(0, startI);
+        endI = Math.min(list.length - 1, endI);
+        let oldRangeList: number[] = [];
+        pel.querySelectorAll(`:scope > [${dataI}]`).forEach((el: HTMLElement) => {
+            oldRangeList.push(Number(el.getAttribute(dataI)));
+        });
+        for (let i of oldRangeList) {
+            if (i < startI || endI < i) pel.querySelector(`:scope > [${dataI}=${i}]`).remove();
+        }
+        for (let i = startI; i <= endI; i++) {
+            if (oldRangeList.includes(i)) continue;
+            let iel = f(i, () => {
+                iel.remove();
+                for (let ii = i + 1; ii <= endI; i++) {
+                    let afterEl = pel.querySelector(`:scope > [${dataI}=${ii}]`) as HTMLElement;
+                    afterEl.setAttribute(dataI, String(ii - 1));
+                    afterEl.style.top = Number(afterEl.style.top.slice(0, -2)) - iHeight - gap + "px";
+                }
+                list = list.toSpliced(i, 1); // 这里list和索引都更新，f内部原始索引和list都不变，数据是一致的
+
+                show(); // 补全最后一个元素
+            });
+            setStyle(iel, {
+                position: "absolute",
+                top: paddingTop + i * (iHeight + gap) + "px",
+                left: paddingLeft + "px",
+            });
+            iel.setAttribute(dataI, String(i));
+            pel.append(iel);
+        }
+    }
+    show();
+    pel.addEventListener("scroll", show);
+    return () => pel.removeEventListener("scroll", show);
 }
 
 /************************************main */
@@ -546,14 +611,10 @@ async function showBookContent(id: string) {
 
         bookContentEl.append(sum);
 
-        reflashContentScroll();
-
-        let h = document.createElement("div");
-        h.style.height = 120 + wordList.length * (24 + 8) + 8 + "px";
-        h.style.width = "1px";
-        h.style.position = "absolute";
-        h.style.top = "0px";
-        bookContentEl.append(h);
+        vlist(bookContentEl, wordList, { iHeight: 24, gap: 8 }, (i) => {
+            let p = el("p", wordList[i].text);
+            return p;
+        });
 
         return;
     }
@@ -678,30 +739,6 @@ function setScrollPosi(el: HTMLElement, posi: number) {
 function getScrollPosi(el: HTMLElement) {
     let n = el.scrollTop / (el.scrollHeight - el.offsetHeight);
     return n;
-}
-
-function reflashContentScroll() {
-    for (let i = 0; i < wordList.length; i++) {
-        const h = 24;
-        const gap = 8;
-        const buffer = 64;
-        let t = 120 + i * (h + gap);
-        let b = 120 + (i + 1) * (gap + h);
-        if (
-            b >= bookContentEl.scrollTop - buffer &&
-            t <= bookContentEl.scrollTop + bookContentEl.offsetHeight + buffer
-        ) {
-            if (bookContentEl.querySelector(`p[data-i='${i}']`)) continue;
-            let p = document.createElement("p");
-            p.setAttribute("data-i", String(i));
-            p.innerText = wordList[i].text;
-            p.style.top = t + "px";
-            p.style.position = "absolute";
-            bookContentEl.append(p);
-        } else {
-            bookContentEl.querySelector(`p[data-i='${i}']`)?.remove();
-        }
-    }
 }
 
 let isEdit = false;
@@ -916,8 +953,6 @@ bookContentEl.onscroll = async () => {
     let section = await getSection(sectionId);
     section.lastPosi = n;
     sectionsStore.setItem(sectionId, section);
-
-    if (wordList.length) reflashContentScroll();
 };
 
 const SHOWMARKLIST = "show_mark_word_list";
