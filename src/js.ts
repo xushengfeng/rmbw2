@@ -628,35 +628,15 @@ async function showBookContent(id: string) {
             }
             wordList.push({ text: t, c: c });
         }
-        let sum = document.createElement("table");
-        function p(name: string, number: number) {
-            let t = document.createElement("tr");
-            let nEl = document.createElement("td");
-            let numEl = document.createElement("td");
-            let pEl = document.createElement("td");
-            nEl.innerText = name;
-            numEl.innerText = number.toFixed(1);
-            pEl.innerText = ((number / l.length) * 100).toFixed(2) + "%";
-            t.append(nEl, numEl, pEl);
-            return t;
+        function p(number: number) {
+            return el("td", [number.toFixed(1), el("progress", { value: number / l.length })]);
         }
-        let t = document.createElement("tr");
-        let nEl = document.createElement("th");
-        let numEl = document.createElement("th");
-        let pEl = document.createElement("th");
-        nEl.innerText = "词";
-        numEl.innerText = String(l.length);
-        pEl.innerText = "100%";
-        t.append(nEl, numEl, pEl);
-
-        sum.append(t);
-        sum.append(p("了解", matchWords));
-        sum.append(p("有效", means));
-        sum.append(p("记忆", means1));
-
-        sum.classList.add("words_sum");
-
-        bookContentEl.append(sum);
+        bookContentEl.append(
+            el("table", { class: "words_sum" }, [
+                el("tr", [el("th", "词"), el("th", "了解"), el("th", "有效"), el("th", "记忆")]),
+                el("tr", [el("td", String(l.length)), p(matchWords), p(means), p(means1)]),
+            ])
+        );
 
         vlist(bookContentEl, wordList, { iHeight: 24, gap: 8, paddingTop: 120 }, (i) => {
             let p = el("p", wordList[i].text);

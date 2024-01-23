@@ -317,6 +317,9 @@ body > #index > div > .icon {
     background-color: var(--bg1);
     backdrop-filter: var(--blur);
     z-index: 1;
+    & progress {
+        width: 2rem;
+    }
 }
 
 #book_content > :has([data-play]) {
