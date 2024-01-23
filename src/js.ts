@@ -1081,13 +1081,7 @@ async function showDic(id: string) {
 
     let wordx = section.words[id];
 
-    let Word = {
-        word: wordx.id,
-        record: null as record,
-        dic: "",
-        mean: NaN,
-        contextx: null as record["means"][0]["contexts"][0],
-    };
+    let Word: { word: string; record: record } & flatWord;
 
     let Share = {
         context: "",
@@ -1096,24 +1090,16 @@ async function showDic(id: string) {
     let isSentence = wordx.type === "sentence";
     let sourceWord = "";
     if (!isSentence) {
-        Word.record = (await wordsStore.getItem(wordx.id)) as record;
+        let record = (await wordsStore.getItem(wordx.id)) as record;
+        Word = { word: wordx.id, record, ...flatWordCard(record, id) };
         if (!Word.record) {
             delete section.words[id];
             sectionsStore.setItem(sectionId, section);
             nextMarkEl.click();
         }
-        for (let i of Word.record.means) {
-            Word.dic = i.dic;
-            Word.mean = i.index;
-            for (let j of i.contexts) {
-                if (j.source.id === id) {
-                    Share.context = j.text;
-                    Share.sourceIndex = j.index;
-                    sourceWord = j.text.slice(...j.index);
-                    Word.contextx = j;
-                }
-            }
-        }
+        Share.context = Word.context.text;
+        Share.sourceIndex = Word.context.index;
+        sourceWord = Word.context.text.slice(...Word.context.index);
     } else {
         Share.context = ((await card2sentence.getItem(id)) as record2).text;
     }
@@ -1130,14 +1116,14 @@ async function showDic(id: string) {
     }
 
     async function changeDicMean(word: string, dic: string, i: number) {
-        if (word != Word.word || dic != Word.dic || i != Word.mean) {
-            await rmWord(Word.record, Word.contextx.source.id, Word.word, Word.dic, Word.mean);
+        if (word != Word.word || dic != Word.dic || i != Word.index) {
+            await rmWord(Word.record, Word.context.source.id, Word.word, Word.dic, Word.index);
 
-            await addReviewCard(word, { dic, index: i }, Word.contextx);
+            await addReviewCard(word, { dic, index: i }, Word.context);
 
             Word.word = word;
             Word.dic = dic;
-            Word.mean = i;
+            Word.index = i;
             section.words[id].id = word;
             await sectionsStore.setItem(sectionId, section);
             Word.record = (await wordsStore.getItem(wordx.id)) as record;
@@ -1206,7 +1192,7 @@ async function showDic(id: string) {
         }
         card2sentence.setItem(id, r);
 
-        rmWord(Word.record, Word.contextx.source.id, Word.word, Word.dic, Word.mean);
+        rmWord(Word.record, Word.context.source.id, Word.word, Word.dic, Word.index);
 
         showSentence();
 
@@ -1312,7 +1298,7 @@ async function showDic(id: string) {
                 el.checked = true;
                 dicDetailsEl.classList.add(HIDEMEANS);
             }
-            if (Word.mean === -1) {
+            if (Word.index === -1) {
                 if (x.means.length > 1) {
                     set();
                     dicDetailsEl.classList.remove(HIDEMEANS);
@@ -1322,7 +1308,7 @@ async function showDic(id: string) {
                     changeDicMean(word, Word.dic, 0);
                 }
             } else {
-                setcheck(Word.mean);
+                setcheck(Word.index);
             }
         }
     }
@@ -1458,7 +1444,7 @@ async function showDic(id: string) {
                         if (j.source.id === id) {
                             j.index = [wordx.index[0] - index.start, wordx.index[1] - index.start];
                             j.text = text;
-                            Word.contextx = j;
+                            Word.context = j;
                             Share.sourceIndex = j.index;
                             await wordsStore.setItem(Word.word, Word.record);
                             break;
@@ -1693,6 +1679,33 @@ async function addReviewCard(
         await card2word.setItem(cardId, word);
         let card2 = new fsrsjs.Card();
         await spellStore.setItem(word, card2);
+    }
+}
+
+type flatWord = {
+    dic: record["means"][0]["dic"];
+    index: record["means"][0]["index"];
+    card_id: record["means"][0]["card_id"];
+    context: record["means"][0]["contexts"][0];
+};
+
+function flatWordCard(record: record, id: string) {
+    let Word: flatWord = {
+        dic: "",
+        index: -1,
+        card_id: "",
+        context: { index: [NaN, NaN], source: { book: "", sections: 0, id: "" }, text: "" },
+    };
+    for (let i of record.means) {
+        Word.dic = i.dic;
+        Word.index = i.index;
+        Word.card_id = i.card_id;
+        for (let j of i.contexts) {
+            if (j.source.id === id) {
+                Word.context = j;
+                return Word;
+            }
+        }
     }
 }
 
