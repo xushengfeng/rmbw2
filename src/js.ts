@@ -127,16 +127,18 @@ function vlist(
     // padding 还需要pel自己设定
     let paddingTop = style.paddingTop ?? 0;
     let paddingLeft = style.paddingLeft ?? 0;
+    let paddingBotton = style.paddingBotton ?? 0;
 
-    let blankEl = el("div", { style: { width: `${style.width || "1"}px` } });
-    blankEl.style.height = iHeight * list.length + gap * list.length - 1 + "px";
+    let blankEl = el("div", { style: { width: `${style.width || "1"}px`, position: "absolute", top: "0" } });
+    blankEl.style.height = iHeight * list.length + gap * list.length - 1 + paddingTop + paddingBotton + "px";
     pel.append(blankEl);
     const dataI = "data-v-i";
     function show() {
         let startI = Math.ceil((pel.scrollTop - paddingTop) / (iHeight + gap));
         let endI = Math.floor((pel.scrollTop - paddingTop + pel.offsetHeight) / (iHeight + gap));
-        startI -= 15;
-        endI += 15;
+        let buffer = Math.min(Math.floor((endI - startI) / 3), 15);
+        startI -= buffer;
+        endI += buffer;
         startI = Math.max(0, startI);
         endI = Math.min(list.length - 1, endI);
         let oldRangeList: number[] = [];
@@ -169,8 +171,11 @@ function vlist(
         }
     }
     show();
-    pel.addEventListener("scroll", show);
-    return () => pel.removeEventListener("scroll", show);
+    function s() {
+        requestAnimationFrame(() => show);
+    }
+    pel.addEventListener("scroll", s);
+    return () => pel.removeEventListener("scroll", s);
 }
 
 /************************************main */
@@ -652,7 +657,7 @@ async function showBookContent(id: string) {
 
         bookContentEl.append(sum);
 
-        vlist(bookContentEl, wordList, { iHeight: 24, gap: 8 }, (i) => {
+        vlist(bookContentEl, wordList, { iHeight: 24, gap: 8, paddingTop: 120 }, (i) => {
             let p = el("p", wordList[i].text);
             return p;
         });
