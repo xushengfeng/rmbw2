@@ -590,14 +590,15 @@ async function showBookContent(id: string) {
     let s = (await sectionsStore.getItem(id)) as section;
     bookContentEl.innerHTML = "";
 
-    bookContentEl.append(
-        el("div", "play", {
-            onclick: () => {
-                autoPlay = true;
-                pTTS(0);
-            },
-        })
-    );
+    if (!isWordBook)
+        bookContentEl.append(
+            el("div", "play", {
+                onclick: () => {
+                    autoPlay = true;
+                    pTTS(0);
+                },
+            })
+        );
 
     contentP = [];
 
