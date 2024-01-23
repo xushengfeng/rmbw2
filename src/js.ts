@@ -172,7 +172,7 @@ function vlist(
     }
     show();
     function s() {
-        requestAnimationFrame(() => show);
+        requestAnimationFrame(show);
     }
     pel.addEventListener("scroll", s);
     return () => pel.removeEventListener("scroll", s);
