@@ -1818,6 +1818,17 @@ let keyboard = new Keyboard(keyboardEl, {
     display: { "{space}": "__", "{shift}": "Shift", "{bksp}": "<-", "{tip}": "🫣", "{audio}": "📣" },
 });
 
+window.addEventListener("keydown", (e) => {
+    if (!(reviewType === "spell" && reviewEl.classList.contains("review_show"))) return;
+    let oldInput = keyboard.getInput();
+    if (e.key != "Backspace") {
+        keyboard.setInput(oldInput + e.key);
+    } else {
+        keyboard.setInput(oldInput.slice(0, -1));
+    }
+    keyboard.options.onChange(keyboard.getInput());
+});
+
 async function getFutureReviewDue(days: number) {
     let now = new Date().getTime();
     now += days * 24 * 60 * 60 * 1000;
