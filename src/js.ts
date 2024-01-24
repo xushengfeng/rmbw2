@@ -3,6 +3,8 @@
 import { el, text, setStyle } from "redom";
 
 import localforage from "localforage";
+import { extendPrototype } from "localforage-setitems";
+extendPrototype(localforage);
 
 import mammoth from "mammoth";
 
@@ -2238,8 +2240,8 @@ const rmbwJsonName = "rmbw.json";
 const rmbwZipName = "rmbw.zip";
 
 type allData = {
-    bookshelf: { [key: string]: any };
-    sections: { [key: string]: any };
+    bookshelf: Object;
+    sections: Object;
     cards: Object;
     words: Object;
     spell: Object;
@@ -2247,6 +2249,17 @@ type allData = {
     card2sentence: Object;
     sentence: Object;
 };
+
+let allData2Store: { [key: string]: LocalForage } = {
+    bookshelf: bookshelfStore,
+    sections: sectionsStore,
+    cards: cardsStore,
+    words: wordsStore,
+    spell: spellStore,
+    card2word: card2word,
+    card2sentence: card2sentence,
+    sentence: sentenceStore,
+} as { [key in keyof allData]: LocalForage };
 async function getAllData() {
     let l: allData = {
         bookshelf: {},
@@ -2258,36 +2271,29 @@ async function getAllData() {
         card2sentence: {},
         sentence: {},
     };
-    await bookshelfStore.iterate((v, k) => {
-        l.bookshelf[k] = v;
-    });
-    await sectionsStore.iterate((v, k) => {
-        l.sections[k] = v;
-    });
-    await cardsStore.iterate((v, k) => {
-        l.cards[k] = v;
-    });
-    await wordsStore.iterate((v, k) => {
-        l.words[k] = v;
-    });
-    await spellStore.iterate((v, k) => {
-        l.spell[k] = v;
-    });
-    await card2word.iterate((v, k) => {
-        l.card2word[k] = v;
-    });
-    await card2sentence.iterate((v, k) => {
-        l.card2sentence[k] = v;
-    });
-    await sectionsStore.iterate((v, k) => {
-        l.sentence[k] = v;
-    });
+    for (const storeName in allData2Store) {
+        await allData2Store[storeName].iterate((v, k) => {
+            l[storeName][k] = v;
+        });
+    }
     let blob = new Blob([JSON.stringify(l)], { type: "text/plain;charset=utf-8" });
     return blob;
 }
 
-function setAllData(data: string) {
+async function setAllData(data: string) {
     let json = JSON.parse(data) as allData;
+    for (let key of ["cards", "spell", "sentence"]) {
+        for (let i in json[key]) {
+            let r = json[key][i] as fsrsjs.Card;
+            r.due = new Date(r.due);
+            r.last_review = new Date(r.last_review);
+        }
+    }
+    for (const storeName in allData2Store) {
+        await allData2Store[storeName].clear();
+        await allData2Store[storeName].setItems(json[storeName]);
+    }
+    location.reload();
 }
 
 async function getDAV(name: string) {

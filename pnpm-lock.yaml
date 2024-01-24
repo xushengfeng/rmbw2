@@ -26,6 +26,9 @@ dependencies:
   localforage:
     specifier: ^1.10.0
     version: 1.10.0
+  localforage-setitems:
+    specifier: ^1.4.0
+    version: 1.4.0
   mammoth:
     specifier: ^1.6.0
     version: 1.6.0
@@ -542,6 +545,12 @@ packages:
     resolution: {integrity: sha512-UaiMJzeWRlEujzAuw5LokY1L5ecNQYZKfmyZ9L7wDHb/p5etKaxXhohBcrw0EYby+G/NA52vRSN4N39dxHAIwQ==}
     dependencies:
       immediate: 3.0.6
+    dev: false
+
+  /localforage-setitems@1.4.0:
+    resolution: {integrity: sha512-uU2ZydBZZkwaP0s1m5NMJXKOQJ0pfqFjDfHdv/SU9E1SWZpr4U3qpyJLZSZJvCvaAeBEL9Bvzd0/CWC9Jtk3wg==}
+    dependencies:
+      localforage: 1.10.0
     dev: false
 
   /localforage@1.10.0:
