@@ -6,6 +6,8 @@ import localforage from "localforage";
 import { extendPrototype } from "localforage-setitems";
 extendPrototype(localforage);
 
+import * as zip from "@zip.js/zip.js";
+
 import mammoth from "mammoth";
 
 import lemmatizer from "lemmatizer";
@@ -2272,8 +2274,7 @@ async function getAllData() {
             l[storeName][k] = v;
         });
     }
-    let blob = new Blob([JSON.stringify(l)], { type: "text/plain;charset=utf-8" });
-    return blob;
+    return JSON.stringify(l);
 }
 
 async function setAllData(data: string) {
@@ -2292,30 +2293,58 @@ async function setAllData(data: string) {
     location.reload();
 }
 
-async function getDAV(name: string) {
-    const baseurl = (await setting.getItem("webStore.dav.url")) as string;
-    const username = (await setting.getItem("webStore.dav.user")) as string;
-    const passwd = (await setting.getItem("webStore.dav.passwd")) as string;
-    let url = new URL(baseurl);
-    url.username = username;
-    url.password = passwd;
+async function xunzip(file: Blob) {
+    const zipFileReader = new zip.BlobReader(file);
+    const strWriter = new zip.TextWriter();
+    const zipReader = new zip.ZipReader(zipFileReader);
+    const firstEntry = (await zipReader.getEntries()).shift();
+    const str = await firstEntry.getData(strWriter);
+    await zipReader.close();
+    return str;
+}
+
+function xzip(data: string) {
+    let fs = new zip.fs.FS();
+    fs.addText(rmbwJsonName, data);
+    return fs.exportBlob();
+}
+
+function basicAuth(username: string, passwd: string) {
+    return `Basic ${username}:${passwd}`;
+}
+
+function joinFilePath(baseurl: string, name: string) {
+    let url = baseurl;
+    if (url.at(-1) != "/") url += "/";
+    url += rmbwZipName;
+    return url;
+}
+
+const DAVConfigPath = { url: "webStore.dav.url", user: "webStore.dav.user", passwd: "webStore.dav.passwd" };
+
+async function getDAV() {
+    const baseurl = (await setting.getItem(DAVConfigPath.url)) as string;
+    const username = (await setting.getItem(DAVConfigPath.user)) as string;
+    const passwd = (await setting.getItem(DAVConfigPath.passwd)) as string;
+    let url = joinFilePath(baseurl, rmbwZipName);
     let data = (
         await fetch(url, {
             method: "get",
+            headers: { Authorization: basicAuth(username, passwd) },
         })
-    ).arrayBuffer();
+    ).blob();
     return data;
 }
 
-async function setDAV(data: Blob, name: string) {
-    const baseurl = (await setting.getItem("webStore.dav.url")) as string;
-    const username = (await setting.getItem("webStore.dav.user")) as string;
-    const passwd = (await setting.getItem("webStore.dav.passwd")) as string;
-    let url = new URL(baseurl);
-    url.username = username;
-    url.password = passwd;
+async function setDAV(data: Blob) {
+    const baseurl = (await setting.getItem(DAVConfigPath.url)) as string;
+    const username = (await setting.getItem(DAVConfigPath.user)) as string;
+    const passwd = (await setting.getItem(DAVConfigPath.passwd)) as string;
+    let url = joinFilePath(baseurl, rmbwZipName);
     fetch(url, {
-        method: "post",
+        method: "put",
+        headers: { Authorization: basicAuth(username, passwd) },
+        body: data,
     }).then();
 }
 
@@ -2334,7 +2363,8 @@ let asyncEl = el("h2", "数据", [
     el("div", [
         el("button", "导出数据", {
             onclick: async () => {
-                let blob = await getAllData();
+                let data = await getAllData();
+                let blob = new Blob([data], { type: "text/plain;charset=utf-8" });
                 let a = document.createElement("a");
                 a.href = URL.createObjectURL(blob);
                 a.download = rmbwJsonName;
@@ -2344,16 +2374,26 @@ let asyncEl = el("h2", "数据", [
         uploadDataEl,
     ]),
     el("div", [
+        el("h3", "webDAV"),
         el("button", "get", {
             onclick: async () => {
-                let data = await getDAV(rmbwZipName);
+                let data = await getDAV();
+                let str = await xunzip(data);
+                setAllData(JSON.parse(str));
             },
         }),
         el("button", "set", {
             onclick: async () => {
                 let data = await getAllData();
+                let file = await xzip(data);
+                setDAV(file);
             },
         }),
+        el("form", [
+            el("label", ["url：", el("input", { "data-path": DAVConfigPath.url })]),
+            el("label", ["用户名：", el("input", { "data-path": DAVConfigPath.user })]),
+            el("label", ["密码：", el("input", { "data-path": DAVConfigPath.passwd })]),
+        ]),
     ]),
 ]);
 

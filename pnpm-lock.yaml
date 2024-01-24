@@ -11,6 +11,9 @@ dependencies:
   '@types/diff-match-patch':
     specifier: ^1.0.36
     version: 1.0.36
+  '@zip.js/zip.js':
+    specifier: ^2.7.32
+    version: 2.7.32
   diff-match-patch:
     specifier: ^1.0.5
     version: 1.0.5
@@ -371,6 +374,11 @@ packages:
   /@xmldom/xmldom@0.8.10:
     resolution: {integrity: sha512-2WALfTl4xo2SkGCYRt6rDTFfk9R1czmBvUQy12gK2KuRKIpWEhcbbzy8EZXtz/jkRqHX8bFEc6FC1HjX4TUWYw==}
     engines: {node: '>=10.0.0'}
+
+  /@zip.js/zip.js@2.7.32:
+    resolution: {integrity: sha512-9Ox1meDIvIKE23LLA7Fxd/ewJpKjj2KryH92doHRqx2406LmIzorsiMawL0qIK7dvwN9K+mfk47lauoIE0o1zQ==}
+    engines: {bun: '>=0.7.0', deno: '>=1.0.0', node: '>=16.5.0'}
+    dev: false
 
   /argparse@1.0.10:
     resolution: {integrity: sha512-o5Roy6tNG4SL/FOkCAN6RzjiakZS25RLYFrcMttJqbdd8BWrnA+fGz57iN5Pb06pvBGvl5gQ0B48dJlslXvoTg==}
