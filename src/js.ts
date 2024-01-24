@@ -124,7 +124,7 @@ function vlist(
         paddingRight?: number;
         width?: number;
     },
-    f: (index: number, remove: () => void) => HTMLElement
+    f: (index: number, remove: () => void) => HTMLElement | Promise<HTMLElement>
 ) {
     let iHeight = style.iHeight;
     let gap = style.gap ?? 0;
@@ -137,7 +137,7 @@ function vlist(
     blankEl.style.height = iHeight * list.length + gap * list.length - 1 + paddingTop + paddingBotton + "px";
     pel.append(blankEl);
     const dataI = "data-v-i";
-    function show() {
+    async function show() {
         let startI = Math.ceil((pel.scrollTop - paddingTop) / (iHeight + gap));
         let endI = Math.floor((pel.scrollTop - paddingTop + pel.offsetHeight) / (iHeight + gap));
         let buffer = Math.min(Math.floor((endI - startI) / 3), 15);
@@ -154,7 +154,7 @@ function vlist(
         }
         for (let i = startI; i <= endI; i++) {
             if (oldRangeList.includes(i)) continue;
-            let iel = f(i, () => {
+            let iel = await f(i, () => {
                 iel.remove();
                 for (let ii = i + 1; ii <= endI; i++) {
                     let afterEl = pel.querySelector(`:scope > [${dataI}="${ii}"]`) as HTMLElement;
@@ -562,11 +562,10 @@ function showBook(book: book) {
 }
 async function showBookSections(sections: book["sections"]) {
     bookSectionsEl.innerHTML = "";
-    for (let i in sections) {
-        let sEl = document.createElement("div"); // TODO 虚拟列表
+    vlist(bookSectionsEl, sections, { iHeight: 24 }, async (i) => {
+        let sEl = document.createElement("div");
         let s = await getSection(sections[i]);
         sEl.innerText = s.title || `章节${Number(i) + 1}`;
-        bookSectionsEl.append(sEl);
         for (let i in s.words) {
             if (!s.words[i].visit) {
                 sEl.classList.add(TODOMARK);
@@ -583,7 +582,8 @@ async function showBookSections(sections: book["sections"]) {
             book.lastPosi = nowBook.sections;
             bookshelfStore.setItem(nowBook.book, book);
         };
-    }
+        return sEl;
+    });
 }
 
 let wordList: { text: string; c: record }[] = [];
@@ -697,7 +697,7 @@ async function showBookContent(id: string) {
             for (let i in s.words) {
                 let index = s.words[i].index;
                 if (index[0] === word.start && index[1] === word.end) {
-                    span.classList.add(MARKWORD); // TODO CSS.highlights
+                    span.classList.add(MARKWORD);
                 }
             }
             span.setAttribute("data-s", String(word.start));
@@ -1032,7 +1032,6 @@ type record2 = {
 const markListEl = document.getElementById("mark_word_list");
 
 async function showMarkList() {
-    // todo vlist
     markListEl.innerHTML = "";
     let list = await getAllMarks();
     list = list.filter((i) => i.s.type === "word");

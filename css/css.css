@@ -230,6 +230,7 @@ body > #index > div > .icon {
 
 #book_nav > #sections {
     overflow: scroll;
+    position: relative;
 }
 #book_buttons {
     display: flex;
