@@ -1811,11 +1811,11 @@ let keyboard = new Keyboard(keyboardEl, {
         spellF(button);
     },
     layout: {
-        default: ["q w e r t y u i o p", "a s d f g h j k l", "{shift} z x c v b n m {bksp}", "tip {space} audio"],
-        shift: ["Q W E R T Y U I O P", "A S D F G H J K L", "{shift} Z X C V B N M {bksp}", "tip {space} audio"],
-        handwrite: ["tip {space} audio"],
+        default: ["q w e r t y u i o p", "a s d f g h j k l", "{shift} z x c v b n m {bksp}", "{tip} {space} {audio}"],
+        shift: ["Q W E R T Y U I O P", "A S D F G H J K L", "{shift} Z X C V B N M {bksp}", "{tip} {space} {audio}"],
+        handwrite: ["{tip} {space} {audio}"],
     },
-    display: { "{space}": "__", "{shift}": "Shift", "{bksp}": "<-", tip: "🫣", audio: "📣" },
+    display: { "{space}": "__", "{shift}": "Shift", "{bksp}": "<-", "{tip}": "🫣", "{audio}": "📣" },
 });
 
 async function getFutureReviewDue(days: number) {
@@ -2031,7 +2031,7 @@ async function showReview(x: { id: string; card: fsrsjs.Card }, type: review) {
         };
         spellF = (button) => {
             console.log(button);
-            if (button === "tip") {
+            if (button === "{tip}") {
                 // 暂时展示
                 input.innerText = "";
                 clearKeyboard();
@@ -2039,7 +2039,7 @@ async function showReview(x: { id: string; card: fsrsjs.Card }, type: review) {
                 wordEl.innerText = word;
                 setSpellCard(x.id, x.card, 2);
             }
-            if (button === "audio") {
+            if (button === "{audio}") {
                 // 发音
                 play(word);
                 input.innerText = "";
