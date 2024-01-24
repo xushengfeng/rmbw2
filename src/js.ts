@@ -1247,7 +1247,7 @@ async function showDic(id: string) {
             for (let j of i.contexts) {
                 if (j.source.id === id) {
                     r.source = j.source;
-                    sentenceStore.setItem(r.card_id, await cardsStore.getItem(i.card_id));
+                    await cardsStore.setItem(r.card_id, await cardsStore.getItem(i.card_id));
                     await cardsStore.removeItem(i.card_id);
                     break;
                 }
@@ -1688,7 +1688,6 @@ var cardsStore = localforage.createInstance({ name: "word", storeName: "cards" }
 var wordsStore = localforage.createInstance({ name: "word", storeName: "words" });
 var card2word = localforage.createInstance({ name: "word", storeName: "card2word" });
 var spellStore = localforage.createInstance({ name: "word", storeName: "spell" });
-var sentenceStore = localforage.createInstance({ name: "word", storeName: "sentence" });
 var card2sentence = localforage.createInstance({ name: "word", storeName: "card2sentence" });
 
 var transCache = localforage.createInstance({ name: "aiCache", storeName: "trans" });
@@ -1838,9 +1837,10 @@ async function getFutureReviewDue(days: number) {
     let wordList: { id: string; card: fsrsjs.Card }[] = [];
     let spellList: { id: string; card: fsrsjs.Card }[] = [];
     // todo sentence
-    await cardsStore.iterate((value: fsrsjs.Card, key) => {
-        if (value.due.getTime() < now) {
-            wordList.push({ id: key, card: value });
+    await card2word.iterate(async (value, key) => {
+        const card = (await cardsStore.getItem(key)) as fsrsjs.Card;
+        if (card.due.getTime() < now) {
+            wordList.push({ id: key, card: card });
         }
     });
     let l: typeof wordList = [];
@@ -2247,7 +2247,6 @@ type allData = {
     spell: Object;
     card2word: Object;
     card2sentence: Object;
-    sentence: Object;
 };
 
 let allData2Store: { [key: string]: LocalForage } = {
@@ -2258,7 +2257,6 @@ let allData2Store: { [key: string]: LocalForage } = {
     spell: spellStore,
     card2word: card2word,
     card2sentence: card2sentence,
-    sentence: sentenceStore,
 } as { [key in keyof allData]: LocalForage };
 async function getAllData() {
     let l: allData = {
@@ -2269,7 +2267,6 @@ async function getAllData() {
         spell: {},
         card2word: {},
         card2sentence: {},
-        sentence: {},
     };
     for (const storeName in allData2Store) {
         await allData2Store[storeName].iterate((v, k) => {
@@ -2282,7 +2279,7 @@ async function getAllData() {
 
 async function setAllData(data: string) {
     let json = JSON.parse(data) as allData;
-    for (let key of ["cards", "spell", "sentence"]) {
+    for (let key of ["cards", "spell"]) {
         for (let i in json[key]) {
             let r = json[key][i] as fsrsjs.Card;
             r.due = new Date(r.due);
