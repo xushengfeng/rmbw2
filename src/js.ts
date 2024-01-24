@@ -1025,7 +1025,6 @@ type record2 = {
     text: string;
     trans: string;
     source: { book: string; sections: number; id: string }; // 原句通过对比计算
-    card_id: string;
 };
 
 const markListEl = document.getElementById("mark_word_list");
@@ -1227,33 +1226,33 @@ async function showDic(id: string) {
     toSentenceEl.onclick = async () => {
         if (isSentence) return;
         isSentence = true;
+        const sentenceCardId = uuid();
         let contextStart = wordx.index[0] - Share.sourceIndex[0];
         let contextEnd = wordx.index[1] + (Share.context.length - Share.sourceIndex[1]);
         wordx.index[0] = contextStart;
         wordx.index[1] = contextEnd;
         wordx.type = "sentence";
-        wordx.id = id;
+        wordx.id = sentenceCardId;
         section.words[id] = wordx;
         sectionsStore.setItem(sectionId, section);
 
         let r: record2 = {
             text: Share.context,
-            card_id: uuid(), // 句子卡片id用uuid而不是单词
             source: null,
             trans: dicTransContent.value,
         };
 
-        for (let i of Word.record.means) {
+        mf: for (let i of Word.record.means) {
             for (let j of i.contexts) {
                 if (j.source.id === id) {
                     r.source = j.source;
-                    await cardsStore.setItem(r.card_id, await cardsStore.getItem(i.card_id));
+                    await cardsStore.setItem(sentenceCardId, await cardsStore.getItem(i.card_id));
                     await cardsStore.removeItem(i.card_id);
-                    break;
+                    break mf;
                 }
             }
         }
-        card2sentence.setItem(id, r);
+        card2sentence.setItem(sentenceCardId, r);
 
         rmWord(Word.record, Word.context.source.id);
 
