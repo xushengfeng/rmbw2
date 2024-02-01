@@ -260,6 +260,7 @@ type section = {
         [key: string]: {
             id: string;
             index: [number, number]; // 文章绝对定位
+            cIndex: [number, number];
             visit: boolean;
             type: "word" | "sentence";
         };
@@ -1013,8 +1014,7 @@ type dic = {
 type record = {
     word: string;
     means: {
-        dic: string;
-        index: number;
+        text: string;
         contexts: {
             text: string;
             index: [number, number]; // 语境定位
@@ -1022,6 +1022,7 @@ type record = {
         }[];
         card_id: string;
     }[];
+    note?: string;
 };
 type record2 = {
     text: string;
@@ -1178,14 +1179,13 @@ async function showDic(id: string) {
         changeContext();
     }
 
-    async function changeDicMean(word: string, dic: string, i: number) {
-        if (word != Word.word || dic != Word.dic || i != Word.index) {
+    async function changeDicMean(word: string, i: number) {
+        if (word != Word.word || i != Word.index) {
             await rmWord(Word.record, Word.context.source.id);
 
-            await addReviewCard(word, { dic, index: i }, Word.context);
+            await setWordC(word, i, Word.context);
 
             Word.word = word;
-            Word.dic = dic;
             Word.index = i;
             section.words[id].id = word;
             await sectionsStore.setItem(sectionId, section);
@@ -1277,7 +1277,7 @@ async function showDic(id: string) {
         dicWordEl.onchange = async () => {
             let newWord = dicWordEl.value.trim();
             await visit(false);
-            await changeDicMean(newWord, Word.dic, -1);
+            await changeDicMean(newWord, -1);
             search(newWord);
         };
 
@@ -1289,7 +1289,7 @@ async function showDic(id: string) {
             div.onclick = async () => {
                 dicWordEl.value = w;
                 await visit(false);
-                await changeDicMean(w, Word.dic, -1);
+                await changeDicMean(w, -1);
                 search(w);
             };
             moreWordsEl.append(div);
@@ -1302,7 +1302,30 @@ async function showDic(id: string) {
         }
 
         async function search(word: string) {
-            let x = dics[Word.dic].get(word) as dic[0];
+            let means = Word.record.means;
+            dicDetailsEl.innerHTML = "";
+            for (let i in means) {
+                const m = means[i];
+                let div = document.createElement("div");
+                let radio = document.createElement("input");
+                radio.type = "radio";
+                radio.name = "dic_means";
+                radio.onclick = () => {
+                    if (radio.checked) {
+                        dicMeansAi?.abort();
+                        changeDicMean(word, Number(i));
+
+                        visit(true);
+                    }
+                };
+                div.onclick = () => radio.click();
+                div.append(radio, disCard2(m));
+                dicDetailsEl.append(div);
+            }
+        }
+
+        async function searchDic(word: string) {
+            let x = dics["lw"].get(word) as dic[0];
             if (!x) {
                 dicDetailsEl.innerText = "none";
                 return;
@@ -1317,7 +1340,7 @@ async function showDic(id: string) {
                 radio.onclick = () => {
                     if (radio.checked) {
                         dicMeansAi?.abort();
-                        changeDicMean(word, Word.dic, Number(i));
+                        changeDicMean(word, Number(i));
 
                         visit(true);
                     }
@@ -1351,7 +1374,7 @@ async function showDic(id: string) {
                     let n = Number(a.match(/[0-9]+/)[0]);
                     if (isNaN(n)) return;
                     setcheck(n);
-                    changeDicMean(word, Word.dic, n);
+                    changeDicMean(word, n);
 
                     visit(true);
                 });
@@ -1368,7 +1391,7 @@ async function showDic(id: string) {
                 } else {
                     setcheck(0);
                     visit(true);
-                    changeDicMean(word, Word.dic, 0);
+                    changeDicMean(word, 0);
                 }
             } else {
                 setcheck(Word.index);
@@ -1554,6 +1577,25 @@ function disCard(m: dic[0]["means"][0]) {
     div.append(disEl, sen);
     return div;
 }
+function disCard2(m: record["means"][0]) {
+    let div = document.createDocumentFragment();
+    let disEl = el("div", el("p", m.text));
+    let sen = document.createElement("div");
+    sen.classList.add("dic_sen");
+    for (let s of m.contexts) {
+        sen.append(
+            el("div", [
+                el("p", [
+                    s.text.slice(0, s.index[0]),
+                    el("span", { style: MARKWORD }, s.text.slice(...s.index)),
+                    s.text.slice(s.index[1]),
+                ]),
+            ])
+        );
+    }
+    div.append(disEl, sen);
+    return div;
+}
 
 async function saveCard(v: {
     dic: string;
@@ -1573,33 +1615,38 @@ async function saveCard(v: {
         }
     }
     const id = uuid();
-    section.words[id] = { id: v.key, index: [v.index.start, v.index.end], visit: false, type: "word" };
+    section.words[id] = {
+        id: v.key,
+        index: [v.index.start, v.index.end],
+        cIndex: [v.cindex.start, v.cindex.end],
+        visit: false,
+        type: "word",
+    };
 
     sectionsStore.setItem(sectionId, section);
-    addReviewCard(
-        v.key,
-        { dic: "lw", index: v.dindex },
-        {
-            text: editText.slice(v.cindex.start, v.cindex.end),
-            index: [v.index.start - v.cindex.start, v.index.end - v.cindex.start],
-            source: { ...nowBook, id: id },
-        }
-    );
     return id;
+}
+
+function source2context(source: section["words"][0], sourceId: string) {
+    return {
+        text: editText.slice(...source.cIndex),
+        index: [source.index[0] - source.cIndex[0], source.index[1] - source.cIndex[0]],
+        source: { ...nowBook, id: sourceId },
+    };
 }
 
 async function rmWord(record: record, sourceId: string) {
     let Word = flatWordCard(record, sourceId);
     let word = record.word;
-    let dic = Word.dic;
     let i = Word.index;
-    for (let m of record.means) {
-        if (m.dic === dic && m.index === i) {
+    for (let index in record.means) {
+        const m = record.means[index];
+        if (Number(index) === i) {
             m.contexts = m.contexts.filter((c) => c.source.id != sourceId);
             if (m.contexts.length === 0) {
                 await card2word.removeItem(m.card_id);
                 await cardsStore.removeItem(m.card_id);
-                record.means = record.means.filter((i) => i.index != m.index);
+                record.means = record.means.toSpliced(Number(index), 1);
                 await wordsStore.setItem(word, record);
             }
             if (record.means.length === 0) {
@@ -1693,34 +1740,23 @@ var card2sentence = localforage.createInstance({ name: "word", storeName: "card2
 var transCache = localforage.createInstance({ name: "aiCache", storeName: "trans" });
 var ttsCache = localforage.createInstance({ name: "aiCache", storeName: "tts" });
 
-async function addReviewCard(
-    word: string,
-    means: {
-        dic: string;
-        index: number;
-    },
-    context: {
-        text: string;
-        index: [number, number];
-        source: { book: string; sections: number; id: string }; // 原句通过对比计算
+async function setWordC(word: string, meanIndex: number, context: record["means"][0]["contexts"][0]) {
+    let w = (await wordsStore.getItem(word)) as record;
+    for (let index in w.means) {
+        const i = w.means[index];
+        if (Number(index) === meanIndex) {
+            if (!i.contexts.includes(context)) i.contexts.push(context);
+            await wordsStore.setItem(word, w);
+            return;
+        }
     }
-) {
+}
+
+async function addReviewCard(word: string, text: string, context: record["means"][0]["contexts"][0]) {
     let w = (await wordsStore.getItem(word)) as record;
     if (w) {
-        for (let i of w.means) {
-            if (i.dic === means.dic && i.index === means.index) {
-                if (!i.contexts.includes(context)) i.contexts.push(context);
-                let card = (await cardsStore.getItem(i.card_id)) as fsrsjs.Card;
-                let now = new Date();
-                let sCards = fsrs.repeat(card, now);
-                // 记过还查，那是忘了
-                await cardsStore.setItem(i.card_id, sCards[fsrsjs.Rating.Hard].card);
-                await wordsStore.setItem(word, w);
-                return;
-            }
-        }
         let cardId = uuid();
-        let m = { ...means, contexts: [context], card_id: cardId };
+        let m = { text, contexts: [context], card_id: cardId };
         w.means.push(m);
         let card = new fsrsjs.Card();
         await cardsStore.setItem(cardId, card);
@@ -1730,14 +1766,7 @@ async function addReviewCard(
         let cardId = uuid();
         let r: record = {
             word: word,
-            means: [
-                {
-                    dic: means.dic,
-                    index: means.index,
-                    contexts: [context],
-                    card_id: cardId,
-                },
-            ],
+            means: [{ text: text, contexts: [context], card_id: cardId }],
         };
         let card = new fsrsjs.Card();
         await wordsStore.setItem(word, r);
@@ -1749,25 +1778,23 @@ async function addReviewCard(
 }
 
 type flatWord = {
-    dic: record["means"][0]["dic"];
-    index: record["means"][0]["index"];
+    index: number;
     card_id: record["means"][0]["card_id"];
     context: record["means"][0]["contexts"][0];
 };
 
 function flatWordCard(record: record, id: string) {
     let Word: flatWord = {
-        dic: "",
         index: -1,
         card_id: "",
         context: { index: [NaN, NaN], source: { book: "", sections: 0, id: "" }, text: "" },
     };
-    for (let i of record.means) {
-        Word.dic = i.dic;
-        Word.index = i.index;
-        Word.card_id = i.card_id;
+    for (let n in record.means) {
+        const i = record.means[n];
         for (let j of i.contexts) {
             if (j.source.id === id) {
+                Word.index = Number(n);
+                Word.card_id = i.card_id;
                 Word.context = j;
                 return Word;
             }
@@ -1848,7 +1875,7 @@ async function getFutureReviewDue(days: number) {
         let wordid = (await card2word.getItem(x.id)) as string;
         let wordRecord = (await wordsStore.getItem(wordid)) as record;
         for (let i of wordRecord.means) {
-            if (i.card_id === x.id && i.index != -1) {
+            if (i.card_id === x.id) {
                 l.push(x);
             }
         }
@@ -1977,11 +2004,8 @@ async function showReview(x: { id: string; card: fsrsjs.Card }, type: review) {
             let d = (await wordsStore.getItem(word)) as record;
             for (let i of d.means) {
                 if (i.card_id === x.id) {
-                    let x = dics[i.dic].get(word) as dic[0];
-                    let m = x.means[i.index];
-
                     let div = document.createElement("div");
-                    div.append(disCard(m));
+                    div.append(disCard2(i));
                     dic.innerHTML = "";
                     dic.append(div);
                 }
@@ -2062,11 +2086,7 @@ async function showReview(x: { id: string; card: fsrsjs.Card }, type: review) {
         let context = el("div");
         let r = (await wordsStore.getItem(word)) as record;
         for (let i of r.means) {
-            if (i.index === -1) continue;
-            let x = dics[i.dic].get(word) as dic[0];
-            let m = x.means[i.index];
-
-            context.append(el("div", [el("p", m.dis.text), el("p", { class: TRANSLATE }, m.dis.tran)]));
+            context.append(el("div", [el("p", i.text)]));
         }
         const div = document.createElement("div");
         div.append(input, context, wordEl);
