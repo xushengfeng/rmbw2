@@ -2379,7 +2379,8 @@ let uploadDataEl = el("input", "上传数据", {
     },
 });
 
-let asyncEl = el("h2", "数据", [
+let asyncEl = el("div", [
+    el("h2", "数据"),
     el("div", [
         el("button", "导出数据", {
             onclick: async () => {
