@@ -38,6 +38,7 @@ import clear_svg from "../assets/icons/clear.svg";
 import close_svg from "../assets/icons/close.svg";
 import more_svg from "../assets/icons/more.svg";
 import reload_svg from "../assets/icons/reload.svg";
+import recume_svg from "../assets/icons/recume.svg";
 
 function icon(src: string) {
     return `<img src="${src}" class="icon">`;
@@ -208,8 +209,8 @@ const toSentenceEl = el("button", iconEl(sentence_svg));
 const hideDicEl = el("button", iconEl(close_svg));
 const dicWordEl = el("input", { alt: "单词" });
 const moreWordsEl = el("div", { class: "more_words" });
-const ttsWordEl = el("button", "play w");
-const ttsContextEl = el("button", "play c");
+const ttsWordEl = el("button", iconEl(recume_svg));
+const ttsContextEl = el("button", iconEl(recume_svg));
 const dicTransB = el("button", iconEl(translate_svg));
 const dicTransContent = el("input", {
     alt: "语境翻译",
@@ -597,7 +598,7 @@ async function showBookContent(id: string) {
 
     if (!isWordBook)
         bookContentEl.append(
-            el("div", "play", {
+            el("div", iconEl(recume_svg), {
                 onclick: () => {
                     autoPlay = true;
                     pTTS(0);
@@ -683,7 +684,7 @@ async function showBookContent(id: string) {
         let pText = editText.slice(paragraph[0]?.start ?? null, paragraph.at(-1)?.end ?? null);
 
         if (pText) {
-            let playEl = el("div", "play", { "data-play": String(contentP.length) });
+            let playEl = el("div", iconEl(recume_svg), { "data-play": String(contentP.length) });
             pel.append(playEl);
         }
 
