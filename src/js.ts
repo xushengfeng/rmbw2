@@ -218,6 +218,8 @@ const dicTransContent = el("input", {
     style: { border: "none", width: "100%", fontSize: "1rem" },
 });
 const dicMinEl = el("button", { style: { minHeight: "24px" } }, iconEl(more_svg));
+const addMeanEl = el("button", { style: { minHeight: "24px" } }, "+");
+const editMeanEl = el("button", { style: { minHeight: "24px" } }, "edit");
 const dicDetailsEl = el("div", {
     style: {
         overflow: "scroll",
@@ -232,7 +234,7 @@ dicEl.append(
     el("div", { style: { display: "flex" } }, [lastMarkEl, nextMarkEl, toSentenceEl, ttsContextEl, hideDicEl]),
     el("div", { style: { display: "flex" } }, [dicWordEl, ttsWordEl, moreWordsEl]),
     el("div", { style: { display: "flex" } }, [dicTransB, dicTransContent]),
-    dicMinEl,
+    el("div", { style: { display: "flex" } }, [dicMinEl, addMeanEl, editMeanEl]),
     dicDetailsEl
 );
 
@@ -1157,10 +1159,8 @@ async function showDic(id: string) {
     if (!isSentence) {
         let record = (await wordsStore.getItem(wordx.id)) as record;
         Word = { word: wordx.id, record, ...flatWordCard(record, id) };
-        if (!Word.record) {
-            delete section.words[id];
-            sectionsStore.setItem(sectionId, section);
-            nextMarkEl.click();
+        if (!record) {
+            Word.context = source2context(wordx, id);
         }
         Share.context = Word.context.text;
         Share.sourceIndex = Word.context.index;
@@ -1296,6 +1296,54 @@ async function showDic(id: string) {
             moreWordsEl.append(div);
         }
 
+        addMeanEl.onclick = () => {
+            addP("", async (text) => {
+                let mean = text.trim();
+                if (mean) {
+                    const index = await addReviewCard(Word.word, mean, source2context(wordx, id));
+                    let record = (await wordsStore.getItem(wordx.id)) as record;
+                    await changeDicMean(Word.word, index);
+                    Word = { word: wordx.id, record, ...flatWordCard(record, id) };
+                }
+                search(Word.word);
+            });
+        };
+
+        editMeanEl.onclick = () => {
+            addP(Word.text, async (text) => {
+                let mean = text.trim();
+                if (Word.record) {
+                    for (let i of Word.record.means) {
+                        if (i.card_id === Word.card_id) {
+                            i.text = mean;
+                            wordsStore.setItem(Word.word, Word.record);
+                            break;
+                        }
+                    }
+                }
+                search(Word.word);
+            });
+        };
+
+        function addP(text: string, f: (text: string) => void) {
+            let textEl = el("textarea", { value: text });
+            let aiB = el("button");
+            let div = el("dialog", [
+                textEl,
+                el("div", { style: { display: "flex" } }, [
+                    aiB,
+                    el("button", "close", {
+                        onclick: () => {
+                            let mean = textEl.value.trim();
+                            div.close();
+                            f(mean);
+                        },
+                    }),
+                ]),
+            ]) as HTMLDialogElement;
+            dialogX(div);
+        }
+
         async function visit(t: boolean) {
             wordx.visit = t;
             section.words[id] = wordx;
@@ -1303,8 +1351,12 @@ async function showDic(id: string) {
         }
 
         async function search(word: string) {
+            if (Word.record) dicDetailsEl.innerHTML = "";
+            else {
+                dicDetailsEl.innerText = "请添加义项";
+                return;
+            }
             let means = Word.record.means;
-            dicDetailsEl.innerHTML = "";
             for (let i in means) {
                 const m = means[i];
                 let div = document.createElement("div");
@@ -1319,6 +1371,7 @@ async function showDic(id: string) {
                         visit(true);
                     }
                 };
+                if (Number(i) === Word.index) radio.checked = true;
                 div.onclick = () => radio.click();
                 div.append(radio, disCard2(m));
                 dicDetailsEl.append(div);
@@ -1631,7 +1684,7 @@ async function saveCard(v: {
 function source2context(source: section["words"][0], sourceId: string) {
     return {
         text: editText.slice(...source.cIndex),
-        index: [source.index[0] - source.cIndex[0], source.index[1] - source.cIndex[0]],
+        index: [source.index[0] - source.cIndex[0], source.index[1] - source.cIndex[0]] as [number, number],
         source: { ...nowBook, id: sourceId },
     };
 }
@@ -1763,6 +1816,7 @@ async function addReviewCard(word: string, text: string, context: record["means"
         await cardsStore.setItem(cardId, card);
         await card2word.setItem(cardId, word);
         await wordsStore.setItem(word, w);
+        return w.means.length - 1;
     } else {
         let cardId = uuid();
         let r: record = {
@@ -1775,19 +1829,23 @@ async function addReviewCard(word: string, text: string, context: record["means"
         await card2word.setItem(cardId, word);
         let card2 = new fsrsjs.Card();
         await spellStore.setItem(word, card2);
+        return 0;
     }
 }
 
 type flatWord = {
     index: number;
+    text: string;
     card_id: record["means"][0]["card_id"];
     context: record["means"][0]["contexts"][0];
 };
 
 function flatWordCard(record: record, id: string) {
+    if (!record) return;
     let Word: flatWord = {
         index: -1,
         card_id: "",
+        text: "",
         context: { index: [NaN, NaN], source: { book: "", sections: 0, id: "" }, text: "" },
     };
     for (let n in record.means) {
@@ -1796,6 +1854,7 @@ function flatWordCard(record: record, id: string) {
             if (j.source.id === id) {
                 Word.index = Number(n);
                 Word.card_id = i.card_id;
+                Word.text = i.text;
                 Word.context = j;
                 return Word;
             }
