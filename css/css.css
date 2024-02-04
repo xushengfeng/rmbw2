@@ -9,7 +9,6 @@
     --color: #000;
     --font-size: 16px;
     --main-bar-size: 24px;
-    --main-font: sans-serif;
     --icon-color: none;
     --icon-color1: invert(1);
     --b-button: 32px;
@@ -19,7 +18,7 @@
 html,
 body {
     margin: 0;
-    font-family: var(--main-font);
+    font-family: "Times New Roman", Times, serif;
     font-size: var(--font-size);
     color: var(--color);
 }
