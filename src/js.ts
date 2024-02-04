@@ -1799,29 +1799,22 @@ async function setWordC(word: string, meanIndex: number, context: record["means"
 
 async function addReviewCardMean(word: string, text: string) {
     let w = (await wordsStore.getItem(word)) as record;
-    if (w) {
-        let cardId = uuid();
-        let m = { text, contexts: [], card_id: cardId };
-        w.means.push(m);
-        let card = new fsrsjs.Card();
-        await cardsStore.setItem(cardId, card);
-        await card2word.setItem(cardId, word);
-        await wordsStore.setItem(word, w);
-        return { index: w.means.length - 1, record: w };
-    } else {
-        let cardId = uuid();
-        let r: record = {
+    if (!w) {
+        w = {
             word: word,
-            means: [{ text: text, contexts: [], card_id: cardId }],
+            means: [],
         };
-        let card = new fsrsjs.Card();
-        await wordsStore.setItem(word, r);
-        await cardsStore.setItem(cardId, card);
-        await card2word.setItem(cardId, word);
         let card2 = new fsrsjs.Card();
         await spellStore.setItem(word, card2);
-        return { index: 0, record: r };
     }
+    let cardId = uuid();
+    let m = { text, contexts: [], card_id: cardId };
+    w.means.push(m);
+    let card = new fsrsjs.Card();
+    await cardsStore.setItem(cardId, card);
+    await card2word.setItem(cardId, word);
+    await wordsStore.setItem(word, w);
+    return { index: w.means.length - 1, record: w };
 }
 
 type flatWord = {
