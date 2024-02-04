@@ -1307,6 +1307,7 @@ async function showDic(id: string) {
                     await changeDicMean(Word.word, x.index);
                     let record = (await wordsStore.getItem(wordx.id)) as record;
                     Word = { word: wordx.id, record, ...flatWordCard(record, id) };
+                    visit(true);
                 }
                 search(Word.word);
             });
