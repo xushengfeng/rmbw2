@@ -1300,9 +1300,10 @@ async function showDic(id: string) {
             addP("", async (text) => {
                 let mean = text.trim();
                 if (mean) {
-                    const index = await addReviewCard(Word.word, mean, source2context(wordx, id));
+                    const x = await addReviewCardMean(Word.word, mean);
+                    Word.record = x.record;
+                    await changeDicMean(Word.word, x.index);
                     let record = (await wordsStore.getItem(wordx.id)) as record;
-                    await changeDicMean(Word.word, index);
                     Word = { word: wordx.id, record, ...flatWordCard(record, id) };
                 }
                 search(Word.word);
@@ -1351,9 +1352,9 @@ async function showDic(id: string) {
         }
 
         async function search(word: string) {
-            if (Word.record) dicDetailsEl.innerHTML = "";
+            if (flatWordCard(Word.record, id).index != -1) dicDetailsEl.innerHTML = "";
             else {
-                dicDetailsEl.innerText = "请添加义项";
+                dicDetailsEl.innerText = "请添加或选择义项";
                 return;
             }
             let means = Word.record.means;
@@ -1693,25 +1694,15 @@ async function rmWord(record: record, sourceId: string) {
     let Word = flatWordCard(record, sourceId);
     let word = record.word;
     let i = Word.index;
+    if (i === -1) return;
     for (let index in record.means) {
         const m = record.means[index];
         if (Number(index) === i) {
             m.contexts = m.contexts.filter((c) => c.source.id != sourceId);
-            if (m.contexts.length === 0) {
-                await card2word.removeItem(m.card_id);
-                await cardsStore.removeItem(m.card_id);
-                record.means = record.means.toSpliced(Number(index), 1);
-                await wordsStore.setItem(word, record);
-            }
-            if (record.means.length === 0) {
-                await wordsStore.removeItem(word);
-                await spellStore.removeItem(word);
-            } else {
-                await wordsStore.setItem(word, record);
-            }
             break;
         }
     }
+    await wordsStore.setItem(word, record);
 }
 
 function rmStyle(start: number) {
@@ -1806,22 +1797,22 @@ async function setWordC(word: string, meanIndex: number, context: record["means"
     }
 }
 
-async function addReviewCard(word: string, text: string, context: record["means"][0]["contexts"][0]) {
+async function addReviewCardMean(word: string, text: string) {
     let w = (await wordsStore.getItem(word)) as record;
     if (w) {
         let cardId = uuid();
-        let m = { text, contexts: [context], card_id: cardId };
+        let m = { text, contexts: [], card_id: cardId };
         w.means.push(m);
         let card = new fsrsjs.Card();
         await cardsStore.setItem(cardId, card);
         await card2word.setItem(cardId, word);
         await wordsStore.setItem(word, w);
-        return w.means.length - 1;
+        return { index: w.means.length - 1, record: w };
     } else {
         let cardId = uuid();
         let r: record = {
             word: word,
-            means: [{ text: text, contexts: [context], card_id: cardId }],
+            means: [{ text: text, contexts: [], card_id: cardId }],
         };
         let card = new fsrsjs.Card();
         await wordsStore.setItem(word, r);
@@ -1829,7 +1820,7 @@ async function addReviewCard(word: string, text: string, context: record["means"
         await card2word.setItem(cardId, word);
         let card2 = new fsrsjs.Card();
         await spellStore.setItem(word, card2);
-        return 0;
+        return { index: 0, record: r };
     }
 }
 
@@ -1841,13 +1832,13 @@ type flatWord = {
 };
 
 function flatWordCard(record: record, id: string) {
-    if (!record) return;
     let Word: flatWord = {
         index: -1,
         card_id: "",
         text: "",
         context: { index: [NaN, NaN], source: { book: "", sections: 0, id: "" }, text: "" },
     };
+    if (!record) return Word;
     for (let n in record.means) {
         const i = record.means[n];
         for (let j of i.contexts) {
@@ -1860,6 +1851,7 @@ function flatWordCard(record: record, id: string) {
             }
         }
     }
+    return Word;
 }
 
 setTimeout(async () => {
