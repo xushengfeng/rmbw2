@@ -1186,7 +1186,7 @@ async function showDic(id: string) {
         if (word != Word.word || i != Word.index) {
             await rmWord(Word.record, Word.context.source.id);
 
-            await setWordC(word, i, Word.context);
+            if (i != -1) await setWordC(word, i, Word.context);
 
             Word.word = word;
             Word.index = i;
@@ -1703,9 +1703,9 @@ function source2context(source: section["words"][0], sourceId: string) {
 
 async function rmWord(record: record, sourceId: string) {
     let Word = flatWordCard(record, sourceId);
-    let word = record.word;
     let i = Word.index;
     if (i === -1) return;
+    let word = record.word;
     for (let index in record.means) {
         const m = record.means[index];
         if (Number(index) === i) {
@@ -1798,6 +1798,7 @@ var ttsCache = localforage.createInstance({ name: "aiCache", storeName: "tts" })
 
 async function setWordC(word: string, meanIndex: number, context: record["means"][0]["contexts"][0]) {
     let w = (await wordsStore.getItem(word)) as record;
+    if (meanIndex < 0) return;
     for (let index in w.means) {
         const i = w.means[index];
         if (Number(index) === meanIndex) {
