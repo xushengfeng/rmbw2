@@ -190,6 +190,7 @@ function vlist(
 /************************************main */
 const MARKWORD = "mark_word";
 const TRANSLATE = "translate";
+const DICSENTENCE = "dic_sentence";
 const HIDEMEANS = "hide_means";
 const DISABLECHANGE = "disable_change";
 const TODOMARK = "to_visit";
@@ -1318,6 +1319,7 @@ async function showDic(id: string) {
     };
 
     function showWord() {
+        dicEl.classList.remove(DICSENTENCE);
         dicTransContent.value = "";
 
         search(Word.word);
@@ -1502,6 +1504,8 @@ async function showDic(id: string) {
         }
     }
     async function showSentence() {
+        dicEl.classList.add(DICSENTENCE);
+
         dicWordEl.value = "";
         moreWordsEl.innerHTML = "";
         dicTransContent.value = ((await card2sentence.getItem(wordx.id)) as record2).trans;
