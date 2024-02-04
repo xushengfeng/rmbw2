@@ -248,8 +248,8 @@ const dicTransContent = el("input", {
     style: { border: "none", width: "100%", fontSize: "1rem" },
 });
 const dicMinEl = el("button", { style: { minHeight: "24px" } }, iconEl(more_svg));
-const addMeanEl = el("button", { style: { minHeight: "24px" } }, "+");
-const editMeanEl = el("button", { style: { minHeight: "24px" } }, "edit");
+const addMeanEl = el("button", { style: { minHeight: "24px" } }, iconEl(add_svg));
+const editMeanEl = el("button", { style: { minHeight: "24px" } }, iconEl(pen_svg));
 const dicDetailsEl = el("div", {
     style: {
         overflow: "scroll",
