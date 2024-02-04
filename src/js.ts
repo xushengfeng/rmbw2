@@ -1168,7 +1168,7 @@ async function showDic(id: string) {
         Share.sourceIndex = Word.context.index;
         sourceWord = Word.context.text.slice(...Word.context.index);
     } else {
-        Share.context = ((await card2sentence.getItem(id)) as record2).text;
+        Share.context = ((await card2sentence.getItem(wordx.id)) as record2).text;
     }
 
     {
@@ -1219,9 +1219,9 @@ async function showDic(id: string) {
         let text = await output.text;
         dicTransContent.value = text;
         if (isSentence) {
-            let r = (await card2sentence.getItem(id)) as record2;
+            let r = (await card2sentence.getItem(wordx.id)) as record2;
             r.trans = text;
-            await card2sentence.setItem(id, r);
+            await card2sentence.setItem(wordx.id, r);
         }
 
         transCache.setItem(Share.context, text);
@@ -1459,7 +1459,7 @@ async function showDic(id: string) {
     async function showSentence() {
         dicWordEl.value = "";
         moreWordsEl.innerHTML = "";
-        dicTransContent.value = ((await card2sentence.getItem(id)) as record2).trans;
+        dicTransContent.value = ((await card2sentence.getItem(wordx.id)) as record2).trans;
         dicDetailsEl.innerHTML = "";
 
         if (!dicTransContent.value) {
@@ -1467,9 +1467,9 @@ async function showDic(id: string) {
         }
 
         dicTransContent.onchange = async () => {
-            let r = (await card2sentence.getItem(id)) as record2;
+            let r = (await card2sentence.getItem(wordx.id)) as record2;
             r.trans = dicTransContent.value;
-            await card2sentence.setItem(id, r);
+            await card2sentence.setItem(wordx.id, r);
         };
     }
 
@@ -1581,9 +1581,9 @@ async function showDic(id: string) {
             if (isSentence) {
                 section.words[id].index = [index.start, index.end];
                 sectionsStore.setItem(sectionId, section);
-                let r = (await card2sentence.getItem(id)) as record2;
+                let r = (await card2sentence.getItem(wordx.id)) as record2;
                 r.text = text;
-                card2sentence.setItem(id, r);
+                card2sentence.setItem(wordx.id, r);
             } else {
                 if (Word.record)
                     for (let i of Word.record.means) {
