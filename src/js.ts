@@ -1565,10 +1565,12 @@ async function showDic(id: string) {
             }
         };
         document.onpointerup = (e) => {
+            if (down.start || down.end) {
+                console.log(editText.slice(index.start, index.end));
+                saveChange();
+            }
             down.start = false;
             down.end = false;
-            console.log(editText.slice(index.start, index.end));
-            saveChange();
         };
         async function saveChange() {
             let text = editText.slice(index.start, index.end);
@@ -1580,18 +1582,24 @@ async function showDic(id: string) {
                 r.text = text;
                 card2sentence.setItem(id, r);
             } else {
-                for (let i of Word.record.means) {
-                    for (let j of i.contexts) {
-                        if (j.source.id === id) {
-                            j.index = [wordx.index[0] - index.start, wordx.index[1] - index.start];
-                            j.text = text;
-                            Word.context = j;
-                            Share.sourceIndex = j.index;
-                            await wordsStore.setItem(Word.word, Word.record);
-                            break;
+                if (Word.record)
+                    for (let i of Word.record.means) {
+                        for (let j of i.contexts) {
+                            if (j.source.id === id) {
+                                j.index = [wordx.index[0] - index.start, wordx.index[1] - index.start];
+                                j.text = text;
+                                Word.context = j;
+                                Share.sourceIndex = j.index;
+                                await wordsStore.setItem(Word.word, Word.record);
+                                break;
+                            }
                         }
                     }
-                }
+            }
+            section.words[id].cIndex = [index.start, index.end];
+            sectionsStore.setItem(sectionId, section);
+            if (!isSentence) {
+                showWord();
             }
         }
         hideDicEl.onclick = () => {
