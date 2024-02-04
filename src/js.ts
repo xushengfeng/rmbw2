@@ -1123,7 +1123,9 @@ dicMinEl.onclick = () => {
 };
 
 function setDicPosi(el: HTMLElement) {
-    dicEl.style.top = `${el.getBoundingClientRect().top}px`;
+    dicEl.style.top = `${
+        el.getBoundingClientRect().bottom - (bookContentEl.getBoundingClientRect().top - bookContentEl.scrollTop) + 24
+    }px`;
 }
 
 let dicMeansAi: AbortController;
@@ -1500,7 +1502,7 @@ async function showDic(id: string) {
                 let pel = bookContentEl;
                 let r = el.getBoundingClientRect();
                 let r0 = pel.getBoundingClientRect();
-                return { left: r.left - r0.left, top: r.top - r0.top };
+                return { left: r.left - r0.left, top: r.top - (r0.top - pel.scrollTop) };
             }
             if (left) {
                 if (!isSentence && Number(el.getAttribute("data-s")) > wordx.index[0]) {
