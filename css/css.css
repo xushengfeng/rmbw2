@@ -471,6 +471,13 @@ div:has(> .translate) > :not(.translate) {
     background: var(--bar-bg);
     backdrop-filter: var(--blur);
     transition: var(--transition);
+
+    & > div {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: calc(40vw - 16px * 2);
+    }
 }
 
 .show_mark_word_list {

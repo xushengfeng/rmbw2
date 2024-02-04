@@ -1038,11 +1038,12 @@ const markListEl = document.getElementById("mark_word_list");
 async function showMarkList() {
     markListEl.innerHTML = "";
     let list = await getAllMarks();
-    list = list.filter((i) => i.s.type === "word");
     vlist(markListEl, list, { iHeight: 24, gap: 4, paddingTop: 16, paddingLeft: 16 }, (index, remove) => {
         const i = list[index];
 
-        let item = el("div", i.s.id, { class: i.s.visit ? "" : TODOMARK });
+        const content = i.s.type === "word" ? i.s.id : editText.slice(i.s.index[0], i.s.index[1]);
+
+        let item = el("div", content, { class: i.s.visit ? "" : TODOMARK });
         item.onclick = () => {
             showDic(i.id);
             jumpToMark(i.s.index[0]);
