@@ -1285,17 +1285,23 @@ async function showDic(id: string) {
             trans: dicTransContent.value,
         };
 
-        mf: for (let i of Word.record.means) {
+        let card: fsrsjs.Card;
+
+        mf: for (let i of Word.record?.means || []) {
             for (let j of i.contexts) {
                 if (j.source.id === id) {
                     r.source = j.source;
-                    await cardsStore.setItem(sentenceCardId, await cardsStore.getItem(i.card_id));
+                    card = await cardsStore.getItem(i.card_id);
                     await cardsStore.removeItem(i.card_id);
                     break mf;
                 }
             }
         }
-        card2sentence.setItem(sentenceCardId, r);
+        if (!r.source) r.source = source2context(wordx, id).source;
+        if (!card) card = new fsrsjs.Card();
+        await cardsStore.setItem(sentenceCardId, card);
+
+        await card2sentence.setItem(sentenceCardId, r);
 
         rmWord(Word.record, Word.context.source.id);
 
