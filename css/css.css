@@ -217,6 +217,7 @@ body > #index > div > .icon {
     left: -20vw;
     height: calc(100vh - 24px);
     display: flex;
+    flex-direction: column;
     z-index: 2;
     background-color: var(--bg1);
     backdrop-filter: var(--blur);
@@ -228,10 +229,6 @@ body > #index > div > .icon {
     box-shadow: 0 0 4px #0002;
 }
 
-#book_nav > #sections {
-    overflow: scroll;
-    position: relative;
-}
 #book_buttons {
     display: flex;
     width: 100%;
@@ -357,22 +354,22 @@ body > #index > div > .icon {
     display: flex !important;
 }
 
-#books {
+.books {
     display: flex;
     flex-direction: column;
     gap: 8px;
     overflow: scroll;
-}
-#books > div {
-    display: flex;
-    flex-direction: column;
-}
-#books > div > :nth-child(1) {
-    border: none;
-    width: 50px;
-    height: calc(50px * 1.414);
-    background-color: #dfdfdf;
-    border-radius: 4px;
+    & > div:not(:has(> .icon)) {
+        display: flex;
+        flex-direction: column;
+        & > :nth-child(1) {
+            border: none;
+            width: 50px;
+            height: calc(50px * 1.414);
+            background-color: #dfdfdf;
+            border-radius: 4px;
+        }
+    }
 }
 
 #book {

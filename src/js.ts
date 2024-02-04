@@ -39,6 +39,7 @@ import close_svg from "../assets/icons/close.svg";
 import more_svg from "../assets/icons/more.svg";
 import reload_svg from "../assets/icons/reload.svg";
 import recume_svg from "../assets/icons/recume.svg";
+import add_svg from "../assets/icons/add.svg";
 
 function icon(src: string) {
     return `<img src="${src}" class="icon">`;
@@ -123,7 +124,7 @@ function vlist(
         paddingLeft?: number;
         paddingBotton?: number;
         paddingRight?: number;
-        width?: number;
+        width?: string;
     },
     f: (index: number, remove: () => void) => HTMLElement | Promise<HTMLElement>
 ) {
@@ -134,7 +135,9 @@ function vlist(
     let paddingLeft = style.paddingLeft ?? 0;
     let paddingBotton = style.paddingBotton ?? 0;
 
-    let blankEl = el("div", { style: { width: `${style.width || "1"}px`, position: "absolute", top: "0" } });
+    let blankEl = el("div", {
+        style: { width: "1px", position: "absolute", top: "0" },
+    });
     blankEl.style.height = iHeight * list.length + gap * list.length - 1 + paddingTop + paddingBotton + "px";
     pel.append(blankEl);
     const dataI = "data-v-i";
@@ -170,6 +173,7 @@ function vlist(
                 position: "absolute",
                 top: paddingTop + i * (iHeight + gap) + "px",
                 left: paddingLeft + "px",
+                width: style.width || "1px",
             });
             iel.setAttribute(dataI, String(i));
             pel.append(iel);
@@ -191,14 +195,40 @@ const DISABLECHANGE = "disable_change";
 const TODOMARK = "to_visit";
 
 const booksEl = document.getElementById("books");
-const bookEl = document.getElementById("book");
-const bookSectionsEl = document.getElementById("sections");
-const addOnlineBookEl = document.getElementById("add_online_book");
-const onlineBooksEl = document.getElementById("online_books");
-const onlineBooksListEl = document.getElementById("online_books_list");
-const addBookEl = document.getElementById("add_book");
-const addSectionEL = document.getElementById("add_section");
+const localBookEl = el("div", { class: "books" });
+const onlineBookEl = el("div", { style: { display: "none" } });
+booksEl.append(
+    el("div", { style: { display: "flex" } }, [
+        el("div", "l", {
+            onclick: () => {
+                showBooks();
+                localBookEl.style.display = "block";
+                onlineBookEl.style.display = "none";
+            },
+        }),
+        el("div", "ol", {
+            onclick: () => {
+                getOnlineBooks();
+                localBookEl.style.display = "none";
+                onlineBookEl.style.display = "block";
+            },
+        }),
+    ]),
+    localBookEl,
+    onlineBookEl
+);
+const bookSectionsEl = el("div", {
+    style: {
+        overflow: "scroll",
+        position: "relative",
+        "flex-grow": "1",
+    },
+});
+const bookBEl = document.getElementById("books_b");
+const addBookEl = el("div", iconEl(add_svg));
+const addSectionEL = el("div", iconEl(add_svg));
 const bookNavEl = document.getElementById("book_nav");
+bookNavEl.append(addSectionEL, bookSectionsEl);
 const bookContentEl = document.getElementById("book_content");
 const changeEditEl = document.getElementById("change_edit");
 const dicEl = document.getElementById("dic");
@@ -310,9 +340,8 @@ function newSection() {
     return s;
 }
 
-addOnlineBookEl.onclick = () => {
-    getOnlineBooks();
-    onlineBooksEl.showPopover();
+bookBEl.onclick = () => {
+    booksEl.showPopover();
 };
 
 async function getOnlineBooksUrl() {
@@ -345,7 +374,7 @@ function showOnlineBooks(
         language: string;
     }[]
 ) {
-    onlineBooksListEl.innerHTML = "";
+    onlineBookEl.innerHTML = "";
     for (let book of books) {
         let div = document.createElement("div");
         let title = document.createElement("span");
@@ -410,16 +439,18 @@ function showOnlineBooks(
                     });
             }
         };
-        onlineBooksListEl.append(div);
-        console.log(onlineBooksListEl);
+        onlineBookEl.append(div);
+        console.log(onlineBookEl);
     }
 }
 
 addBookEl.onclick = async () => {
     let b = await newBook();
     nowBook = b;
-    setBookS();
+    let book = await getBooksById(nowBook.book);
+    showBook(book);
     changeEdit(true);
+    booksEl.hidePopover();
 };
 
 addSectionEL.onclick = async () => {
@@ -477,7 +508,8 @@ async function setBookS() {
 }
 
 async function showBooks() {
-    booksEl.innerHTML = "";
+    localBookEl.innerHTML = "";
+    localBookEl.append(addBookEl);
     let bookList: book[] = [];
     await bookshelfStore.iterate((book: book) => {
         bookList.push(book);
@@ -497,7 +529,7 @@ async function showBooks() {
         }
         titleEl.innerText = book.name;
         bookIEl.append(titleEl);
-        booksEl.append(bookIEl);
+        localBookEl.append(bookIEl);
         bookIEl.onclick = () => {
             showBook(book);
             book.visitTime = new Date().getTime();
@@ -507,6 +539,7 @@ async function showBooks() {
             } else {
                 changeEditEl.classList.add(DISABLECHANGE);
             }
+            booksEl.hidePopover();
         };
         bookIEl.oncontextmenu = (e) => {
             e.preventDefault();
@@ -566,28 +599,33 @@ function showBook(book: book) {
 }
 async function showBookSections(sections: book["sections"]) {
     bookSectionsEl.innerHTML = "";
-    vlist(bookSectionsEl, sections, { iHeight: 24 }, async (i) => {
-        let sEl = document.createElement("div");
-        let s = await getSection(sections[i]);
-        sEl.innerText = s.title || `章节${Number(i) + 1}`;
-        for (let i in s.words) {
-            if (!s.words[i].visit) {
-                sEl.classList.add(TODOMARK);
-                break;
+    vlist(
+        bookSectionsEl,
+        sections,
+        { iHeight: 24, paddingTop: 16, paddingLeft: 16, width: "calc(20vw - 1rem * 2)" },
+        async (i) => {
+            let sEl = document.createElement("div");
+            let s = await getSection(sections[i]);
+            sEl.innerText = s.title || `章节${Number(i) + 1}`;
+            for (let i in s.words) {
+                if (!s.words[i].visit) {
+                    sEl.classList.add(TODOMARK);
+                    break;
+                }
             }
-        }
-        sEl.onclick = async () => {
-            sEl.classList.remove(TODOMARK);
+            sEl.onclick = async () => {
+                sEl.classList.remove(TODOMARK);
 
-            nowBook.sections = Number(i);
-            showBookContent(sections[i]);
-            setBookS();
-            let book = await getBooksById(nowBook.book);
-            book.lastPosi = nowBook.sections;
-            bookshelfStore.setItem(nowBook.book, book);
-        };
-        return sEl;
-    });
+                nowBook.sections = Number(i);
+                showBookContent(sections[i]);
+                setBookS();
+                let book = await getBooksById(nowBook.book);
+                book.lastPosi = nowBook.sections;
+                bookshelfStore.setItem(nowBook.book, book);
+            };
+            return sEl;
+        }
+    );
 }
 
 let wordList: { text: string; c: record }[] = [];
