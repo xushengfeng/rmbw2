@@ -18,7 +18,7 @@
 html,
 body {
     margin: 0;
-    font-family: "Times New Roman", Times, serif;
+    font-family: sans-serif;
     font-size: var(--font-size);
     color: var(--color);
 }
@@ -265,7 +265,7 @@ body > #index > div > .icon {
     width: 100%;
     box-sizing: border-box;
     padding: 1rem 4rem;
-    font-family: serif;
+    font-family: "Times New Roman", Times, serif;
 }
 #book_content > textarea {
     height: calc(100vh - 96px);
