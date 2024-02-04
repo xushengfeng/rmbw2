@@ -173,7 +173,7 @@ function vlist(
                 position: "absolute",
                 top: paddingTop + i * (iHeight + gap) + "px",
                 left: paddingLeft + "px",
-                width: style.width || "1px",
+                ...(style.width ? { width: style.width } : {}),
             });
             iel.setAttribute(dataI, String(i));
             pel.append(iel);
