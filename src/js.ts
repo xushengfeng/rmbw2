@@ -1262,6 +1262,7 @@ async function showDic(id: string) {
             let r = (await card2sentence.getItem(wordx.id)) as record2;
             r.trans = text;
             await card2sentence.setItem(wordx.id, r);
+            visit(true);
         }
 
         transCache.setItem(Share.context, text);
@@ -1317,6 +1318,12 @@ async function showDic(id: string) {
     ttsContextEl.onclick = () => {
         runTTS(Share.context);
     };
+
+    async function visit(t: boolean) {
+        wordx.visit = t;
+        section.words[id] = wordx;
+        await sectionsStore.setItem(sectionId, section);
+    }
 
     function showWord() {
         dicEl.classList.remove(DICSENTENCE);
@@ -1393,12 +1400,6 @@ async function showDic(id: string) {
                 ]),
             ]) as HTMLDialogElement;
             dialogX(div);
-        }
-
-        async function visit(t: boolean) {
-            wordx.visit = t;
-            section.words[id] = wordx;
-            await sectionsStore.setItem(sectionId, section);
         }
 
         async function search(word: string) {
@@ -1519,6 +1520,7 @@ async function showDic(id: string) {
             let r = (await card2sentence.getItem(wordx.id)) as record2;
             r.trans = dicTransContent.value;
             await card2sentence.setItem(wordx.id, r);
+            visit(true);
         };
     }
 
