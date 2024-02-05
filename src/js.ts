@@ -886,9 +886,15 @@ function changePosi(section: section, text: string) {
     source.push(section.text.length);
     map.push(text.length);
     console.log(source, map);
-    for (let w in section.words) {
-        let start = section.words[w].index[0];
-        let end = section.words[w].index[1];
+    section.words = changeSectionW(section.words, source, map, "index");
+    section.words = changeSectionW(section.words, source, map, "cIndex");
+    return section;
+}
+
+function changeSectionW(sectionW: section["words"], source: number[], map: number[], key: "index" | "cIndex") {
+    for (let w in sectionW) {
+        let start = sectionW[w][key][0];
+        let end = sectionW[w][key][1];
         let Start = 0,
             End = 0;
         for (let i = 0; i < source.length; i++) {
@@ -899,9 +905,9 @@ function changePosi(section: section, text: string) {
                 End = Math.min(map[i] + (end - source[i]), map[i + 1]);
             }
         }
-        section.words[w].index = [Start, End];
+        sectionW[w][key] = [Start, End];
     }
-    return section;
+    return sectionW;
 }
 
 import diff_match_patch from "diff-match-patch";
