@@ -15,8 +15,8 @@ dependencies:
     specifier: ^2.7.32
     version: 2.7.32
   auto-fun:
-    specifier: ^1.0.2
-    version: 1.0.2
+    specifier: ^1.0.3
+    version: 1.0.3
   diff-match-patch:
     specifier: ^1.0.5
     version: 1.0.5
@@ -389,8 +389,8 @@ packages:
       sprintf-js: 1.0.3
     dev: false
 
-  /auto-fun@1.0.2:
-    resolution: {integrity: sha512-GNPXhsW1A62feqZ4U9rrTKweuB1CzzJEMUWVdjI/fZL1dtT0SyAOXSypnvYQp8FJopkIZtOvOr3ouny1QGLgng==}
+  /auto-fun@1.0.3:
+    resolution: {integrity: sha512-eY0iwKV4Fke7wC1bNp30NFbjwD8Zk6xoPcuJW+qj7AujzRU6A8/A8ZsxKoB8sbgRcrW356cQt8KskL7+NU3S+g==}
     dev: false
 
   /base64-js@1.5.1:

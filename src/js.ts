@@ -1817,7 +1817,40 @@ function wordFix2str(f: { type: "prefix" | "root" | "suffix"; t: string; dis: st
 }
 
 function aiButtons2(textEl: HTMLTextAreaElement, sentence: string) {
-    return el("div", []);
+    function setText(text: string) {
+        textEl.setRangeText(text);
+    }
+    return el("div", [
+        el("button", "分析", {
+            onclick: async () => {
+                let t = sentenceGm(await sentenceAi.gm(sentence));
+                setText(t);
+            },
+        }),
+        el("button", "拆分", {
+            onclick: async () => {
+                setText((await sentenceAi.split(sentence)).shortSentences.join("\n"));
+            },
+        }),
+    ]);
+}
+
+function sentenceGm(t: senNode) {
+    function get(T: senNode) {
+        let text = "";
+        for (let t of T) {
+            if (typeof t === "string") {
+                text += t;
+            } else {
+                let tx = get(t.text);
+                if (t.isPost) tx = `<(${tx})`;
+                else tx = `(${tx})>`;
+                text += tx;
+            }
+        }
+        return text;
+    }
+    return get(t);
 }
 
 import autoFun from "auto-fun";
@@ -1911,6 +1944,72 @@ let wordAi = {
             script: [`输入word的语言是${sourceLan}`, `返回输入word ipa国际音标`],
         });
         return f.run(`word:${word}`).result as Promise<{ list: string[] }>;
+    },
+};
+
+type senNode = ({ text: senNode; isPost: boolean } | string)[];
+
+let sentenceAi = {
+    gm: async (sentence: string) => {
+        type splitS = ({ text: string; isPost: boolean } | string)[];
+        let f = new autoFun.def({
+            input: ["sentence:string 句子"],
+            output: [`split:({ text: string; isPost: boolean } | string)[]`],
+            script: [
+                "分析sentence修饰成分和被修饰成分",
+                "被修饰成分包括主谓宾核心词或词组，修饰成分包括具有限定或修饰的词、词组或从句",
+                "将他们按顺序添加到split",
+                "被修饰成分直接以string形式添加到split",
+                "修饰成分以{ text: string 修饰成分; isPost: boolean }形式添加到split",
+                "对于修饰成分，如果修饰成分在被修饰成分之后，isPost 为 true，反之为false",
+                "如果这个句子不是一个完整句，只有修饰成分，直接返回split:[该句子]",
+            ],
+            test: [
+                {
+                    input: "The yong",
+                    output: {
+                        split: ["The yong"] as splitS,
+                    },
+                },
+                {
+                    input: "The yong man who walled to us is our teacher",
+                    output: {
+                        split: [
+                            { text: "The yong", isPost: false },
+                            "man",
+                            { text: "who walled to us", isPost: true },
+                            "is",
+                            { text: "our", isPost: false },
+                            "teacher",
+                        ] as splitS,
+                    },
+                },
+            ],
+        });
+        async function splitSen(sentence: string) {
+            let t: senNode = [];
+            let l = (await f.run(`sentence:${sentence}`).result)["split"] as splitS;
+            for (let i of l) {
+                if (typeof i === "string") {
+                    t.push(i);
+                } else {
+                    let x: senNode[0] = { text: [i.text], isPost: i.isPost };
+                    x.text = await splitSen(i.text);
+                }
+            }
+            return t;
+        }
+        let x = await splitSen(sentence);
+        console.log(x);
+        return x;
+    },
+    split: (sentence: string) => {
+        let f = new autoFun.def({
+            input: ["sentence:string 长句子"],
+            output: ["shortSentences:string[] 短句子"],
+            script: ["将sentence改写成几个短句，输出到shortSentences"],
+        });
+        return f.run(`sentence:${sentence}`).result as Promise<{ shortSentences: string[] }>;
     },
 };
 
