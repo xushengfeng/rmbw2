@@ -194,6 +194,7 @@ const DICSENTENCE = "dic_sentence";
 const HIDEMEANS = "hide_means";
 const DISABLECHANGE = "disable_change";
 const TODOMARK = "to_visit";
+const DICDIALOG = "dic_dialog";
 
 const booksEl = document.getElementById("books");
 const localBookEl = el("div", { class: "books" });
@@ -1386,7 +1387,7 @@ async function showDic(id: string) {
         function addP(text: string, f: (text: string) => void) {
             let textEl = el("textarea", { value: text });
             let aiB = aiButtons(textEl, Word.word, Word.text);
-            let div = el("dialog", [
+            let div = el("dialog", { class: DICDIALOG }, [
                 textEl,
                 el("div", { style: { display: "flex" } }, [
                     aiB,
