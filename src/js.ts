@@ -1788,8 +1788,12 @@ function aiButtons1(textEl: HTMLTextAreaElement, word: string) {
         el("button", "词根词缀", {
             onclick: async () => {
                 let f = (await wordAi.fix(word)).list;
-                let text = wordFix2str(f);
-                setText(text.join(" + "));
+                if (f.length > 1) {
+                    let text = wordFix2str(f);
+                    setText(text.join(" + "));
+                } else {
+                    setText(word);
+                }
             },
         }),
         el("button", "词源", {
@@ -1878,12 +1882,14 @@ let wordAi = {
             script: [`分析word词根词缀`, "根据测试例,依次将词根词缀添加到list"],
             test: {
                 input: "unbelievably",
-                output: [
-                    { type: "prefix", t: "un", dis: "否定" },
-                    { type: "root", t: "believe", dis: "相信" },
-                    { type: "suffix", t: "able", dis: "能" },
-                    { type: "suffix", t: "ly", dis: "副词" },
-                ],
+                output: {
+                    list: [
+                        { type: "prefix", t: "un", dis: "否定" },
+                        { type: "root", t: "believe", dis: "相信" },
+                        { type: "suffix", t: "able", dis: "能" },
+                        { type: "suffix", t: "ly", dis: "副词" },
+                    ],
+                },
             },
         });
         return f.run(`word:${word}`).result as Promise<{
