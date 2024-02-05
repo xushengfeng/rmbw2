@@ -1622,7 +1622,8 @@ function disCard(m: dic[0]["means"][0]) {
 }
 function disCard2(m: record["means"][0]) {
     let div = document.createDocumentFragment();
-    let disEl = el("div", el("p", m.text));
+    let disEl = el("p");
+    disEl.innerText = m.text;
     let sen = document.createElement("div");
     sen.classList.add("dic_sen");
     for (let s of m.contexts) {
@@ -1630,13 +1631,13 @@ function disCard2(m: record["means"][0]) {
             el("div", [
                 el("p", [
                     s.text.slice(0, s.index[0]),
-                    el("span", { style: MARKWORD }, s.text.slice(...s.index)),
+                    el("span", { class: MARKWORD }, s.text.slice(...s.index)),
                     s.text.slice(s.index[1]),
                 ]),
             ])
         );
     }
-    div.append(disEl, sen);
+    div.append(el("div", disEl), sen);
     return div;
 }
 
