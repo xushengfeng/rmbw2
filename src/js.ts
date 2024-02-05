@@ -1365,7 +1365,7 @@ async function showDic(id: string) {
         }
 
         addMeanEl.onclick = () => {
-            addP("", async (text) => {
+            addP("", Word.word, Word.context.text, async (text) => {
                 let mean = text.trim();
                 if (mean) {
                     const x = await addReviewCardMean(Word.word, mean);
@@ -1380,7 +1380,7 @@ async function showDic(id: string) {
         };
 
         editMeanEl.onclick = () => {
-            addP(Word.text, async (text) => {
+            addP(Word.text, Word.word, Word.context.text, async (text) => {
                 let mean = text.trim();
                 if (Word.record) {
                     for (let i of Word.record.means) {
@@ -1394,25 +1394,6 @@ async function showDic(id: string) {
                 search(Word.word);
             });
         };
-
-        function addP(text: string, f: (text: string) => void) {
-            let textEl = el("textarea", { value: text });
-            let aiB = aiButtons(textEl, Word.word, Word.text);
-            let div = el("dialog", { class: DICDIALOG }, [
-                textEl,
-                el("div", { style: { display: "flex" } }, [
-                    aiB,
-                    el("button", iconEl(close_svg), {
-                        onclick: () => {
-                            let mean = textEl.value.trim();
-                            div.close();
-                            f(mean);
-                        },
-                    }),
-                ]),
-            ]) as HTMLDialogElement;
-            dialogX(div);
-        }
 
         async function search(word: string) {
             if (flatWordCard(Word.record, id).index != -1) dicDetailsEl.innerHTML = "";
@@ -1708,6 +1689,25 @@ async function rmWord(record: record, sourceId: string) {
 
 function rmStyle(start: number) {
     bookContentEl.querySelector(`span[data-s="${start}"]`)?.classList?.remove(MARKWORD);
+}
+
+function addP(text: string, word: string, sentence: string, f: (text: string) => void) {
+    let textEl = el("textarea", { value: text });
+    let aiB = aiButtons(textEl, word, sentence);
+    let div = el("dialog", { class: DICDIALOG }, [
+        textEl,
+        el("div", { style: { display: "flex" } }, [
+            aiB,
+            el("button", iconEl(close_svg), {
+                onclick: () => {
+                    let mean = textEl.value.trim();
+                    div.close();
+                    f(mean);
+                },
+            }),
+        ]),
+    ]) as HTMLDialogElement;
+    dialogX(div);
 }
 
 function aiButtons(textEl: HTMLTextAreaElement, word: string, context: string) {
