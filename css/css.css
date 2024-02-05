@@ -476,6 +476,15 @@ div:has(> .translate) > :not(.translate) {
         border: none;
         resize: none;
     }
+    & > :last-child > :first-child {
+        display: flex;
+        & > button {
+            display: block;
+            width: auto;
+            height: 24px;
+            padding: 0 4px;
+        }
+    }
     &::backdrop {
         backdrop-filter: var(--blur);
     }

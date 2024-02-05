@@ -1391,7 +1391,7 @@ async function showDic(id: string) {
                 textEl,
                 el("div", { style: { display: "flex" } }, [
                     aiB,
-                    el("button", "close", {
+                    el("button", iconEl(close_svg), {
                         onclick: () => {
                             let mean = textEl.value.trim();
                             div.close();
