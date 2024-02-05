@@ -266,6 +266,7 @@ body > #index > div > .icon {
     box-sizing: border-box;
     padding: 1rem 4rem;
     font-family: "Times New Roman", Times, serif;
+    font-size: 1rem;
 }
 #book_content > textarea {
     height: calc(100vh - 96px);
