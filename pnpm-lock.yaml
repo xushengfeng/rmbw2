@@ -14,6 +14,9 @@ dependencies:
   '@zip.js/zip.js':
     specifier: ^2.7.32
     version: 2.7.32
+  auto-fun:
+    specifier: ^1.0.2
+    version: 1.0.2
   diff-match-patch:
     specifier: ^1.0.5
     version: 1.0.5
@@ -384,6 +387,10 @@ packages:
     resolution: {integrity: sha512-o5Roy6tNG4SL/FOkCAN6RzjiakZS25RLYFrcMttJqbdd8BWrnA+fGz57iN5Pb06pvBGvl5gQ0B48dJlslXvoTg==}
     dependencies:
       sprintf-js: 1.0.3
+    dev: false
+
+  /auto-fun@1.0.2:
+    resolution: {integrity: sha512-GNPXhsW1A62feqZ4U9rrTKweuB1CzzJEMUWVdjI/fZL1dtT0SyAOXSypnvYQp8FJopkIZtOvOr3ouny1QGLgng==}
     dev: false
 
   /base64-js@1.5.1:

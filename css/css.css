@@ -9,7 +9,6 @@
     --color: #000;
     --font-size: 16px;
     --main-bar-size: 24px;
-    --main-font: sans-serif;
     --icon-color: none;
     --icon-color1: invert(1);
     --b-button: 32px;
@@ -19,7 +18,7 @@
 html,
 body {
     margin: 0;
-    font-family: var(--main-font);
+    font-family: sans-serif;
     font-size: var(--font-size);
     color: var(--color);
 }
@@ -217,6 +216,7 @@ body > #index > div > .icon {
     left: -20vw;
     height: calc(100vh - 24px);
     display: flex;
+    flex-direction: column;
     z-index: 2;
     background-color: var(--bg1);
     backdrop-filter: var(--blur);
@@ -228,10 +228,6 @@ body > #index > div > .icon {
     box-shadow: 0 0 4px #0002;
 }
 
-#book_nav > #sections {
-    overflow: scroll;
-    position: relative;
-}
 #book_buttons {
     display: flex;
     width: 100%;
@@ -269,7 +265,8 @@ body > #index > div > .icon {
     width: 100%;
     box-sizing: border-box;
     padding: 1rem 4rem;
-    font-family: serif;
+    font-family: "Times New Roman", Times, serif;
+    font-size: 1rem;
 }
 #book_content > textarea {
     height: calc(100vh - 96px);
@@ -357,22 +354,22 @@ body > #index > div > .icon {
     display: flex !important;
 }
 
-#books {
+.books {
     display: flex;
     flex-direction: column;
     gap: 8px;
     overflow: scroll;
-}
-#books > div {
-    display: flex;
-    flex-direction: column;
-}
-#books > div > :nth-child(1) {
-    border: none;
-    width: 50px;
-    height: calc(50px * 1.414);
-    background-color: #dfdfdf;
-    border-radius: 4px;
+    & > div:not(:has(> .icon)) {
+        display: flex;
+        flex-direction: column;
+        & > :nth-child(1) {
+            border: none;
+            width: 50px;
+            height: calc(50px * 1.414);
+            background-color: #dfdfdf;
+            border-radius: 4px;
+        }
+    }
 }
 
 #book {
@@ -417,6 +414,12 @@ body > #index > div > .icon {
     visibility: visible !important;
 }
 
+.dic_sentence {
+    & > :is(:nth-child(2), :nth-child(4), :nth-child(5)) {
+        display: none !important;
+    }
+}
+
 .more_words {
     display: flex;
     gap: 4px;
@@ -458,6 +461,35 @@ div:has(> .translate) > :not(.translate) {
     display: none;
 }
 
+.dic_dialog {
+    margin: 3rem;
+    width: auto;
+    height: auto;
+    display: flex;
+    flex-direction: column;
+    border: none;
+    border-radius: 1rem;
+    padding: 1rem;
+    & > textarea {
+        flex-grow: 1;
+        overflow: scroll;
+        border: none;
+        resize: none;
+    }
+    & > :last-child > :first-child {
+        display: flex;
+        & > button {
+            display: block;
+            width: auto;
+            height: 24px;
+            padding: 0 4px;
+        }
+    }
+    &::backdrop {
+        backdrop-filter: var(--blur);
+    }
+}
+
 #mark_word_list {
     position: fixed;
     overflow-y: scroll;
@@ -471,6 +503,13 @@ div:has(> .translate) > :not(.translate) {
     background: var(--bar-bg);
     backdrop-filter: var(--blur);
     transition: var(--transition);
+
+    & > div {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: calc(40vw - 16px * 2);
+    }
 }
 
 .show_mark_word_list {
