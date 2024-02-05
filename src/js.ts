@@ -1385,7 +1385,7 @@ async function showDic(id: string) {
 
         function addP(text: string, f: (text: string) => void) {
             let textEl = el("textarea", { value: text });
-            let aiB = el("button");
+            let aiB = aiButtons(textEl, Word.word, Word.text);
             let div = el("dialog", [
                 textEl,
                 el("div", { style: { display: "flex" } }, [
@@ -1770,6 +1770,142 @@ async function rmWord(record: record, sourceId: string) {
 function rmStyle(start: number) {
     bookContentEl.querySelector(`span[data-s="${start}"]`)?.classList?.remove(MARKWORD);
 }
+
+function aiButtons(textEl: HTMLTextAreaElement, word: string, context: string) {
+    function setText(text: string) {
+        textEl.setRangeText(text);
+    }
+    return el("div", [
+        el("button", "基本意思", {
+            onclick: async () => {
+                let x = await wordAi.mean(word, context, bookLan, "zh");
+                setText(x.mean0 + "\n" + x.mean1 + "\n" + x.mean2);
+            },
+        }),
+        el("button", "音标", {
+            onclick: async () => {
+                setText((await wordAi.pronunciation(word, bookLan)).list.join("\n"));
+            },
+        }),
+        el("button", "emoji", {
+            onclick: async () => {
+                setText((await wordAi.meanEmoji(word, context)).mean);
+            },
+        }),
+        el("button", "近义词", {
+            onclick: async () => {
+                let x = await wordAi.syn(word, context);
+                let text = [];
+                if (x.list0.length) text.push(`= ${x.list0.join(", ")}`);
+                if (x.list1.length) text.push(`≈ ${x.list1.join(", ")}`);
+                setText(text.join("\n"));
+            },
+        }),
+        el("button", "反义词", {
+            onclick: async () => {
+                setText((await wordAi.opp(word, context)).list.join(", "));
+            },
+        }),
+    ]);
+}
+function aiButtons2(textEl: HTMLTextAreaElement, word: string) {
+    return el("div", [
+        el("button", "词根词缀", { onclick: wordAi.fix(word) }),
+        el("button", "词源", { onclick: wordAi.etymology(word) }),
+    ]);
+}
+
+import autoFun from "auto-fun";
+
+autoFun.config({
+    type: "chatgpt",
+    url: (await setting.getItem("ai.url")) as string,
+    key: await setting.getItem("ai.key"),
+});
+
+let wordAi = {
+    mean: (word: string, context: string, sourceLan: string, userLan: string) => {
+        let f = new autoFun.def({
+            input: ["word:string 单词", "context:string 单词所在的语境"],
+            output: [
+                `mean0:string ${sourceLan}简明释义`,
+                `mean1:string ${sourceLan}释义`,
+                `mean2:string ${userLan}释义`,
+            ],
+            script: [
+                `根据context中word的意思，返回用${sourceLan}简明解释的mean0、用${sourceLan}解释的mean1和用${userLan}解释的mean2`,
+            ],
+        });
+        return f.run([`word:${word}`, `context:${context}`]).result as Promise<{
+            mean0: string;
+            mean1: string;
+            mean2: string;
+        }>;
+    },
+    meanEmoji: (word: string, context: string) => {
+        let f = new autoFun.def({
+            input: ["word:string 单词"],
+            output: [`mean:string 用emoji表示的意思`],
+            script: [`根据context中word的意思，返回emoji`],
+        });
+        return f.run([`word:${word}`, `context:${context}`]).result as Promise<{ mean: string }>;
+    },
+    syn: (word: string, context: string) => {
+        let f = new autoFun.def({
+            input: ["word:string 单词", "context:string 单词所在的语境"],
+            output: [`list0:string[] 同义词`, `list1:string[] 近义词`],
+            script: [
+                `判断context中word的意思`,
+                "若存在该语境下能进行同义替换的词，添加到list0同义词表，同义词应比word更简单",
+                "克制地添加若干近义词到list1",
+            ],
+        });
+        return f.run([`word:${word}`, `context:${context}`]).result as Promise<{ list0: string[]; list1: string[] }>;
+    },
+    opp: (word: string, context: string) => {
+        let f = new autoFun.def({
+            input: ["word:string 单词", "context:string 单词所在的语境"],
+            output: ["list:string[]反义词列表"],
+            script: [`根据context中word的意思，与其意思相反的反义词列表list`],
+        });
+        return f.run([`word:${word}`, `context:${context}`]).result as Promise<{ list: string[] }>;
+    },
+    fix: (word: string) => {
+        let f = new autoFun.def({
+            input: "word:string 单词",
+            output: `list:{ type: "prefix" | "root" | "suffix"; t: string; dis: string }[]词根词缀列表`,
+            script: [`分析word词根词缀`, "根据测试例,依次将词根词缀添加到list"],
+            test: {
+                input: "unbelievably",
+                output: [
+                    { type: "prefix", t: "un", dis: "否定" },
+                    { type: "root", t: "believe", dis: "相信" },
+                    { type: "suffix", t: "able", dis: "能" },
+                    { type: "suffix", t: "ly", dis: "副词" },
+                ],
+            },
+        });
+        return f.run(`word:${word}`).result as Promise<{
+            list: { type: "prefix" | "root" | "suffix"; t: string; dis: string }[];
+        }>;
+    },
+    etymology: (word: string) => {
+        let f = new autoFun.def({
+            input: "word:string 单词",
+            output: `list:string[]词源`,
+            script: [`分析word词源并返回他们`],
+        });
+        return f.run(`word:${word}`).result as Promise<{ list: string[] }>;
+    },
+    pronunciation: (word: string, sourceLan: string) => {
+        let f = new autoFun.def({
+            input: "word:string 单词",
+            output: `list:string[]ipa列表`,
+            script: [`输入word的语言是${sourceLan}`, `返回输入word ipa国际音标`],
+        });
+        return f.run(`word:${word}`).result as Promise<{ list: string[] }>;
+    },
+};
 
 type aim = { role: "system" | "user" | "assistant"; content: string }[];
 
