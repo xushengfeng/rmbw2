@@ -252,6 +252,7 @@ const dicTransContent = el("input", {
 const dicMinEl = el("button", { style: { minHeight: "24px" } }, iconEl(more_svg));
 const addMeanEl = el("button", { style: { minHeight: "24px" } }, iconEl(add_svg));
 const editMeanEl = el("button", { style: { minHeight: "24px" } }, iconEl(pen_svg));
+const noteEl = el("button", { style: { minHeight: "24px" } }, iconEl(pen_svg));
 const dicDetailsEl = el("div", {
     style: {
         overflow: "scroll",
@@ -263,7 +264,7 @@ const dicDetailsEl = el("div", {
 });
 
 dicEl.append(
-    el("div", { style: { display: "flex" } }, [lastMarkEl, nextMarkEl, toSentenceEl, ttsContextEl, hideDicEl]),
+    el("div", { style: { display: "flex" } }, [lastMarkEl, nextMarkEl, toSentenceEl, ttsContextEl, noteEl, hideDicEl]),
     el("div", { style: { display: "flex" } }, [dicWordEl, ttsWordEl, moreWordsEl]),
     el("div", { style: { display: "flex" } }, [dicTransB, dicTransContent]),
     el("div", { style: { display: "flex" } }, [dicMinEl, addMeanEl, editMeanEl]),
@@ -1082,6 +1083,7 @@ type record2 = {
     text: string;
     trans: string;
     source: { book: string; sections: number; id: string }; // 原句通过对比计算
+    note?: string;
 };
 
 const markListEl = document.getElementById("mark_word_list");
@@ -1395,6 +1397,16 @@ async function showDic(id: string) {
             });
         };
 
+        noteEl.onclick = () => {
+            addP(Word.record?.note || "", Word.word, null, async (text) => {
+                let mean = text.trim();
+                if (Word.record) {
+                    Word.record["note"] = mean;
+                    wordsStore.setItem(Word.word, Word.record);
+                }
+            });
+        };
+
         async function search(word: string) {
             if (flatWordCard(Word.record, id).index != -1) dicDetailsEl.innerHTML = "";
             else {
@@ -1440,6 +1452,15 @@ async function showDic(id: string) {
             r.trans = dicTransContent.value;
             await card2sentence.setItem(wordx.id, r);
             visit(true);
+        };
+
+        noteEl.onclick = async () => {
+            let r = (await card2sentence.getItem(wordx.id)) as record2;
+            addP(r.note || "", null, r.text, async (text) => {
+                let mean = text.trim();
+                r["note"] = mean;
+                await card2sentence.setItem(wordx.id, r);
+            });
         };
     }
 
@@ -1693,7 +1714,7 @@ function rmStyle(start: number) {
 
 function addP(text: string, word: string, sentence: string, f: (text: string) => void) {
     let textEl = el("textarea", { value: text });
-    let aiB = aiButtons(textEl, word, sentence);
+    let aiB = getAiButtons(textEl, word, sentence);
     let div = el("dialog", { class: DICDIALOG }, [
         textEl,
         el("div", { style: { display: "flex" } }, [
@@ -1708,6 +1729,18 @@ function addP(text: string, word: string, sentence: string, f: (text: string) =>
         ]),
     ]) as HTMLDialogElement;
     dialogX(div);
+}
+
+function getAiButtons(textEl: HTMLTextAreaElement, word: string, sentence: string) {
+    if (word && sentence) {
+        return aiButtons(textEl, word, sentence);
+    } else {
+        if (word) {
+            return aiButtons1(textEl, word);
+        } else {
+            return aiButtons2(textEl, sentence);
+        }
+    }
 }
 
 function aiButtons(textEl: HTMLTextAreaElement, word: string, context: string) {
@@ -1747,11 +1780,40 @@ function aiButtons(textEl: HTMLTextAreaElement, word: string, context: string) {
         }),
     ]);
 }
-function aiButtons2(textEl: HTMLTextAreaElement, word: string) {
+function aiButtons1(textEl: HTMLTextAreaElement, word: string) {
+    function setText(text: string) {
+        textEl.setRangeText(text);
+    }
     return el("div", [
-        el("button", "词根词缀", { onclick: wordAi.fix(word) }),
-        el("button", "词源", { onclick: wordAi.etymology(word) }),
+        el("button", "词根词缀", {
+            onclick: async () => {
+                let f = (await wordAi.fix(word)).list;
+                let text = wordFix2str(f);
+                setText(text.join(" + "));
+            },
+        }),
+        el("button", "词源", {
+            onclick: async () => {
+                setText((await wordAi.etymology(word)).list.join(", "));
+            },
+        }),
     ]);
+}
+
+function wordFix2str(f: { type: "prefix" | "root" | "suffix"; t: string; dis: string }[]) {
+    let text = [];
+    for (let ff of f) {
+        let t = ff.t;
+        if (ff.type === "prefix") t = t + "-";
+        if (ff.type === "suffix") t = "-" + t;
+        if (ff.dis) t += " (" + ff.dis + ")";
+        text.push(t);
+    }
+    return text;
+}
+
+function aiButtons2(textEl: HTMLTextAreaElement, sentence: string) {
+    return el("div", []);
 }
 
 import autoFun from "auto-fun";
