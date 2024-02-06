@@ -1117,7 +1117,8 @@ async function showMarkList() {
                             card2sentence.removeItem(i.s.id);
                         } else {
                             let record = (await wordsStore.getItem(i.s.id)) as record;
-                            rmWord(record, i.id);
+                            record = await rmWord(record, i.id);
+                            await clearWordMean(record);
                             rmStyle(i.s.index[0]);
                         }
                         delete section.words[i.id];
@@ -1707,6 +1708,20 @@ async function rmWord(record: record, sourceId: string) {
         }
     }
     await wordsStore.setItem(word, record);
+    return record;
+}
+async function clearWordMean(record: record) {
+    let means: record["means"] = [];
+    for (let m of record.means) {
+        if (m.contexts.length === 0) {
+            await card2word.removeItem(m.card_id);
+            await cardsStore.removeItem(m.card_id);
+        } else {
+            means.push(m);
+        }
+    }
+    record.means = means;
+    await wordsStore.setItem(record.word, record);
 }
 
 function rmStyle(start: number) {
