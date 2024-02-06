@@ -2404,132 +2404,138 @@ function clearKeyboard() {
 }
 
 async function showReview(x: { id: string; card: fsrsjs.Card }, type: review) {
-    function crContext(word: record) {
-        let context = document.createElement("div");
-        if (!word) return context;
-        for (let i of word.means) {
-            if (i.card_id === x.id) {
-                for (let c of i.contexts.toReversed()) {
-                    let p = document.createElement("p");
-                    let span = document.createElement("span");
-                    span.classList.add(MARKWORD);
-                    span.innerText = c.text.slice(c.index[0], c.index[1]);
-                    p.append(c.text.slice(0, c.index[0]), span, c.text.slice(c.index[1]));
-                    context.append(p);
-                }
-            }
-        }
-        return context;
-    }
     if (!x) {
         reviewViewEl.innerText = "暂无复习🎉";
         return;
     }
     if (type === "word") {
-        let wordid = (await card2word.getItem(x.id)) as string;
-        let wordRecord = (await wordsStore.getItem(wordid)) as record;
-        let div = document.createElement("div");
-        let context = crContext(wordRecord);
-        context.onclick = async () => {
-            let word = (await card2word.getItem(x.id)) as string;
-            let d = (await wordsStore.getItem(word)) as record;
-            for (let i of d.means) {
-                if (i.card_id === x.id) {
-                    let div = document.createElement("div");
-                    div.append(disCard2(i));
-                    dic.innerHTML = "";
-                    dic.append(div);
-                }
-            }
-        };
-        let dic = document.createElement("div");
-        let b = (rating: fsrsjs.Rating, text: string) => {
-            let button = document.createElement("button");
-            button.innerText = text;
-            button.onclick = async () => {
-                setReviewCard(x.id, x.card, rating);
-                let next = await nextDue(reviewType);
-                showReview(next, reviewType);
-            };
-            return button;
-        };
-        let againB = b(1, "x");
-        let hardB = b(2, "o");
-        let goodB = b(3, "v");
-        let esayB = b(4, "vv");
-        let buttons = document.createElement("div");
-        buttons.append(againB, hardB, goodB, esayB);
-
-        div.append(context, dic, buttons);
-        div.classList.add("review_word");
-        reviewViewEl.innerHTML = "";
-        reviewViewEl.append(div);
+        showWordReview(x);
     }
     if (type === "spell") {
-        let input = el("div", { class: "spell_input" }, "|");
-        clearKeyboard();
-        let wordEl = document.createElement("div");
-        let spellNum = 3;
-        const word = x.id;
-        spellCheckF = async (inputValue: string) => {
-            input.innerText = inputValue;
-            let inputWord = inputValue;
-            wordEl.innerHTML = "";
-            if (inputWord === word) {
-                // 正确
-                if (spellNum === 1) {
-                    setSpellCard(x.id, x.card, 4);
-                    let next = await nextDue(reviewType);
-                    showReview(next, reviewType);
-                } else {
-                    spellNum--;
-                    inputValue = "";
-                    input.innerText = `Good! ${spellNum} time(s) left`;
-                }
-                clearKeyboard();
-            }
-            //错误归位
-            if (inputWord.length === word.length && inputWord != word) {
-                inputValue = "";
-                input.innerText = `"${inputWord}" is wrong! ${spellNum} time(s) left`;
-                play(word);
-                setSpellCard(x.id, x.card, 1);
-                clearKeyboard();
-            }
-        };
-        spellF = (button) => {
-            console.log(button);
-            if (button === "{tip}") {
-                // 暂时展示
-                input.innerText = "";
-                clearKeyboard();
-                play(word);
-                wordEl.innerText = word;
-                setSpellCard(x.id, x.card, 2);
-            }
-            if (button === "{audio}") {
-                // 发音
-                play(word);
-                input.innerText = "";
-                clearKeyboard();
-            }
-        };
-        let context = el("div");
-        let r = (await wordsStore.getItem(word)) as record;
-        for (let i of r.means) {
-            context.append(el("div", [el("p", i.text)]));
-        }
-        const div = document.createElement("div");
-        div.append(input, context, wordEl);
-        div.classList.add("review_spell");
-        reviewViewEl.innerHTML = "";
-        reviewViewEl.append(div);
+        showSpellReview(x);
     }
     if (type === "sentence") {
         showSentenceReview(x);
     }
 }
+function crContext(word: record, id: string) {
+    let context = document.createElement("div");
+    if (!word) return context;
+    for (let i of word.means) {
+        if (i.card_id === id) {
+            for (let c of i.contexts.toReversed()) {
+                let p = document.createElement("p");
+                let span = document.createElement("span");
+                span.classList.add(MARKWORD);
+                span.innerText = c.text.slice(c.index[0], c.index[1]);
+                p.append(c.text.slice(0, c.index[0]), span, c.text.slice(c.index[1]));
+                context.append(p);
+            }
+        }
+    }
+    return context;
+}
+async function showWordReview(x: { id: string; card: fsrsjs.Card }) {
+    let wordid = (await card2word.getItem(x.id)) as string;
+    let wordRecord = (await wordsStore.getItem(wordid)) as record;
+    let div = document.createElement("div");
+    let context = crContext(wordRecord, x.id);
+    context.onclick = async () => {
+        let word = (await card2word.getItem(x.id)) as string;
+        let d = (await wordsStore.getItem(word)) as record;
+        for (let i of d.means) {
+            if (i.card_id === x.id) {
+                let div = document.createElement("div");
+                div.append(disCard2(i));
+                dic.innerHTML = "";
+                dic.append(div);
+            }
+        }
+    };
+    let dic = document.createElement("div");
+    let b = (rating: fsrsjs.Rating, text: string) => {
+        let button = document.createElement("button");
+        button.innerText = text;
+        button.onclick = async () => {
+            setReviewCard(x.id, x.card, rating);
+            let next = await nextDue(reviewType);
+            showReview(next, reviewType);
+        };
+        return button;
+    };
+    let againB = b(1, "x");
+    let hardB = b(2, "o");
+    let goodB = b(3, "v");
+    let esayB = b(4, "vv");
+    let buttons = document.createElement("div");
+    buttons.append(againB, hardB, goodB, esayB);
 
+    div.append(context, dic, buttons);
+    div.classList.add("review_word");
+    reviewViewEl.innerHTML = "";
+    reviewViewEl.append(div);
+}
+
+async function showSpellReview(x: { id: string; card: fsrsjs.Card }) {
+    let input = el("div", { class: "spell_input" }, "|");
+    clearKeyboard();
+    let wordEl = document.createElement("div");
+    let spellNum = 3;
+    const word = x.id;
+    spellCheckF = async (inputValue: string) => {
+        input.innerText = inputValue;
+        let inputWord = inputValue;
+        wordEl.innerHTML = "";
+        if (inputWord === word) {
+            // 正确
+            if (spellNum === 1) {
+                setSpellCard(x.id, x.card, 4);
+                let next = await nextDue(reviewType);
+                showReview(next, reviewType);
+            } else {
+                spellNum--;
+                inputValue = "";
+                input.innerText = `Good! ${spellNum} time(s) left`;
+            }
+            clearKeyboard();
+        }
+        //错误归位
+        if (inputWord.length === word.length && inputWord != word) {
+            inputValue = "";
+            input.innerText = `"${inputWord}" is wrong! ${spellNum} time(s) left`;
+            play(word);
+            setSpellCard(x.id, x.card, 1);
+            clearKeyboard();
+        }
+    };
+    spellF = (button) => {
+        console.log(button);
+        if (button === "{tip}") {
+            // 暂时展示
+            input.innerText = "";
+            clearKeyboard();
+            play(word);
+            wordEl.innerText = word;
+            setSpellCard(x.id, x.card, 2);
+        }
+        if (button === "{audio}") {
+            // 发音
+            play(word);
+            input.innerText = "";
+            clearKeyboard();
+        }
+    };
+    let context = el("div");
+    let r = (await wordsStore.getItem(word)) as record;
+    for (let i of r.means) {
+        context.append(el("div", [el("p", i.text)]));
+    }
+    const div = document.createElement("div");
+    div.append(input, context, wordEl);
+    div.classList.add("review_spell");
+    reviewViewEl.innerHTML = "";
+    reviewViewEl.append(div);
+}
 async function showSentenceReview(x: { id: string; card: fsrsjs.Card }) {
     let sentence = (await card2sentence.getItem(x.id)) as record2;
     let div = document.createElement("div");
