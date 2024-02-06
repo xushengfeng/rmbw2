@@ -195,6 +195,7 @@ const HIDEMEANS = "hide_means";
 const DISABLECHANGE = "disable_change";
 const TODOMARK = "to_visit";
 const DICDIALOG = "dic_dialog";
+const AIDIALOG = "ai_dialog";
 
 const booksEl = document.getElementById("books");
 const localBookEl = el("div", { class: "books" });
@@ -1778,6 +1779,7 @@ function aiButtons(textEl: HTMLTextAreaElement, word: string, context: string) {
                 setText((await wordAi.opp(word, context)).list.join(", "));
             },
         }),
+        tmpAiB(textEl, `$这里有个单词${word}，它位于${context}`),
     ]);
 }
 function aiButtons1(textEl: HTMLTextAreaElement, word: string) {
@@ -1801,6 +1803,7 @@ function aiButtons1(textEl: HTMLTextAreaElement, word: string) {
                 setText((await wordAi.etymology(word)).list.join(", "));
             },
         }),
+        tmpAiB(textEl, `$这里有个单词${word}`),
     ]);
 }
 
@@ -1832,6 +1835,7 @@ function aiButtons2(textEl: HTMLTextAreaElement, sentence: string) {
                 setText((await sentenceAi.split(sentence)).shortSentences.join("\n"));
             },
         }),
+        tmpAiB(textEl, `$这里有个句子${sentence}`),
     ]);
 }
 
@@ -2012,6 +2016,51 @@ let sentenceAi = {
         return f.run(`sentence:${sentence}`).result as Promise<{ shortSentences: string[] }>;
     },
 };
+
+function tmpAiB(mainTextEl: HTMLTextAreaElement, info: string) {
+    const aiB = el("button", "AI", {
+        onclick: () => {
+            tmpAi(mainTextEl, info, aiB.getBoundingClientRect().x, aiB.getBoundingClientRect().y);
+        },
+    });
+    return aiB;
+}
+
+function tmpAi(mainTextEl: HTMLTextAreaElement, info: string, x: number, y: number) {
+    let textEl = el("textarea", { value: ">" });
+    textEl.onkeyup = async (e) => {
+        if (e.key === "Enter" && !e.shiftKey) {
+            let text = textEl.value.trim();
+            let aiM = textAi(text);
+            if (info) aiM.unshift({ role: "system", content: info });
+            console.log(aiM);
+            let start = textEl.selectionStart;
+            let end = textEl.selectionEnd;
+            let aitext = await ai(aiM, "对话").text;
+            let addText = `ai:\n${aitext}`;
+            let changeText = textEl.value.slice(0, start) + addText + textEl.value.slice(end);
+            textEl.value = changeText;
+            editText = changeText;
+            textEl.selectionStart = start;
+            textEl.selectionEnd = start + addText.length;
+        }
+    };
+    let div = el("dialog", { class: AIDIALOG }, [
+        textEl,
+        el("div", { style: { display: "flex", "justify-content": "flex-end" } }, [
+            el("button", iconEl(close_svg), {
+                onclick: () => {
+                    let mean = textEl.value.trim();
+                    div.close();
+                    if (mean != ">") mainTextEl.setRangeText("\n" + mean);
+                },
+            }),
+        ]),
+    ]) as HTMLDialogElement;
+    div.style.left = `min(100vw - 400px, ${x}px)`;
+    div.style.top = `min(100vh - 400px, ${y}px - 400px)`;
+    dialogX(div);
+}
 
 type aim = { role: "system" | "user" | "assistant"; content: string }[];
 

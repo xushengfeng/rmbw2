@@ -490,6 +490,37 @@ div:has(> .translate) > :not(.translate) {
     }
 }
 
+.ai_dialog {
+    margin: 0;
+    width: 400px;
+    height: 400px;
+    border: 1px solid var(--color) !important;
+    display: flex;
+    flex-direction: column;
+    border: none;
+    border-radius: 1rem;
+    padding: 1rem;
+    box-sizing: border-box;
+    & > textarea {
+        flex-grow: 1;
+        overflow: scroll;
+        border: none;
+        resize: none;
+    }
+    & > :last-child > :first-child {
+        display: flex;
+        & > button {
+            display: block;
+            width: auto;
+            height: 24px;
+            padding: 0 4px;
+        }
+    }
+    &::backdrop {
+        background: #0001;
+    }
+}
+
 #mark_word_list {
     position: fixed;
     overflow-y: scroll;
