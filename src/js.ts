@@ -2262,7 +2262,7 @@ async function getFutureReviewDue(days: number) {
     now = Math.round(now);
     let wordList: { id: string; card: fsrsjs.Card }[] = [];
     let spellList: { id: string; card: fsrsjs.Card }[] = [];
-    // todo sentence
+    let sentenceList: { id: string; card: fsrsjs.Card }[] = [];
     await card2word.iterate(async (value, key) => {
         const card = (await cardsStore.getItem(key)) as fsrsjs.Card;
         if (card.due.getTime() < now) {
@@ -2285,7 +2285,14 @@ async function getFutureReviewDue(days: number) {
             spellList.push({ id: key, card: value });
         }
     });
-    return { word: wordList, spell: spellList };
+
+    await card2sentence.iterate(async (value, key) => {
+        const card = (await cardsStore.getItem(key)) as fsrsjs.Card;
+        if (card.due.getTime() < now) {
+            sentenceList.push({ id: key, card: card });
+        }
+    });
+    return { word: wordList, spell: spellList, sentence: sentenceList };
 }
 async function getReviewDue(type: review) {
     for (let i of due.word) {
@@ -2296,9 +2303,14 @@ async function getReviewDue(type: review) {
         let card = (await spellStore.getItem(i.id)) as fsrsjs.Card;
         i.card = card;
     }
+    for (let i of due.sentence) {
+        let card = (await cardsStore.getItem(i.id)) as fsrsjs.Card;
+        i.card = card;
+    }
     let now = new Date().getTime();
     let wordList: { id: string; card: fsrsjs.Card }[] = [];
     let spellList: { id: string; card: fsrsjs.Card }[] = [];
+    let sentenceList: { id: string; card: fsrsjs.Card }[] = [];
     for (let i of due.word) {
         if (i.card.due.getTime() < now) {
             wordList.push(i);
@@ -2309,12 +2321,20 @@ async function getReviewDue(type: review) {
             spellList.push(i);
         }
     }
+    for (let i of due.sentence) {
+        if (i.card.due.getTime() < now) {
+            sentenceList.push(i);
+        }
+    }
     wordList.sort((a, b) => a.card.due.getTime() - b.card.due.getTime());
     spellList.sort((a, b) => a.card.due.getTime() - b.card.due.getTime());
+    sentenceList.sort((a, b) => a.card.due.getTime() - b.card.due.getTime());
     if (type === "word") {
         return wordList[0];
-    } else {
+    } else if (type === "spell") {
         return spellList[0];
+    } else {
+        return sentenceList[0];
     }
 }
 
@@ -2327,20 +2347,32 @@ let due: {
         id: string;
         card: fsrsjs.Card;
     }[];
+    sentence: {
+        id: string;
+        card: fsrsjs.Card;
+    }[];
 } = {
     word: [],
     spell: [],
+    sentence: [],
 };
 
-type review = "word" | "spell";
+type review = "word" | "spell" | "sentence";
 var reviewType: review = "word";
 const reviewModeEl = document.getElementById("review_mode");
 const reviewWordEl = document.getElementById("review_word") as HTMLInputElement;
 const reviewSpellEl = document.getElementById("review_spell") as HTMLInputElement;
+const reviewSentenceEl = document.getElementById("review_sentence") as HTMLInputElement;
+
 reviewWordEl.checked = true;
 reviewModeEl.onclick = () => {
     if (reviewWordEl.checked) {
         reviewType = "word";
+
+        spellInputEl.style.display = "none";
+    }
+    if (reviewSentenceEl.checked) {
+        reviewType = "sentence";
 
         spellInputEl.style.display = "none";
     }
@@ -2493,6 +2525,46 @@ async function showReview(x: { id: string; card: fsrsjs.Card }, type: review) {
         reviewViewEl.innerHTML = "";
         reviewViewEl.append(div);
     }
+    if (type === "sentence") {
+        showSentenceReview(x);
+    }
+}
+
+async function showSentenceReview(x: { id: string; card: fsrsjs.Card }) {
+    let sentence = (await card2sentence.getItem(x.id)) as record2;
+    let div = document.createElement("div");
+    let context = el("p", sentence.text);
+    context.onclick = async () => {
+        dic.innerHTML = "";
+        dic.append(el("p", { class: TRANSLATE }, sentence.trans));
+        if (sentence.note) {
+            let p = el("p");
+            p.innerText = sentence.note;
+            dic.append(p);
+        }
+    };
+    let dic = document.createElement("div");
+    let b = (rating: fsrsjs.Rating, text: string) => {
+        let button = document.createElement("button");
+        button.innerText = text;
+        button.onclick = async () => {
+            setReviewCard(x.id, x.card, rating);
+            let next = await nextDue(reviewType);
+            showReview(next, reviewType);
+        };
+        return button;
+    };
+    let againB = b(1, "x");
+    let hardB = b(2, "o");
+    let goodB = b(3, "v");
+    let esayB = b(4, "vv");
+    let buttons = document.createElement("div");
+    buttons.append(againB, hardB, goodB, esayB);
+
+    div.append(context, dic, buttons);
+    div.classList.add("review_word");
+    reviewViewEl.innerHTML = "";
+    reviewViewEl.append(div);
 }
 
 let audioEl = <HTMLAudioElement>document.getElementById("audio");
