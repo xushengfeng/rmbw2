@@ -1865,7 +1865,7 @@ function shwoDicEl(mainTextEl: HTMLTextAreaElement, word: string, x: number, y: 
         ]),
     ]) as HTMLDialogElement;
     div.style.left = `min(100vw - 400px, ${x}px)`;
-    div.style.top = `min(100vh - 400px, ${y}px - 400px)`;
+    div.style.top = `min(100dvh - 400px, ${y}px - 400px)`;
     dialogX(div);
 }
 function disCard2(m: record["means"][0]) {
@@ -2306,7 +2306,7 @@ function tmpAi(mainTextEl: HTMLTextAreaElement, info: string, x: number, y: numb
         ]),
     ]) as HTMLDialogElement;
     div.style.left = `min(100vw - 400px, ${x}px)`;
-    div.style.top = `min(100vh - 400px, ${y}px - 400px)`;
+    div.style.top = `min(100dvh - 400px, ${y}px - 400px)`;
     dialogX(div);
 }
 

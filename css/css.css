@@ -16,6 +16,7 @@
     --o-padding: 8px;
     --font-size: 16px;
     --font-family: serif;
+    --size0: 24px;
 }
 
 :root[data-theme="dark"] {
@@ -190,13 +191,13 @@ body > #index > div > .icon {
 }
 
 :is(div, button):has(> .icon) {
-    height: 24px;
-    width: 24px;
+    height: var(--size0);
+    width: var(--size0);
     position: relative;
 }
 :is(div, button) > .icon {
-    height: 24px;
-    width: 24px;
+    height: var(--size0);
+    width: var(--size0);
 }
 
 .hiden {
@@ -204,7 +205,7 @@ body > #index > div > .icon {
 }
 
 .main {
-    height: 100vh;
+    height: 100dvh;
     position: absolute;
     top: 0;
     display: flex;
@@ -233,10 +234,10 @@ body > #index > div > .icon {
 
 #book_nav {
     position: absolute;
-    top: 24px;
+    top: var(--size0);
     width: 20vw;
     left: -20vw;
-    height: calc(100vh - 24px);
+    height: calc(100dvh - var(--size0));
     display: flex;
     flex-direction: column;
     z-index: 2;
@@ -255,21 +256,21 @@ body > #index > div > .icon {
     width: 100%;
 }
 #book_buttons > div:has(.icon) {
-    height: 24px;
-    width: 24px;
+    height: var(--size0);
+    width: var(--size0);
     position: relative;
 }
 #change_edit {
-    height: 24px;
-    width: 24px;
+    height: var(--size0);
+    width: var(--size0);
     position: relative;
 }
 .disable_change {
     cursor: not-allowed;
 }
 #book_buttons > div > .icon {
-    height: 24px;
-    width: 24px;
+    height: var(--size0);
+    width: var(--size0);
 }
 #book_name {
     flex-grow: 1;
@@ -277,9 +278,9 @@ body > #index > div > .icon {
 
 .change_style_bar {
     margin: 0;
-    top: 24px;
+    top: var(--size0);
     left: auto;
-    right: 24px;
+    right: var(--size0);
     border: none;
     background-color: var(--bg1);
     backdrop-filter: var(--blur);
@@ -337,7 +338,7 @@ body > #index > div > .icon {
     background-size: 400px 400px;
     background-attachment: local;
     position: relative;
-    height: calc(100vh - 24px);
+    height: calc(100dvh - var(--size0));
     padding: 1rem 64px;
     overflow-y: scroll;
     overflow-x: hidden;
@@ -368,7 +369,7 @@ body > #index > div > .icon {
         }
     }
     & > textarea {
-        height: calc(100vh - 96px);
+        height: calc(100dvh - 96px);
     }
 }
 .mark_word {
@@ -420,7 +421,7 @@ body > #index > div > .icon {
 
 #pTTSp {
     position: fixed;
-    bottom: 24px;
+    bottom: var(--size0);
     margin: auto 0;
     background: var(--bar-bg);
     backdrop-filter: var(--blur);
@@ -428,7 +429,7 @@ body > #index > div > .icon {
     align-items: center;
     justify-content: center;
     & > audio {
-        height: 24px;
+        height: var(--size0);
         display: block;
     }
 }
@@ -498,9 +499,9 @@ body > #index > div > .icon {
 
 #dic {
     position: absolute;
-    top: 24px;
+    top: var(--size0);
     width: 100%;
-    max-height: 60vh;
+    max-height: 60dvh;
     display: flex;
     flex-direction: column;
     background-color: var(--bg1);
@@ -592,7 +593,7 @@ div:has(> .translate) > :not(.translate) {
         & > button {
             display: block;
             width: auto;
-            height: 24px;
+            height: var(--size0);
             padding: 0 4px;
         }
     }
@@ -625,7 +626,7 @@ div:has(> .translate) > :not(.translate) {
         & > button {
             display: block;
             width: auto;
-            height: 24px;
+            height: var(--size0);
             padding: 0 4px;
         }
     }
@@ -674,7 +675,7 @@ div:has(> .translate) > :not(.translate) {
         & > button {
             display: block;
             width: auto;
-            height: 24px;
+            height: var(--size0);
             padding: 0 4px;
         }
     }
@@ -687,8 +688,8 @@ div:has(> .translate) > :not(.translate) {
     position: fixed;
     overflow-y: scroll;
     right: -100%;
-    top: 24px;
-    height: calc(100vh - 24px);
+    top: var(--size0);
+    height: calc(100dvh - var(--size0));
     width: 40vw;
     border-radius: 1rem 0 0 1rem;
     box-sizing: border-box;
@@ -714,13 +715,13 @@ div:has(> .translate) > :not(.translate) {
 
 #review {
     position: absolute;
-    top: 100vh;
+    top: 100dvh;
     background-color: var(--bg1);
     backdrop-filter: var(--blur);
     transition: var(--transition);
 }
 .review_show {
-    top: 24px !important;
+    top: var(--size0) !important;
 }
 #review_buttons {
     display: flex;
@@ -737,18 +738,18 @@ div:has(> .translate) > :not(.translate) {
 }
 
 #review_buttons > div:has(.icon) {
-    height: 24px;
-    width: 24px;
+    height: var(--size0);
+    width: var(--size0);
     position: relative;
 }
 #review_buttons > div > .icon {
-    height: 24px;
-    width: 24px;
+    height: var(--size0);
+    width: var(--size0);
 }
 
 #review {
     width: 100vw;
-    height: calc(100vh - 24px);
+    height: calc(100dvh - var(--size0));
     display: flex;
     flex-direction: column;
 }
@@ -760,7 +761,7 @@ div:has(> .translate) > :not(.translate) {
 #review_view {
     flex-grow: 1;
     display: flex;
-    max-height: calc(100vh - 2 * 24px);
+    max-height: calc(100dvh - 2 * var(--size0));
     font-family: var(--font-family);
     font-size: var(--font-size);
 }
@@ -782,7 +783,7 @@ div:has(> .translate) > :not(.translate) {
 }
 
 #review_l {
-    height: calc(100vh - 32px);
+    height: calc(100dvh - 32px);
     overflow: auto;
 }
 #review_l > div {
@@ -814,7 +815,7 @@ div:has(> .translate) > :not(.translate) {
 }
 #history > div > div {
     position: absolute;
-    height: 24px;
+    height: var(--size0);
 }
 #setting {
     overflow: scroll;
@@ -822,8 +823,8 @@ div:has(> .translate) > :not(.translate) {
     backdrop-filter: var(--blur);
     transition: var(--transition);
     border: none;
-    margin-top: 24px;
-    max-height: calc(100vh - 24px);
+    margin-top: var(--size0);
+    max-height: calc(100dvh - var(--size0));
 }
 
 #menu {
