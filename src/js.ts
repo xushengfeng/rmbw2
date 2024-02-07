@@ -235,6 +235,9 @@ const bookNavEl = document.getElementById("book_nav");
 bookNavEl.append(addSectionEL, bookSectionsEl);
 let bookContentEl = document.getElementById("book_content");
 const bookContentContainerEl = bookContentEl.parentElement;
+const changeStyleEl = document.getElementById("change_style");
+const changeStyleBar = el("div", { popover: "auto" });
+document.body.append(changeStyleBar);
 const changeEditEl = document.getElementById("change_edit");
 const dicEl = document.getElementById("dic");
 const bookdicEl = document.getElementById("book_dic");
@@ -830,6 +833,91 @@ function setScrollPosi(el: HTMLElement, posi: number) {
 function getScrollPosi(el: HTMLElement) {
     let n = el.scrollTop / (el.scrollHeight - el.offsetHeight);
     return n;
+}
+
+const bookStyleList = {
+    fontSize: [],
+    lineHeight: [],
+    contentWidth: [],
+};
+const bookStyle = JSON.parse(
+    ((await setting.getItem("setyle.default")) as string) ||
+        JSON.stringify({
+            fontSize: 2,
+            lineHeight: 2,
+            contentWidth: 2,
+        })
+);
+{
+    for (let i = 12; i <= 28; i += 2) {
+        bookStyleList.fontSize.push(i);
+    }
+    bookStyleList.fontSize.push(32, 40, 56, 72, 96, 128);
+    for (let i = 20; i <= 60; i += 5) {
+        bookStyleList.contentWidth.push(i);
+    }
+    for (let i = 1; i <= 2.6; i += 0.2) {
+        bookStyleList.lineHeight.push(i);
+    }
+}
+
+changeStyleEl.onclick = () => {
+    changeStyleBar.togglePopover();
+};
+
+{
+    let fontSize = createRangeSetEl(bookStyle.fontSize, bookStyleList.fontSize.length - 1, (i) => {
+        bookStyle.fontSize = i;
+        setBookStyle();
+    });
+    let lineHeight = createRangeSetEl(bookStyle.lineHeight, bookStyleList.lineHeight.length - 1, (i) => {
+        bookStyle.lineHeight = i;
+        setBookStyle();
+    });
+    let contentWidth = createRangeSetEl(bookStyle.contentWidth, bookStyleList.contentWidth.length - 1, (i) => {
+        bookStyle.contentWidth = i;
+        setBookStyle();
+    });
+    changeStyleBar.append(fontSize, lineHeight, contentWidth);
+}
+
+setBookStyle();
+
+function setBookStyle() {
+    bookContentContainerEl.style.setProperty("--font-size", `${bookStyleList.fontSize[bookStyle.fontSize]}px`);
+    bookContentContainerEl.style.setProperty("--line-height", `${bookStyleList.lineHeight[bookStyle.lineHeight]}em`);
+    bookContentContainerEl.style.setProperty(
+        "--content-width",
+        `${bookStyleList.contentWidth[bookStyle.contentWidth]}em`
+    );
+    setting.setItem("setyle.default", JSON.stringify(bookStyle));
+}
+
+function createRangeSetEl(value: number, maxV: number, f: (i: number) => void, minIcon?: string, maxIcon?: string) {
+    const div = el("div");
+    const min = el("button");
+    if (minIcon) min.append(iconEl(minIcon));
+    const max = el("button");
+    if (maxIcon) max.append(iconEl(maxIcon));
+    const p = el("span");
+    setV();
+    min.onclick = () => {
+        value--;
+        value = Math.max(value, 0);
+        setV();
+        f(value);
+    };
+    max.onclick = () => {
+        value++;
+        value = Math.min(value, maxV);
+        setV();
+        f(value);
+    };
+    function setV() {
+        p.innerText = String(value + 1);
+    }
+    div.append(min, p, max);
+    return div;
 }
 
 let isEdit = false;
