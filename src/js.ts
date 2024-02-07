@@ -2543,7 +2543,9 @@ async function showSpellReview(x: { id: string; card: fsrsjs.Card }) {
     let context = el("div");
     let r = (await wordsStore.getItem(word)) as record;
     for (let i of r.means) {
-        context.append(el("div", [el("p", i.text)]));
+        const p = el("p");
+        p.innerText = i.text;
+        context.append(el("div", [p]));
     }
     const div = document.createElement("div");
     div.append(input, context, wordEl);
