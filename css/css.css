@@ -3,6 +3,7 @@
     --bg1: #fff9;
     --blur: blur(10px);
     --hover-color: #dfdfdf;
+    --box-shadow: 0 0 4px #0002;
     --transition: 0.4s cubic-bezier(0.25, 1, 0.5, 1);
     --border-radius: 8px;
     --height: 40px;
@@ -15,6 +16,45 @@
     --o-padding: 8px;
     --font-size: 16px;
     --font-family: serif;
+}
+
+:root[data-theme="dark"] {
+    --bg: #000;
+    --bg1: #000a;
+    --color: #cacaca;
+    --hover-color: #303030;
+    --box-shadow: 0 0 4px #fff7;
+    & .icon {
+        filter: invert(0.78);
+    }
+}
+:root[data-theme="classical"] {
+    --bg: #eceae6;
+    --bg1: #eceae6aa;
+}
+
+@media (prefers-color-scheme: dark) {
+    :root[data-theme="auto"] {
+        --bg: #000;
+        --bg1: #000a;
+        --color: #cacaca;
+        --hover-color: #303030;
+        --box-shadow: 0 0 4px #fff7;
+        & .icon {
+            filter: invert(0.78);
+        }
+    }
+    ::-webkit-scrollbar-thumb {
+        border-radius: 10px;
+        background: #444;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+        background: #555;
+    }
+    kbd {
+        box-shadow: 0 5px #fff4;
+        background: linear-gradient(315deg, #191919, #000);
+    }
 }
 
 html,
@@ -112,32 +152,13 @@ textarea {
     color: var(--color);
 }
 
-@media (prefers-color-scheme: dark) {
-    :root {
-        --bar-bg: rgba(0, 0, 0, var(--alpha));
-        --bar-hover-color: #fff2;
-        --bg: #000;
-        --bg2: #1f1f1f;
-        --hover-color: #333;
-        --m-color1: hsl(224deg 100% 38%);
-        --m-color2: hsl(0, 0%, 14%);
-        --shadow: #fff9 0 0 2px;
-        --color: #fff;
-        --color2: #aaa;
-        --border: 1px #fff solid;
-        --icon-color: var(--icon-color1) !important;
-    }
-    ::-webkit-scrollbar-thumb {
-        border-radius: 10px;
-        background: #444;
-    }
-    ::-webkit-scrollbar-thumb:hover {
-        background: #555;
-    }
-    kbd {
-        box-shadow: 0 5px #fff4;
-        background: linear-gradient(315deg, #191919, #000);
-    }
+[popover] {
+    color: var(--color);
+}
+
+dialog {
+    background-color: var(--bg);
+    color: var(--color);
 }
 
 body::-webkit-scrollbar {
@@ -226,7 +247,7 @@ body > #index > div > .icon {
 }
 .book_nav_show {
     left: 0 !important;
-    box-shadow: 0 0 4px #0002;
+    box-shadow: var(--box-shadow);
 }
 
 #book_buttons {
@@ -263,7 +284,7 @@ body > #index > div > .icon {
     background-color: var(--bg1);
     backdrop-filter: var(--blur);
     transition: var(--transition);
-    box-shadow: 0 0 4px #0002;
+    box-shadow: var(--box-shadow);
     border-radius: 1rem;
     padding: 4px;
     flex-direction: column;
@@ -289,9 +310,23 @@ body > #index > div > .icon {
     background-color: var(--bg1);
     backdrop-filter: var(--blur);
     transition: var(--transition);
-    box-shadow: 0 0 4px #0002;
+    box-shadow: var(--box-shadow);
     border-radius: 1rem;
     border: none;
+}
+
+.theme_select {
+    & input {
+        display: none;
+    }
+    & label {
+        padding: 4px;
+        border-radius: 8px;
+        border: transparent 1px solid;
+        &:has(input:checked) {
+            border: #000 1px dashed;
+        }
+    }
 }
 
 #book_content_container {
@@ -428,7 +463,7 @@ body > #index > div > .icon {
     backdrop-filter: var(--blur);
     transition: var(--transition);
     border: none;
-    box-shadow: 0 0 4px #0002;
+    box-shadow: var(--box-shadow);
     padding: 4px;
     border-radius: 4px;
 }
@@ -449,7 +484,7 @@ body > #index > div > .icon {
     box-sizing: border-box;
     opacity: 0;
     visibility: hidden;
-    box-shadow: 0 0 4px #0002;
+    box-shadow: var(--box-shadow);
     & input {
         font-family: var(--font-family);
         font-size: var(--font-size);
@@ -774,7 +809,7 @@ div:has(> .translate) > :not(.translate) {
     max-width: 64px !important;
     min-width: none !important;
     border: none;
-    box-shadow: 0 0 4px #0002;
+    box-shadow: var(--box-shadow);
     border-radius: 4px;
 }
 #menu > * {
@@ -789,7 +824,7 @@ div:has(> .translate) > :not(.translate) {
     transition: var(--transition);
     padding: 1rem;
     border: none;
-    box-shadow: 0 0 4px #0002;
+    box-shadow: var(--box-shadow);
     border-radius: 1rem;
     display: grid;
     grid-template-columns: repeat(2, 1fr);

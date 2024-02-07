@@ -854,6 +854,7 @@ const bookStyle = JSON.parse(
             lineHeight: 2,
             contentWidth: 2,
             fontFamily: "serif",
+            theme: "auto",
         })
 );
 {
@@ -935,12 +936,45 @@ document.body.appendChild(fontListEl);
         content_width_small_svg,
         content_width_large_svg
     );
-    changeStyleBar.append(fontEl, fontSize, lineHeight, contentWidth);
+    let themeSelect = el("div", { class: "theme_select" }, [
+        themeI("auto", "自动", "#fff", "#000"),
+        themeI("light", "亮色", "#fff", "#000"),
+        themeI("classical", "古典", "#eceae6", "#000"),
+        themeI("dark", "暗色", "#000", "#cacaca"),
+    ]);
+    function themeI(value: string, name: string, bg: string, color: string) {
+        return el(
+            "label",
+            {
+                style: {
+                    background: bg,
+                    color,
+                },
+            },
+            [
+                el("input", {
+                    type: "radio",
+                    name: "theme",
+                    value: value,
+                }),
+                name,
+            ]
+        );
+    }
+    (themeSelect.querySelector("input[value='" + bookStyle.theme + "']") as HTMLInputElement).checked = true;
+    themeSelect.querySelectorAll("input").forEach((el) => {
+        el.addEventListener("change", (e) => {
+            bookStyle.theme = (e.target as HTMLInputElement).value;
+            setBookStyle();
+        });
+    });
+    changeStyleBar.append(fontEl, fontSize, lineHeight, contentWidth, themeSelect);
 }
 
 setBookStyle();
 
 function setBookStyle() {
+    document.documentElement.setAttribute("data-theme", bookStyle.theme);
     document.documentElement.style.setProperty("--font-family", `${bookStyle.fontFamily}`);
     document.documentElement.style.setProperty("--font-size", `${bookStyleList.fontSize[bookStyle.fontSize]}px`);
     bookContentContainerEl.style.setProperty("--line-height", `${bookStyleList.lineHeight[bookStyle.lineHeight]}em`);
