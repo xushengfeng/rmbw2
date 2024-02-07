@@ -941,8 +941,8 @@ document.body.appendChild(fontListEl);
 setBookStyle();
 
 function setBookStyle() {
-    bookContentContainerEl.style.setProperty("--font-family", `${bookStyle.fontFamily}`);
-    bookContentContainerEl.style.setProperty("--font-size", `${bookStyleList.fontSize[bookStyle.fontSize]}px`);
+    document.documentElement.style.setProperty("--font-family", `${bookStyle.fontFamily}`);
+    document.documentElement.style.setProperty("--font-size", `${bookStyleList.fontSize[bookStyle.fontSize]}px`);
     bookContentContainerEl.style.setProperty("--line-height", `${bookStyleList.lineHeight[bookStyle.lineHeight]}em`);
     bookContentContainerEl.style.setProperty(
         "--content-width",
