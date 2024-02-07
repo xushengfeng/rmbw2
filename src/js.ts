@@ -233,7 +233,8 @@ const addBookEl = el("div", iconEl(add_svg));
 const addSectionEL = el("div", iconEl(add_svg));
 const bookNavEl = document.getElementById("book_nav");
 bookNavEl.append(addSectionEL, bookSectionsEl);
-const bookContentEl = document.getElementById("book_content");
+let bookContentEl = document.getElementById("book_content");
+const bookContentContainerEl = bookContentEl.parentElement;
 const changeEditEl = document.getElementById("change_edit");
 const dicEl = document.getElementById("dic");
 const bookdicEl = document.getElementById("book_dic");
@@ -639,7 +640,9 @@ let contentP: string[] = [];
 
 async function showBookContent(id: string) {
     let s = (await sectionsStore.getItem(id)) as section;
-    bookContentEl.innerHTML = "";
+    bookContentContainerEl.innerHTML = "";
+    bookContentEl = el("div");
+    bookContentContainerEl.append(bookContentEl);
 
     if (!isWordBook)
         bookContentEl.append(
@@ -682,14 +685,14 @@ async function showBookContent(id: string) {
         function p(number: number) {
             return el("td", [number.toFixed(1), el("progress", { value: number / l.length })]);
         }
-        bookContentEl.append(
+        bookContentContainerEl.append(
             el("table", { class: "words_sum" }, [
                 el("tr", [el("th", "词"), el("th", "了解"), el("th", "有效"), el("th", "记忆")]),
                 el("tr", [el("td", String(l.length)), p(matchWords), p(means), p(means1)]),
             ])
         );
 
-        vlist(bookContentEl, wordList, { iHeight: 24, gap: 8, paddingTop: 120 }, (i) => {
+        vlist(bookContentContainerEl, wordList, { iHeight: 24, gap: 8, paddingTop: 120 }, (i) => {
             let p = el("p", wordList[i].text);
             return p;
         });
@@ -805,7 +808,7 @@ async function showBookContent(id: string) {
     }
 
     contentScrollPosi = s.lastPosi;
-    setScrollPosi(bookContentEl, contentScrollPosi);
+    setScrollPosi(bookContentContainerEl, contentScrollPosi);
 
     bookContentEl.append(dicEl);
 }
@@ -829,6 +832,10 @@ async function changeEdit(b: boolean) {
         changeEditEl.innerHTML = icon(ok_svg);
         return setEdit();
     } else {
+        let newC = el("div");
+        bookContentContainerEl.innerHTML = "";
+        bookContentContainerEl.append(newC);
+        bookContentEl = newC;
         if (nowBook.book) {
             let book = await getBooksById(nowBook.book);
             let sectionId = book.sections[nowBook.sections];
@@ -922,8 +929,10 @@ async function setEdit() {
     let book = await getBooksById(nowBook.book);
     let sectionId = book.sections[nowBook.sections];
     let section = await getSection(sectionId);
-    bookContentEl.innerHTML = "";
-    let text = document.createElement("textarea");
+    bookContentContainerEl.innerHTML = "";
+    let text = el("textarea");
+    bookContentContainerEl.append(text);
+    bookContentEl = text;
     text.value = section.text;
     setScrollPosi(text, contentScrollPosi);
     text.onchange = () => {
@@ -966,7 +975,6 @@ async function setEdit() {
             text.selectionEnd = start + addText.length;
         }
     };
-    bookContentEl.append(text);
     let upel = document.createElement("input");
     upel.type = "file";
     upel.onchange = () => {
@@ -1000,7 +1008,7 @@ async function setEdit() {
             };
         }
     };
-    bookContentEl.append(upel);
+    bookContentContainerEl.append(upel);
 
     text.onscroll = () => {
         contentScrollPosi = getScrollPosi(text);
@@ -1034,8 +1042,8 @@ function textAi(text: string) {
     return aiM;
 }
 
-bookContentEl.onscroll = async () => {
-    let n = getScrollPosi(bookContentEl);
+bookContentContainerEl.onscroll = async () => {
+    let n = getScrollPosi(bookContentContainerEl);
     contentScrollPosi = n;
     let book = await getBooksById(nowBook.book);
     let sectionId = book.sections[nowBook.sections];

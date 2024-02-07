@@ -252,26 +252,42 @@ body > #index > div > .icon {
 #book_name {
     flex-grow: 1;
 }
-#book_content {
+#book_content_container {
+    --font-size: 16px;
+    --content-width: 60em;
+    --line-height: 1.2em;
     position: relative;
-}
-#book_content > :not(textarea) {
-    user-select: none;
-}
-#book_content,
-#book_content > textarea {
-    overflow: scroll;
-    height: calc(100svh - 24px);
-    width: 100%;
-    box-sizing: border-box;
-    padding: 1rem 4rem;
-    font-family: "Times New Roman", Times, serif;
-    font-size: 1rem;
-}
-#book_content > textarea {
-    height: calc(100vh - 96px);
-    border: none;
-    padding: 0;
+    height: calc(100vh - 24px);
+    padding: 1rem 64px;
+    overflow-y: scroll;
+    overflow-x: hidden;
+    & > :first-child {
+        margin: 0 auto;
+        font-size: var(--font-size);
+        max-width: var(--content-width);
+        line-height: var(--line-height);
+        font-family: "Times New Roman", Times, serif;
+
+        border: none;
+        width: 100%;
+        & > :has([data-play]) {
+            position: relative;
+            &:hover {
+                > [data-play] {
+                    opacity: 1;
+                }
+            }
+        }
+        & > * > [data-play] {
+            position: absolute;
+            left: -30px;
+            opacity: 0.2;
+            transition: var(--transition);
+        }
+    }
+    & > textarea {
+        height: calc(100vh - 96px);
+    }
 }
 .mark_word {
     text-decoration: underline wavy #999;
@@ -318,21 +334,6 @@ body > #index > div > .icon {
     & progress {
         width: 2rem;
     }
-}
-
-#book_content > :has([data-play]) {
-    position: relative;
-    &:hover {
-        > [data-play] {
-            opacity: 1;
-        }
-    }
-}
-#book_content > * > [data-play] {
-    position: absolute;
-    left: -30px;
-    opacity: 0.2;
-    transition: var(--transition);
 }
 
 #pTTSp {
