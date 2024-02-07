@@ -697,6 +697,7 @@ div:has(> .translate) > :not(.translate) {
     padding: 1rem;
     background: var(--bar-bg);
     backdrop-filter: var(--blur);
+    box-shadow: var(--box-shadow);
     transition: var(--transition);
     font-family: var(--font-family);
     font-size: var(--font-size);
