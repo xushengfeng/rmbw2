@@ -194,8 +194,9 @@ const DICSENTENCE = "dic_sentence";
 const HIDEMEANS = "hide_means";
 const DISABLECHANGE = "disable_change";
 const TODOMARK = "to_visit";
-const DICDIALOG = "dic_dialog";
+const NOTEDIALOG = "note_dialog";
 const AIDIALOG = "ai_dialog";
+const DICDIALOG = "dic_dialog";
 
 const booksEl = document.getElementById("books");
 const localBookEl = el("div", { class: "books" });
@@ -1062,8 +1063,8 @@ setting.getItem("dics").then(async (l: string[]) => {
 
 type dic = {
     [word: string]: {
-        meta: string;
-        means: { dis: { text: string; tran: string }; sen: { text: string; tran: string }[]; pos: string }[];
+        text: string;
+        isAlias?: boolean;
     };
 };
 
@@ -1612,29 +1613,35 @@ async function showDic(id: string) {
     }
 }
 
-function disCard(m: dic[0]["means"][0]) {
-    let div = document.createDocumentFragment();
-    let disEl = document.createElement("div");
-    let p = document.createElement("p");
-    p.innerText = m.dis.text;
-    let span = document.createElement("p");
-    span.innerText = m.dis.tran;
-    span.classList.add(TRANSLATE);
-    disEl.append(p, span);
-    let sen = document.createElement("div");
-    sen.classList.add("dic_sen");
-    for (let s of m.sen) {
-        let div = document.createElement("div");
-        let p = document.createElement("p");
-        p.innerText = s.text;
-        let span = document.createElement("p");
-        span.innerText = s.tran;
-        span.classList.add(TRANSLATE);
-        div.append(p, span);
-        sen.append(div);
+function shwoDicEl(mainTextEl: HTMLTextAreaElement, word: string, x: number, y: number) {
+    let list = el("div");
+    let dic = dics["lw"].get(word);
+    if (dic.isAlias) dic = dics["lw"].get(dic.text);
+    let tmpdiv = el("div");
+    tmpdiv.innerHTML = dic.text;
+    for (let i of tmpdiv.innerText.split("\n").filter((i) => i.trim() != "")) {
+        let p = el("p");
+        p.innerHTML = i;
+        list.appendChild(el("label", [el("input", { type: "checkbox", value: p.innerText }), p]));
     }
-    div.append(disEl, sen);
-    return div;
+    let div = el("dialog", { class: DICDIALOG }, [
+        list,
+        el("div", { style: { display: "flex", "justify-content": "flex-end" } }, [
+            el("button", iconEl(close_svg), {
+                onclick: () => {
+                    // 获取所有checked的值
+                    let checkedValues = Array.from(list.querySelectorAll("input[type='checkbox']:checked")).map(
+                        (el: HTMLInputElement) => el.value
+                    );
+                    mainTextEl.setRangeText(checkedValues.join("\n"));
+                    div.close();
+                },
+            }),
+        ]),
+    ]) as HTMLDialogElement;
+    div.style.left = `min(100vw - 400px, ${x}px)`;
+    div.style.top = `min(100vh - 400px, ${y}px - 400px)`;
+    dialogX(div);
 }
 function disCard2(m: record["means"][0]) {
     let div = document.createDocumentFragment();
@@ -1731,7 +1738,7 @@ function rmStyle(start: number) {
 function addP(text: string, word: string, sentence: string, f: (text: string) => void) {
     let textEl = el("textarea", { value: text });
     let aiB = getAiButtons(textEl, word, sentence);
-    let div = el("dialog", { class: DICDIALOG }, [
+    let div = el("dialog", { class: NOTEDIALOG }, [
         textEl,
         el("div", { style: { display: "flex" } }, [
             aiB,
@@ -1795,6 +1802,7 @@ function aiButtons(textEl: HTMLTextAreaElement, word: string, context: string) {
             },
         }),
         tmpAiB(textEl, `$这里有个单词${word}，它位于${context}`),
+        dicB(textEl, word),
     ]);
 }
 function aiButtons1(textEl: HTMLTextAreaElement, word: string) {
@@ -2075,6 +2083,15 @@ function tmpAi(mainTextEl: HTMLTextAreaElement, info: string, x: number, y: numb
     div.style.left = `min(100vw - 400px, ${x}px)`;
     div.style.top = `min(100vh - 400px, ${y}px - 400px)`;
     dialogX(div);
+}
+
+function dicB(mainTextEl: HTMLTextAreaElement, word: string) {
+    const dicB = el("button", "词典", {
+        onclick: () => {
+            shwoDicEl(mainTextEl, word, dicB.getBoundingClientRect().x, dicB.getBoundingClientRect().y);
+        },
+    });
+    return dicB;
 }
 
 type aim = { role: "system" | "user" | "assistant"; content: string }[];
@@ -2707,8 +2724,8 @@ uploadDicEl.onchange = () => {
             console.log(dic);
             const id = dic.id;
             let l = (dics[id] = new Map());
-            for (let i in dic.dics) {
-                l.set(i, dic.dics[i]);
+            for (let i in dic.dic) {
+                l.set(i, dic.dic[i]);
             }
             dicStore.setItem(id, l);
             setting.setItem("dics", Object.keys(dics));

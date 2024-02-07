@@ -461,7 +461,7 @@ div:has(> .translate) > :not(.translate) {
     display: none;
 }
 
-.dic_dialog {
+.note_dialog {
     margin: 3rem;
     width: auto;
     height: auto;
@@ -506,6 +506,53 @@ div:has(> .translate) > :not(.translate) {
         overflow: scroll;
         border: none;
         resize: none;
+    }
+    & > :last-child > :first-child {
+        display: flex;
+        & > button {
+            display: block;
+            width: auto;
+            height: 24px;
+            padding: 0 4px;
+        }
+    }
+    &::backdrop {
+        background: #0001;
+    }
+}
+
+.dic_dialog {
+    margin: 0;
+    width: 400px;
+    height: 400px;
+    border: 1px solid var(--color) !important;
+    display: flex;
+    flex-direction: column;
+    border: none;
+    border-radius: 1rem;
+    padding: 1rem;
+    box-sizing: border-box;
+    & > :first-child {
+        flex-grow: 1;
+        overflow-y: scroll;
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        & > label {
+            display: block;
+            cursor: pointer;
+            border: transparent 1px dashed;
+            & > input {
+                display: none;
+            }
+            & > p {
+                margin: 8px;
+            }
+        }
+        & > label:has(> input:checked) {
+            border: var(--color) 1px dashed;
+            border-radius: 1rem;
+        }
     }
     & > :last-child > :first-child {
         display: flex;
