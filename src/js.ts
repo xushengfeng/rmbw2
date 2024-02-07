@@ -184,7 +184,7 @@ function vlist(
         requestAnimationFrame(show);
     }
     pel.addEventListener("scroll", s);
-    return () => pel.removeEventListener("scroll", s);
+    return { remove: () => pel.removeEventListener("scroll", s), show };
 }
 
 /************************************main */
@@ -646,6 +646,8 @@ async function showBookContent(id: string) {
 
     editText = s.text;
 
+    contentScrollPosi = s.lastPosi;
+
     if (!isWordBook)
         bookContentEl.append(
             el("div", iconEl(recume_svg), {
@@ -694,11 +696,13 @@ async function showBookContent(id: string) {
             ])
         );
 
-        vlist(bookContentContainerEl, wordList, { iHeight: 24, gap: 8, paddingTop: 120 }, (i) => {
+        const v = vlist(bookContentContainerEl, wordList, { iHeight: 24, gap: 8, paddingTop: 120 }, (i) => {
             let p = el("p", wordList[i].text);
             return p;
         });
 
+        setScrollPosi(bookContentContainerEl, contentScrollPosi);
+        v.show();
         return;
     }
 
@@ -808,7 +812,6 @@ async function showBookContent(id: string) {
         bookContentEl.append(pel);
     }
 
-    contentScrollPosi = s.lastPosi;
     setScrollPosi(bookContentContainerEl, contentScrollPosi);
 
     bookContentEl.append(dicEl);
