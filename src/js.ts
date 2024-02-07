@@ -638,11 +638,15 @@ let wordList: { text: string; c: record }[] = [];
 
 let contentP: string[] = [];
 
+let wordRemove: () => void = () => {};
+
 async function showBookContent(id: string) {
     let s = (await sectionsStore.getItem(id)) as section;
     bookContentContainerEl.innerHTML = "";
     bookContentEl = el("div");
     bookContentContainerEl.append(bookContentEl);
+
+    wordRemove();
 
     editText = s.text;
 
@@ -700,6 +704,8 @@ async function showBookContent(id: string) {
             let p = el("p", wordList[i].text);
             return p;
         });
+
+        wordRemove = v.remove;
 
         setScrollPosi(bookContentContainerEl, contentScrollPosi);
         v.show();
