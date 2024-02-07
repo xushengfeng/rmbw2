@@ -644,6 +644,8 @@ async function showBookContent(id: string) {
     bookContentEl = el("div");
     bookContentContainerEl.append(bookContentEl);
 
+    editText = s.text;
+
     if (!isWordBook)
         bookContentEl.append(
             el("div", iconEl(recume_svg), {
@@ -700,7 +702,6 @@ async function showBookContent(id: string) {
         return;
     }
 
-    editText = s.text;
     const segmenter = new Segmenter(bookLan, { granularity: "word" });
     let segments = segmenter.segment(s.text);
     let list = Array.from(segments);
