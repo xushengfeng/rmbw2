@@ -526,15 +526,19 @@ async function setBookS() {
             let titleEl = document.createElement("input");
             titleEl.value = section.title;
             bookNameEl.innerHTML = "";
-            bookNameEl.append(titleEl);
+            bookNameEl.append(
+                titleEl,
+                el("button", iconEl(ok_svg), {
+                    onclick: async () => {
+                        let sectionId = (await getBooksById(nowBook.book)).sections[nowBook.sections];
+                        let section = await getSection(sectionId);
+                        section.title = titleEl.value;
+                        sectionsStore.setItem(sectionId, section);
+                        setBookS();
+                    },
+                })
+            );
             titleEl.focus();
-            titleEl.onchange = async () => {
-                let sectionId = (await getBooksById(nowBook.book)).sections[nowBook.sections];
-                let section = await getSection(sectionId);
-                section.title = titleEl.value;
-                sectionsStore.setItem(sectionId, section);
-                setBookS();
-            };
         };
     }
 }
@@ -586,6 +590,7 @@ async function showBooks() {
                     if (bookIEl.innerText) bookIEl.querySelector("div").innerText = name;
                     book.name = name;
                     bookshelfStore.setItem(book.id, book);
+                    setBookS();
                 }
             };
             let editMetaEl = el("div", "元数据", {
@@ -611,6 +616,7 @@ async function showBooks() {
                         });
                         bookshelfStore.setItem(book.id, book);
                         metaEl.close();
+                        setBookS();
                     };
                     dialogX(metaEl);
                 },
