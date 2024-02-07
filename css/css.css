@@ -348,6 +348,7 @@ body > #index > div > .icon {
         line-height: var(--line-height);
         transition: var(--transition);
         font-family: var(--font-family);
+        position: relative;
 
         border: none;
         width: 100%;
@@ -399,7 +400,7 @@ body > #index > div > .icon {
 .context_end::after {
     content: "";
     position: absolute;
-    top: -16px;
+    top: -1em;
     left: 4px;
     width: 2px;
     height: 1em;
@@ -475,8 +476,7 @@ body > #index > div > .icon {
 #dic {
     position: absolute;
     top: 24px;
-    left: 1rem;
-    width: calc(100vw - 2rem);
+    width: 100%;
     max-height: 60vh;
     display: flex;
     flex-direction: column;
