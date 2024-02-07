@@ -40,6 +40,13 @@ import more_svg from "../assets/icons/more.svg";
 import reload_svg from "../assets/icons/reload.svg";
 import recume_svg from "../assets/icons/recume.svg";
 import add_svg from "../assets/icons/add.svg";
+import style_svg from "../assets/icons/style.svg";
+import font_small_svg from "../assets/icons/font_small.svg";
+import font_large_svg from "../assets/icons/font_large.svg";
+import line_height_small_svg from "../assets/icons/line_height_small.svg";
+import line_height_large_svg from "../assets/icons/line_height_large.svg";
+import content_width_small_svg from "../assets/icons/content_width_small.svg";
+import content_width_large_svg from "../assets/icons/content_width_large.svg";
 
 function icon(src: string) {
     return `<img src="${src}" class="icon">`;
@@ -236,7 +243,7 @@ bookNavEl.append(addSectionEL, bookSectionsEl);
 let bookContentEl = document.getElementById("book_content");
 const bookContentContainerEl = bookContentEl.parentElement;
 const changeStyleEl = document.getElementById("change_style");
-const changeStyleBar = el("div", { popover: "auto" });
+const changeStyleBar = el("div", { popover: "auto", class: "change_style_bar" });
 document.body.append(changeStyleBar);
 const changeEditEl = document.getElementById("change_edit");
 const dicEl = document.getElementById("dic");
@@ -866,18 +873,36 @@ changeStyleEl.onclick = () => {
 };
 
 {
-    let fontSize = createRangeSetEl(bookStyle.fontSize, bookStyleList.fontSize.length - 1, (i) => {
-        bookStyle.fontSize = i;
-        setBookStyle();
-    });
-    let lineHeight = createRangeSetEl(bookStyle.lineHeight, bookStyleList.lineHeight.length - 1, (i) => {
-        bookStyle.lineHeight = i;
-        setBookStyle();
-    });
-    let contentWidth = createRangeSetEl(bookStyle.contentWidth, bookStyleList.contentWidth.length - 1, (i) => {
-        bookStyle.contentWidth = i;
-        setBookStyle();
-    });
+    let fontSize = createRangeSetEl(
+        bookStyle.fontSize,
+        bookStyleList.fontSize.length - 1,
+        (i) => {
+            bookStyle.fontSize = i;
+            setBookStyle();
+        },
+        font_small_svg,
+        font_large_svg
+    );
+    let lineHeight = createRangeSetEl(
+        bookStyle.lineHeight,
+        bookStyleList.lineHeight.length - 1,
+        (i) => {
+            bookStyle.lineHeight = i;
+            setBookStyle();
+        },
+        line_height_small_svg,
+        line_height_large_svg
+    );
+    let contentWidth = createRangeSetEl(
+        bookStyle.contentWidth,
+        bookStyleList.contentWidth.length - 1,
+        (i) => {
+            bookStyle.contentWidth = i;
+            setBookStyle();
+        },
+        content_width_small_svg,
+        content_width_large_svg
+    );
     changeStyleBar.append(fontSize, lineHeight, contentWidth);
 }
 

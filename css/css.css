@@ -252,6 +252,33 @@ body > #index > div > .icon {
 #book_name {
     flex-grow: 1;
 }
+
+.change_style_bar {
+    margin: 0;
+    top: 24px;
+    left: auto;
+    right: 24px;
+    border: none;
+    background-color: var(--bg1);
+    backdrop-filter: var(--blur);
+    transition: var(--transition);
+    box-shadow: 0 0 4px #0002;
+    border-radius: 1rem;
+    padding: 4px;
+    flex-direction: column;
+    gap: 4px;
+    &:popover-open {
+        display: flex;
+    }
+    & > div {
+        display: flex;
+        & > span {
+            width: 2rem;
+            text-align: center;
+        }
+    }
+}
+
 #book_content_container {
     --font-size: 16px;
     --content-width: 60em;
