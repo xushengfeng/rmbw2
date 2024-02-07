@@ -56,7 +56,15 @@ function iconEl(src: string) {
 }
 
 function uuid() {
-    return crypto.randomUUID().slice(0, 8);
+    if (crypto.randomUUID) {
+        return crypto.randomUUID().slice(0, 8);
+    } else {
+        return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, (c) => {
+            const r = (Math.random() * 16) | 0,
+                v = c === "x" ? r : (r & 0x3) | 0x8;
+            return v.toString(16).slice(0, 8);
+        });
+    }
 }
 
 var setting = localforage.createInstance({
