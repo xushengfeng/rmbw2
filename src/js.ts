@@ -853,6 +853,7 @@ const bookStyle = JSON.parse(
             fontSize: 2,
             lineHeight: 2,
             contentWidth: 2,
+            fontFamily: "serif",
         })
 );
 {
@@ -872,7 +873,38 @@ changeStyleEl.onclick = () => {
     changeStyleBar.togglePopover();
 };
 
+let fontListEl = el("div", {
+    popover: "auto",
+    class: "font_list",
+});
+document.body.appendChild(fontListEl);
+
 {
+    const fontEl = el("div", "serif");
+    setFontElF(bookStyle.fontFamily);
+    fontEl.onclick = async () => {
+        fontListEl.showPopover();
+        // @ts-ignore
+        const availableFonts = await window.queryLocalFonts();
+        let fonts = availableFonts.map((i) => i.fullName) as string[];
+        fonts.filter((i) => i != "sans" && i != "serif");
+        fonts.unshift("serif", "sans");
+        vlist(fontListEl, fonts, { iHeight: 24, paddingLeft: 4, paddingRight: 4 }, (i) => {
+            let fontName = fonts[i];
+            return el("div", fontName, {
+                style: { "font-family": fontName },
+                onclick: () => {
+                    setFontElF(fontName);
+                    bookStyle.fontFamily = fontName;
+                    setBookStyle();
+                },
+            });
+        });
+    };
+    function setFontElF(name: string) {
+        fontEl.innerText = name;
+        fontEl.style.fontFamily = name;
+    }
     let fontSize = createRangeSetEl(
         bookStyle.fontSize,
         bookStyleList.fontSize.length - 1,
@@ -903,12 +935,13 @@ changeStyleEl.onclick = () => {
         content_width_small_svg,
         content_width_large_svg
     );
-    changeStyleBar.append(fontSize, lineHeight, contentWidth);
+    changeStyleBar.append(fontEl, fontSize, lineHeight, contentWidth);
 }
 
 setBookStyle();
 
 function setBookStyle() {
+    bookContentContainerEl.style.setProperty("--font-family", `${bookStyle.fontFamily}`);
     bookContentContainerEl.style.setProperty("--font-size", `${bookStyleList.fontSize[bookStyle.fontSize]}px`);
     bookContentContainerEl.style.setProperty("--line-height", `${bookStyleList.lineHeight[bookStyle.lineHeight]}em`);
     bookContentContainerEl.style.setProperty(

@@ -279,10 +279,25 @@ body > #index > div > .icon {
     }
 }
 
+.font_list {
+    position: relative;
+    overflow: scroll;
+    width: 240px;
+    height: 200px;
+    white-space: nowrap;
+    background-color: var(--bg1);
+    backdrop-filter: var(--blur);
+    transition: var(--transition);
+    box-shadow: 0 0 4px #0002;
+    border-radius: 1rem;
+    border: none;
+}
+
 #book_content_container {
     --font-size: 16px;
     --content-width: 60em;
     --line-height: 1.2em;
+    --font-family: serif;
     position: relative;
     height: calc(100vh - 24px);
     padding: 1rem 64px;
@@ -294,7 +309,7 @@ body > #index > div > .icon {
         max-width: var(--content-width);
         line-height: var(--line-height);
         transition: var(--transition);
-        font-family: "Times New Roman", Times, serif;
+        font-family: var(--font-family);
 
         border: none;
         width: 100%;
