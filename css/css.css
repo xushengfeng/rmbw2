@@ -437,21 +437,44 @@ body > #index > div > .icon {
     display: flex !important;
 }
 
-.books {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    overflow: scroll;
-    & > div:not(:has(> .icon)) {
-        display: flex;
-        flex-direction: column;
-        & > :nth-child(1) {
-            border: none;
-            width: 50px;
-            height: calc(50px * 1.414);
-            background-color: #dfdfdf;
-            border-radius: 4px;
+#books {
+    background-color: var(--bg1);
+    backdrop-filter: var(--blur);
+    border: none;
+    border-radius: 1rem;
+    padding: 1rem;
+    box-shadow: var(--box-shadow);
+    & > :first-child {
+        gap: 4px;
+        & > div {
+            padding: 4px;
         }
+    }
+    & > .books {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 8px;
+        overflow: scroll;
+        & > div:not(:has(> .icon)) {
+            display: flex;
+            flex-direction: column;
+            & > :nth-child(1) {
+                border: none;
+                width: 50px;
+                height: calc(50px * 1.414);
+                background-color: #dfdfdf;
+                border-radius: 4px;
+            }
+        }
+    }
+}
+
+.show_online_book {
+    & > :nth-child(2) {
+        display: none !important;
+    }
+    & > :nth-child(3) {
+        display: grid !important;
     }
 }
 

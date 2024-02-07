@@ -207,21 +207,19 @@ const DICDIALOG = "dic_dialog";
 
 const booksEl = document.getElementById("books");
 const localBookEl = el("div", { class: "books" });
-const onlineBookEl = el("div", { style: { display: "none" } });
+const onlineBookEl = el("div", { class: "books", style: { display: "none" } });
 booksEl.append(
     el("div", { style: { display: "flex" } }, [
-        el("div", "l", {
+        el("div", "本地书籍", {
             onclick: () => {
                 showBooks();
-                localBookEl.style.display = "block";
-                onlineBookEl.style.display = "none";
+                booksEl.classList.remove("show_online_book");
             },
         }),
-        el("div", "ol", {
+        el("div", "在线书籍", {
             onclick: () => {
                 getOnlineBooks();
-                localBookEl.style.display = "none";
-                onlineBookEl.style.display = "block";
+                booksEl.classList.add("show_online_book");
             },
         }),
     ]),
@@ -388,12 +386,22 @@ function showOnlineBooks(
             path: string;
         }[];
         language: string;
+        cover?: string;
     }[]
 ) {
     onlineBookEl.innerHTML = "";
     for (let book of books) {
         let div = document.createElement("div");
         let title = document.createElement("span");
+        if (book.cover) {
+            let bookCover = document.createElement("img");
+            bookCover.src = book.cover;
+            div.append(bookCover);
+        } else {
+            let bookCover = document.createElement("div");
+            bookCover.innerText = book.name;
+            div.append(bookCover);
+        }
         title.innerText = book.name;
         div.append(title);
         div.onclick = async () => {
