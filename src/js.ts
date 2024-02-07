@@ -855,6 +855,7 @@ const bookStyle = JSON.parse(
             contentWidth: 2,
             fontFamily: "serif",
             theme: "auto",
+            paper: true,
         })
 );
 {
@@ -968,7 +969,16 @@ document.body.appendChild(fontListEl);
             setBookStyle();
         });
     });
-    changeStyleBar.append(fontEl, fontSize, lineHeight, contentWidth, themeSelect);
+    const paperI = el("input", {
+        type: "checkbox",
+        onchange: () => {
+            bookStyle.paper = paperI.checked;
+            setBookStyle();
+        },
+    });
+    paperI.checked = bookStyle.paper as boolean;
+    const paperEl = el("label", [paperI, "纸质背景"]);
+    changeStyleBar.append(fontEl, fontSize, lineHeight, contentWidth, themeSelect, paperEl);
 }
 
 setBookStyle();
@@ -982,6 +992,7 @@ function setBookStyle() {
         "--content-width",
         `${bookStyleList.contentWidth[bookStyle.contentWidth]}em`
     );
+    bookContentContainerEl.style.setProperty("--bg", bookStyle.paper ? "url(../assets/Texture.png) repeat" : "none");
     setting.setItem("setyle.default", JSON.stringify(bookStyle));
 }
 
