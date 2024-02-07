@@ -293,6 +293,7 @@ body > #index > div > .icon {
         font-size: var(--font-size);
         max-width: var(--content-width);
         line-height: var(--line-height);
+        transition: var(--transition);
         font-family: "Times New Roman", Times, serif;
 
         border: none;
