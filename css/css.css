@@ -274,6 +274,7 @@ body > #index > div > .icon {
 }
 #book_name {
     flex-grow: 1;
+    line-height: var(--size0);
 }
 
 .change_style_bar {
