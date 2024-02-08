@@ -163,13 +163,13 @@ dialog {
     color: var(--color);
     background-color: var(--bg1);
     backdrop-filter: var(--blur);
-    border: none;
+    border: 1px solid var(--color);
     padding: 1rem;
     border-radius: 1rem;
     outline: none;
 }
 [popover] {
-    box-shadow: var(--box-shadow);
+    border: 1px solid var(--color);
 }
 
 body::-webkit-scrollbar {
@@ -273,11 +273,10 @@ body {
     top: var(--size0);
     left: auto;
     right: var(--size0);
-    border: none;
+    border: 1px solid var(--color);
     background-color: var(--bg1);
     backdrop-filter: var(--blur);
     transition: var(--transition);
-    box-shadow: var(--box-shadow);
     border-radius: 1rem;
     padding: 4px;
     flex-direction: column;
@@ -303,9 +302,8 @@ body {
     background-color: var(--bg1);
     backdrop-filter: var(--blur);
     transition: var(--transition);
-    box-shadow: var(--box-shadow);
     border-radius: 1rem;
-    border: none;
+    border: 1px solid var(--color);
 }
 
 .theme_select {
@@ -508,7 +506,7 @@ body {
     box-sizing: border-box;
     opacity: 0;
     visibility: hidden;
-    box-shadow: var(--box-shadow);
+    border: 1px solid var(--color);
     & input {
         font-family: var(--font-family);
         font-size: var(--font-size);
