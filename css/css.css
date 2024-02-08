@@ -332,7 +332,7 @@ body {
 #book_content_container {
     --content-width: 60em;
     --line-height: 1.2em;
-    --paper-bg: url(../assets/Texture.png) repeat;
+    --paper-bg: url("../assets/Texture.png") repeat;
     background: var(--paper-bg);
     background-size: 400px 400px;
     background-attachment: local;
