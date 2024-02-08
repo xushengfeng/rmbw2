@@ -153,13 +153,17 @@ textarea {
     color: var(--color);
 }
 
-[popover] {
-    color: var(--color);
-}
-
+[popover],
 dialog {
-    background-color: var(--bg);
     color: var(--color);
+    background-color: var(--bg1);
+    backdrop-filter: var(--blur);
+    border: none;
+    padding: 1rem;
+    border-radius: 1rem;
+}
+[popover] {
+    box-shadow: var(--box-shadow);
 }
 
 body::-webkit-scrollbar {
@@ -440,12 +444,6 @@ body > #index > div > .icon {
 }
 
 #books {
-    background-color: var(--bg1);
-    backdrop-filter: var(--blur);
-    border: none;
-    border-radius: 1rem;
-    padding: 1rem;
-    box-shadow: var(--box-shadow);
     & > :first-child {
         gap: 4px;
         & > div {
@@ -578,9 +576,6 @@ div:has(> .translate) > :not(.translate) {
     height: auto;
     display: flex;
     flex-direction: column;
-    border: none;
-    border-radius: 1rem;
-    padding: 1rem;
     & > textarea {
         flex-grow: 1;
         overflow: scroll;
@@ -610,9 +605,6 @@ div:has(> .translate) > :not(.translate) {
     border: 1px solid var(--color) !important;
     display: flex;
     flex-direction: column;
-    border: none;
-    border-radius: 1rem;
-    padding: 1rem;
     box-sizing: border-box;
     & > textarea {
         flex-grow: 1;
@@ -643,9 +635,6 @@ div:has(> .translate) > :not(.translate) {
     border: 1px solid var(--color) !important;
     display: flex;
     flex-direction: column;
-    border: none;
-    border-radius: 1rem;
-    padding: 1rem;
     box-sizing: border-box;
     font-family: var(--font-family);
     font-size: var(--font-size);
