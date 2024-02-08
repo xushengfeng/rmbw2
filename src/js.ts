@@ -1448,7 +1448,7 @@ async function showDic(id: string) {
     if (!isSentence) {
         let record = (await wordsStore.getItem(wordx.id)) as record;
         Word = { word: wordx.id, record, ...flatWordCard(record, id) };
-        if (!record) {
+        if (Word.index === -1) {
             Word.context = source2context(wordx, id);
         }
         Share.context = Word.context.text;
@@ -1661,6 +1661,7 @@ async function showDic(id: string) {
 
                         visit(true);
                     }
+                    editMeanEl.style.display = "";
                 };
                 if (Number(i) === Word.index) radio.checked = true;
                 div.onclick = () => radio.click();
