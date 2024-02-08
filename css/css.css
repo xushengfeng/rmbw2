@@ -795,6 +795,65 @@ div:has(> .translate) > :not(.translate) {
     text-align: center;
 }
 
+.hg-theme-default {
+    touch-action: manipulation;
+    user-select: none;
+    width: 100%;
+    background: color-mix(in srgb, var(--bg) 94%, var(--color));
+    padding: 4px;
+    box-sizing: border-box;
+
+    & .hg-row {
+        display: flex;
+        &:not(:last-child) {
+            margin-bottom: 5px;
+        }
+        & .hg-button-container,
+        & .hg-button:not(:last-child) {
+            margin-right: 5px;
+        }
+        & > div:last-child {
+            margin-right: 0;
+        }
+        & .hg-button-container {
+            display: flex;
+        }
+    }
+    & .hg-button {
+        border-width: 0;
+        font-size: inherit;
+        outline: 0;
+        display: inline-block;
+        flex-grow: 1;
+        align-items: center;
+        background: var(--bg);
+        color: var(--color);
+        border-radius: 5px;
+        box-sizing: border-box;
+        cursor: pointer;
+        display: flex;
+        height: 40px;
+        justify-content: center;
+        padding: 5px;
+        & span {
+            pointer-events: none;
+        }
+        &.hg-standardBtn {
+            width: 20px;
+        }
+        &.hg-activeButton {
+            background: color-mix(in srgb, var(--bg) 90%, var(--color));
+        }
+    }
+    &.hg-layout-numeric .hg-button {
+        align-items: center;
+        display: flex;
+        height: 60px;
+        justify-content: center;
+        width: 33.3%;
+    }
+}
+
 #setting {
     overflow: scroll;
     background-color: var(--bg1);
