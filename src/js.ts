@@ -140,7 +140,7 @@ function vlist(
         paddingRight?: number;
         width?: string;
     },
-    f: (index: number, remove: () => void) => HTMLElement | Promise<HTMLElement>
+    f: (index: number, item: any, remove: () => void) => HTMLElement | Promise<HTMLElement>
 ) {
     let iHeight = style.iHeight;
     let gap = style.gap ?? 0;
@@ -172,9 +172,9 @@ function vlist(
         }
         for (let i = startI; i <= endI; i++) {
             if (oldRangeList.includes(i)) continue;
-            let iel = await f(i, () => {
+            let iel = await f(i, list[i], () => {
                 iel.remove();
-                for (let ii = i + 1; ii <= endI; i++) {
+                for (let ii = i + 1; ii <= endI; ii++) {
                     let afterEl = pel.querySelector(`:scope > [${dataI}="${ii}"]`) as HTMLElement;
                     if (!afterEl) continue;
                     afterEl.setAttribute(dataI, String(ii - 1));
@@ -1324,45 +1324,48 @@ const markListEl = document.getElementById("mark_word_list");
 async function showMarkList() {
     markListEl.innerHTML = "";
     let list = await getAllMarks();
-    vlist(markListEl, list, { iHeight: 24, gap: 4, paddingTop: 16, paddingLeft: 16 }, (index, remove) => {
-        const i = list[index];
+    vlist(
+        markListEl,
+        list,
+        { iHeight: 24, gap: 4, paddingTop: 16, paddingLeft: 16 },
+        (index, i: (typeof list)[0], remove) => {
+            const content = i.s.type === "word" ? i.s.id : editText.slice(i.s.index[0], i.s.index[1]);
 
-        const content = i.s.type === "word" ? i.s.id : editText.slice(i.s.index[0], i.s.index[1]);
-
-        let item = el("div", content, { class: i.s.visit ? "" : TODOMARK });
-        item.onclick = () => {
-            showDic(i.id);
-            jumpToMark(i.s.index[0]);
-        };
-        item.oncontextmenu = (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            menuEl.innerHTML = "";
-            menuEl.append(
-                el("div", "删除", {
-                    style: { color: "red" },
-                    onclick: async () => {
-                        let book = await getBooksById(nowBook.book);
-                        let sectionId = book.sections[nowBook.sections];
-                        let section = await getSection(sectionId);
-                        if (i.s.type === "sentence") {
-                            card2sentence.removeItem(i.s.id);
-                        } else {
-                            let record = (await wordsStore.getItem(i.s.id)) as record;
-                            record = await rmWord(record, i.id);
-                            if (record) await clearWordMean(record);
-                            rmStyle(i.s.index[0]);
-                        }
-                        delete section.words[i.id];
-                        sectionsStore.setItem(sectionId, section);
-                        remove();
-                    },
-                })
-            );
-            showMenu(e.clientX, e.clientY);
-        };
-        return item;
-    });
+            let item = el("div", content, { class: i.s.visit ? "" : TODOMARK });
+            item.onclick = () => {
+                showDic(i.id);
+                jumpToMark(i.s.index[0]);
+            };
+            item.oncontextmenu = (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                menuEl.innerHTML = "";
+                menuEl.append(
+                    el("div", "删除", {
+                        style: { color: "red" },
+                        onclick: async () => {
+                            let book = await getBooksById(nowBook.book);
+                            let sectionId = book.sections[nowBook.sections];
+                            let section = await getSection(sectionId);
+                            if (i.s.type === "sentence") {
+                                card2sentence.removeItem(i.s.id);
+                            } else {
+                                let record = (await wordsStore.getItem(i.s.id)) as record;
+                                record = await rmWord(record, i.id);
+                                if (record) await clearWordMean(record);
+                                rmStyle(i.s.index[0]);
+                            }
+                            delete section.words[i.id];
+                            sectionsStore.setItem(sectionId, section);
+                            remove();
+                        },
+                    })
+                );
+                showMenu(e.clientX, e.clientY);
+            };
+            return item;
+        }
+    );
 }
 
 async function getAllMarks() {
