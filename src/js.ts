@@ -1641,9 +1641,10 @@ async function showDic(id: string) {
         };
 
         async function search(word: string) {
-            if (flatWordCard(Word.record, id).index != -1) dicDetailsEl.innerHTML = "";
+            editMeanEl.style.display = flatWordCard(Word.record, id).index === -1 ? "none" : "";
+            if (Word.record) dicDetailsEl.innerHTML = "";
             else {
-                dicDetailsEl.innerText = "请添加或选择义项";
+                dicDetailsEl.innerText = "请添加义项";
                 return;
             }
             let means = Word.record.means;
