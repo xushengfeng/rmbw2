@@ -2023,34 +2023,40 @@ function aiButtons(textEl: HTMLTextAreaElement, word: string, context: string) {
         textEl.setRangeText(text);
     }
     return el("div", [
+        el("button", "所有", {
+            onclick: async () => {
+                let text = [];
+                text.push(await wordAiText.mean(word, context));
+                text.push(await wordAiText.pronunciation(word));
+                text.push(await wordAiText.meanEmoji(word, context));
+                text.push(await wordAiText.syn(word, context));
+                text.push(await wordAiText.opp(word, context));
+                setText(text.join("\n"));
+            },
+        }),
         el("button", "基本意思", {
             onclick: async () => {
-                let x = await wordAi.mean(word, context, bookLan, "zh");
-                setText(x.mean0 + "\n" + x.mean1 + "\n" + x.mean2);
+                setText(await wordAiText.mean(word, context));
             },
         }),
         el("button", "音标", {
             onclick: async () => {
-                setText((await wordAi.pronunciation(word, bookLan)).list.join("\n"));
+                setText(await wordAiText.pronunciation(word));
             },
         }),
         el("button", "emoji", {
             onclick: async () => {
-                setText((await wordAi.meanEmoji(word, context)).mean);
+                setText(await wordAiText.meanEmoji(word, context));
             },
         }),
         el("button", "近义词", {
             onclick: async () => {
-                let x = await wordAi.syn(word, context);
-                let text = [];
-                if (x.list0.length) text.push(`= ${x.list0.join(", ")}`);
-                if (x.list1.length) text.push(`≈ ${x.list1.join(", ")}`);
-                setText(text.join("\n"));
+                setText(await wordAiText.syn(word, context));
             },
         }),
         el("button", "反义词", {
             onclick: async () => {
-                setText("- " + (await wordAi.opp(word, context)).list.join(", "));
+                setText(await wordAiText.opp(word, context));
             },
         }),
         tmpAiB(textEl, `$这里有个单词${word}，它位于${context}`),
@@ -2064,18 +2070,12 @@ function aiButtons1(textEl: HTMLTextAreaElement, word: string) {
     return el("div", [
         el("button", "词根词缀", {
             onclick: async () => {
-                let f = (await wordAi.fix(word)).list;
-                if (f.length > 1) {
-                    let text = wordFix2str(f);
-                    setText(text.join(" + "));
-                } else {
-                    setText(word);
-                }
+                setText(await wordAiText.fix(word));
             },
         }),
         el("button", "词源", {
             onclick: async () => {
-                setText((await wordAi.etymology(word)).list.join(", "));
+                setText(await wordAiText.etymology(word));
             },
         }),
         tmpAiB(textEl, `$这里有个单词${word}`),
@@ -2223,6 +2223,41 @@ let wordAi = {
             script: [`输入word的语言是${sourceLan}`, `返回输入word ipa国际音标`],
         });
         return f.run(`word:${word}`).result as Promise<{ list: string[] }>;
+    },
+};
+
+let wordAiText = {
+    mean: async (word: string, context: string) => {
+        let x = await wordAi.mean(word, context, bookLan, "zh");
+        return x.mean0 + "\n" + x.mean1 + "\n" + x.mean2;
+    },
+    meanEmoji: async (word: string, context: string) => {
+        return (await wordAi.meanEmoji(word, context)).mean;
+    },
+    syn: async (word: string, context: string) => {
+        let x = await wordAi.syn(word, context);
+        let text = [];
+        if (x.list0.length) text.push(`= ${x.list0.join(", ")}`);
+        if (x.list1.length) text.push(`≈ ${x.list1.join(", ")}`);
+        return text.join("\n");
+    },
+    opp: async (word: string, context: string) => {
+        return "- " + (await wordAi.opp(word, context)).list.join(", ");
+    },
+    fix: async (word: string) => {
+        let f = (await wordAi.fix(word)).list;
+        if (f.length > 1) {
+            let text = wordFix2str(f);
+            return text.join(" + ");
+        } else {
+            return word;
+        }
+    },
+    etymology: async (word: string) => {
+        return (await wordAi.etymology(word)).list.join(", ");
+    },
+    pronunciation: async (word: string) => {
+        return (await wordAi.pronunciation(word, bookLan)).list.join("\n");
     },
 };
 
