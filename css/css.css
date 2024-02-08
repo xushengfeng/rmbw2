@@ -583,6 +583,13 @@ div:has(> .translate) > :not(.translate) {
     height: auto;
     display: flex;
     flex-direction: column;
+    & > p {
+        font-family: var(--font-family);
+        font-size: var(--font-size);
+        max-height: 2em;
+        white-space: nowrap;
+        overflow-x: auto;
+    }
     & > textarea {
         flex-grow: 1;
         overflow: scroll;

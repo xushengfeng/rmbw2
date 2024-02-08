@@ -1600,7 +1600,7 @@ async function showDic(id: string) {
         }
 
         addMeanEl.onclick = () => {
-            addP("", Word.word, Word.context.text, async (text) => {
+            addP("", Word.word, Word.context.text, Word.context.index, async (text) => {
                 let mean = text.trim();
                 if (mean) {
                     const x = await addReviewCardMean(Word.word, mean);
@@ -1615,7 +1615,7 @@ async function showDic(id: string) {
         };
 
         editMeanEl.onclick = () => {
-            addP(Word.text, Word.word, Word.context.text, async (text) => {
+            addP(Word.text, Word.word, Word.context.text, Word.context.index, async (text) => {
                 let mean = text.trim();
                 if (Word.record) {
                     for (let i of Word.record.means) {
@@ -1631,7 +1631,7 @@ async function showDic(id: string) {
         };
 
         noteEl.onclick = () => {
-            addP(Word.record?.note || "", Word.word, null, async (text) => {
+            addP(Word.record?.note || "", Word.word, null, null, async (text) => {
                 let mean = text.trim();
                 if (Word.record) {
                     Word.record["note"] = mean;
@@ -1689,7 +1689,7 @@ async function showDic(id: string) {
 
         noteEl.onclick = async () => {
             let r = (await card2sentence.getItem(wordx.id)) as record2;
-            addP(r.note || "", null, r.text, async (text) => {
+            addP(r.note || "", null, r.text, null, async (text) => {
                 let mean = text.trim();
                 r["note"] = mean;
                 await card2sentence.setItem(wordx.id, r);
@@ -1965,10 +1965,26 @@ function rmStyle(start: number) {
     bookContentEl.querySelector(`span[data-s="${start}"]`)?.classList?.remove(MARKWORD);
 }
 
-function addP(text: string, word: string, sentence: string, f: (text: string) => void) {
+function addP(
+    text: string,
+    word: string,
+    sentence: string,
+    index: record["means"][0]["contexts"][0]["index"],
+    f: (text: string) => void
+) {
+    let p = el("p");
+    const sourceWord = sentence.slice(...index);
+    if (index) {
+        p.append(
+            sentence.slice(0, index[0]),
+            el("span", { class: MARKWORD }, sourceWord, sourceWord != word ? `(${word})` : ""),
+            sentence.slice(index[1])
+        );
+    } else p.append(word || sentence);
     let textEl = el("textarea", { value: text });
     let aiB = getAiButtons(textEl, word, sentence);
     let div = el("dialog", { class: NOTEDIALOG }, [
+        p,
         textEl,
         el("div", { style: { display: "flex" } }, [
             aiB,
