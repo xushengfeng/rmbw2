@@ -2028,7 +2028,7 @@ function aiButtons(textEl: HTMLTextAreaElement, word: string, context: string) {
         }),
         el("button", "反义词", {
             onclick: async () => {
-                setText((await wordAi.opp(word, context)).list.join(", "));
+                setText("- " + (await wordAi.opp(word, context)).list.join(", "));
             },
         }),
         tmpAiB(textEl, `$这里有个单词${word}，它位于${context}`),
