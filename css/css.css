@@ -342,6 +342,7 @@ body {
     overflow-y: scroll;
     overflow-x: hidden;
     & > :first-child {
+        display: block;
         margin: 0 auto;
         font-size: var(--font-size);
         max-width: var(--content-width);
