@@ -312,7 +312,16 @@ body {
         border-radius: 8px;
         border: transparent 1px solid;
         &:has(input:checked) {
-            border: #000 1px dashed;
+            border: var(--color) 1px dashed;
+        }
+    }
+    @media (prefers-color-scheme: dark) {
+        & label:has(input[value="auto"]) {
+            background-color: #000 !important;
+            color: #cacaca !important;
+            &:has(input:checked) {
+                border: var(--color) 1px dashed;
+            }
         }
     }
 }
@@ -383,7 +392,7 @@ body {
     left: 4px;
     width: 2px;
     height: 1em;
-    background-color: #000;
+    background-color: var(--color);
 }
 .context_end::after {
     content: "";
@@ -392,7 +401,7 @@ body {
     left: 4px;
     width: 2px;
     height: 1em;
-    background-color: #000;
+    background-color: var(--color);
 }
 
 #book_content .words_sum {
@@ -519,7 +528,7 @@ body {
 .more_words > span {
     cursor: pointer;
     border-radius: 4px;
-    border: dashed 1px #000;
+    border: dashed 1px var(--color);
 }
 
 .translate {
@@ -540,10 +549,10 @@ div:has(> .translate) > :not(.translate) {
     border: solid 1px transparent;
 }
 .dic_details > div:hover {
-    border: dashed 1px #000;
+    border: dashed 1px var(--color);
 }
 .dic_details > div:has(input[type="radio"]:checked) {
-    border: dashed 1px #000;
+    border: dashed 1px var(--color);
 }
 .dic_details > div > input[type="radio"] {
     display: none;
@@ -708,7 +717,7 @@ div:has(> .translate) > :not(.translate) {
     border: dashed 1px transparent;
 }
 #review_mode > label:has(input:checked) {
-    border: dashed 1px #000;
+    border: dashed 1px var(--color);
 }
 
 #review_buttons > div:has(.icon) {
