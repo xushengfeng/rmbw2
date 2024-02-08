@@ -1013,10 +1013,7 @@ function setBookStyle() {
         "--content-width",
         `${bookStyleList.contentWidth[bookStyle.contentWidth]}em`
     );
-    bookContentContainerEl.style.setProperty(
-        "--paper-bg",
-        bookStyle.paper ? "url(../assets/Texture.png) repeat" : "none"
-    );
+    bookContentContainerEl.style.background = bookStyle.paper ? "var(--paper-bg)" : "none";
     setting.setItem("setyle.default", JSON.stringify(bookStyle));
 }
 
