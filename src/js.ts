@@ -176,6 +176,7 @@ function vlist(
                 iel.remove();
                 for (let ii = i + 1; ii <= endI; i++) {
                     let afterEl = pel.querySelector(`:scope > [${dataI}="${ii}"]`) as HTMLElement;
+                    if (!afterEl) continue;
                     afterEl.setAttribute(dataI, String(ii - 1));
                     afterEl.style.top = Number(afterEl.style.top.slice(0, -2)) - iHeight - gap + "px";
                 }
