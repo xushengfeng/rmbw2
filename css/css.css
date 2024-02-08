@@ -332,8 +332,8 @@ body {
 #book_content_container {
     --content-width: 60em;
     --line-height: 1.2em;
-    --bg: url(../assets/Texture.png) repeat;
-    background: var(--bg);
+    --paper-bg: url(../assets/Texture.png) repeat;
+    background: var(--paper-bg);
     background-size: 400px 400px;
     background-attachment: local;
     position: relative;
