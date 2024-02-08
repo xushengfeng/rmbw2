@@ -1013,7 +1013,7 @@ function setBookStyle() {
         "--content-width",
         `${bookStyleList.contentWidth[bookStyle.contentWidth]}em`
     );
-    bookContentContainerEl.style.background = bookStyle.paper ? "var(--paper-bg)" : "none";
+    bookContentContainerEl.style.background = bookStyle.paper ? "" : "none";
     setting.setItem("setyle.default", JSON.stringify(bookStyle));
 }
 
