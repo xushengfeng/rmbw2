@@ -1349,7 +1349,7 @@ async function showMarkList() {
                         } else {
                             let record = (await wordsStore.getItem(i.s.id)) as record;
                             record = await rmWord(record, i.id);
-                            await clearWordMean(record);
+                            if (record) await clearWordMean(record);
                             rmStyle(i.s.index[0]);
                         }
                         delete section.words[i.id];
