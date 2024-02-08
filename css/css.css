@@ -1,3 +1,8 @@
+@font-face {
+    font-family: "Noto Color Emoji";
+    src: url(../assets/NotoColorEmoji.ttf);
+}
+
 :root {
     --bg: #fff;
     --bg1: #fff9;
@@ -61,7 +66,7 @@
 html,
 body {
     margin: 0;
-    font-family: sans-serif;
+    font-family: sans-serif, "Noto Color Emoji";
     color: var(--color);
 }
 
