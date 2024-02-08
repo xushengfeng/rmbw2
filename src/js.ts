@@ -1809,19 +1809,22 @@ async function showDic(id: string) {
                 r.text = text;
                 card2sentence.setItem(wordx.id, r);
             } else {
+                const cIndex = [wordx.index[0] - index.start, wordx.index[1] - index.start] as [number, number];
                 if (Word.record)
                     for (let i of Word.record.means) {
                         for (let j of i.contexts) {
                             if (j.source.id === id) {
-                                j.index = [wordx.index[0] - index.start, wordx.index[1] - index.start];
+                                j.index = cIndex;
                                 j.text = text;
-                                Word.context = j;
-                                Share.sourceIndex = j.index;
                                 await wordsStore.setItem(Word.word, Word.record);
                                 break;
                             }
                         }
                     }
+                Word.context.text = text;
+                Word.context.index = cIndex;
+                Share.sourceIndex = cIndex;
+                Share.context = text;
             }
             section.words[id].cIndex = [index.start, index.end];
             sectionsStore.setItem(sectionId, section);
