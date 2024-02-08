@@ -161,6 +161,7 @@ dialog {
     border: none;
     padding: 1rem;
     border-radius: 1rem;
+    outline: none;
 }
 [popover] {
     box-shadow: var(--box-shadow);
@@ -439,14 +440,33 @@ body {
         & > div:not(:has(> .icon)) {
             display: flex;
             flex-direction: column;
+            align-items: center;
             & > :nth-child(1) {
                 border: none;
-                width: 50px;
-                height: calc(50px * 1.414);
+                width: 100px;
+                aspect-ratio: calc(1 / 1.414);
                 background-color: #dfdfdf;
                 border-radius: 4px;
+                box-shadow: var(--box-shadow);
+                font-size: 2em;
+                word-break: break-all;
+                overflow: hidden;
+                color: #0006;
+            }
+            & > :nth-child(2) {
+                max-width: 100px;
+                overflow-wrap: break-word;
             }
         }
+        @media (max-width: calc(100px * 4 + 8px * 3 + 2em + 6px)) {
+            grid-template-columns: repeat(3, 1fr);
+        }
+        @media (max-width: calc(100px * 3 + 8px * 2 + 2em + 6px)) {
+            grid-template-columns: repeat(2, 1fr);
+        }
+    }
+    &::backdrop {
+        backdrop-filter: var(--blur);
     }
 }
 
