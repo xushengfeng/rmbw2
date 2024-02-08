@@ -175,25 +175,6 @@ body {
     overflow: hidden;
 }
 
-body > #index {
-    display: flex;
-    overflow: hidden;
-    max-width: 100vw;
-    position: fixed;
-    z-index: 1;
-    right: 0;
-    transition: 0.4s;
-}
-body > #index > div {
-    position: relative;
-    width: var(--main-bar-size);
-    height: var(--main-bar-size);
-}
-body > #index > div > .icon {
-    width: var(--main-bar-size);
-    height: var(--main-bar-size);
-}
-
 :is(div, button):has(> .icon) {
     height: var(--size0);
     width: var(--size0);
@@ -476,24 +457,6 @@ body > #index > div > .icon {
     & > :nth-child(3) {
         display: grid !important;
     }
-}
-
-#book {
-    display: flex;
-    flex-direction: column;
-}
-#book > #sections {
-    width: 20px;
-}
-
-#online_books {
-    background-color: var(--bg1);
-    backdrop-filter: var(--blur);
-    transition: var(--transition);
-    border: none;
-    box-shadow: var(--box-shadow);
-    padding: 4px;
-    border-radius: 4px;
 }
 
 #dic {
@@ -798,16 +761,6 @@ div:has(> .translate) > :not(.translate) {
     text-align: center;
 }
 
-#history {
-    overflow: scroll;
-}
-#history > div {
-    position: relative;
-}
-#history > div > div {
-    position: absolute;
-    height: var(--size0);
-}
 #setting {
     overflow: scroll;
     background-color: var(--bg1);
