@@ -46,6 +46,7 @@ import line_height_small_svg from "../assets/icons/line_height_small.svg";
 import line_height_large_svg from "../assets/icons/line_height_large.svg";
 import content_width_small_svg from "../assets/icons/content_width_small.svg";
 import content_width_large_svg from "../assets/icons/content_width_large.svg";
+import githubIcon from "../assets/other/Github.svg";
 
 function icon(src: string) {
     return `<img src="${src}" class="icon">`;
@@ -3259,5 +3260,35 @@ settingEl.append(
                 transCache.clear();
             },
         }),
+    ])
+);
+
+settingEl.append(
+    el("div", { class: "about" }, [
+        el("h2", "关于"),
+        el("div", [
+            el("div", [el("img", { width: "32", src: "./logo/logo.svg" }), "rmbw2"]),
+            el(
+                "a",
+                el("img", {
+                    src: "https://www.netlify.com/v3/img/components/netlify-light.svg",
+                    alt: "Deploys by Netlify",
+                    loading: "lazy",
+                })
+            ),
+            el("div", [
+                "项目开源地址",
+                el(
+                    "a",
+                    { href: "https://github.com/xushengfeng/xlinkote/", target: "_blank" },
+                    el("img", { img: githubIcon })
+                ),
+            ]),
+            el("div", el("a", { href: "https://github.com/xushengfeng/xlinkote/blob/master/LICENSE" }, "GPL-3.0")),
+            el("div", [
+                "Designed and programmed by xsf ",
+                el("a", { href: "mailto:xushengfeng_zg@163.com" }, "xushengfeng_zg@163.com"),
+            ]),
+        ]),
     ])
 );
