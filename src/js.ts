@@ -1563,6 +1563,8 @@ async function showDic(id: string) {
         rmStyle(wordx.index[0]);
     };
 
+    if (!isSentence) play(Word.word);
+
     ttsWordEl.onclick = () => {
         play(Word.word);
     };
