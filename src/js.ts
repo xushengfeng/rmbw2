@@ -1985,8 +1985,8 @@ function addP(
     f: (text: string) => void
 ) {
     let p = el("p");
-    const sourceWord = sentence.slice(...index);
     if (index) {
+        const sourceWord = sentence.slice(...index);
         p.append(
             sentence.slice(0, index[0]),
             el("span", { class: MARKWORD }, sourceWord, sourceWord != word ? `(${word})` : ""),
