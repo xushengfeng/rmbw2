@@ -2589,14 +2589,19 @@ async function getFutureReviewDue(days: number) {
     now += days * 24 * 60 * 60 * 1000;
     now = Math.round(now);
     let wordList: { id: string; card: fsrsjs.Card }[] = [];
+    const wordListTemp: string[] = [];
     let spellList: { id: string; card: fsrsjs.Card }[] = [];
     let sentenceList: { id: string; card: fsrsjs.Card }[] = [];
-    await card2word.iterate(async (value, key) => {
+    const sentenceListTemp: string[] = [];
+    await card2word.iterate((value, key) => {
+        wordListTemp.push(key);
+    });
+    for (let key of wordListTemp) {
         const card = (await cardsStore.getItem(key)) as fsrsjs.Card;
         if (card.due.getTime() < now) {
             wordList.push({ id: key, card: card });
         }
-    });
+    }
     let l: typeof wordList = [];
     for (let x of wordList) {
         let wordid = (await card2word.getItem(x.id)) as string;
@@ -2614,12 +2619,15 @@ async function getFutureReviewDue(days: number) {
         }
     });
 
-    await card2sentence.iterate(async (value, key) => {
+    await card2sentence.iterate((value, key) => {
+        sentenceListTemp.push(key);
+    });
+    for (let key of sentenceListTemp) {
         const card = (await cardsStore.getItem(key)) as fsrsjs.Card;
         if (card.due.getTime() < now) {
             sentenceList.push({ id: key, card: card });
         }
-    });
+    }
     return { word: wordList, spell: spellList, sentence: sentenceList };
 }
 async function getReviewDue(type: review) {
