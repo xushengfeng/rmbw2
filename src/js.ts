@@ -1334,8 +1334,8 @@ async function showMarkList() {
 
             let item = el("div", content, { class: i.s.visit ? "" : TODOMARK });
             item.onclick = () => {
-                showDic(i.id);
                 jumpToMark(i.s.index[0]);
+                showDic(i.id);
             };
             item.oncontextmenu = (e) => {
                 e.preventDefault();
@@ -1388,8 +1388,8 @@ lastMarkEl.onclick = async () => {
     index--;
     index = index < 0 ? 0 : index;
     let id = list[index].id;
-    showDic(id);
     jumpToMark(list[index].s.index[0]);
+    showDic(id);
 };
 nextMarkEl.onclick = async () => {
     if (!nowDicId) return;
@@ -1398,13 +1398,12 @@ nextMarkEl.onclick = async () => {
     index++;
     index = index >= list.length ? list.length - 1 : index;
     let id = list[index].id;
-    showDic(id);
     jumpToMark(list[index].s.index[0]);
+    showDic(id);
 };
 function jumpToMark(start: number) {
     let span = bookContentEl.querySelector(`span[data-s="${start}"]`);
-    span.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "nearest" });
-    span.classList.add("flash_word");
+    bookContentContainerEl.scrollTop = span.getBoundingClientRect().top - bookContentEl.getBoundingClientRect().top;
     setTimeout(() => {
         span.classList.remove("flash_word");
     }, 1200);
