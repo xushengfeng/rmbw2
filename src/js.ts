@@ -1872,7 +1872,7 @@ function shwoDicEl(mainTextEl: HTMLTextAreaElement, word: string, x: number, y: 
     let div = el("dialog", { class: DICDIALOG }, [
         list,
         el("div", { style: { display: "flex", "justify-content": "flex-end" } }, [
-            el("button", iconEl(close_svg), {
+            el("button", iconEl(ok_svg), {
                 onclick: () => {
                     // 获取所有checked的值
                     let checkedValues = Array.from(list.querySelectorAll("input[type='checkbox']:checked")).map(
@@ -2003,7 +2003,7 @@ function addP(
         textEl,
         el("div", { style: { display: "flex" } }, [
             aiB,
-            el("button", iconEl(close_svg), {
+            el("button", iconEl(ok_svg), {
                 onclick: () => {
                     let mean = textEl.value.trim();
                     div.close();
@@ -2367,7 +2367,7 @@ function tmpAi(mainTextEl: HTMLTextAreaElement, info: string, x: number, y: numb
     let div = el("dialog", { class: AIDIALOG }, [
         textEl,
         el("div", { style: { display: "flex", "justify-content": "flex-end" } }, [
-            el("button", iconEl(close_svg), {
+            el("button", iconEl(ok_svg), {
                 onclick: () => {
                     let mean = textEl.value.trim();
                     div.close();
