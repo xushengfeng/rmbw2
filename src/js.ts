@@ -810,7 +810,7 @@ async function showBookContent(id: string) {
             const i = span.getAttribute("data-i");
             let s = paragraph[0].start,
                 e = paragraph.at(-1).end;
-            let j = Number(i) - 1;
+            let j = Number(i);
             while (j >= 0 && !paragraph[j].text.match(/[.?!\n]/)) {
                 s = paragraph[j].start;
                 j--;
