@@ -285,7 +285,11 @@ const dicDetailsEl = el("div", {
 
 dicEl.append(
     el("div", { style: { display: "flex" } }, [lastMarkEl, nextMarkEl, toSentenceEl, ttsContextEl, noteEl, hideDicEl]),
-    el("div", { style: { display: "flex", "flex-wrap": "wrap" } }, [dicWordEl, ttsWordEl, moreWordsEl]),
+    el("div", { style: { display: "flex", "flex-wrap": "wrap", "align-items": "center" } }, [
+        dicWordEl,
+        ttsWordEl,
+        moreWordsEl,
+    ]),
     el("div", { style: { display: "flex" } }, [dicTransB, dicTransContent]),
     el("div", { style: { display: "flex" } }, [dicMinEl, addMeanEl, editMeanEl]),
     dicDetailsEl
