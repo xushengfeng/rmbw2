@@ -1549,7 +1549,6 @@ async function showDic(id: string) {
                 if (j.source.id === id) {
                     r.source = j.source;
                     card = await cardsStore.getItem(i.card_id);
-                    await cardsStore.removeItem(i.card_id);
                     break mf;
                 }
             }
@@ -1560,7 +1559,8 @@ async function showDic(id: string) {
 
         await card2sentence.setItem(sentenceCardId, r);
 
-        rmWord(Word.record, Word.context.source.id);
+        await rmWord(Word.record, Word.context.source.id);
+        clearWordMean(Word.record);
 
         showSentence();
 
