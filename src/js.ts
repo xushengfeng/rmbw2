@@ -2879,7 +2879,7 @@ async function showSpellReview(x: { id: string; card: fsrsjs.Card }) {
         context.append(el("div", [p]));
     }
     const div = document.createElement("div");
-    div.append(input, context, wordEl);
+    div.append(input, wordEl, context);
     div.classList.add("review_spell");
     reviewViewEl.innerHTML = "";
     reviewViewEl.append(div);
