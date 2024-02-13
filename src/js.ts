@@ -2784,7 +2784,7 @@ async function showWordReview(x: { id: string; card: fsrsjs.Card }) {
     let wordRecord = (await wordsStore.getItem(wordid)) as record;
     let div = document.createElement("div");
     let context = crContext(wordRecord, x.id);
-    context.onclick = async () => {
+    context.onclick = reviewHotkey["show"].f = async () => {
         let word = (await card2word.getItem(x.id)) as string;
         let d = (await wordsStore.getItem(word)) as record;
         for (let i of d.means) {
@@ -2808,12 +2808,28 @@ async function showWordReview(x: { id: string; card: fsrsjs.Card }) {
     reviewViewEl.append(div);
 }
 
+var reviewHotkey: { [key: string]: { f: () => void; key: string } } = {
+    1: { key: "1", f: () => {} },
+    2: { key: "2", f: () => {} },
+    3: { key: "3", f: () => {} },
+    show: { key: " ", f: () => {} },
+};
+
+document.addEventListener("keydown", (e) => {
+    if (!reviewEl.classList.contains("review_show") && reviewType != "spell") return;
+    for (let i in reviewHotkey) {
+        if (e.key === reviewHotkey[i].key) {
+            reviewHotkey[i].f();
+        }
+    }
+});
+
 function getReviewCardButtons(id: string, card: fsrsjs.Card, readText: string, f: (rating: number) => void) {
     const showTime = new Date().getTime();
     let b = (rating: fsrsjs.Rating, icon: HTMLElement) => {
         let button = document.createElement("button");
         button.append(icon);
-        button.onclick = async () => {
+        button.onclick = reviewHotkey[rating].f = async () => {
             if (rating === 3 && new Date().getTime() - showTime < (await getReadTime(readText)) + 200) rating = 4; // todo 自定义
             setReviewCard(id, card, rating);
             f(rating);
@@ -2982,7 +2998,7 @@ async function showSentenceReview(x: { id: string; card: fsrsjs.Card }) {
     let sentence = (await card2sentence.getItem(x.id)) as record2;
     let div = document.createElement("div");
     let context = el("p", sentence.text);
-    context.onclick = async () => {
+    context.onclick = reviewHotkey["show"].f = async () => {
         dic.innerHTML = "";
         dic.append(el("p", { class: TRANSLATE }, sentence.trans));
         if (sentence.note) {
