@@ -2789,10 +2789,12 @@ async function showWordReview(x: { id: string; card: fsrsjs.Card }) {
         }
     };
     let dic = document.createElement("div");
+    const showTime = new Date().getTime();
     let b = (rating: fsrsjs.Rating, text: string) => {
         let button = document.createElement("button");
         button.innerText = text;
         button.onclick = async () => {
+            if (rating === 3 && new Date().getTime() - showTime < 1000) rating = 4; // todo 更精确
             setReviewCard(x.id, x.card, rating);
             let next = await nextDue(reviewType);
             showReview(next, reviewType);
@@ -2802,9 +2804,8 @@ async function showWordReview(x: { id: string; card: fsrsjs.Card }) {
     let againB = b(1, "x");
     let hardB = b(2, "o");
     let goodB = b(3, "v");
-    let esayB = b(4, "vv");
     let buttons = document.createElement("div");
-    buttons.append(againB, hardB, goodB, esayB);
+    buttons.append(againB, hardB, goodB);
 
     div.append(context, dic, buttons);
     div.classList.add("review_word");
