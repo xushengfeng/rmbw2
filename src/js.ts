@@ -2801,7 +2801,7 @@ async function showWordReview(x: { id: string; card: fsrsjs.Card }) {
         let button = document.createElement("button");
         button.innerText = text;
         button.onclick = async () => {
-            if (rating === 3 && new Date().getTime() - showTime < 1000) rating = 4; // todo 更精确
+            if (rating === 3 && new Date().getTime() - showTime < 400 * context.childElementCount + 200) rating = 4; // todo 自定义
             setReviewCard(x.id, x.card, rating);
             let next = await nextDue(reviewType);
             showReview(next, reviewType);
