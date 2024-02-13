@@ -1293,6 +1293,47 @@ bookdicEl.onclick = async () => {
     }
 };
 
+async function sectionSelectEl(radio?: boolean) {
+    const bookSectionsSelectEl = el("div", { popover: "auto" });
+    document.body.append(bookSectionsSelectEl);
+    return {
+        el: el("button", "选择词书", {
+            onclick: () => {
+                sectionSelect(bookSectionsSelectEl, radio);
+                bookSectionsSelectEl.showPopover();
+            },
+        }),
+        values: () => getSelectBooks(bookSectionsSelectEl),
+    };
+}
+
+async function sectionSelect(menuEl: HTMLElement, radio?: boolean) {
+    let bookList: book[] = [];
+    await bookshelfStore.iterate((book: book) => {
+        bookList.push(book);
+    });
+    bookList = bookList.filter((b) => b.type === "word");
+    menuEl.innerHTML = "";
+    for (let i of bookList) {
+        let book = el("div", i.name);
+        for (let s of i.sections) {
+            let section = await getSection(s);
+            book.append(
+                el("label", [
+                    el("input", { type: radio ? "radio" : "checkbox", value: s, name: "books" }),
+                    section.title,
+                ])
+            );
+        }
+        menuEl.append(book);
+    }
+    return menuEl;
+}
+
+function getSelectBooks(el: HTMLElement) {
+    return Array.from(el.querySelectorAll("input:checked")).map((i: HTMLInputElement) => i.value);
+}
+
 let dics: { [key: string]: Map<string, dic[0]> } = {};
 var dicStore = localforage.createInstance({ name: "dic" });
 setting.getItem("dics").then(async (l: string[]) => {
@@ -1331,15 +1372,15 @@ type record2 = {
 
 const markListBarEl = document.getElementById("mark_word_list");
 const markListEl = el("div");
-const bookListEl = el("input");
+const bookListEl = await sectionSelectEl();
 const autoNewWordEl = el("div", [
     el("button", "自动", {
         onclick: async () => {
-            const words = await getNewWords(editText, bookListEl.value.split(" "));
+            const words = await getNewWords(editText, bookListEl.values());
             selectWord(words);
         },
     }),
-    bookListEl,
+    bookListEl.el,
 ]);
 markListBarEl.append(autoNewWordEl, markListEl);
 
