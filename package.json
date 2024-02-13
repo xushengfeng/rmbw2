@@ -21,6 +21,7 @@
         "auto-fun": "^1.0.3",
         "diff-match-patch": "^1.0.5",
         "fsrs.js": "^1.1.2",
+        "hyphen": "^1.10.4",
         "intl-segmenter-polyfill": "^0.4.4",
         "lemmatizer": "^0.0.1",
         "localforage": "^1.10.0",

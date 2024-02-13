@@ -12,6 +12,8 @@ import mammoth from "mammoth";
 
 import lemmatizer from "lemmatizer";
 
+import { hyphenate } from "hyphen/en";
+
 var Segmenter = Intl.Segmenter;
 if (!Segmenter) {
     console.warn("no support Intl.Segmenter");
@@ -2080,6 +2082,11 @@ function aiButtons1(textEl: HTMLTextAreaElement, word: string) {
         el("button", "词根词缀", {
             onclick: async () => {
                 setText(await wordAiText.fix(word));
+            },
+        }),
+        el("button", "音节分词", {
+            onclick: async () => {
+                setText(await hyphenate(word, { hyphenChar: "·" }));
             },
         }),
         el("button", "词源", {
