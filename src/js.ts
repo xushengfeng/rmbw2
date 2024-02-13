@@ -2359,7 +2359,6 @@ function tmpAi(mainTextEl: HTMLTextAreaElement, info: string, x: number, y: numb
             let addText = `ai:\n${aitext}`;
             let changeText = textEl.value.slice(0, start) + addText + textEl.value.slice(end);
             textEl.value = changeText;
-            editText = changeText;
             textEl.selectionStart = start;
             textEl.selectionEnd = start + addText.length;
         }
