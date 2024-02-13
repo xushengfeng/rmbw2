@@ -13,6 +13,7 @@ import mammoth from "mammoth";
 import lemmatizer from "lemmatizer";
 
 import { hyphenate } from "hyphen/en";
+const hyphenChar = "·";
 
 var Segmenter = Intl.Segmenter;
 if (!Segmenter) {
@@ -1150,7 +1151,7 @@ function changeSectionW(sectionW: section["words"], source: number[], map: numbe
     return sectionW;
 }
 
-import diff_match_patch from "diff-match-patch";
+import diff_match_patch, { Diff } from "diff-match-patch";
 var dmp = new diff_match_patch();
 
 changeEdit(false);
@@ -2086,7 +2087,7 @@ function aiButtons1(textEl: HTMLTextAreaElement, word: string) {
         }),
         el("button", "音节分词", {
             onclick: async () => {
-                setText(await hyphenate(word, { hyphenChar: "·" }));
+                setText(await hyphenate(word, { hyphenChar }));
             },
         }),
         el("button", "词源", {
@@ -2846,19 +2847,21 @@ async function showSpellReview(x: { id: string; card: fsrsjs.Card }) {
         if (inputWord.length === word.length && inputWord != word) {
             inputValue = "";
             input.innerText = `"${inputWord}" is wrong! ${spellNum} time(s) left`;
+            wordEl.append(await spellDiffWord(word, inputWord));
+            wordEl.append(await hyphenate(word, { hyphenChar }));
             play(word);
             setSpellCard(x.id, x.card, 1);
             clearKeyboard();
         }
     };
-    spellF = (button) => {
+    spellF = async (button) => {
         console.log(button);
         if (button === "{tip}") {
             // 暂时展示
             input.innerText = "";
             clearKeyboard();
             play(word);
-            wordEl.innerText = word;
+            wordEl.innerText = await hyphenate(word, { hyphenChar });
             setSpellCard(x.id, x.card, 2);
         }
         if (button === "{audio}") {
@@ -2881,6 +2884,58 @@ async function showSpellReview(x: { id: string; card: fsrsjs.Card }) {
     reviewViewEl.innerHTML = "";
     reviewViewEl.append(div);
 }
+
+async function spellDiffWord(rightWord: string, wrongWord: string) {
+    let div = el("div");
+    const rightL = (await hyphenate(rightWord, { hyphenChar })).split(hyphenChar);
+
+    let diff = dmp.diff_main(wrongWord, rightWord);
+
+    const smallestDiff: typeof diff = [];
+    const diffL: (typeof diff)[] = [];
+    for (let i of rightL) {
+        diffL.push([]);
+    }
+    let rightIndex = 0;
+    let diffLength = 0;
+    for (let i of diff) {
+        for (let t of i[1]) {
+            smallestDiff.push([i[0], t]);
+        }
+    }
+    for (let i of smallestDiff) {
+        diffL[rightIndex].push(i);
+        if (i[0] != -1) {
+            diffLength++;
+        }
+        if (diffLength >= rightL[rightIndex].length) {
+            rightIndex++;
+            rightIndex = Math.min(rightIndex, rightL.length - 1);
+            diffLength = 0;
+        }
+    }
+
+    for (let i in diffL) {
+        div.append(getDiffWord(diffL[i]));
+        if (Number(i) < rightL.length - 1) div.append(hyphenChar);
+    }
+    return div;
+}
+
+function getDiffWord(diff: Diff[]) {
+    const div = document.createDocumentFragment();
+    for (let i of diff) {
+        if (i[0] === 0) {
+            div.append(i[1]);
+        } else if (i[0] === 1) {
+            div.append(el("span", { class: "diff_add" }, i[1]));
+        } else {
+            div.append(el("span", { class: "diff_remove" }, i[1]));
+        }
+    }
+    return div;
+}
+
 async function showSentenceReview(x: { id: string; card: fsrsjs.Card }) {
     let sentence = (await card2sentence.getItem(x.id)) as record2;
     let div = document.createElement("div");

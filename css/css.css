@@ -805,6 +805,12 @@ div:has(> .translate) > :not(.translate) {
 
 .review_spell {
     flex-grow: 1;
+    & .diff_add {
+        color: color-mix(in srgb, #0f0 80%, var(--color));
+    }
+    & .diff_remove {
+        color: color-mix(in srgb, #f00 80%, var(--color));
+    }
 }
 
 .spell_input {
