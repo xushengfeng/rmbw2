@@ -2898,6 +2898,7 @@ async function spellDiffWord(rightWord: string, wrongWord: string) {
     }
     let rightIndex = 0;
     let diffLength = 0;
+    // 拆分
     for (let i of diff) {
         for (let t of i[1]) {
             smallestDiff.push([i[0], t]);
@@ -2915,8 +2916,21 @@ async function spellDiffWord(rightWord: string, wrongWord: string) {
         }
     }
 
-    for (let i in diffL) {
-        div.append(getDiffWord(diffL[i]));
+    // 合并
+    const newDiffL: Diff[][] = [];
+    for (let i of diffL) {
+        newDiffL.push([]);
+        for (let n = 0; n < i.length; n++) {
+            if (i[n][0] === newDiffL.at(-1)?.at(-1)?.[0]) {
+                newDiffL.at(-1).at(-1)[1] += i[n][1];
+            } else {
+                newDiffL.at(-1).push(i[n]);
+            }
+        }
+    }
+
+    for (let i in newDiffL) {
+        div.append(getDiffWord(newDiffL[i]));
         if (Number(i) < rightL.length - 1) div.append(hyphenChar);
     }
     return div;
