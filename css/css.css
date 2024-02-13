@@ -386,7 +386,10 @@ body {
     }
 }
 .mark_word {
-    text-decoration: underline wavy #999;
+    text-decoration: underline wavy #999 !important;
+}
+.tmp_mark_word {
+    text-decoration: underline wavy color-mix(in srgb, #999 50%, var(--bg));
 }
 .flash_word {
     text-decoration: underline wavy #2735bb;
@@ -692,7 +695,8 @@ div:has(> .translate) > :not(.translate) {
 
 #mark_word_list {
     position: fixed;
-    overflow-y: scroll;
+    display: flex;
+    flex-direction: column;
     right: -100%;
     top: var(--size0);
     height: calc(100dvh - var(--size0));
@@ -706,11 +710,17 @@ div:has(> .translate) > :not(.translate) {
     transition: var(--transition);
     font-family: var(--font-family);
 
-    & > div {
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        max-width: calc(40vw - 16px * 2);
+    & > :nth-child(2) {
+        position: relative;
+        overflow-y: scroll;
+        flex-grow: 1;
+
+        & > div {
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: calc(40vw - 16px * 2);
+        }
     }
 }
 

@@ -209,6 +209,7 @@ function vlist(
 
 /************************************main */
 const MARKWORD = "mark_word";
+const TMPMARKWORD = "tmp_mark_word";
 const TRANSLATE = "translate";
 const DICSENTENCE = "dic_sentence";
 const HIDEMEANS = "hide_means";
@@ -1286,8 +1287,8 @@ bookContentContainerEl.onscroll = async () => {
 
 const SHOWMARKLIST = "show_mark_word_list";
 bookdicEl.onclick = async () => {
-    markListEl.classList.toggle(SHOWMARKLIST);
-    if (markListEl.classList.contains(SHOWMARKLIST)) {
+    markListBarEl.classList.toggle(SHOWMARKLIST);
+    if (markListBarEl.classList.contains(SHOWMARKLIST)) {
         showMarkList();
     }
 };
@@ -1328,7 +1329,19 @@ type record2 = {
     note?: string;
 };
 
-const markListEl = document.getElementById("mark_word_list");
+const markListBarEl = document.getElementById("mark_word_list");
+const markListEl = el("div");
+const bookListEl = el("input");
+const autoNewWordEl = el("div", [
+    el("button", "自动", {
+        onclick: async () => {
+            const words = await getNewWords(editText, bookListEl.value.split(" "));
+            selectWord(words);
+        },
+    }),
+    bookListEl,
+]);
+markListBarEl.append(autoNewWordEl, markListEl);
 
 async function showMarkList() {
     markListEl.innerHTML = "";
@@ -2535,6 +2548,60 @@ function flatWordCard(record: record, id: string) {
         }
     }
     return Word;
+}
+
+function selectWord(words: string[]) {
+    bookContentEl.querySelectorAll("span[data-i]").forEach((el: HTMLSpanElement) => {
+        if (words.includes(el.innerText)) {
+            el.classList.add(TMPMARKWORD);
+        }
+    });
+}
+
+async function getNewWords(text: string, wordBooks: string[]) {
+    let newWords: string[] = [];
+    if (!wordBooks || !wordBooks.join("")) {
+        newWords = await getNewWordsFromAi(text);
+    } else {
+        newWords = await getNewWordsFromBook(text, wordBooks);
+    }
+    const ignoreWords = await getIgnoreWords();
+    return newWords.filter((w) => !ignoreWords.includes(w));
+}
+
+async function getNewWordsFromAi(text: string) {
+    const f = new autoFun.def({
+        input: ["des", "text:string"],
+        script: ["根据des，判读text中的生词", "专有名词、词组不属于生词", "返回生词"],
+        output: ["words:string[]"],
+    });
+    return (await f.run([`des:我的词汇量是牛津3000 A2`, `text:${text}`]).result)["words"];
+}
+
+async function getNewWordsFromBook(text: string, books: string[]) {
+    let words: string[] = [];
+    for (let book of books) {
+        const w = (await getSection(book)).text.trim().split("\n");
+        const keys = await wordsStore.keys();
+        for (let word of w) {
+            if (!keys.includes(word)) {
+                words.push(word);
+            }
+        }
+    }
+    const segmenter = new Segmenter(bookLan, { granularity: "word" });
+    let segments = segmenter.segment(text);
+    let list = Array.from(segments).map((i) => i.segment);
+    words = words.filter((w) => list.includes(w));
+    return words;
+}
+
+async function getIgnoreWords() {
+    const sectionId = (await setting.getItem("wordBook.ignore")) as string;
+    if (!sectionId) return [];
+    const section = await getSection(sectionId);
+    if (!section) return [];
+    return section.text.trim().split("\n");
 }
 
 setTimeout(async () => {
