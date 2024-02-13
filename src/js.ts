@@ -32,6 +32,7 @@ import { MsEdgeTTS, OUTPUT_FORMAT } from "msedge-tts-browserify";
 
 import pen_svg from "../assets/icons/pen.svg";
 import ok_svg from "../assets/icons/ok.svg";
+import help_svg from "../assets/icons/help.svg";
 import translate_svg from "../assets/icons/translate.svg";
 import left_svg from "../assets/icons/left.svg";
 import right_svg from "../assets/icons/right.svg";
@@ -2809,9 +2810,9 @@ async function showWordReview(x: { id: string; card: fsrsjs.Card }) {
 
 function getReviewCardButtons(id: string, card: fsrsjs.Card, readText: string, f: (rating: number) => void) {
     const showTime = new Date().getTime();
-    let b = (rating: fsrsjs.Rating, text: string) => {
+    let b = (rating: fsrsjs.Rating, icon: HTMLElement) => {
         let button = document.createElement("button");
-        button.innerText = text;
+        button.append(icon);
         button.onclick = async () => {
             if (rating === 3 && new Date().getTime() - showTime < (await getReadTime(readText)) + 200) rating = 4; // todo 自定义
             setReviewCard(id, card, rating);
@@ -2819,9 +2820,9 @@ function getReviewCardButtons(id: string, card: fsrsjs.Card, readText: string, f
         };
         return button;
     };
-    let againB = b(1, "x");
-    let hardB = b(2, "o");
-    let goodB = b(3, "v");
+    let againB = b(1, iconEl(close_svg));
+    let hardB = b(2, iconEl(help_svg));
+    let goodB = b(3, iconEl(ok_svg));
     let buttons = document.createElement("div");
     buttons.append(againB, hardB, goodB);
     return buttons;
