@@ -2784,7 +2784,9 @@ async function showWordReview(x: { id: string; card: fsrsjs.Card }) {
     let wordRecord = (await wordsStore.getItem(wordid)) as record;
     let div = document.createElement("div");
     let context = crContext(wordRecord, x.id);
-    context.onclick = reviewHotkey["show"].f = async () => {
+    let hasShowAnswer = false;
+    async function showAnswer() {
+        hasShowAnswer = true;
         let word = (await card2word.getItem(x.id)) as string;
         let d = (await wordsStore.getItem(word)) as record;
         for (let i of d.means) {
@@ -2795,11 +2797,16 @@ async function showWordReview(x: { id: string; card: fsrsjs.Card }) {
                 dic.append(div);
             }
         }
-    };
+    }
+    context.onclick = reviewHotkey["show"].f = showAnswer;
     let dic = document.createElement("div");
     let buttons = getReviewCardButtons(x.id, x.card, context.innerText, async (rating) => {
-        let next = await nextDue(reviewType);
-        showReview(next, reviewType);
+        if (hasShowAnswer) {
+            let next = await nextDue(reviewType);
+            showReview(next, reviewType);
+        } else {
+            showAnswer();
+        }
     });
 
     div.append(context, dic, buttons);
@@ -2998,7 +3005,10 @@ async function showSentenceReview(x: { id: string; card: fsrsjs.Card }) {
     let sentence = (await card2sentence.getItem(x.id)) as record2;
     let div = document.createElement("div");
     let context = el("p", sentence.text);
-    context.onclick = reviewHotkey["show"].f = async () => {
+    let hasShowAnswer = false;
+    context.onclick = reviewHotkey["show"].f = showAnswer;
+    async function showAnswer() {
+        hasShowAnswer = true;
         dic.innerHTML = "";
         dic.append(el("p", { class: TRANSLATE }, sentence.trans));
         if (sentence.note) {
@@ -3006,11 +3016,15 @@ async function showSentenceReview(x: { id: string; card: fsrsjs.Card }) {
             p.innerText = sentence.note;
             dic.append(p);
         }
-    };
+    }
     let dic = document.createElement("div");
     let buttons = getReviewCardButtons(x.id, x.card, context.innerText, async (rating) => {
-        let next = await nextDue(reviewType);
-        showReview(next, reviewType);
+        if (hasShowAnswer) {
+            let next = await nextDue(reviewType);
+            showReview(next, reviewType);
+        } else {
+            showAnswer();
+        }
     });
 
     div.append(context, dic, buttons);
