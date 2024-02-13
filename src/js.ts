@@ -2821,11 +2821,15 @@ async function showWordReview(x: { id: string; card: fsrsjs.Card }) {
 }
 
 async function showSpellReview(x: { id: string; card: fsrsjs.Card }) {
-    let input = el("div", { class: "spell_input" }, "|");
+    const spaceHoder = "|";
+    let input = el("div", { class: "spell_input" }, spaceHoder);
     clearKeyboard();
     let wordEl = document.createElement("div");
-    let spellNum = 3;
+    const SPELLNUM = 2;
+    let spellNum = SPELLNUM;
+    let isPerfect = false;
     const word = x.id;
+    play(word);
     spellCheckF = async (inputValue: string) => {
         input.innerText = inputValue;
         let inputWord = inputValue;
@@ -2833,20 +2837,23 @@ async function showSpellReview(x: { id: string; card: fsrsjs.Card }) {
         if (inputWord === word) {
             // 正确
             if (spellNum === 1) {
-                setSpellCard(x.id, x.card, 4);
+                setSpellCard(x.id, x.card, isPerfect ? 4 : 3);
                 let next = await nextDue(reviewType);
                 showReview(next, reviewType);
             } else {
                 spellNum--;
                 inputValue = "";
-                input.innerText = `Good! ${spellNum} time(s) left`;
+                input.innerText = spaceHoder;
+                wordEl.append("👍");
             }
             clearKeyboard();
         }
         //错误归位
         if (inputWord.length === word.length && inputWord != word) {
+            spellNum = SPELLNUM;
+            isPerfect = false;
             inputValue = "";
-            input.innerText = `"${inputWord}" is wrong! ${spellNum} time(s) left`;
+            input.innerText = spaceHoder;
             wordEl.append(await spellDiffWord(word, inputWord));
             wordEl.append(await hyphenate(word, { hyphenChar }));
             play(word);
@@ -2860,6 +2867,7 @@ async function showSpellReview(x: { id: string; card: fsrsjs.Card }) {
             // 暂时展示
             input.innerText = "";
             clearKeyboard();
+            isPerfect = false;
             play(word);
             wordEl.innerText = await hyphenate(word, { hyphenChar });
             setSpellCard(x.id, x.card, 2);
