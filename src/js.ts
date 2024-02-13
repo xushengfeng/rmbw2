@@ -2924,7 +2924,15 @@ async function spellDiffWord(rightWord: string, wrongWord: string) {
 
 function getDiffWord(diff: Diff[]) {
     const div = document.createDocumentFragment();
-    for (let i of diff) {
+    for (let n = 0; n < diff.length; n++) {
+        const i = diff[n];
+        if (i[0] === -1 && diff[n + 1]?.[0] === 0 && diff[n + 2]?.[0] === 1) {
+            if (i[1] === diff[n + 2][1]) {
+                div.append(el("span", { class: "diff_exchange" }, [el("span", i[1]), el("span", diff[n + 1][1])]));
+                n += 2;
+                continue;
+            }
+        }
         if (i[0] === 0) {
             div.append(i[1]);
         } else if (i[0] === 1) {
