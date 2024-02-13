@@ -1296,10 +1296,10 @@ bookdicEl.onclick = async () => {
 async function sectionSelectEl(radio?: boolean) {
     const bookSectionsSelectEl = el("div", { popover: "auto" });
     document.body.append(bookSectionsSelectEl);
+    sectionSelect(bookSectionsSelectEl, radio);
     return {
         el: el("button", "选择词书", {
             onclick: () => {
-                sectionSelect(bookSectionsSelectEl, radio);
                 bookSectionsSelectEl.showPopover();
             },
         }),
@@ -2660,6 +2660,8 @@ reviewBEl.onclick = () => {
 };
 
 const reviewReflashEl = document.getElementById("review_reflash");
+const reviewScope = await sectionSelectEl();
+reviewReflashEl.parentElement.append(reviewScope.el);
 const reviewViewEl = document.getElementById("review_view");
 
 const keyboardEl = el("div", { class: "simple-keyboard" });
@@ -2700,17 +2702,29 @@ window.addEventListener("keydown", (e) => {
     keyboard.options.onChange(keyboard.getInput());
 });
 
+async function getWordsScope() {
+    const books = reviewScope.values();
+    if (books.length === 0) return;
+    let words: string[] = [];
+    for (let book of books) {
+        const w = (await getSection(book)).text.trim().split("\n");
+        words.push(...w);
+    }
+    return words;
+}
+
 async function getFutureReviewDue(days: number) {
     let now = new Date().getTime();
     now += days * 24 * 60 * 60 * 1000;
     now = Math.round(now);
+    const wordsScope = await getWordsScope();
     let wordList: { id: string; card: fsrsjs.Card }[] = [];
     const wordListTemp: string[] = [];
     let spellList: { id: string; card: fsrsjs.Card }[] = [];
     let sentenceList: { id: string; card: fsrsjs.Card }[] = [];
     const sentenceListTemp: string[] = [];
-    await card2word.iterate((value, key) => {
-        wordListTemp.push(key);
+    await card2word.iterate((value: string, key) => {
+        if (!wordsScope || wordsScope.includes(value)) wordListTemp.push(key);
     });
     for (let key of wordListTemp) {
         const card = (await cardsStore.getItem(key)) as fsrsjs.Card;
@@ -2731,7 +2745,7 @@ async function getFutureReviewDue(days: number) {
     wordList = l;
     await spellStore.iterate((value: fsrsjs.Card, key) => {
         if (value.due.getTime() < now) {
-            spellList.push({ id: key, card: value });
+            if (!wordsScope || wordsScope.includes(key)) spellList.push({ id: key, card: value });
         }
     });
 
