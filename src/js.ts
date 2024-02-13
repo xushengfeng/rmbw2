@@ -2796,15 +2796,26 @@ async function showWordReview(x: { id: string; card: fsrsjs.Card }) {
         }
     };
     let dic = document.createElement("div");
+    let buttons = getReviewCardButtons(x.id, x.card, context.innerText, async (rating) => {
+        let next = await nextDue(reviewType);
+        showReview(next, reviewType);
+    });
+
+    div.append(context, dic, buttons);
+    div.classList.add("review_word");
+    reviewViewEl.innerHTML = "";
+    reviewViewEl.append(div);
+}
+
+function getReviewCardButtons(id: string, card: fsrsjs.Card, readText: string, f: (rating: number) => void) {
     const showTime = new Date().getTime();
     let b = (rating: fsrsjs.Rating, text: string) => {
         let button = document.createElement("button");
         button.innerText = text;
         button.onclick = async () => {
-            if (rating === 3 && new Date().getTime() - showTime < 400 * context.childElementCount + 200) rating = 4; // todo 自定义
-            setReviewCard(x.id, x.card, rating);
-            let next = await nextDue(reviewType);
-            showReview(next, reviewType);
+            if (rating === 3 && new Date().getTime() - showTime < (await getReadTime(readText)) + 200) rating = 4; // todo 自定义
+            setReviewCard(id, card, rating);
+            f(rating);
         };
         return button;
     };
@@ -2813,11 +2824,11 @@ async function showWordReview(x: { id: string; card: fsrsjs.Card }) {
     let goodB = b(3, "v");
     let buttons = document.createElement("div");
     buttons.append(againB, hardB, goodB);
+    return buttons;
+}
 
-    div.append(context, dic, buttons);
-    div.classList.add("review_word");
-    reviewViewEl.innerHTML = "";
-    reviewViewEl.append(div);
+async function getReadTime(text: string) {
+    return text.length * 20;
 }
 
 async function showSpellReview(x: { id: string; card: fsrsjs.Card }) {
@@ -2980,22 +2991,10 @@ async function showSentenceReview(x: { id: string; card: fsrsjs.Card }) {
         }
     };
     let dic = document.createElement("div");
-    let b = (rating: fsrsjs.Rating, text: string) => {
-        let button = document.createElement("button");
-        button.innerText = text;
-        button.onclick = async () => {
-            setReviewCard(x.id, x.card, rating);
-            let next = await nextDue(reviewType);
-            showReview(next, reviewType);
-        };
-        return button;
-    };
-    let againB = b(1, "x");
-    let hardB = b(2, "o");
-    let goodB = b(3, "v");
-    let esayB = b(4, "vv");
-    let buttons = document.createElement("div");
-    buttons.append(againB, hardB, goodB, esayB);
+    let buttons = getReviewCardButtons(x.id, x.card, context.innerText, async (rating) => {
+        let next = await nextDue(reviewType);
+        showReview(next, reviewType);
+    });
 
     div.append(context, dic, buttons);
     div.classList.add("review_word");
