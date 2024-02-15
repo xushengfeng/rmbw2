@@ -3323,6 +3323,13 @@ settingEl.querySelectorAll("[data-path]").forEach(async (el: HTMLElement) => {
 });
 function setUi() {}
 
+settingEl.append(
+    el("div", [
+        el("h2", "词书"),
+        el("div", [el("label", ["忽略词表", el("input", { "data-path": "wordBook.ignore" })])]),
+    ])
+);
+
 const rmbwJsonName = "rmbw.json";
 const rmbwZipName = "rmbw.zip";
 
