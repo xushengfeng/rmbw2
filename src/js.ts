@@ -2090,7 +2090,8 @@ function aiButtons(textEl: HTMLTextAreaElement, word: string, context: string) {
     function setText(text: string) {
         textEl.setRangeText(text);
     }
-    return el("div", [
+    const buttons = document.createDocumentFragment();
+    buttons.append(
         el("button", "所有", {
             onclick: async () => {
                 let text = [];
@@ -2128,14 +2129,16 @@ function aiButtons(textEl: HTMLTextAreaElement, word: string, context: string) {
             },
         }),
         tmpAiB(textEl, `$这里有个单词${word}，它位于${context}`),
-        dicB(textEl, word),
-    ]);
+        dicB(textEl, word)
+    );
+    return buttons;
 }
 function aiButtons1(textEl: HTMLTextAreaElement, word: string) {
     function setText(text: string) {
         textEl.setRangeText(text);
     }
-    return el("div", [
+    const buttons = document.createDocumentFragment();
+    buttons.append(
         el("button", "词根词缀", {
             onclick: async () => {
                 setText(await wordAiText.fix(word));
@@ -2151,8 +2154,9 @@ function aiButtons1(textEl: HTMLTextAreaElement, word: string) {
                 setText(await wordAiText.etymology(word));
             },
         }),
-        tmpAiB(textEl, `$这里有个单词${word}`),
-    ]);
+        tmpAiB(textEl, `$这里有个单词${word}`)
+    );
+    return buttons;
 }
 
 function wordFix2str(f: { type: "prefix" | "root" | "suffix"; t: string; dis: string }[]) {
@@ -2171,7 +2175,8 @@ function aiButtons2(textEl: HTMLTextAreaElement, sentence: string) {
     function setText(text: string) {
         textEl.setRangeText(text);
     }
-    return el("div", [
+    const buttons = document.createDocumentFragment();
+    buttons.append(
         el("button", "分析", {
             onclick: async () => {
                 let t = sentenceGm(await sentenceAi.gm(sentence));
@@ -2183,8 +2188,9 @@ function aiButtons2(textEl: HTMLTextAreaElement, sentence: string) {
                 setText((await sentenceAi.split(sentence)).shortSentences.join("\n"));
             },
         }),
-        tmpAiB(textEl, `$这里有个句子${sentence}`),
-    ]);
+        tmpAiB(textEl, `$这里有个句子${sentence}`)
+    );
+    return buttons;
 }
 
 function sentenceGm(t: senNode) {

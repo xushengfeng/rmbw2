@@ -603,13 +603,14 @@ div:has(> .translate) > :not(.translate) {
         font-family: var(--font-family);
         font-size: var(--font-size);
     }
-    & > :last-child > :first-child {
+    & > :last-child {
         display: flex;
         & > button {
             display: block;
             width: auto;
             height: var(--size0);
             padding: 0 4px;
+            min-width: var(--size0);
         }
     }
     &::backdrop {
@@ -633,13 +634,14 @@ div:has(> .translate) > :not(.translate) {
         font-family: var(--font-family);
         font-size: var(--font-size);
     }
-    & > :last-child > :first-child {
+    & > :last-child {
         display: flex;
         & > button {
             display: block;
             width: auto;
             height: var(--size0);
             padding: 0 4px;
+            min-width: var(--size0);
         }
     }
     &::backdrop {
@@ -677,15 +679,6 @@ div:has(> .translate) > :not(.translate) {
         & > label:has(> input:checked) {
             border: var(--color) 1px dashed;
             border-radius: 1rem;
-        }
-    }
-    & > :last-child > :first-child {
-        display: flex;
-        & > button {
-            display: block;
-            width: auto;
-            height: var(--size0);
-            padding: 0 4px;
         }
     }
     &::backdrop {
