@@ -2904,6 +2904,7 @@ function crContext(word: record, id: string) {
 async function showWordReview(x: { id: string; card: fsrsjs.Card }) {
     let wordid = (await card2word.getItem(x.id)) as string;
     let wordRecord = (await wordsStore.getItem(wordid)) as record;
+    play(wordRecord.word);
     let div = document.createElement("div");
     let context = crContext(wordRecord, x.id);
     let hasShowAnswer = false;
