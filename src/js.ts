@@ -1415,7 +1415,7 @@ async function showMarkList() {
                             } else {
                                 let record = (await wordsStore.getItem(i.s.id)) as record;
                                 record = await rmWord(record, i.id);
-                                if (record) await clearWordMean(record);
+                                await clearWordMean(record);
                                 rmStyle(i.s.index[0]);
                             }
                             delete section.words[i.id];
@@ -2021,6 +2021,7 @@ async function rmWord(record: record, sourceId: string) {
     return record;
 }
 async function clearWordMean(record: record) {
+    if (!record) return;
     let means: record["means"] = [];
     for (let m of record.means) {
         if (m.contexts.length === 0) {
