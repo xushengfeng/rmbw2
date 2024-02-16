@@ -959,3 +959,10 @@ div:has(> .translate) > :not(.translate) {
     display: flex;
     flex-direction: column;
 }
+
+.docs {
+    overflow: scroll;
+    height: 100dvh;
+    padding: 4rem;
+    box-sizing: border-box;
+}
