@@ -84,6 +84,7 @@ function showMenu(x: number, y: number) {
     menuEl.style.left = x + "px";
     menuEl.style.top = y + "px";
     willShowMenu = true;
+    menuEl.onclick = () => menuEl.hidePopover();
 }
 
 document.body.addEventListener("pointerup", (e) => {
