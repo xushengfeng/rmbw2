@@ -27,6 +27,7 @@
         "localforage": "^1.10.0",
         "localforage-setitems": "^1.4.0",
         "mammoth": "^1.6.0",
+        "markdown-it": "^14.0.0",
         "msedge-tts-browserify": "^1.3.4",
         "redom": "^4.0.0",
         "simple-keyboard": "^3.7.45"
