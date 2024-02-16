@@ -214,7 +214,6 @@ const TMPMARKWORD = "tmp_mark_word";
 const TRANSLATE = "translate";
 const DICSENTENCE = "dic_sentence";
 const HIDEMEANS = "hide_means";
-const DISABLECHANGE = "disable_change";
 const TODOMARK = "to_visit";
 const NOTEDIALOG = "note_dialog";
 const AIDIALOG = "ai_dialog";
@@ -581,11 +580,6 @@ async function showBooks() {
             showBook(book);
             book.visitTime = new Date().getTime();
             bookshelfStore.setItem(book.id, book);
-            if (book.canEdit) {
-                changeEditEl.classList.remove(DISABLECHANGE);
-            } else {
-                changeEditEl.classList.add(DISABLECHANGE);
-            }
             booksEl.hidePopover();
         };
         bookIEl.oncontextmenu = (e) => {
@@ -1073,7 +1067,6 @@ let isEdit = false;
 let editText = "";
 
 async function changeEdit(b: boolean) {
-    if (changeEditEl.classList.contains(DISABLECHANGE)) return;
     isEdit = b;
     if (isEdit) {
         changeEditEl.innerHTML = icon(ok_svg);
@@ -1178,6 +1171,7 @@ async function setEdit() {
     let section = await getSection(sectionId);
     bookContentContainerEl.innerHTML = "";
     let text = el("textarea");
+    text.disabled = !book.canEdit;
     bookContentContainerEl.append(text);
     bookContentEl = text;
     text.value = section.text;

@@ -256,9 +256,6 @@ body {
     width: var(--size0);
     position: relative;
 }
-.disable_change {
-    cursor: not-allowed;
-}
 #book_buttons > div > .icon {
     height: var(--size0);
     width: var(--size0);
