@@ -2434,6 +2434,7 @@ function tmpAi(mainTextEl: HTMLTextAreaElement, info: string, x: number, y: numb
         if (e.key === "Enter" && !e.shiftKey) {
             let text = textEl.value.trim();
             let aiM = textAi(text);
+            if (aiM.at(-1).role != "user") return;
             if (info) aiM.unshift({ role: "system", content: info });
             console.log(aiM);
             let start = textEl.selectionStart;
