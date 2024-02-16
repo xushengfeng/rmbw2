@@ -671,6 +671,19 @@ async function showBookSections(sections: book["sections"]) {
                 book.lastPosi = nowBook.sections;
                 bookshelfStore.setItem(nowBook.book, book);
             };
+            sEl.oncontextmenu = (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                menuEl.innerHTML = "";
+                menuEl.append(
+                    el("div", "复制id", {
+                        onclick: async () => {
+                            navigator.clipboard.writeText(sections[i]);
+                        },
+                    })
+                );
+                showMenu(e.clientX, e.clientY);
+            };
             return sEl;
         }
     );
