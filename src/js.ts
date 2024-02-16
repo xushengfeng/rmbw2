@@ -1389,6 +1389,11 @@ const autoNewWordEl = el("div", [
         },
     }),
     bookListEl.el,
+    el("button", iconEl(clear_svg), {
+        onclick: () => {
+            selectWord([]);
+        },
+    }),
 ]);
 markListBarEl.append(autoNewWordEl, markListEl);
 
@@ -2607,6 +2612,7 @@ function flatWordCard(record: record, id: string) {
 }
 
 function selectWord(words: string[]) {
+    bookContentEl.querySelectorAll(`.${TMPMARKWORD}`).forEach((el) => el.classList.remove(TMPMARKWORD));
     bookContentEl.querySelectorAll("span[data-i]").forEach((el: HTMLSpanElement) => {
         if (words.includes(el.innerText)) {
             el.classList.add(TMPMARKWORD);
