@@ -205,7 +205,16 @@ function vlist(
         requestAnimationFrame(show);
     }
     pel.addEventListener("scroll", s);
-    return { remove: () => pel.removeEventListener("scroll", s), show };
+
+    const observer = new MutationObserver((mutationsList) => {
+        for (let mutation of mutationsList) {
+            if (mutation.type === "childList" && Array.from(mutation.removedNodes).includes(blankEl)) {
+                pel.removeEventListener("scroll", s);
+            }
+        }
+    });
+    observer.observe(pel, { childList: true });
+    return { show };
 }
 
 /************************************main */
@@ -688,15 +697,11 @@ let wordList: { text: string; c: record }[] = [];
 
 let contentP: string[] = [];
 
-let wordRemove: () => void = () => {};
-
 async function showBookContent(id: string) {
     let s = (await sectionsStore.getItem(id)) as section;
     bookContentContainerEl.innerHTML = "";
     bookContentEl = el("div");
     bookContentContainerEl.append(bookContentEl);
-
-    wordRemove();
 
     editText = s.text;
 
@@ -754,8 +759,6 @@ async function showBookContent(id: string) {
             let p = el("p", wordList[i].text);
             return p;
         });
-
-        wordRemove = v.remove;
 
         setScrollPosi(bookContentContainerEl, contentScrollPosi);
         v.show();
