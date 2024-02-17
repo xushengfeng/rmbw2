@@ -71,6 +71,10 @@ function uuid() {
     }
 }
 
+function time() {
+    return new Date().getTime();
+}
+
 var setting = localforage.createInstance({
     name: "setting",
     driver: localforage.LOCALSTORAGE,
@@ -2555,6 +2559,16 @@ var card2word = localforage.createInstance({ name: "word", storeName: "card2word
 var spellStore = localforage.createInstance({ name: "word", storeName: "spell" });
 var card2sentence = localforage.createInstance({ name: "word", storeName: "card2sentence" });
 
+var cardActionsStore = localforage.createInstance({ name: "word", storeName: "actions" });
+function setCardAction(cardId: string, time: Date, rating: fsrsjs.Rating, state: fsrsjs.State, duration: number) {
+    cardActionsStore.setItem(String(time), {
+        cardId,
+        rating,
+        state,
+        duration,
+    });
+}
+
 var transCache = localforage.createInstance({ name: "aiCache", storeName: "trans" });
 var ttsCache = localforage.createInstance({ name: "aiCache", storeName: "tts" });
 
@@ -3007,7 +3021,7 @@ function getReviewCardButtons(id: string, card: fsrsjs.Card, readText: string, f
         button.append(icon);
         button.onclick = reviewHotkey[rating].f = async () => {
             if (rating === 3 && new Date().getTime() - showTime < (await getReadTime(readText)) + 200) rating = 4; // todo 自定义
-            setReviewCard(id, card, rating);
+            setReviewCard(id, card, rating, time() - showTime);
             f(rating);
         };
         return button;
@@ -3032,6 +3046,7 @@ async function showSpellReview(x: { id: string; card: fsrsjs.Card }) {
     const SPELLNUM = 2;
     let spellNum = SPELLNUM;
     let isPerfect = false;
+    let showTime = time();
     const word = x.id;
     play(word);
     spellCheckF = async (inputValue: string) => {
@@ -3041,7 +3056,7 @@ async function showSpellReview(x: { id: string; card: fsrsjs.Card }) {
         if (inputWord === word) {
             // 正确
             if (spellNum === 1) {
-                setSpellCard(x.id, x.card, isPerfect ? 4 : 3);
+                setSpellCard(x.id, x.card, isPerfect ? 4 : 3, time() - showTime);
                 let next = await nextDue(reviewType);
                 showReview(next, reviewType);
             } else {
@@ -3061,7 +3076,9 @@ async function showSpellReview(x: { id: string; card: fsrsjs.Card }) {
             wordEl.append(await spellDiffWord(word, inputWord));
             wordEl.append(await hyphenate(word, { hyphenChar }));
             play(word);
-            setSpellCard(x.id, x.card, 1);
+            let t = time();
+            setSpellCard(x.id, x.card, 1, t - showTime);
+            showTime = t;
             clearKeyboard();
         }
     };
@@ -3074,7 +3091,9 @@ async function showSpellReview(x: { id: string; card: fsrsjs.Card }) {
             isPerfect = false;
             play(word);
             wordEl.innerText = await hyphenate(word, { hyphenChar });
-            setSpellCard(x.id, x.card, 2);
+            let t = time();
+            setSpellCard(x.id, x.card, 2, t - showTime);
+            showTime = t;
         }
         if (button === "{audio}") {
             // 发音
@@ -3291,13 +3310,15 @@ async function pTTS(index: number) {
     pTTSEl.onended = nextplay;
 }
 
-function setReviewCard(id: string, card: fsrsjs.Card, rating: fsrsjs.Rating) {
+function setReviewCard(id: string, card: fsrsjs.Card, rating: fsrsjs.Rating, duration: number) {
     let now = new Date();
+    setCardAction(id, now, rating, card.state, duration);
     let sCards = fsrs.repeat(card, now);
     cardsStore.setItem(id, sCards[rating].card);
 }
-function setSpellCard(id: string, card: fsrsjs.Card, rating: fsrsjs.Rating) {
+function setSpellCard(id: string, card: fsrsjs.Card, rating: fsrsjs.Rating, duration: number) {
     let now = new Date();
+    setCardAction(id, now, rating, card.state, duration);
     let sCards = fsrs.repeat(card, now);
     spellStore.setItem(id, sCards[rating].card);
 }
