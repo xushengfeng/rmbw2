@@ -2561,7 +2561,7 @@ var card2sentence = localforage.createInstance({ name: "word", storeName: "card2
 
 var cardActionsStore = localforage.createInstance({ name: "word", storeName: "actions" });
 function setCardAction(cardId: string, time: Date, rating: fsrsjs.Rating, state: fsrsjs.State, duration: number) {
-    cardActionsStore.setItem(String(time), {
+    cardActionsStore.setItem(String(time.getTime()), {
         cardId,
         rating,
         state,
