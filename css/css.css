@@ -700,6 +700,15 @@ div:has(> .translate) > :not(.translate) {
     transition: var(--transition);
     font-family: var(--font-family);
 
+    & > :nth-child(1) {
+        display: flex;
+        & > button {
+            display: block;
+            width: auto;
+            min-width: var(--size0);
+        }
+    }
+
     & > :nth-child(2) {
         position: relative;
         overflow-y: scroll;

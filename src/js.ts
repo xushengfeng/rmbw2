@@ -1397,6 +1397,11 @@ const autoNewWordEl = el("div", [
             selectWord([]);
         },
     }),
+    el("button", "将未标记的词添加到忽略词表", {
+        onclick: () => {
+            autoIgnore();
+        },
+    }),
 ]);
 markListBarEl.append(autoNewWordEl, markListEl);
 
@@ -2668,6 +2673,21 @@ async function getIgnoreWords() {
     const section = await getSection(sectionId);
     if (!section) return [];
     return section.text.trim().split("\n");
+}
+
+async function autoIgnore() {
+    const sectionId = (await setting.getItem("wordBook.ignore")) as string;
+    if (!sectionId) return;
+    const words = Array.from(bookContentEl.querySelectorAll(`:scope>:not(.${MARKWORD})`)).map((el) =>
+        el.textContent.trim()
+    );
+    const section = await getSection(sectionId);
+    const oldWords = section.text.trim().split("\n");
+    for (let w of words) {
+        if (!oldWords.includes(w)) oldWords.push(w);
+    }
+    section.text = oldWords.join("\n");
+    await sectionsStore.setItem(sectionId, section);
 }
 
 setTimeout(async () => {
