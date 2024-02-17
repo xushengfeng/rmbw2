@@ -723,10 +723,9 @@ async function showBookContent(id: string) {
     if (isWordBook) {
         let l = s.text.trim().split("\n");
         let keys = await wordsStore.keys();
+        const ignoreWords = await getIgnoreWords();
         let matchWords = 0;
-        let means = 0;
         let means1 = 0;
-        const maxMeans = 3;
         for (let i of l) {
             let t = i;
             let c: record;
@@ -734,7 +733,6 @@ async function showBookContent(id: string) {
                 c = (await wordsStore.getItem(i)) as record;
                 t = `${t} *`;
                 matchWords++;
-                means += Math.min(c.means.length / maxMeans, 1);
                 let r = 0;
                 for (let j of c.means) {
                     let x = (await cardsStore.getItem(j.card_id)) as fsrsjs.Card;
@@ -742,6 +740,10 @@ async function showBookContent(id: string) {
                     r += retrievability;
                 }
                 means1 += r / c.means.length;
+            } else if (ignoreWords.includes(i)) {
+                t = `${t} **`;
+                matchWords++;
+                means1 += 1;
             }
             wordList.push({ text: t, c: c });
         }
@@ -750,8 +752,8 @@ async function showBookContent(id: string) {
         }
         bookContentContainerEl.append(
             el("table", { class: "words_sum" }, [
-                el("tr", [el("th", "词"), el("th", "了解"), el("th", "有效"), el("th", "记忆")]),
-                el("tr", [el("td", String(l.length)), p(matchWords), p(means), p(means1)]),
+                el("tr", [el("th", "词"), el("th", "了解"), el("th", "记忆")]),
+                el("tr", [el("td", String(l.length)), p(matchWords), p(means1)]),
             ])
         );
 
