@@ -3329,40 +3329,6 @@ uploadDicEl.onchange = () => {
     }
 };
 
-settingEl.querySelectorAll("[data-path]").forEach(async (el: HTMLElement) => {
-    const path = el.getAttribute("data-path");
-    let value = await setting.getItem(path);
-    if (el.tagName === "INPUT") {
-        let iel = el as HTMLInputElement;
-        if (iel.type === "checkbox") {
-            iel.checked = value as boolean;
-            iel.addEventListener("input", () => {
-                setting.setItem(path, iel.checked);
-                setUi();
-            });
-        } else if (iel.type === "range") {
-            iel.value = value as string;
-            iel.addEventListener("input", () => {
-                setting.setItem(path, Number(iel.value));
-                setUi();
-            });
-        } else {
-            iel.value = value as string;
-            iel.addEventListener("input", () => {
-                setting.setItem(path, iel.value);
-                setUi();
-            });
-        }
-    } else if (el.tagName === "SELECT") {
-        (el as HTMLSelectElement).value = value as string;
-        el.onchange = () => {
-            setting.setItem(path, (el as HTMLSelectElement).value);
-            setUi();
-        };
-    }
-});
-function setUi() {}
-
 settingEl.append(
     el("div", [
         el("h2", "词书"),
@@ -3602,3 +3568,32 @@ settingEl.append(
         ]),
     ])
 );
+
+settingEl.querySelectorAll("[data-path]").forEach(async (el: HTMLElement) => {
+    const path = el.getAttribute("data-path");
+    let value = await setting.getItem(path);
+    if (el.tagName === "INPUT") {
+        let iel = el as HTMLInputElement;
+        if (iel.type === "checkbox") {
+            iel.checked = value as boolean;
+            iel.addEventListener("input", () => {
+                setting.setItem(path, iel.checked);
+            });
+        } else if (iel.type === "range") {
+            iel.value = value as string;
+            iel.addEventListener("input", () => {
+                setting.setItem(path, Number(iel.value));
+            });
+        } else {
+            iel.value = value as string;
+            iel.addEventListener("input", () => {
+                setting.setItem(path, iel.value);
+            });
+        }
+    } else if (el.tagName === "SELECT") {
+        (el as HTMLSelectElement).value = value as string;
+        el.onchange = () => {
+            setting.setItem(path, (el as HTMLSelectElement).value);
+        };
+    }
+});
