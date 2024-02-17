@@ -3016,10 +3016,16 @@ document.addEventListener("keydown", (e) => {
 
 function getReviewCardButtons(id: string, card: fsrsjs.Card, readText: string, f: (rating: number) => void) {
     const showTime = new Date().getTime();
+    let hasClick = false;
     let b = (rating: fsrsjs.Rating, icon: HTMLElement) => {
         let button = document.createElement("button");
         button.append(icon);
         button.onclick = reviewHotkey[rating].f = async () => {
+            if (hasClick) {
+                f(rating);
+                return;
+            }
+            hasClick = true;
             if (rating === 3 && new Date().getTime() - showTime < (await getReadTime(readText)) + 200) rating = 4; // todo 自定义
             setReviewCard(id, card, rating, time() - showTime);
             f(rating);
