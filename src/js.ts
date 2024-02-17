@@ -757,13 +757,12 @@ async function showBookContent(id: string) {
             ])
         );
 
-        const v = vlist(bookContentContainerEl, wordList, { iHeight: 24, gap: 8, paddingTop: 120 }, (i) => {
+        vlist(bookContentContainerEl, wordList, { iHeight: 24, gap: 8, paddingTop: 120 }, (i) => {
             let p = el("p", wordList[i].text);
             return p;
         });
 
         setScrollPosi(bookContentContainerEl, contentScrollPosi);
-        v.show();
         return;
     }
 
