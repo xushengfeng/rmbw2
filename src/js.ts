@@ -3372,7 +3372,7 @@ async function renderCharts() {
             k
         ) => {
             const date = new Date(k);
-            if (v.state === fsrsjs.State.New) {
+            if (v.state === fsrsjs.State.New && !v.rating) {
                 newCard.push(date);
             } else {
                 reviewCard.push(date);
