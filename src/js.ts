@@ -2799,6 +2799,10 @@ async function getWordsScope() {
     return words;
 }
 
+function filterWithScope(word: string, scope: string[]) {
+    return !scope || scope.includes(word);
+}
+
 async function getFutureReviewDue(days: number) {
     let now = new Date().getTime();
     now += days * 24 * 60 * 60 * 1000;
@@ -2810,7 +2814,7 @@ async function getFutureReviewDue(days: number) {
     let sentenceList: { id: string; card: fsrsjs.Card }[] = [];
     const sentenceListTemp: string[] = [];
     await card2word.iterate((value: string, key) => {
-        if (!wordsScope || wordsScope.includes(value)) wordListTemp.push(key);
+        if (filterWithScope(value, wordsScope)) wordListTemp.push(key);
     });
     for (let key of wordListTemp) {
         const card = (await cardsStore.getItem(key)) as fsrsjs.Card;
@@ -2831,7 +2835,7 @@ async function getFutureReviewDue(days: number) {
     wordList = l;
     await spellStore.iterate((value: fsrsjs.Card, key) => {
         if (value.due.getTime() < now) {
-            if (!wordsScope || wordsScope.includes(key)) spellList.push({ id: key, card: value });
+            if (filterWithScope(key, wordsScope)) spellList.push({ id: key, card: value });
         }
     });
 
@@ -3361,13 +3365,32 @@ document.body.append(plotEl);
 async function renderCharts() {
     plotEl.innerHTML = "";
     const cardDue = el("div");
-    const due: number[] = [];
-    await cardsStore.iterate((v: fsrsjs.Card, k) => {
-        due.push(v.due.getTime());
+    const wordsScope = await getWordsScope();
+    const wordDue: string[] = [];
+    const spellDue: number[] = [];
+    const sentenceDue: string[] = [];
+    await wordsStore.iterate((v: record, k: string) => {
+        if (!filterWithScope(k, wordsScope)) return;
+        for (let m of v.means) {
+            wordDue.push(m.card_id);
+        }
     });
-    cardDue.append(renderCardDue(due));
+    await spellStore.iterate((v: fsrsjs.Card, k: string) => {
+        if (!filterWithScope(k, wordsScope)) return;
+        spellDue.push(v.due.getTime());
+    });
+    await card2sentence.iterate((v: record2, k: string) => {
+        sentenceDue.push(k);
+    });
+    const wordDue1: number[] = [];
+    for (let k of wordDue) wordDue1.push(((await cardsStore.getItem(k)) as fsrsjs.Card).due.getTime());
+    const sentenceDue1: number[] = [];
+    for (let k of sentenceDue) sentenceDue1.push(((await cardsStore.getItem(k)) as fsrsjs.Card).due.getTime());
+
+    cardDue.append("单词", renderCardDue(wordDue1));
+    cardDue.append("拼写", renderCardDue(spellDue));
+    cardDue.append("句子", renderCardDue(sentenceDue1));
     plotEl.append(cardDue);
-    // todo spell scope
 
     const newCard: Date[] = [];
     const reviewCard: Date[] = [];
@@ -3395,7 +3418,8 @@ async function renderCharts() {
 }
 
 function renderCardDue(data: number[]) {
-    const canvas = el("canvas");
+    const canvas = el("canvas", { class: "oneD_plot" });
+    const now = time();
     const zoom = 1 / ((1000 * 60 * 60) / 10);
     let max = -Infinity,
         min = Infinity;
@@ -3403,7 +3427,8 @@ function renderCardDue(data: number[]) {
         if (d > max) max = d;
         if (d < min) min = d;
     });
-    canvas.width = (max - min) * zoom;
+    max = Math.max(max, now);
+    canvas.width = (max - min) * zoom + 1;
     canvas.height = 16;
     const ctx = canvas.getContext("2d");
     function l(x: number, color: string) {
@@ -3417,7 +3442,6 @@ function renderCardDue(data: number[]) {
         const x = (d - min) * zoom;
         l(x, "#000");
     });
-    const now = time();
     const x = (now - min) * zoom;
     l(x, "#f00");
     l((now + 1000 * 60 * 60 - min) * zoom, "#00f");
