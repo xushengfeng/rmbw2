@@ -717,6 +717,7 @@ async function showBookContent(id: string) {
             el("div", iconEl(recume_svg), {
                 onclick: async () => {
                     autoPlay = true;
+                    autoPlayTTSEl.checked = true;
                     await pTTS(0);
                     for (let i = 1; i < contentP.length; i++) {
                         await getTTS(contentP[i]);
