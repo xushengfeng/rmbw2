@@ -336,7 +336,7 @@ body {
     position: relative;
     height: calc(100dvh - var(--size0));
     box-sizing: border-box;
-    padding: 1rem 64px calc(100dvh - var(--size0));
+    padding: 1rem 24px calc(100dvh - var(--size0));
     overflow-y: scroll;
     overflow-x: hidden;
     scroll-behavior: smooth;
