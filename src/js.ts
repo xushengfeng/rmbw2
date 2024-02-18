@@ -3277,7 +3277,14 @@ tts.setMetadata(
     OUTPUT_FORMAT.WEBM_24KHZ_16BIT_MONO_OPUS
 );
 
+async function ttsNormalize(text: string) {
+    const posi = (((await setting.getItem(ttsVoiceConfig)) as string) || "en-GB-LibbyNeural").slice(0, 2);
+    if (posi === "zh" || posi === "ja" || posi === "ko") return;
+    return text.normalize("NFKC");
+}
+
 async function getTTS(text: string) {
+    text = await ttsNormalize(text);
     let b = (await ttsCache.getItem(text)) as Blob;
     if (b) {
         return URL.createObjectURL(b);
