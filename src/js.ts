@@ -50,6 +50,7 @@ import line_height_small_svg from "../assets/icons/line_height_small.svg";
 import line_height_large_svg from "../assets/icons/line_height_large.svg";
 import content_width_small_svg from "../assets/icons/content_width_small.svg";
 import content_width_large_svg from "../assets/icons/content_width_large.svg";
+import chart_svg from "../assets/icons/chart.svg";
 import githubIcon from "../assets/other/Github.svg";
 
 function icon(src: string) {
@@ -2742,7 +2743,7 @@ const reviewScope = await sectionSelectEl();
 reviewReflashEl.parentElement.append(reviewScope.el);
 const reviewViewEl = document.getElementById("review_view");
 reviewReflashEl.parentElement.append(
-    el("button", "charts", {
+    el("button", iconEl(chart_svg), {
         onclick: () => {
             plotEl.showPopover();
             renderCharts();
