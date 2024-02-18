@@ -3350,6 +3350,30 @@ async function renderCharts() {
     cardDue.append(renderCardDue(due));
     plotEl.append(cardDue);
     // todo spell scope
+
+    const newCard: Date[] = [];
+    const reviewCard: Date[] = [];
+    await cardActionsStore.iterate(
+        (
+            v: {
+                cardId: string;
+                rating: fsrsjs.Rating;
+                state: fsrsjs.State;
+                duration: number;
+            },
+            k
+        ) => {
+            const date = new Date(k);
+            if (v.state === fsrsjs.State.New) {
+                newCard.push(date);
+            } else {
+                reviewCard.push(date);
+            }
+        }
+    );
+    const cal = renderCal(2024, newCard);
+    const cal1 = renderCal(2024, reviewCard);
+    plotEl.append(el("div", [el("h2", "新卡片"), cal, el("h2", "已复习"), cal1]));
 }
 
 function renderCardDue(data: number[]) {
@@ -3381,6 +3405,34 @@ function renderCardDue(data: number[]) {
     l((now + 1000 * 60 * 60 - min) * zoom, "#00f");
     l((now + 1000 * 60 * 60 * 24 - min) * zoom, "#00f");
     return canvas;
+}
+
+function renderCal(year: number, data: Date[]) {
+    const count: { [key: string]: number } = {};
+    for (let d of data) {
+        const id = d.toDateString();
+        if (count[id]) count[id]++;
+        else count[id] = 1;
+    }
+    const max = Math.max(...Object.values(count));
+    const div = el("div", { class: "cal_plot" });
+    const firstDate = new Date(year, 0, 1);
+    const zero2first = (firstDate.getDay() + 1) * 24 * 60 * 60 * 1000;
+    let s_date = new Date(firstDate.getTime() - zero2first);
+    const f = document.createDocumentFragment();
+    for (let x = 1; x <= 53; x++) {
+        for (let y = 1; y <= 7; y++) {
+            s_date = new Date(s_date.getTime() + 24 * 60 * 60 * 1000);
+            let x = `${s_date.getFullYear()}-${s_date.getMonth() + 1}-${s_date.getDate()}`;
+            const v = (count[s_date.toDateString()] ?? 0) / max;
+            const item = el("div");
+            item.title = s_date.toLocaleDateString();
+            if (v) item.style.backgroundColor = `color-mix(in srgb-linear, #9be9a8, #216e39 ${v * 100}%)`;
+            f.append(item);
+        }
+    }
+    div.append(f);
+    return div;
 }
 
 //###### setting
