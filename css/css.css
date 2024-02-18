@@ -898,6 +898,14 @@ div:has(> .translate) > :not(.translate) {
     }
 }
 
+.plot {
+    max-width: 90dvw;
+    & > div {
+        width: 100%;
+        overflow: scroll;
+    }
+}
+
 #setting {
     overflow: scroll;
     background-color: var(--bg1);

@@ -2723,6 +2723,14 @@ const reviewReflashEl = document.getElementById("review_reflash");
 const reviewScope = await sectionSelectEl();
 reviewReflashEl.parentElement.append(reviewScope.el);
 const reviewViewEl = document.getElementById("review_view");
+reviewReflashEl.parentElement.append(
+    el("button", "charts", {
+        onclick: () => {
+            plotEl.showPopover();
+            renderCharts();
+        },
+    })
+);
 
 const keyboardEl = el("div", { class: "simple-keyboard" });
 const handwriterEl = el("div");
@@ -3327,6 +3335,52 @@ function setSpellCard(id: string, card: fsrsjs.Card, rating: fsrsjs.Rating, dura
     setCardAction(id, now, rating, card.state, duration);
     let sCards = fsrs.repeat(card, now);
     spellStore.setItem(id, sCards[rating].card);
+}
+
+const plotEl = el("div", { popover: "auto", class: "plot" });
+document.body.append(plotEl);
+
+async function renderCharts() {
+    plotEl.innerHTML = "";
+    const cardDue = el("div");
+    const due: number[] = [];
+    await cardsStore.iterate((v: fsrsjs.Card, k) => {
+        due.push(v.due.getTime());
+    });
+    cardDue.append(renderCardDue(due));
+    plotEl.append(cardDue);
+    // todo spell scope
+}
+
+function renderCardDue(data: number[]) {
+    const canvas = el("canvas");
+    const zoom = 1 / ((1000 * 60 * 60) / 10);
+    let max = -Infinity,
+        min = Infinity;
+    data.forEach((d) => {
+        if (d > max) max = d;
+        if (d < min) min = d;
+    });
+    canvas.width = (max - min) * zoom;
+    canvas.height = 16;
+    const ctx = canvas.getContext("2d");
+    function l(x: number, color: string) {
+        ctx.strokeStyle = color;
+        ctx.beginPath();
+        ctx.moveTo(x, 0);
+        ctx.lineTo(x, 16);
+        ctx.stroke();
+    }
+    data.forEach((d) => {
+        const x = (d - min) * zoom;
+        l(x, "#000");
+    });
+    const now = time();
+    const x = (now - min) * zoom;
+    l(x, "#f00");
+    l((now + 1000 * 60 * 60 - min) * zoom, "#00f");
+    l((now + 1000 * 60 * 60 * 24 - min) * zoom, "#00f");
+    return canvas;
 }
 
 //###### setting
