@@ -751,13 +751,23 @@ async function showBookContent(id: string) {
             }
             wordList.push({ text: t, c: c });
         }
+        let spell = 0;
+        for (let i of l) {
+            let c = (await spellStore.getItem(i)) as fsrsjs.Card;
+            if (c) {
+                let retrievability = Math.pow(1 + c.elapsed_days / (9 * c.stability), -1) || 0;
+                spell += retrievability;
+            } else if (ignoreWords.includes(i)) {
+                spell += 1;
+            }
+        }
         function p(number: number) {
             return el("td", [number.toFixed(1), el("progress", { value: number / l.length })]);
         }
         bookContentContainerEl.append(
             el("table", { class: "words_sum" }, [
-                el("tr", [el("th", "词"), el("th", "了解"), el("th", "记忆")]),
-                el("tr", [el("td", String(l.length)), p(matchWords), p(means1)]),
+                el("tr", [el("th", "词"), el("th", "了解"), el("th", "记忆"), el("th", "拼写")]),
+                el("tr", [el("td", String(l.length)), p(matchWords), p(means1), p(spell)]),
             ])
         );
 
