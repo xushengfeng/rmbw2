@@ -1195,7 +1195,7 @@ async function setEdit() {
     bookContentEl = text;
     text.value = section.text;
     setScrollPosi(text, contentScrollPosi);
-    text.onchange = () => {
+    text.oninput = () => {
         editText = text.value;
     };
     text.onkeyup = async (e) => {
