@@ -1638,7 +1638,10 @@ async function showDic(id: string) {
             }
         }
         if (!r.source) r.source = source2context(wordx, id).source;
-        if (!card) card = new fsrsjs.Card();
+        if (!card) {
+            card = new fsrsjs.Card();
+            newCardAction(sentenceCardId);
+        }
         await cardsStore.setItem(sentenceCardId, card);
 
         await card2sentence.setItem(sentenceCardId, r);
@@ -2568,6 +2571,9 @@ function setCardAction(cardId: string, time: Date, rating: fsrsjs.Rating, state:
         duration,
     });
 }
+function newCardAction(id: string) {
+    setCardAction(id, new Date(), null, null, null);
+}
 
 var transCache = localforage.createInstance({ name: "aiCache", storeName: "trans" });
 var ttsCache = localforage.createInstance({ name: "aiCache", storeName: "tts" });
@@ -2593,12 +2599,14 @@ async function addReviewCardMean(word: string, text: string) {
             means: [],
         };
         let card2 = new fsrsjs.Card();
+        newCardAction(word);
         await spellStore.setItem(word, card2);
     }
     let cardId = uuid();
     let m = { text, contexts: [], card_id: cardId };
     w.means.push(m);
     let card = new fsrsjs.Card();
+    newCardAction(cardId);
     await cardsStore.setItem(cardId, card);
     await card2word.setItem(cardId, word);
     await wordsStore.setItem(word, w);
