@@ -2135,37 +2135,47 @@ function aiButtons(textEl: HTMLTextAreaElement, word: string, context: string) {
         el("button", "所有", {
             onclick: async () => {
                 let text = [];
-                text.push(await wordAiText.mean(word, context));
-                text.push(await wordAiText.pronunciation(word));
-                text.push(await wordAiText.meanEmoji(word, context));
-                text.push(await wordAiText.syn(word, context));
-                text.push(await wordAiText.opp(word, context));
+                const r = (await autoFun.runList([
+                    { fun: wordAi.mean(bookLan, "zh"), input: { word, context } },
+                    { fun: wordAi.pronunciation(bookLan), input: { word } },
+                    { fun: wordAi.meanEmoji(), input: { word, context } },
+                    { fun: wordAi.syn(), input: { word, context } },
+                    { fun: wordAi.opp(), input: { word, context } },
+                ]).result) as any[];
+                text.push(wordAiText.mean(r[0]));
+                text.push(wordAiText.pronunciation(r[1]));
+                text.push(wordAiText.meanEmoji(r[2]));
+                text.push(wordAiText.syn(r[3]));
+                text.push(wordAiText.opp(r[4]));
+
                 setText(text.join("\n"));
             },
         }),
         el("button", "基本意思", {
             onclick: async () => {
-                setText(await wordAiText.mean(word, context));
+                setText(wordAiText.mean((await wordAi.mean(bookLan, "zh").run({ word, context }).result) as any));
             },
         }),
         el("button", "音标", {
             onclick: async () => {
-                setText(await wordAiText.pronunciation(word));
+                setText(
+                    wordAiText.pronunciation((await wordAi.pronunciation(bookLan).run({ word, context }).result) as any)
+                );
             },
         }),
         el("button", "emoji", {
             onclick: async () => {
-                setText(await wordAiText.meanEmoji(word, context));
+                setText(wordAiText.meanEmoji((await wordAi.meanEmoji().run({ word }).result) as any));
             },
         }),
         el("button", "近义词", {
             onclick: async () => {
-                setText(await wordAiText.syn(word, context));
+                setText(wordAiText.syn((await wordAi.syn().run({ word, context }).result) as any));
             },
         }),
         el("button", "反义词", {
             onclick: async () => {
-                setText(await wordAiText.opp(word, context));
+                setText(wordAiText.opp((await wordAi.opp().run({ word, context }).result) as any));
             },
         }),
         tmpAiB(textEl, `$这里有个单词${word}，它位于${context}`),
@@ -2181,7 +2191,7 @@ function aiButtons1(textEl: HTMLTextAreaElement, word: string) {
     buttons.append(
         el("button", "词根词缀", {
             onclick: async () => {
-                setText(await wordAiText.fix(word));
+                setText(wordAiText.fix((await wordAi.fix().run({ word }).result) as any));
             },
         }),
         el("button", "音节分词", {
@@ -2191,7 +2201,7 @@ function aiButtons1(textEl: HTMLTextAreaElement, word: string) {
         }),
         el("button", "词源", {
             onclick: async () => {
-                setText(await wordAiText.etymology(word));
+                setText(wordAiText.etymology((await wordAi.fix().run({ word }).result) as any));
             },
         }),
         tmpAiB(textEl, `$这里有个单词${word}`)
@@ -2260,56 +2270,52 @@ autoFun.config({
 });
 
 let wordAi = {
-    mean: (word: string, context: string, sourceLan: string, userLan: string) => {
+    mean: (sourceLan: string, userLan: string) => {
         let f = new autoFun.def({
-            input: ["word:string 单词", "context:string 单词所在的语境"],
-            output: [
-                `mean0:string ${sourceLan}简明释义`,
-                `mean1:string ${sourceLan}释义`,
-                `mean2:string ${userLan}释义`,
-            ],
+            input: { word: "string 单词", context: "string 单词所在的语境" },
+            output: {
+                mean0: `string ${sourceLan}简明释义`,
+                mean1: `string ${sourceLan}释义`,
+                mean2: `string ${userLan}释义`,
+            },
             script: [
                 `根据context中word的意思，返回用${sourceLan}简明解释的mean0、用${sourceLan}解释的mean1和用${userLan}解释的mean2`,
             ],
         });
-        return f.run([`word:${word}`, `context:${context}`]).result as Promise<{
-            mean0: string;
-            mean1: string;
-            mean2: string;
-        }>;
+        return f;
     },
-    meanEmoji: (word: string, context: string) => {
+    meanEmoji: () => {
         let f = new autoFun.def({
-            input: ["word:string 单词"],
-            output: [`mean:string 用emoji表示的意思`],
+            input: { word: "string 单词" },
+            output: { mean: `string 用emoji表示的意思` },
             script: [`根据context中word的意思，返回emoji`],
         });
-        return f.run([`word:${word}`, `context:${context}`]).result as Promise<{ mean: string }>;
+        return f;
     },
-    syn: (word: string, context: string) => {
+    syn: () => {
         let f = new autoFun.def({
-            input: ["word:string 单词", "context:string 单词所在的语境"],
-            output: [`list0:string[] 同义词`, `list1:string[] 近义词`],
+            input: { word: "string 单词", context: "string 单词所在的语境" },
+            output: { list0: `string[] 同义词`, list1: `string[] 近义词` },
             script: [
                 `判断context中word的意思`,
                 "若存在该语境下能进行同义替换的词，添加到list0同义词表，同义词应比word更简单",
                 "克制地添加若干近义词到list1",
             ],
         });
-        return f.run([`word:${word}`, `context:${context}`]).result as Promise<{ list0: string[]; list1: string[] }>;
+        return f;
     },
-    opp: (word: string, context: string) => {
+    opp: () => {
         let f = new autoFun.def({
-            input: ["word:string 单词", "context:string 单词所在的语境"],
-            output: ["list:string[]反义词列表"],
+            input: { word: "string 单词", context: "string 单词所在的语境" },
+            output: { list: "string[]反义词列表" },
             script: [`根据context中word的意思，与其意思相反的反义词列表list`],
         });
-        return f.run([`word:${word}`, `context:${context}`]).result as Promise<{ list: string[] }>;
+        return f;
     },
-    fix: (word: string) => {
+    fix: () => {
         let f = new autoFun.def({
-            input: "word:string 单词",
-            output: `list:{ type: "prefix" | "root" | "suffix"; t: string; dis: string }[]词根词缀列表`,
+            input: { word: "string 单词" },
+            output: { list: `{ type: "prefix" | "root" | "suffix"; t: string; dis: string }[]词根词缀列表` },
             script: [`分析word词根词缀`, "根据测试例,依次将词根词缀添加到list"],
             test: {
                 input: "unbelievably",
@@ -2323,60 +2329,51 @@ let wordAi = {
                 },
             },
         });
-        return f.run(`word:${word}`).result as Promise<{
-            list: { type: "prefix" | "root" | "suffix"; t: string; dis: string }[];
-        }>;
+        return f;
     },
-    etymology: (word: string) => {
+    etymology: () => {
         let f = new autoFun.def({
-            input: "word:string 单词",
-            output: `list:string[]词源`,
+            input: { word: "string 单词" },
+            output: { list: `string[]词源` },
             script: [`分析word词源并返回他们`],
         });
-        return f.run(`word:${word}`).result as Promise<{ list: string[] }>;
+        return f;
     },
-    pronunciation: (word: string, sourceLan: string) => {
+    pronunciation: (sourceLan: string) => {
         let f = new autoFun.def({
-            input: "word:string 单词",
-            output: `list:string[]ipa列表`,
+            input: { word: "string 单词" },
+            output: { list: `string[]ipa列表` },
             script: [`输入word的语言是${sourceLan}`, `返回输入word ipa国际音标`],
         });
-        return f.run(`word:${word}`).result as Promise<{ list: string[] }>;
+        return f;
     },
 };
 
 let wordAiText = {
-    mean: async (word: string, context: string) => {
-        let x = await wordAi.mean(word, context, bookLan, "zh");
+    mean: (x: { mean0: string; mean1: string; mean2: string }) => {
         return x.mean0 + "\n" + x.mean1 + "\n" + x.mean2;
     },
-    meanEmoji: async (word: string, context: string) => {
-        return (await wordAi.meanEmoji(word, context)).mean;
+    meanEmoji: (x: { mean: string }) => {
+        return x.mean;
     },
-    syn: async (word: string, context: string) => {
-        let x = await wordAi.syn(word, context);
+    syn: (x: { list0: string[]; list1: string[] }) => {
         let text = [];
         if (x.list0.length) text.push(`= ${x.list0.join(", ")}`);
         if (x.list1.length) text.push(`≈ ${x.list1.join(", ")}`);
         return text.join("\n");
     },
-    opp: async (word: string, context: string) => {
-        return "- " + (await wordAi.opp(word, context)).list.join(", ");
+    opp: (x: { list: string[] }) => {
+        return "- " + x.list.join(", ");
     },
-    fix: async (word: string) => {
-        let f = (await wordAi.fix(word)).list;
-        if (f.length > 1) {
-            let text = wordFix2str(f);
-            return text.join(" + ");
-        } else {
-            return word;
-        }
+    fix: (f: { type: "prefix" | "root" | "suffix"; t: string; dis: string }[]) => {
+        let text = wordFix2str(f);
+        return text.join(" + ");
     },
-    etymology: async (word: string) => {
-        return (await wordAi.etymology(word)).list.join(", ");
+    etymology: (x: { list: string[] }) => {
+        return x.list.join(", ");
     },
-    pronunciation: async (word: string) => {
-        return (await wordAi.pronunciation(word, bookLan)).list.join("\n");
+    pronunciation: (x: { list: string[] }) => {
+        return x.list.join("\n");
     },
 };
 
@@ -2386,8 +2383,8 @@ let sentenceAi = {
     gm: async (sentence: string) => {
         type splitS = ({ text: string; isPost: boolean } | string)[];
         let f = new autoFun.def({
-            input: ["sentence:string 句子"],
-            output: [`split:({ text: string; isPost: boolean } | string)[]`],
+            input: { sentence: "string 句子" },
+            output: { split: `({ text: string; isPost: boolean } | string)[]` },
             script: [
                 "分析sentence修饰成分和被修饰成分",
                 "被修饰成分包括主谓宾核心词或词组，修饰成分包括具有限定或修饰的词、词组或从句",
@@ -2438,8 +2435,8 @@ let sentenceAi = {
     },
     split: (sentence: string) => {
         let f = new autoFun.def({
-            input: ["sentence:string 长句子"],
-            output: ["shortSentences:string[] 短句子"],
+            input: { sentence: "string 长句子" },
+            output: { shortSentences: "string[] 短句子" },
             script: ["将sentence改写成几个短句，输出到shortSentences"],
         });
         return f.run(`sentence:${sentence}`).result as Promise<{ shortSentences: string[] }>;
@@ -2676,11 +2673,11 @@ async function getNewWords(text: string, wordBooks: string[]) {
 
 async function getNewWordsFromAi(text: string) {
     const f = new autoFun.def({
-        input: ["des", "text:string"],
+        input: { des: "描述", text: "string" },
         script: ["根据des，判读text中的生词", "专有名词、词组不属于生词", "返回生词"],
-        output: ["words:string[]"],
+        output: { words: "string[]" },
     });
-    return (await f.run([`des:我的词汇量是牛津3000 A2`, `text:${text}`]).result)["words"];
+    return (await f.run({ des: `我的词汇量是牛津3000 A2`, text: `${text}` }).result)["words"];
 }
 
 async function getNewWordsFromBook(text: string, books: string[]) {
