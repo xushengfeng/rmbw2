@@ -715,9 +715,12 @@ async function showBookContent(id: string) {
     if (!isWordBook)
         bookContentEl.append(
             el("div", iconEl(recume_svg), {
-                onclick: () => {
+                onclick: async () => {
                     autoPlay = true;
-                    pTTS(0);
+                    await pTTS(0);
+                    for (let i = 1; i < contentP.length; i++) {
+                        await getTTS(contentP[i]);
+                    }
                 },
             })
         );
