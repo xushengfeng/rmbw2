@@ -1381,6 +1381,15 @@ type dic = {
     };
 };
 
+let ipaDics: { [key: string]: Map<string, string> } = {};
+var ipaDicStore = localforage.createInstance({ name: "ipa_dic" });
+setting.getItem("ipa_dics").then(async (l: string[]) => {
+    for (let i of l || []) {
+        ipaDics[i] = (await ipaDicStore.getItem(i)) as Map<string, string>;
+    }
+    console.log(ipaDicStore);
+});
+
 type record = {
     word: string;
     means: {
@@ -2141,7 +2150,6 @@ function aiButtons(textEl: HTMLTextAreaElement, word: string, context: string) {
                 let text = [];
                 const r = (await autoFun.runList([
                     { fun: wordAi.mean(bookLan, "zh"), input: { word, context } },
-                    { fun: wordAi.pronunciation(bookLan), input: { word } },
                     { fun: wordAi.meanEmoji(), input: { word, context } },
                     { fun: wordAi.syn(), input: { word, context } },
                     { fun: wordAi.opp(), input: { word, context } },
@@ -2166,9 +2174,7 @@ function aiButtons(textEl: HTMLTextAreaElement, word: string, context: string) {
         }),
         el("button", "音标", {
             onclick: async () => {
-                setText(
-                    wordAiText.pronunciation((await wordAi.pronunciation(bookLan).run({ word, context }).result) as any)
-                );
+                setText(getIPA(word));
             },
         }),
         el("button", "emoji", {
@@ -2344,14 +2350,6 @@ let wordAi = {
             input: { word: "string 单词" },
             output: { list: `string[]词源` },
             script: [`分析word词源并返回他们`],
-        });
-        return f;
-    },
-    pronunciation: (sourceLan: string) => {
-        let f = new autoFun.def({
-            input: { word: "string 单词" },
-            output: { list: `string[]ipa列表` },
-            script: [`输入word的语言是${sourceLan}`, `返回输入word ipa国际音标`],
         });
         return f;
     },
@@ -3515,6 +3513,35 @@ uploadDicEl.onchange = () => {
         };
     }
 };
+
+const uploadIpaDicEl = el("input", { type: "file" });
+uploadIpaDicEl.onchange = () => {
+    const file = uploadIpaDicEl.files[0];
+    if (file) {
+        const reader = new FileReader();
+        reader.readAsText(file);
+        reader.onload = () => {
+            let dic = JSON.parse(reader.result as string);
+            console.log(dic);
+            const data = Object.values(dic)[0][0];
+            let l = new Map();
+            for (let i in data) {
+                l.set(i, data[i]);
+            }
+            const id = Object.keys(dic)[0];
+            ipaDics[id] = l;
+            ipaDicStore.setItem(id, l);
+            setting.setItem("ipa_dics", Object.keys(ipaDics));
+        };
+    }
+};
+
+function getIPA(word: string) {
+    const ipa = ipaDics["en_UK"].get(word);
+    return ipa;
+}
+
+settingEl.append(uploadIpaDicEl);
 
 settingEl.append(
     el("div", [
