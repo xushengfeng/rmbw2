@@ -2293,13 +2293,10 @@ let wordAi = {
         let f = new autoFun.def({
             input: { word: "string 单词", context: "string 单词所在的语境" },
             output: {
-                mean0: `string ${sourceLan}简明释义`,
                 mean1: `string ${sourceLan}释义`,
                 mean2: `string ${userLan}释义`,
             },
-            script: [
-                `根据context中word的意思，返回用${sourceLan}简明解释的mean0、用${sourceLan}解释的mean1和用${userLan}解释的mean2`,
-            ],
+            script: [`根据context中word的意思，返回用${sourceLan}解释的mean1和用${userLan}解释的mean2`],
         });
         return f;
     },
@@ -2361,8 +2358,8 @@ let wordAi = {
 };
 
 let wordAiText = {
-    mean: (x: { mean0: string; mean1: string; mean2: string }) => {
-        return x.mean0 + "\n" + x.mean1 + "\n" + x.mean2;
+    mean: (x: { mean1: string; mean2: string }) => {
+        return x.mean1 + "\n" + x.mean2;
     },
     meanEmoji: (x: { mean: string }) => {
         return x.mean;
