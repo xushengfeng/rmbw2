@@ -2179,7 +2179,7 @@ function aiButtons(textEl: HTMLTextAreaElement, word: string, context: string) {
         }),
         el("button", "音标", {
             onclick: async () => {
-                setText(getIPA(word));
+                setText(await getIPA(word));
             },
         }),
         el("button", "emoji", {
@@ -3143,7 +3143,7 @@ async function showSpellReview(x: { id: string; card: fsrsjs.Card }) {
     };
     let context = el("div");
     let r = (await wordsStore.getItem(word)) as record;
-    context.append(getIPA(word));
+    context.append(await getIPA(word));
     for (let i of r.means) {
         const p = el("p");
         p.innerText = i.text;
@@ -3536,12 +3536,20 @@ uploadIpaDicEl.onchange = () => {
     }
 };
 
-function getIPA(word: string) {
-    const ipa = ipaDics["en_UK"].get(word);
-    return ipa || "";
+async function getIPA(word: string) {
+    const ipaDicsPath = (await setting.getItem("ipa_dics.default")) as string;
+    if (!ipaDicsPath) return "";
+    let l: string[] = [];
+    if (ipaDicsPath.includes(",")) l = ipaDicsPath.split(",").map((i) => i.trim());
+    else l = [ipaDicsPath.trim()];
+    for (let p of l) {
+        const ipa = ipaDics[p]?.get(word);
+        if (ipa) return ipa;
+    }
+    return "";
 }
 
-settingEl.append(uploadIpaDicEl);
+settingEl.append(uploadIpaDicEl, el("input", { "data-path": "ipa_dics.default" }));
 
 settingEl.append(
     el("div", [
