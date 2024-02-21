@@ -3778,6 +3778,20 @@ settingEl.append(
                 })
             ),
             el("div", [
+                el("button", "更新", {
+                    onclick: async () => {
+                        const cacheKeepList = ["v2"];
+                        const keyList = await caches.keys();
+                        const cachesToDelete = keyList.filter((key) => !cacheKeepList.includes(key));
+                        await Promise.all(
+                            cachesToDelete.map(async (key) => {
+                                await caches.delete(key);
+                            })
+                        );
+                    },
+                }),
+            ]),
+            el("div", [
                 "项目开源地址",
                 el(
                     "a",
