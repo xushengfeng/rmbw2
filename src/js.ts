@@ -2159,7 +2159,7 @@ function aiButtons(textEl: HTMLTextAreaElement, word: string, context: string) {
                     { fun: wordAi.meanEmoji(), input: { word, context } },
                     { fun: wordAi.syn(), input: { word, context } },
                     { fun: wordAi.opp(), input: { word, context } },
-                ]).result) as any[];
+                ])) as any[];
                 if (!r[3]) {
                     setText(JSON.stringify(r, null, 2));
                     return;
