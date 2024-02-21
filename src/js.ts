@@ -3569,6 +3569,7 @@ type allData = {
     spell: Object;
     card2word: Object;
     card2sentence: Object;
+    actions: Object;
 };
 
 let allData2Store: { [key: string]: LocalForage } = {
@@ -3579,6 +3580,7 @@ let allData2Store: { [key: string]: LocalForage } = {
     spell: spellStore,
     card2word: card2word,
     card2sentence: card2sentence,
+    actions: cardActionsStore,
 } as { [key in keyof allData]: LocalForage };
 async function getAllData() {
     let l: allData = {
@@ -3589,6 +3591,7 @@ async function getAllData() {
         spell: {},
         card2word: {},
         card2sentence: {},
+        actions: {},
     };
     for (const storeName in allData2Store) {
         await allData2Store[storeName].iterate((v, k) => {
