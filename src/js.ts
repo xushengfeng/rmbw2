@@ -2165,7 +2165,6 @@ function aiButtons(textEl: HTMLTextAreaElement, word: string, context: string) {
                     return;
                 }
                 text.push(wordAiText.mean(r[0]));
-                text.push(wordAiText.pronunciation(r[1]));
                 text.push(wordAiText.meanEmoji(r[2]));
                 text.push(wordAiText.syn(r[3]));
                 text.push(wordAiText.opp(r[4]));
@@ -2383,9 +2382,6 @@ let wordAiText = {
     },
     etymology: (x: { list: string[] }) => {
         return x.list.join(", ");
-    },
-    pronunciation: (x: { list: string[] }) => {
-        return x.list.join("\n");
     },
 };
 
