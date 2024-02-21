@@ -3144,6 +3144,7 @@ async function showSpellReview(x: { id: string; card: fsrsjs.Card }) {
     };
     let context = el("div");
     let r = (await wordsStore.getItem(word)) as record;
+    context.append(getIPA(word));
     for (let i of r.means) {
         const p = el("p");
         p.innerText = i.text;
@@ -3538,7 +3539,7 @@ uploadIpaDicEl.onchange = () => {
 
 function getIPA(word: string) {
     const ipa = ipaDics["en_UK"].get(word);
-    return ipa;
+    return ipa || "";
 }
 
 settingEl.append(uploadIpaDicEl);
