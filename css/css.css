@@ -381,6 +381,11 @@ body {
     & > textarea {
         height: calc(100dvh - 96px);
     }
+    &:has(table) {
+        & p {
+            margin: 0;
+        }
+    }
 }
 .mark_word {
     text-decoration: underline wavy #999 !important;

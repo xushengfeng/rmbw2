@@ -169,7 +169,7 @@ function vlist(
     let blankEl = el("div", {
         style: { width: "1px", position: "absolute", top: "0" },
     });
-    blankEl.style.height = iHeight * list.length + gap * list.length - 1 + paddingTop + paddingBotton + "px";
+    blankEl.style.height = iHeight * list.length + gap * list.length + paddingTop + paddingBotton + "px";
     pel.append(blankEl);
     const dataI = "data-v-i";
     async function show() {
@@ -782,7 +782,7 @@ async function showBookContent(id: string) {
             ])
         );
 
-        vlist(bookContentContainerEl, wordList, { iHeight: 24, gap: 8, paddingTop: 120 }, (i) => {
+        vlist(bookContentContainerEl, wordList, { iHeight: 24, gap: 8, paddingTop: 120, paddingBotton: 8 }, (i) => {
             let p = el("p", wordList[i].text);
             return p;
         });
