@@ -728,6 +728,18 @@ div:has(> .translate) > :not(.translate) {
     box-shadow: var(--shadow);
 }
 
+.words_select {
+    display: flex;
+    flex-direction: column;
+    align-items: end;
+    & > div {
+        max-height: 80dvh;
+        display: flex;
+        flex-direction: column;
+        overflow: scroll;
+    }
+}
+
 #review {
     position: absolute;
     top: 100dvh;

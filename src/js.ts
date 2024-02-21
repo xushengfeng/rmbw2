@@ -1432,7 +1432,7 @@ const autoNewWordEl = el("div", [
             selectWord([]);
         },
     }),
-    el("button", "将未标记的词添加到忽略词表", {
+    el("button", "自动添加到忽略词表", {
         onclick: () => {
             autoIgnore();
         },
@@ -2714,16 +2714,35 @@ async function getIgnoreWords() {
 async function autoIgnore() {
     const sectionId = (await setting.getItem("wordBook.ignore")) as string;
     if (!sectionId) return;
-    const words = Array.from(bookContentEl.querySelectorAll(`:scope>:not(.${MARKWORD})`)).map((el) =>
-        el.textContent.trim()
+    const words = Array.from(bookContentEl.querySelectorAll(`:scope>*>span:not(.${MARKWORD})`)).map((el) =>
+        el.textContent.trim().toLocaleLowerCase()
     );
     const section = await getSection(sectionId);
     const oldWords = section.text.trim().split("\n");
+    const dialog = el("dialog", { class: "words_select" }) as HTMLDialogElement;
+    const f = el("div");
+    const newWords = [];
     for (let w of words) {
-        if (!oldWords.includes(w)) oldWords.push(w);
+        if (w && !oldWords.includes(w) && !newWords.includes(w)) {
+            newWords.push(w);
+        }
     }
-    section.text = oldWords.join("\n");
-    await sectionsStore.setItem(sectionId, section);
+    for (let w of newWords) {
+        let item = el("label", [el("input", { type: "checkbox", value: w }), w]);
+        f.append(item);
+    }
+    dialog.append(
+        f,
+        el("button", iconEl(ok_svg), {
+            onclick: async () => {
+                let words = Array.from(f.querySelectorAll("input:checked")).map((el: HTMLInputElement) => el.value);
+                section.text = oldWords.concat(words).join("\n");
+                await sectionsStore.setItem(sectionId, section);
+                dialog.close();
+            },
+        })
+    );
+    dialogX(dialog);
 }
 
 setTimeout(async () => {
