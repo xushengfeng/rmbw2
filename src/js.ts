@@ -3101,43 +3101,33 @@ async function showSpellReview(x: { id: string; card: fsrsjs.Card }) {
     let input = el("div", { class: "spell_input" }, spaceHoder);
     clearKeyboard();
     let wordEl = document.createElement("div");
-    const SPELLNUM = 2;
-    let spellNum = SPELLNUM;
     let isPerfect = false;
+    let spellResult: "none" | "right" | "wrong" = "none";
     let showTime = time();
     const word = x.id;
     play(word);
-    spellCheckF = async (inputValue: string) => {
-        input.innerText = inputValue;
-        let inputWord = inputValue;
+    spellCheckF = async (inputWord: string) => {
+        input.innerText = inputWord;
         wordEl.innerHTML = "";
         if (inputWord === word) {
             // 正确
-            if (spellNum === 1) {
-                setSpellCard(x.id, x.card, isPerfect ? 4 : 3, time() - showTime);
-                let next = await nextDue(reviewType);
-                showReview(next, reviewType);
-            } else {
-                spellNum--;
-                inputValue = "";
-                input.innerText = spaceHoder;
-                wordEl.append("👍");
-            }
+            // todo 拆分动画
+
+            if (spellResult === "none") setSpellCard(x.id, x.card, isPerfect ? 4 : 3, time() - showTime);
+            spellResult = "right";
+            let next = await nextDue(reviewType);
+            showReview(next, reviewType);
             clearKeyboard();
         }
         //错误归位
         if (inputWord.length === word.length && inputWord != word) {
-            spellNum = SPELLNUM;
-            isPerfect = false;
-            inputValue = "";
             input.innerText = spaceHoder;
             wordEl.append(await spellDiffWord(word, inputWord));
             wordEl.append(await hyphenate(word, { hyphenChar }));
             play(word);
-            let t = time();
-            setSpellCard(x.id, x.card, 1, t - showTime);
-            showTime = t;
+            if (spellResult === "none") setSpellCard(x.id, x.card, 1, time() - showTime);
             clearKeyboard();
+            spellResult = "wrong";
         }
     };
     spellF = async (button) => {
@@ -3149,9 +3139,6 @@ async function showSpellReview(x: { id: string; card: fsrsjs.Card }) {
             isPerfect = false;
             play(word);
             wordEl.innerText = await hyphenate(word, { hyphenChar });
-            let t = time();
-            setSpellCard(x.id, x.card, 2, t - showTime);
-            showTime = t;
         }
         if (button === "{audio}") {
             // 发音
