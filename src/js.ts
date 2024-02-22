@@ -2108,11 +2108,11 @@ function addP(
     let p = el("p");
     if (index) {
         const sourceWord = sentence.slice(...index);
-        p.append(
-            sentence.slice(0, index[0]),
-            el("span", { class: MARKWORD }, sourceWord, sourceWord != word ? `(${word})` : ""),
-            sentence.slice(index[1])
-        );
+        const sourceWordEl = el("span", { class: MARKWORD }, sourceWord, sourceWord != word ? `(${word})` : "");
+        p.append(sentence.slice(0, index[0]), sourceWordEl, sentence.slice(index[1]));
+        setTimeout(() => {
+            p.scrollLeft = sourceWordEl.offsetLeft - p.offsetWidth / 2;
+        }, 100);
     } else p.append(word || sentence);
     let textEl = el("textarea", { value: text });
     let aiB = getAiButtons(textEl, word, sentence);
