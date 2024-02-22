@@ -286,7 +286,7 @@ const toSentenceEl = el("button", iconEl(sentence_svg));
 const hideDicEl = el("button", iconEl(close_svg));
 const dicWordEl = el("input", { alt: "单词" });
 const moreWordsEl = el("div", { class: "more_words" });
-const ttsWordEl = el("button", iconEl(recume_svg));
+const ttsWordEl = el("button", { style: { width: "auto", height: "auto", "font-size": "inherit" } });
 const ttsContextEl = el("button", iconEl(recume_svg));
 const dicTransB = el("button", iconEl(translate_svg));
 const dicTransContent = el("input", {
@@ -1699,7 +1699,7 @@ async function showDic(id: string) {
         await sectionsStore.setItem(sectionId, section);
     }
 
-    function showWord() {
+    async function showWord() {
         dicEl.classList.remove(DICSENTENCE);
         dicTransContent.value = "";
 
@@ -1711,6 +1711,8 @@ async function showDic(id: string) {
             await changeDicMean(newWord, -1);
             search(newWord);
         };
+
+        ttsWordEl.innerText = await getIPA(Word.word);
 
         let lword = lemmatizer(sourceWord);
         moreWordsEl.innerHTML = "";
