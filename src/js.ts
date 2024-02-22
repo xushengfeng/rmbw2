@@ -3257,6 +3257,7 @@ async function spellAnimate(el: HTMLElement) {
 
     const t = 160;
 
+    await sleep(t);
     for (let i = 0; i < el.children.length; i++) {
         const e = el.children.item(i) as HTMLElement;
         e.style.opacity = "1";
