@@ -1732,6 +1732,7 @@ async function showDic(id: string) {
         addMeanEl.onclick = () => {
             addP("", Word.word, Word.context.text, Word.context.index, async (text) => {
                 let mean = text.trim();
+                Word.text = mean;
                 if (mean) {
                     const x = await addReviewCardMean(Word.word, mean);
                     Word.record = x.record;
@@ -1747,6 +1748,7 @@ async function showDic(id: string) {
         editMeanEl.onclick = () => {
             addP(Word.text, Word.word, Word.context.text, Word.context.index, async (text) => {
                 let mean = text.trim();
+                Word.text = mean;
                 if (Word.record) {
                     for (let i of Word.record.means) {
                         if (i.card_id === Word.card_id) {
