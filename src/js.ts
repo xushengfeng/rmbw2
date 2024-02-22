@@ -3512,10 +3512,9 @@ function renderCal(year: number, data: Date[]) {
     for (let x = 1; x <= 53; x++) {
         for (let y = 1; y <= 7; y++) {
             s_date = new Date(s_date.getTime() + 24 * 60 * 60 * 1000);
-            let x = `${s_date.getFullYear()}-${s_date.getMonth() + 1}-${s_date.getDate()}`;
             const v = (count[s_date.toDateString()] ?? 0) / max;
             const item = el("div");
-            item.title = s_date.toLocaleDateString();
+            item.title = `${s_date.toLocaleDateString()}  ${count[s_date.toDateString()] ?? 0}`;
             if (v) item.style.backgroundColor = `color-mix(in srgb-linear, #9be9a8, #216e39 ${v * 100}%)`;
             f.append(item);
         }

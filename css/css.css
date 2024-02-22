@@ -400,8 +400,8 @@ body {
 .context_start,
 .context_end {
     position: absolute;
-    width: 10px;
-    height: 10px;
+    width: 16px;
+    height: 16px;
     background-color: #fff;
     border-radius: 50%;
     border: #000 1px solid;
@@ -410,8 +410,8 @@ body {
 .context_start::after {
     content: "";
     position: absolute;
-    top: 10px;
-    left: 4px;
+    top: 16px;
+    left: 7px;
     width: 2px;
     height: 1em;
     background-color: var(--color);
@@ -420,7 +420,7 @@ body {
     content: "";
     position: absolute;
     top: -1em;
-    left: 4px;
+    left: 7px;
     width: 2px;
     height: 1em;
     background-color: var(--color);
