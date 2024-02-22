@@ -3111,7 +3111,14 @@ async function showSpellReview(x: { id: string; card: fsrsjs.Card }) {
         wordEl.innerHTML = "";
         if (inputWord === word) {
             // 正确
-            // todo 拆分动画
+            const rightL = (await hyphenate(word, { hyphenChar })).split(hyphenChar);
+            const ele = el("div");
+            for (let i of rightL) {
+                ele.append(el("span", i));
+            }
+            input.innerHTML = "";
+            input.append(ele);
+            await spellAnimate(ele);
 
             if (spellResult === "none") setSpellCard(x.id, x.card, isPerfect ? 4 : 3, time() - showTime);
             spellResult = "right";
@@ -3233,6 +3240,28 @@ function getDiffWord(diff: Diff[]) {
         }
     }
     return div;
+}
+
+async function spellAnimate(el: HTMLElement) {
+    function sleep(ms: number) {
+        return new Promise((re) => {
+            setTimeout(() => {
+                re(null);
+            }, ms);
+        });
+    }
+    Array.from(el.children).forEach((el: HTMLElement) => {
+        el.style.opacity = "0.2";
+        el.style.transition = "0.2s";
+    });
+
+    const t = 160;
+
+    for (let i = 0; i < el.children.length; i++) {
+        const e = el.children.item(i) as HTMLElement;
+        e.style.opacity = "1";
+        await sleep(el.children.item(i).textContent.length * t);
+    }
 }
 
 async function showSentenceReview(x: { id: string; card: fsrsjs.Card }) {
