@@ -1596,6 +1596,7 @@ async function showDic(id: string) {
             await rmWord(Word.record, Word.context.source.id);
 
             if (i != -1) await setWordC(word, i, Word.context);
+            else await clearWordMean(Word.record);
 
             Word.word = word;
             Word.index = i;
