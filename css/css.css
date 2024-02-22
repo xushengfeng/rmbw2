@@ -345,13 +345,17 @@ body {
         margin: 0 auto;
         font-size: var(--font-size);
         max-width: var(--content-width);
-        line-height: var(--line-height);
         transition: var(--transition);
         font-family: var(--font-family);
         position: relative;
 
         border: none;
         width: 100%;
+
+        & > p {
+            line-height: var(--line-height);
+            transition: var(--transition);
+        }
 
         &:not(textarea) {
             user-select: none;
