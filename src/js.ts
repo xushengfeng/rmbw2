@@ -2093,8 +2093,13 @@ async function clearWordMean(record: record) {
             means.push(m);
         }
     }
-    record.means = means;
-    await wordsStore.setItem(record.word, record);
+    if (means.length === 0) {
+        await wordsStore.removeItem(record.word);
+        await spellStore.removeItem(record.word);
+    } else {
+        record.means = means;
+        await wordsStore.setItem(record.word, record);
+    }
 }
 
 function rmStyle(start: number) {
