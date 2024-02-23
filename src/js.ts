@@ -3165,8 +3165,6 @@ async function showSpellReview(x: { id: string; card: fsrsjs.Card }) {
         if (button === "{audio}") {
             // 发音
             play(word);
-            input.innerText = "";
-            clearKeyboard();
         }
     };
     let context = el("div");
