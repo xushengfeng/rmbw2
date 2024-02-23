@@ -1452,7 +1452,7 @@ async function showMarkList() {
 
             let item = el("div", content, { class: i.s.visit ? "" : TODOMARK });
             item.onclick = () => {
-                jumpToMark(i.s.index[0]);
+                jumpToMark(i.s.cIndex[0]);
                 showDic(i.id);
             };
             item.oncontextmenu = (e) => {
@@ -1506,7 +1506,7 @@ lastMarkEl.onclick = async () => {
     index--;
     index = index < 0 ? 0 : index;
     let id = list[index].id;
-    jumpToMark(list[index].s.index[0]);
+    jumpToMark(list[index].s.cIndex[0]);
     showDic(id);
 };
 nextMarkEl.onclick = async () => {
@@ -1516,7 +1516,7 @@ nextMarkEl.onclick = async () => {
     index++;
     index = index >= list.length ? list.length - 1 : index;
     let id = list[index].id;
-    jumpToMark(list[index].s.index[0]);
+    jumpToMark(list[index].s.cIndex[0]);
     showDic(id);
 };
 function jumpToMark(start: number) {
