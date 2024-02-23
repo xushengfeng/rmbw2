@@ -2732,17 +2732,10 @@ async function autoIgnore() {
     const dialog = el("dialog", { class: "words_select" }) as HTMLDialogElement;
     const f = el("div");
     const studyWords = await wordsStore.keys();
-    const newWords = words
-        .filter((w) => !oldWords.includes(w))
-        .filter((w) => !oldWords.includes(lemmatizer(w)))
-        .filter((w) => !studyWords.includes(w));
-    const newWords1 = Array.from(new Set(newWords));
-    const sourceWords: string[] = [];
-    for (let w of newWords1) {
-        const l = lemmatizer(w);
-        if (l != w) sourceWords.push(l);
-    }
-    sourceWords.concat(newWords1).forEach((w) => {
+    const newWords = words.filter((w) => !oldWords.includes(w)).filter((w) => !oldWords.includes(lemmatizer(w)));
+    const sourceWords = newWords.map((w) => lemmatizer(w));
+    const newWords1 = Array.from(new Set(sourceWords.concat(newWords))).filter((w) => !studyWords.includes(w));
+    newWords1.forEach((w) => {
         let item = el("label", [el("input", { type: "checkbox", value: w }), w]);
         f.append(item);
     });
