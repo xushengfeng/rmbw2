@@ -2731,7 +2731,11 @@ async function autoIgnore() {
     const oldWords = section.text.trim().split("\n");
     const dialog = el("dialog", { class: "words_select" }) as HTMLDialogElement;
     const f = el("div");
-    const newWords = words.filter((w) => !oldWords.includes(w)).filter((w) => !oldWords.includes(lemmatizer(w)));
+    const studyWords = await wordsStore.keys();
+    const newWords = words
+        .filter((w) => !oldWords.includes(w))
+        .filter((w) => !oldWords.includes(lemmatizer(w)))
+        .filter((w) => !studyWords.includes(w));
     const newWords1 = Array.from(new Set(newWords));
     const sourceWords: string[] = [];
     for (let w of newWords1) {
