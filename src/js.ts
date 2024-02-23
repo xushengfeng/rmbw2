@@ -2735,6 +2735,8 @@ async function autoIgnore() {
     for (let w of words) {
         if (w && !oldWords.includes(w) && !newWords.includes(w)) {
             newWords.push(w);
+            const l = lemmatizer(w);
+            if (l != w) newWords.push(l);
         }
     }
     for (let w of newWords) {
