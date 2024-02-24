@@ -3140,7 +3140,25 @@ async function showSpellReview(x: { id: string; card: fsrsjs.Card }) {
             wordEl.append(await spellDiffWord(word, inputWord));
             wordEl.append(await hyphenate(word, { hyphenChar }));
             play(word);
-            if (spellResult === "none") setSpellCard(x.id, x.card, 1, time() - showTime);
+            if (spellResult === "none") {
+                const oldCard = x.card;
+                const actionId = setSpellCard(x.id, x.card, 1, time() - showTime);
+                let diff = dmp.diff_main(inputWord, word);
+                const f = diff.filter((i) => i[0] != 0);
+                if (f.length === 2) {
+                    if (f[0][0] === -1 && f[0][1].length === 1 && f[1][0] === 1 && f[1][1].length === 1)
+                        wordEl.append(
+                            el("button", "手误 撤回", {
+                                onclick: () => {
+                                    spellStore.setItem(x.id, oldCard);
+                                    cardActionsStore.removeItem(actionId);
+                                    spellResult = "none";
+                                    wordEl.innerHTML = "";
+                                },
+                            })
+                        );
+                }
+            }
             clearKeyboard();
             spellResult = "wrong";
         }
@@ -3410,6 +3428,7 @@ function setSpellCard(id: string, card: fsrsjs.Card, rating: fsrsjs.Rating, dura
     setCardAction(id, now, rating, card.state, duration);
     let sCards = fsrs.repeat(card, now);
     spellStore.setItem(id, sCards[rating].card);
+    return String(now.getTime());
 }
 
 const plotEl = el("div", { popover: "auto", class: "plot" });
