@@ -564,7 +564,7 @@ async function setBookS() {
                         let sectionId = (await getBooksById(nowBook.book)).sections[nowBook.sections];
                         let section = await getSection(sectionId);
                         section.title = titleEl.value;
-                        sectionsStore.setItem(sectionId, section);
+                        await sectionsStore.setItem(sectionId, section);
                         setBookS();
                     },
                 })
@@ -662,6 +662,7 @@ function showBook(book: book) {
     bookLan = book.language;
 }
 async function showBookSections(sections: book["sections"]) {
+    sections = structuredClone(sections);
     bookSectionsEl.innerHTML = "";
     vlist(
         bookSectionsEl,
