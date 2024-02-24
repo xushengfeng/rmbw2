@@ -3387,7 +3387,7 @@ async function getTTS(text: string) {
         readable.on("end", () => {
             console.log("STREAM end");
             let blob = new Blob([base], { type: "audio/webm" });
-            ttsCache.setItem(text, blob);
+            if (blob.size > 0) ttsCache.setItem(text, blob);
             re(URL.createObjectURL(blob));
         });
     });
