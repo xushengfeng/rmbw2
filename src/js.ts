@@ -3105,14 +3105,14 @@ async function getReadTime(text: string) {
 }
 
 async function showSpellReview(x: { id: string; card: fsrsjs.Card }) {
+    const word = x.id;
     const spaceHoder = "|";
-    let input = el("div", { class: "spell_input" }, spaceHoder);
+    let input = el("div", { class: "spell_input", style: { width: `${word.length}ch` } }, spaceHoder);
     clearKeyboard();
     let wordEl = document.createElement("div");
     let isPerfect = false;
     let spellResult: "none" | "right" | "wrong" = "none";
     let showTime = time();
-    const word = x.id;
     play(word);
     spellCheckF = async (inputWord: string) => {
         input.innerText = inputWord;

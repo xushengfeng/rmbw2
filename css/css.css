@@ -855,8 +855,7 @@ div:has(> .translate) > :not(.translate) {
 
 .spell_input {
     font-size: 2em;
-    width: 100%;
-    text-align: center;
+    margin: auto;
 }
 
 .hg-theme-default {
