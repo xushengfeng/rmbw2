@@ -2809,6 +2809,7 @@ let keyboard = new Keyboard(keyboardEl, {
 
 window.addEventListener("keydown", (e) => {
     if (!(reviewType === "spell" && reviewEl.classList.contains("review_show"))) return;
+    if (!reviewEl.contains(document.elementFromPoint(window.innerWidth / 2, window.innerHeight / 2))) return; // 用于note
     let oldInput = keyboard.getInput();
     if (e.key != "Backspace") {
         keyboard.setInput(oldInput + e.key);
@@ -3180,7 +3181,20 @@ async function showSpellReview(x: { id: string; card: fsrsjs.Card }) {
     };
     let context = el("div");
     let r = (await wordsStore.getItem(word)) as record;
-    context.append(await getIPA(word));
+    context.append(el("div", await getIPA(word)));
+    context.append(
+        el("button", iconEl(pen_svg), {
+            onclick: () => {
+                addP(r.note || "", word, null, null, async (text) => {
+                    let mean = text.trim();
+                    if (r) {
+                        r["note"] = mean;
+                        wordsStore.setItem(word, r);
+                    }
+                });
+            },
+        })
+    );
     for (let i of r.means) {
         const p = el("p");
         p.innerText = i.text;
