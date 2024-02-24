@@ -727,9 +727,10 @@ async function showBookContent(id: string) {
                     autoPlay = true;
                     autoPlayTTSEl.checked = true;
                     await pTTS(0);
-                    for (let i = 1; i < contentP.length; i++) {
-                        await getTTS(contentP[i]);
-                    }
+                    if ((await getTtsEngine()) === "ms")
+                        for (let i = 1; i < contentP.length; i++) {
+                            await getTTS(contentP[i]);
+                        }
                 },
             })
         );
@@ -3347,10 +3348,13 @@ function play(word: string) {
 
 const tts = new MsEdgeTTS();
 const ttsVoiceConfig = "tts.voice";
-tts.setMetadata(
-    (await setting.getItem(ttsVoiceConfig)) || "en-GB-LibbyNeural",
-    OUTPUT_FORMAT.WEBM_24KHZ_16BIT_MONO_OPUS
-);
+const ttsEngineConfig = "tts.engine";
+
+const synth = window.speechSynthesis;
+
+async function getTtsEngine() {
+    return ((await setting.getItem(ttsEngineConfig)) || "browser") as "browser" | "ms";
+}
 
 async function ttsNormalize(text: string) {
     const posi = (((await setting.getItem(ttsVoiceConfig)) as string) || "en-GB-LibbyNeural").slice(0, 2);
@@ -3359,6 +3363,10 @@ async function ttsNormalize(text: string) {
 }
 
 async function getTTS(text: string) {
+    await tts.setMetadata(
+        (await setting.getItem(ttsVoiceConfig)) || "en-GB-LibbyNeural",
+        OUTPUT_FORMAT.WEBM_24KHZ_16BIT_MONO_OPUS
+    );
     text = await ttsNormalize(text);
     let b = (await ttsCache.getItem(text)) as Blob;
     if (b) {
@@ -3394,8 +3402,27 @@ async function getTTS(text: string) {
 }
 
 async function runTTS(text: string) {
-    audioEl.src = await getTTS(text);
-    audioEl.play();
+    if ((await getTtsEngine()) === "browser") {
+        localTTS(text);
+    } else {
+        audioEl.src = await getTTS(text);
+        audioEl.play();
+    }
+}
+
+async function localTTS(text: string) {
+    text = await ttsNormalize(text);
+    const utterThis = new SpeechSynthesisUtterance(text);
+    const voices = window.speechSynthesis.getVoices();
+    const sv = ((await setting.getItem(ttsVoiceConfig)) as string) || "en-GB-LibbyNeural";
+    for (let i = 0; i < voices.length; i++) {
+        if (voices[i].name === sv) {
+            utterThis.voice = voices[i];
+            break;
+        }
+    }
+    synth.speak(utterThis);
+    return utterThis;
 }
 
 const pttsEl = document.getElementById("pTTSp");
@@ -3427,10 +3454,15 @@ async function pTTS(index: number) {
     }
     pttsEl.classList.add(SHOWPTTS);
 
-    let url = await getTTS(text);
-    pTTSEl.src = url;
-    pTTSEl.play();
-    pTTSEl.onended = nextplay;
+    if ((await getTtsEngine()) === "browser") {
+        const utterThis = await localTTS(text);
+        utterThis.onend = nextplay;
+    } else {
+        let url = await getTTS(text);
+        pTTSEl.src = url;
+        pTTSEl.play();
+        pTTSEl.onended = nextplay;
+    }
 }
 
 function setReviewCard(id: string, card: fsrsjs.Card, rating: fsrsjs.Rating, duration: number) {
@@ -3800,18 +3832,32 @@ let asyncEl = el("div", [
 
 settingEl.append(asyncEl);
 
+const ttsEngineEl = el("select", { "data-path": ttsEngineConfig }, [
+    el("option", "浏览器", { value: "browser" }),
+    el("option", "微软", { value: "ms" }),
+]);
+
 let loadTTSVoicesEl = el("button", "load");
 let voicesListEl = el("select");
 loadTTSVoicesEl.onclick = async () => {
     voicesListEl.innerHTML = "";
-    let list = await tts.getVoices();
-    for (let v of list) {
-        let text = `${v.Gender === "Male" ? "♂️" : "♀️"} ${v.FriendlyName.replace(
-            /Microsoft (\w+) Online \(Natural\)/,
-            "$1"
-        )}`;
-        let op = el("option", text, { value: v.ShortName });
-        voicesListEl.append(op);
+    if ((await getTtsEngine()) === "browser") {
+        const list = speechSynthesis.getVoices();
+        for (let v of list) {
+            let text = `${v.name.replace(/Microsoft (\w+) Online \(Natural\)/, "$1")}`;
+            let op = el("option", text, { value: v.name });
+            voicesListEl.append(op);
+        }
+    } else {
+        let list = await tts.getVoices();
+        for (let v of list) {
+            let text = `${v.Gender === "Male" ? "♂️" : "♀️"} ${v.FriendlyName.replace(
+                /Microsoft (\w+) Online \(Natural\)/,
+                "$1"
+            )}`;
+            let op = el("option", text, { value: v.ShortName });
+            voicesListEl.append(op);
+        }
     }
     voicesListEl.value = await setting.getItem(ttsVoiceConfig);
     voicesListEl.onchange = () => {
@@ -3822,7 +3868,7 @@ loadTTSVoicesEl.onclick = async () => {
     };
 };
 
-settingEl.append(el("div", [el("h2", "tts"), loadTTSVoicesEl, voicesListEl]));
+settingEl.append(el("div", [el("h2", "tts"), ttsEngineEl, loadTTSVoicesEl, voicesListEl]));
 
 settingEl.append(
     el("div", [
