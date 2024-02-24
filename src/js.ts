@@ -555,6 +555,7 @@ async function setBookS() {
         bookNameEl.onclick = () => {
             let titleEl = document.createElement("input");
             titleEl.value = section.title;
+            titleEl.select();
             bookNameEl.innerHTML = "";
             bookNameEl.append(
                 titleEl,
