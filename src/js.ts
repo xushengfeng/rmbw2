@@ -553,7 +553,7 @@ async function setBookS() {
             section.title
         }`;
         bookNameEl.onclick = () => {
-            let titleEl = document.createElement("input");
+            let titleEl = el("input", { style: { "font-size": "inherit" } });
             titleEl.value = section.title;
             titleEl.select();
             bookNameEl.innerHTML = "";
