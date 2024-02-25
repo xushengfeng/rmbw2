@@ -21,8 +21,8 @@ dependencies:
     specifier: ^1.0.5
     version: 1.0.5
   fsrs.js:
-    specifier: ^1.1.2
-    version: 1.1.2
+    specifier: ^1.2.2
+    version: 1.2.2
   hyphen:
     specifier: ^1.10.4
     version: 1.10.4
@@ -39,8 +39,8 @@ dependencies:
     specifier: ^1.4.0
     version: 1.4.0
   mammoth:
-    specifier: ^1.6.0
-    version: 1.6.0
+    specifier: ^1.7.0
+    version: 1.7.0
   markdown-it:
     specifier: ^14.0.0
     version: 14.0.0
@@ -775,8 +775,8 @@ packages:
     dev: true
     optional: true
 
-  /fsrs.js@1.1.2:
-    resolution: {integrity: sha512-Bbvm5fWXjRoFzOQSs8SHLu2/wIwCjdNNENLGYDCNmaaM5eHmfOww57LiaYdp2+jTNX1VpDkI1qF87glZ9UZ5yA==}
+  /fsrs.js@1.2.2:
+    resolution: {integrity: sha512-LFFPn33/EBbqJoOKmtCfE+Y3LyijQO7ytf/3N6+BlPP/QxI6nlrX6n7IeeKVkjxXVrKxUUvFXTR5K6keSztphg==}
     engines: {node: '>=10'}
     dev: false
 
@@ -1012,8 +1012,8 @@ packages:
       semver: 5.7.2
     dev: true
 
-  /mammoth@1.6.0:
-    resolution: {integrity: sha512-jOwbj6BwJzxCf6jr2l1zmSemniIkLnchvELXnDJCANlJawhzyIKObIq48B8kWEPLgUUh57k7FtEO3DHFQMnjMg==}
+  /mammoth@1.7.0:
+    resolution: {integrity: sha512-ptFhft61dqieLffpdpHD7PUS0cX9YvHQIO3n3ejRhj1bi5Na+RL5wovtNHHXAK6Oj554XfGrVcyTuxgegN6umw==}
     engines: {node: '>=12.0.0'}
     hasBin: true
     dependencies:
