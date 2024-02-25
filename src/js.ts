@@ -1380,7 +1380,6 @@ setting.getItem("dics").then(async (l: string[]) => {
     for (let i of l || []) {
         dics[i] = (await dicStore.getItem(i)) as Map<string, dic[0]>;
     }
-    console.log(dics);
 });
 
 type dic = {
@@ -1396,7 +1395,6 @@ setting.getItem("ipa_dics").then(async (l: string[]) => {
     for (let i of l || []) {
         ipaDics[i] = (await ipaDicStore.getItem(i)) as Map<string, string>;
     }
-    console.log(ipaDicStore);
 });
 
 type record = {
