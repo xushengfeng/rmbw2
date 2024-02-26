@@ -2386,7 +2386,11 @@ let wordAi = {
                 mean1: `string ${sourceLan}释义`,
                 mean2: `string ${userLan}释义`,
             },
-            script: [`根据context中word的意思，返回用${sourceLan}解释的mean1和用${userLan}解释的mean2`],
+            script: [
+                "翻译$context",
+                "分析$word在$context这个上下文语境中的具体意思",
+                `根据意思，返回用${sourceLan}解释的$mean1和用${userLan}解释的$mean2`,
+            ],
         });
         return f;
     },

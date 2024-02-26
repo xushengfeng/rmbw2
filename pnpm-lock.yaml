@@ -15,8 +15,8 @@ dependencies:
     specifier: ^2.7.32
     version: 2.7.32
   auto-fun:
-    specifier: ^2.0.6
-    version: 2.0.6
+    specifier: ^2.1.2
+    version: 2.1.2
   diff-match-patch:
     specifier: ^1.0.5
     version: 1.0.5
@@ -439,8 +439,8 @@ packages:
     resolution: {integrity: sha512-8+9WqebbFzpX9OR+Wa6O29asIogeRMzcGtAINdpMHHyAg10f05aSFVBbcEqGf/PXw1EjAZ+q2/bEBg3DvurK3Q==}
     dev: false
 
-  /auto-fun@2.0.6:
-    resolution: {integrity: sha512-uqIFXYskt9ZMyh9/ajQ1/5DTlphU4CtbuByQk/iIG3/H0ylaXLiY97IPiEYwutRmyGiKFHx6bpkyzCdThifE9Q==}
+  /auto-fun@2.1.2:
+    resolution: {integrity: sha512-61vgVIjdFs4Fj4DJzA24JNLBltDIhPpXH0TVI67Crn8gpK8gRbCCB7dqDLmiVqJ+Pgv7kAQUiA1K85VcCL07Iw==}
     dev: false
 
   /base64-js@1.5.1:
