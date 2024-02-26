@@ -924,7 +924,9 @@ function getScrollPosi(el: HTMLElement) {
 }
 
 async function showLisent(text: string) {
-    let l = text.split(/[.?!。？！]/g).filter((i) => i);
+    const al = /[.?!。？！]/g;
+    const ali = /[.?!。？！,，]/g;
+    let l = sp(ali);
     console.log(l);
     const d = el("dialog", { class: "play_list" }) as HTMLDialogElement;
     const playsEl = el("div");
@@ -943,18 +945,24 @@ async function showLisent(text: string) {
             playsEl.append(pEl);
         }
     }
+    function sp(regxp: RegExp) {
+        return text
+            .split(regxp)
+            .filter((i) => i)
+            .map((i) => i.trim());
+    }
     d.append(
         el("div", [
             el("button", "按句", {
                 onclick: () => {
-                    l = text.split(/[.?!。？！]/g).filter((i) => i);
+                    l = sp(al);
                     textEl.value = l.join("\n");
                     playEl();
                 },
             }),
             el("button", "按小句", {
                 onclick: () => {
-                    l = text.split(/[.?!。？！,，]/g).filter((i) => i);
+                    l = sp(ali);
                     textEl.value = l.join("\n");
                     playEl();
                 },
