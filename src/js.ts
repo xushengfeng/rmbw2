@@ -827,6 +827,11 @@ async function showBookContent(id: string) {
         if (pText) {
             let playEl = el("div", iconEl(recume_svg), { "data-play": String(contentP.length) });
             pel.append(playEl);
+            pel.append(
+                el("div", iconEl(more_svg), {
+                    "data-play-l": String(contentP.length),
+                })
+            );
         }
 
         contentP.push(pText);
@@ -852,6 +857,10 @@ async function showBookContent(id: string) {
             let playEl = ev.target as HTMLElement;
             if (playEl.getAttribute("data-play")) {
                 pTTS(Number(playEl.getAttribute("data-play")));
+                return;
+            }
+            if (playEl.getAttribute("data-play-l")) {
+                showLisent(contentP[Number(playEl.getAttribute("data-play-l"))]);
                 return;
             }
             const span = ev.target as HTMLSpanElement;
@@ -912,6 +921,52 @@ function setScrollPosi(el: HTMLElement, posi: number) {
 function getScrollPosi(el: HTMLElement) {
     let n = el.scrollTop / (el.scrollHeight - el.offsetHeight);
     return n;
+}
+
+async function showLisent(text: string) {
+    let l = text.split(/[.?!。？！]/g).filter((i) => i);
+    console.log(l);
+    const d = el("dialog", { class: "play_list" }) as HTMLDialogElement;
+    const playsEl = el("div");
+    const textEl = el("textarea", { value: l.join("\n") });
+    playEl();
+    d.append(el("div", [playsEl, textEl]));
+    textEl.oninput = playEl;
+    function playEl() {
+        const l = textEl.value.split("\n");
+        playsEl.innerHTML = "";
+        for (let s of l) {
+            const pEl = el("button", iconEl(recume_svg));
+            pEl.onclick = () => {
+                runTTS(s);
+            };
+            playsEl.append(pEl);
+        }
+    }
+    d.append(
+        el("div", [
+            el("button", "按句", {
+                onclick: () => {
+                    l = text.split(/[.?!。？！]/g).filter((i) => i);
+                    textEl.value = l.join("\n");
+                    playEl();
+                },
+            }),
+            el("button", "按小句", {
+                onclick: () => {
+                    l = text.split(/[.?!。？！,，]/g).filter((i) => i);
+                    textEl.value = l.join("\n");
+                    playEl();
+                },
+            }),
+            el("button", iconEl(close_svg), {
+                onclick: () => {
+                    d.close();
+                },
+            }),
+        ])
+    );
+    dialogX(d);
 }
 
 const bookStyleList = {
