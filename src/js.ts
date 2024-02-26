@@ -1824,14 +1824,19 @@ async function showDic(id: string) {
             addP(Word.text, Word.word, Word.context.text, Word.context.index, async (text) => {
                 let mean = text.trim();
                 Word.text = mean;
-                if (Word.record) {
-                    for (let i of Word.record.means) {
-                        if (i.card_id === Word.card_id) {
-                            i.text = mean;
-                            wordsStore.setItem(Word.word, Word.record);
-                            break;
+                if (mean) {
+                    if (Word.record) {
+                        for (let i of Word.record.means) {
+                            if (i.card_id === Word.card_id) {
+                                i.text = mean;
+                                wordsStore.setItem(Word.word, Word.record);
+                                break;
+                            }
                         }
                     }
+                } else {
+                    await visit(false);
+                    await changeDicMean(Word.word, -1);
                 }
                 search(Word.word);
             });
