@@ -787,6 +787,17 @@ async function showBookContent(id: string) {
 
         vlist(bookContentContainerEl, wordList, { iHeight: 24, gap: 8, paddingTop: 120, paddingBotton: 8 }, (i) => {
             let p = el("p", wordList[i].text);
+            p.oncontextmenu = (e) => {
+                e.preventDefault();
+                showMenu(e.clientX, e.clientY);
+                menuEl.append(
+                    el("div", "添加到忽略词表", {
+                        onclick: () => {
+                            addIgnore(wordList[i].text);
+                        },
+                    })
+                );
+            };
             return p;
         });
 
@@ -2821,6 +2832,20 @@ async function autoIgnore() {
         })
     );
     dialogX(dialog);
+}
+
+async function addIgnore(word: string) {
+    const sectionId = (await setting.getItem("wordBook.ignore")) as string;
+    if (!sectionId) return;
+    const section = await getSection(sectionId);
+    const oldWords = section.text.trim().split("\n");
+    if (!oldWords.includes(word)) {
+        oldWords.push(word);
+        section.text = oldWords.concat(oldWords).join("\n");
+        await sectionsStore.setItem(sectionId, section);
+    } else {
+        return;
+    }
 }
 
 setTimeout(async () => {
