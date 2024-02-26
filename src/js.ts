@@ -2247,17 +2247,15 @@ function aiButtons(textEl: HTMLTextAreaElement, word: string, context: string) {
                 const r = (await autoFun.runList([
                     { fun: wordAi.mean(bookLan, "zh"), input: { word, context } },
                     { fun: wordAi.meanEmoji(), input: { word, context } },
-                    { fun: wordAi.syn(), input: { word, context } },
-                    { fun: wordAi.opp(), input: { word, context } },
+                    { fun: wordAi.synOpp(), input: { word, context } },
                 ])) as any[];
-                if (!r[3]) {
+                if (!r[2]) {
                     setText(JSON.stringify(r, null, 2));
                     return;
                 }
                 text.push(wordAiText.mean(r[0]));
                 text.push(wordAiText.meanEmoji(r[1]));
-                text.push(wordAiText.syn(r[2]));
-                text.push(wordAiText.opp(r[3]));
+                text.push(wordAiText.synOpp(r[2]));
 
                 setText(text.join("\n"));
             },
@@ -2277,14 +2275,9 @@ function aiButtons(textEl: HTMLTextAreaElement, word: string, context: string) {
                 setText(wordAiText.meanEmoji((await wordAi.meanEmoji().run({ word }).result) as any));
             },
         }),
-        el("button", "近义词", {
+        el("button", "近反义词", {
             onclick: async () => {
-                setText(wordAiText.syn((await wordAi.syn().run({ word, context }).result) as any));
-            },
-        }),
-        el("button", "反义词", {
-            onclick: async () => {
-                setText(wordAiText.opp((await wordAi.opp().run({ word, context }).result) as any));
+                setText(wordAiText.synOpp((await wordAi.synOpp().run({ word, context }).result) as any));
             },
         }),
         tmpAiB(textEl, `$这里有个单词${word}，它位于${context}`),
@@ -2402,23 +2395,16 @@ let wordAi = {
         });
         return f;
     },
-    syn: () => {
+    synOpp: () => {
         let f = new autoFun.def({
             input: { word: "string 单词", context: "string 单词所在的语境" },
-            output: { list0: `string[] 同义词`, list1: `string[] 近义词` },
+            output: { list0: `string[] 同义词`, list1: `string[] 近义词`, list2: `string[] 近义词` },
             script: [
                 `判断context中word的意思`,
                 "若存在该语境下能进行同义替换的词，添加到list0同义词表，同义词应比word更简单",
                 "克制地添加若干近义词到list1",
+                "克制地添加若干反义词到list2",
             ],
-        });
-        return f;
-    },
-    opp: () => {
-        let f = new autoFun.def({
-            input: { word: "string 单词", context: "string 单词所在的语境" },
-            output: { list: "string[]反义词列表" },
-            script: [`根据context中word的意思，与其意思相反的反义词列表list`],
         });
         return f;
     },
@@ -2458,14 +2444,12 @@ let wordAiText = {
     meanEmoji: (x: { mean: string }) => {
         return x.mean;
     },
-    syn: (x: { list0: string[]; list1: string[] }) => {
+    synOpp: (x: { list0: string[]; list1: string[]; list2: string[] }) => {
         let text = [];
-        if (x.list0.length) text.push(`= ${x.list0.join(", ")}`);
-        if (x.list1.length) text.push(`≈ ${x.list1.join(", ")}`);
+        if (x.list0?.length) text.push(`= ${x.list0.join(", ")}`);
+        if (x.list1?.length) text.push(`≈ ${x.list1.join(", ")}`);
+        if (x.list2?.length) text.push(`- ${x.list2.join(", ")}`);
         return text.join("\n");
-    },
-    opp: (x: { list: string[] }) => {
-        return "- " + x.list.join(", ");
     },
     fix: (f: { type: "prefix" | "root" | "suffix"; t: string; dis: string }[]) => {
         let text = wordFix2str(f);
