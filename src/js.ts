@@ -2856,6 +2856,8 @@ reviewBEl.onclick = () => {
 };
 
 const reviewReflashEl = document.getElementById("review_reflash");
+const reviewAi = el("input", { type: "checkbox" });
+reviewReflashEl.parentElement.append(el("label", [reviewAi, "ai"]));
 const reviewScope = await sectionSelectEl();
 reviewReflashEl.parentElement.append(reviewScope.el);
 const reviewViewEl = document.getElementById("review_view");
@@ -3069,6 +3071,7 @@ reviewReflashEl.onclick = async () => {
     due = await getFutureReviewDue(0.1);
     let l = await getReviewDue(reviewType);
     console.log(l);
+    if (reviewAi.checked) await getWordAiContext();
     showReview(l, reviewType);
 };
 
@@ -3078,13 +3081,48 @@ function clearKeyboard() {
     keyboard.clearInput();
 }
 
+let aiContexts: { [id: string]: { text: string } } = {};
+async function getWordAiContext() {
+    const l: { word: string; mean: string }[] = [];
+    for (let x of due.word) {
+        let wordid = (await card2word.getItem(x.id)) as string;
+        let wordRecord = (await wordsStore.getItem(wordid)) as record;
+        for (let i of wordRecord.means) {
+            if (i.card_id === x.id) {
+                l.push({ word: wordRecord.word, mean: i.text });
+                break;
+            }
+        }
+    }
+
+    const f = new autoFun.def({
+        input: { list: "{word:string,mean:string}[] 单词及释义列表" },
+        script: ["为$word及其$expalin提供一个例句，并用**加粗该单词，无需翻译，放到$sentences"],
+        output: { sentences: "{word:string,sentence:string}[]" },
+    });
+
+    const r = await f.run({ list: l as any }).result;
+    let rr: { word: string; sentence: string }[];
+    if (Array.isArray(r)) {
+        rr = r;
+    } else {
+        rr = r["sentences"];
+    }
+
+    aiContexts = {};
+    for (let i in due.word) {
+        aiContexts[due.word[i].id] = { text: rr[i]?.sentence || "" };
+    }
+}
+
 async function showReview(x: { id: string; card: fsrsjs.Card }, type: review) {
     if (!x) {
         reviewViewEl.innerText = "暂无复习🎉";
         return;
     }
+    const isAi = reviewAi.checked;
     if (type === "word") {
-        showWordReview(x);
+        showWordReview(x, isAi);
     }
     if (type === "spell") {
         showSpellReview(x);
@@ -3110,12 +3148,22 @@ function crContext(word: record, id: string) {
     }
     return context;
 }
-async function showWordReview(x: { id: string; card: fsrsjs.Card }) {
+async function aiContext(id: string) {
+    let context = document.createElement("div");
+    const text = aiContexts[id]?.text;
+    if (!text) return context;
+    const l = text.split(/\*\*(.+)\*\*/);
+    context.append(el("p", [l[0], el("span", l[1], { class: MARKWORD }), l[2]]));
+    return context;
+}
+async function showWordReview(x: { id: string; card: fsrsjs.Card }, isAi: boolean) {
     let wordid = (await card2word.getItem(x.id)) as string;
     let wordRecord = (await wordsStore.getItem(wordid)) as record;
     play(wordRecord.word);
     let div = document.createElement("div");
-    let context = crContext(wordRecord, x.id);
+    let context: HTMLDivElement;
+    if (isAi) context = await aiContext(x.id);
+    else context = crContext(wordRecord, x.id);
     let hasShowAnswer = false;
     async function showAnswer() {
         hasShowAnswer = true;
