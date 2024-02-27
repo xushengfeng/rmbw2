@@ -24,9 +24,6 @@ if (!Segmenter) {
     });
 }
 
-import MarkdownIt from "markdown-it";
-const md = new MarkdownIt({ breaks: true });
-
 import "@oddbird/popover-polyfill";
 
 import Keyboard from "simple-keyboard";
@@ -2096,7 +2093,7 @@ function shwoDicEl(mainTextEl: HTMLTextAreaElement, word: string, x: number, y: 
 function disCard2(m: record["means"][0]) {
     let div = document.createDocumentFragment();
     let disEl = el("p");
-    disEl.innerHTML = md.render(m.text);
+    disEl.innerText = m.text;
     let sen = document.createElement("div");
     sen.classList.add("dic_sen");
     for (let s of m.contexts) {
