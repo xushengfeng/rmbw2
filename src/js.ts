@@ -3175,7 +3175,7 @@ function getReviewCardButtons(id: string, card: fsrsjs.Card, readText: string, f
                 return;
             }
             hasClick = true;
-            if (rating === 3 && new Date().getTime() - showTime < (await getReadTime(readText)) + 200) rating = 4; // todo 自定义
+            if (rating === 3 && new Date().getTime() - showTime < (await getReadTime(readText)) + 400) rating = 4; // todo 自定义
             setReviewCard(id, card, rating, time() - showTime);
             f(rating);
         };
@@ -3190,7 +3190,10 @@ function getReviewCardButtons(id: string, card: fsrsjs.Card, readText: string, f
 }
 
 async function getReadTime(text: string) {
-    return text.length * 20;
+    const segmenter = new Segmenter(bookLan, { granularity: "word" });
+    let segments = segmenter.segment(text);
+    const wordsCount = Array.from(segments).length;
+    return wordsCount * (Number(await setting.getItem("user.readSpeed")) || 100);
 }
 
 async function showSpellReview(x: { id: string; card: fsrsjs.Card }) {
@@ -3748,6 +3751,44 @@ settingEl.append(
     el("div", [
         el("h2", "词书"),
         el("div", [el("label", ["忽略词表", el("input", { "data-path": "wordBook.ignore" })])]),
+    ])
+);
+
+const testSpeedLanEl = el("input");
+const testSpeedContentEl = el("p");
+const readSpeedEl = el("input", { type: "number", "data-path": "user.readSpeed" });
+
+settingEl.append(
+    el("div", [
+        el("p", "测试阅读速度"),
+        testSpeedLanEl,
+        el("button", "load", {
+            onclick: async () => {
+                const l: aim = [{ content: `生成一段${testSpeedLanEl.value || "en"}小短文，使用简单词`, role: "user" }];
+                testSpeedContentEl.setAttribute("data-text", await ai(l).text);
+            },
+        }),
+        el("button", "start", {
+            onclick: () => {
+                testSpeedContentEl.setAttribute("data-time", String(time()));
+                testSpeedContentEl.innerText = testSpeedContentEl.getAttribute("data-text");
+            },
+        }),
+        testSpeedContentEl,
+        el("button", "finish", {
+            onclick: () => {
+                const startTime = Number(testSpeedContentEl.getAttribute("data-time"));
+                const text = testSpeedContentEl.innerText;
+                const endTime = time();
+
+                const segmenter = new Segmenter(testSpeedLanEl.value || "en", { granularity: "word" });
+                let segments = segmenter.segment(text);
+                const wordsCount = Array.from(segments).length;
+                readSpeedEl.value = String(Math.round((endTime - startTime) / wordsCount));
+                readSpeedEl.dispatchEvent(new Event("input"));
+            },
+        }),
+        el("label", [readSpeedEl, "ms/word"]),
     ])
 );
 
