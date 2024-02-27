@@ -3223,15 +3223,16 @@ function getReviewCardButtons(id: string, card: fsrsjs.Card, readText: string, f
                 return;
             }
             hasClick = true;
-            if (rating === 3 && new Date().getTime() - showTime < (await getReadTime(readText)) + 400) rating = 4; // todo 自定义
+            if (rating === fsrsjs.Rating.Good && new Date().getTime() - showTime < (await getReadTime(readText)) + 400)
+                rating = fsrsjs.Rating.Easy; // todo 自定义
             setReviewCard(id, card, rating, time() - showTime);
             f(rating);
         };
         return button;
     };
-    let againB = b(1, iconEl(close_svg));
-    let hardB = b(2, iconEl(help_svg));
-    let goodB = b(3, iconEl(ok_svg));
+    let againB = b(fsrsjs.Rating.Again, iconEl(close_svg));
+    let hardB = b(fsrsjs.Rating.Hard, iconEl(help_svg));
+    let goodB = b(fsrsjs.Rating.Good, iconEl(ok_svg));
     let buttons = document.createElement("div");
     buttons.append(againB, hardB, goodB);
     return buttons;
@@ -3268,7 +3269,8 @@ async function showSpellReview(x: { id: string; card: fsrsjs.Card }) {
             input.append(ele);
             await spellAnimate(ele);
 
-            if (spellResult === "none") setSpellCard(x.id, x.card, isPerfect ? 4 : 3, time() - showTime);
+            if (spellResult === "none")
+                setSpellCard(x.id, x.card, isPerfect ? fsrsjs.Rating.Easy : fsrsjs.Rating.Good, time() - showTime);
             spellResult = "right";
             let next = await nextDue(reviewType);
             showReview(next, reviewType);
