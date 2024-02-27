@@ -3084,7 +3084,8 @@ function clearKeyboard() {
 let aiContexts: { [id: string]: { text: string } } = {};
 async function getWordAiContext() {
     const l: { word: string; mean: string }[] = [];
-    for (let x of due.word) {
+    const newDue = due.word.filter((i) => i.card.state === fsrsjs.State.Review);
+    for (let x of newDue) {
         let wordid = (await card2word.getItem(x.id)) as string;
         let wordRecord = (await wordsStore.getItem(wordid)) as record;
         for (let i of wordRecord.means) {
@@ -3110,8 +3111,8 @@ async function getWordAiContext() {
     }
 
     aiContexts = {};
-    for (let i in due.word) {
-        aiContexts[due.word[i].id] = { text: rr[i]?.sentence || "" };
+    for (let i in newDue) {
+        aiContexts[newDue[i].id] = { text: rr[i]?.sentence || "" };
     }
 }
 
@@ -3150,8 +3151,7 @@ function crContext(word: record, id: string) {
 }
 async function aiContext(id: string) {
     let context = document.createElement("div");
-    const text = aiContexts[id]?.text;
-    if (!text) return context;
+    const text = aiContexts[id].text;
     const l = text.split(/\*\*(.+)\*\*/);
     context.append(el("p", [l[0], el("span", l[1], { class: MARKWORD }), l[2]]));
     return context;
@@ -3162,7 +3162,7 @@ async function showWordReview(x: { id: string; card: fsrsjs.Card }, isAi: boolea
     play(wordRecord.word);
     let div = document.createElement("div");
     let context: HTMLDivElement;
-    if (isAi) context = await aiContext(x.id);
+    if (isAi && aiContexts[x.id]?.text) context = await aiContext(x.id);
     else context = crContext(wordRecord, x.id);
     let hasShowAnswer = false;
     async function showAnswer() {
