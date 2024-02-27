@@ -539,7 +539,7 @@ let nowBook = {
 };
 
 let isWordBook = false;
-let bookLan = "";
+let bookLan = ((await setting.getItem("lan.learn")) as string) || "en";
 
 showBooks();
 setBookS();
@@ -3796,6 +3796,8 @@ async function getIPA(word: string) {
 }
 
 settingEl.append(uploadIpaDicEl, el("input", { "data-path": "ipa_dics.default" }));
+
+settingEl.append(el("label", ["学习语言", el("input", { "data-path": "lan.learn" })]));
 
 settingEl.append(
     el("div", [
