@@ -30,7 +30,8 @@
         "markdown-it": "^14.0.0",
         "msedge-tts-browserify": "^1.3.4",
         "redom": "^4.0.0",
-        "simple-keyboard": "^3.7.45"
+        "simple-keyboard": "^3.7.45",
+        "webm-duration-fix": "^1.0.4"
     },
     "devDependencies": {
         "@types/hyphen": "^1.6.7",

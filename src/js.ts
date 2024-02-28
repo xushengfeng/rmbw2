@@ -3489,6 +3489,8 @@ const tts = new MsEdgeTTS();
 const ttsVoiceConfig = "tts.voice";
 const ttsEngineConfig = "tts.engine";
 
+import fixWebmDuration from "webm-duration-fix";
+
 const synth = window.speechSynthesis;
 
 async function getTtsEngine() {
@@ -3531,9 +3533,10 @@ async function getTTS(text: string) {
     });
 
     return new Promise((re: (url: string) => void, rj) => {
-        readable.on("end", () => {
+        readable.on("end", async () => {
             console.log("STREAM end");
             let blob = new Blob([base], { type: "audio/webm" });
+            blob = await fixWebmDuration(blob);
             if (blob.size > 0) ttsCache.setItem(text, blob);
             re(URL.createObjectURL(blob));
         });
