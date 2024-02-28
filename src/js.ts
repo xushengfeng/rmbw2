@@ -793,8 +793,8 @@ async function showBookContent(id: string) {
                 showMenu(e.clientX, e.clientY);
                 menuEl.append(
                     el("div", "添加到忽略词表", {
-                        onclick: () => {
-                            addIgnore(wordList[i].text);
+                        onclick: async () => {
+                            await addIgnore(wordList[i].text);
                         },
                     })
                 );
@@ -2835,7 +2835,7 @@ async function addIgnore(word: string) {
     const oldWords = section.text.trim().split("\n");
     if (!oldWords.includes(word)) {
         oldWords.push(word);
-        section.text = oldWords.concat(oldWords).join("\n");
+        section.text = oldWords.join("\n");
         await sectionsStore.setItem(sectionId, section);
     } else {
         return;
