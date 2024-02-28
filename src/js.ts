@@ -789,6 +789,7 @@ async function showBookContent(id: string) {
             let p = el("p", wordList[i].text);
             p.oncontextmenu = (e) => {
                 e.preventDefault();
+                menuEl.innerHTML = "";
                 showMenu(e.clientX, e.clientY);
                 menuEl.append(
                     el("div", "添加到忽略词表", {
