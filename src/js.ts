@@ -3072,7 +3072,7 @@ reviewReflashEl.onclick = async () => {
     due = await getFutureReviewDue(0.1);
     let l = await getReviewDue(reviewType);
     console.log(l);
-    if (reviewAi.checked) await getWordAiContext();
+    if (reviewAi.checked && reviewType === "word") await getWordAiContext();
     showReview(l, reviewType);
 };
 
