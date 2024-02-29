@@ -3097,6 +3097,8 @@ async function getWordAiContext() {
         }
     }
 
+    if (l.length === 0) return;
+
     const f = new autoFun.def({
         input: { list: "{word:string,mean:string}[] 单词及释义列表" },
         script: ["为$word及其$expalin提供一个例句，并用**加粗该单词，无需翻译，放到$sentences"],
