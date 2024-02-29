@@ -2452,8 +2452,8 @@ let wordAiText = {
         if (x.list2?.length) text.push(`- ${x.list2.join(", ")}`);
         return text.join("\n");
     },
-    fix: (f: { type: "prefix" | "root" | "suffix"; t: string; dis: string }[]) => {
-        let text = wordFix2str(f);
+    fix: (f: { list: { type: "prefix" | "root" | "suffix"; t: string; dis: string }[] }) => {
+        let text = wordFix2str(f.list);
         return text.join(" + ");
     },
     etymology: (x: { list: string[] }) => {
