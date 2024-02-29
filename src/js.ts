@@ -3251,7 +3251,8 @@ async function getReadTime(text: string) {
 async function showSpellReview(x: { id: string; card: fsrsjs.Card }) {
     const word = x.id;
     const spaceHoder = "|";
-    let input = el("div", { class: "spell_input", style: { width: `${word.length}ch` } }, spaceHoder);
+    let input = el("div", { class: "spell_input", style: { width: "min-content" } }, spaceHoder);
+    input.innerText = word; // 占位计算宽度
     clearKeyboard();
     let wordEl = document.createElement("div");
     let isPerfect = false;
@@ -3349,6 +3350,9 @@ async function showSpellReview(x: { id: string; card: fsrsjs.Card }) {
     div.classList.add("review_spell");
     reviewViewEl.innerHTML = "";
     reviewViewEl.append(div);
+
+    input.style.width = input.offsetWidth + "px";
+    input.innerText = spaceHoder;
 }
 
 async function spellDiffWord(rightWord: string, wrongWord: string) {
