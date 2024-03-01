@@ -3254,6 +3254,7 @@ async function showSpellReview(x: { id: string; card: fsrsjs.Card }) {
     let input = el("div", { class: "spell_input", style: { width: "min-content" } }, spaceHoder);
     input.innerText = word; // 占位计算宽度
     clearKeyboard();
+    const SHOWSENWORD = "spell_sen_word_show";
     let wordEl = document.createElement("div");
     let isPerfect = false;
     let spellResult: "none" | "right" | "wrong" = "none";
@@ -3262,6 +3263,7 @@ async function showSpellReview(x: { id: string; card: fsrsjs.Card }) {
     spellCheckF = async (inputWord: string) => {
         input.innerText = inputWord;
         wordEl.innerHTML = "";
+        div.classList.remove(SHOWSENWORD);
         if (inputWord === word) {
             // 正确
             const rightL = (await hyphenate(word, { hyphenChar })).split(hyphenChar);
@@ -3286,6 +3288,7 @@ async function showSpellReview(x: { id: string; card: fsrsjs.Card }) {
             wordEl.append(await spellDiffWord(word, inputWord));
             wordEl.append(await hyphenate(word, { hyphenChar }));
             play(word);
+            div.classList.add(SHOWSENWORD);
             if (spellResult === "none") {
                 const oldCard = x.card;
                 const actionId = setSpellCard(x.id, x.card, 1, time() - showTime);
@@ -3318,6 +3321,7 @@ async function showSpellReview(x: { id: string; card: fsrsjs.Card }) {
             isPerfect = false;
             play(word);
             wordEl.innerText = await hyphenate(word, { hyphenChar });
+            div.classList.add(SHOWSENWORD);
         }
         if (button === "{audio}") {
             // 发音
@@ -3341,9 +3345,7 @@ async function showSpellReview(x: { id: string; card: fsrsjs.Card }) {
         })
     );
     for (let i of r.means) {
-        const p = el("p");
-        p.innerText = i.text;
-        context.append(el("div", [p]));
+        context.append(el("div", disCard2(i)));
     }
     const div = document.createElement("div");
     div.append(input, wordEl, context);

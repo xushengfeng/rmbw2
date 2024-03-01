@@ -883,6 +883,15 @@ div:has(> .translate) > :not(.translate) {
             border-bottom: 1px solid var(--color);
         }
     }
+    & .mark_word {
+        color: transparent;
+    }
+}
+
+.spell_sen_word_show {
+    & .mark_word {
+        color: inherit;
+    }
 }
 
 .spell_input {
