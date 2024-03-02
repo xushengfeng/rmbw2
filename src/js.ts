@@ -2647,6 +2647,10 @@ function ai(m: aim, text?: string) {
 
 import * as fsrsjs from "fsrs.js";
 let fsrs = new fsrsjs.FSRS();
+const fsrsW = JSON.parse(await setting.getItem("fsrs.w")) as number[];
+if (fsrsW?.length === 17) {
+    fsrs.p.w = fsrsW;
+}
 
 var cardsStore = localforage.createInstance({ name: "word", storeName: "cards" });
 var wordsStore = localforage.createInstance({ name: "word", storeName: "words" });
@@ -4021,6 +4025,42 @@ let asyncEl = el("div", [
 ]);
 
 settingEl.append(asyncEl);
+
+async function getCSV() {
+    const spChar = ",";
+    let text: string[] = [["card_id", "review_time", "review_rating", "review_state", "review_duration"].join(spChar)];
+    await cardActionsStore.iterate((v, k) => {
+        if (!v["rating"]) return;
+        const card_id = v["cardId"];
+        const review_time = Number(k);
+        const review_rating = v["rating"];
+        const review_state = v["state"];
+        const review_duration = v["duration"];
+        let row = [card_id, review_time, review_rating, review_state, review_duration].join(spChar);
+        text.push(row);
+    });
+    const csv = text.join("\n");
+    return csv;
+}
+
+settingEl.append(
+    el("div", [
+        el("h2", "复习"),
+        el("button", "导出", {
+            onclick: async () => {
+                const csv = await getCSV();
+                const blob = new Blob([csv], { type: "text/csv" });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement("a");
+                a.href = url;
+                a.download = "review.csv";
+                a.click();
+            },
+        }),
+        el("br"),
+        el("label", ["参数：", el("input", { "data-path": "fsrs.w" })]),
+    ])
+);
 
 const ttsEngineEl = el("select", { "data-path": ttsEngineConfig }, [
     el("option", "浏览器", { value: "browser" }),
