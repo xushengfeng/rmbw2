@@ -3661,9 +3661,9 @@ async function renderCharts() {
     const sentenceDue1: number[] = [];
     for (let k of sentenceDue) sentenceDue1.push(((await cardsStore.getItem(k)) as fsrsjs.Card).due.getTime());
 
-    cardDue.append("单词", renderCardDue(wordDue1));
-    cardDue.append("拼写", renderCardDue(spellDue));
-    cardDue.append("句子", renderCardDue(sentenceDue1));
+    cardDue.append(renderCardDue("单词", wordDue1));
+    cardDue.append(renderCardDue("拼写", spellDue));
+    cardDue.append(renderCardDue("句子", sentenceDue1));
     plotEl.append(cardDue);
 
     const newCard: Date[] = [];
@@ -3691,7 +3691,7 @@ async function renderCharts() {
     plotEl.append(el("div", [el("h2", "新卡片"), cal, el("h2", "已复习"), cal1]));
 }
 
-function renderCardDue(data: number[]) {
+function renderCardDue(text: string, data: number[]) {
     const canvas = el("canvas", { class: "oneD_plot" });
     const now = time();
     const zoom = 1 / ((1000 * 60 * 60) / 10);
@@ -3712,15 +3712,19 @@ function renderCardDue(data: number[]) {
         ctx.lineTo(x, 16);
         ctx.stroke();
     }
+    let count = 0;
+    const nowx = (now - min) * zoom;
     data.forEach((d) => {
         const x = (d - min) * zoom;
         l(x, "#000");
+        if (x < nowx) count++;
     });
-    const x = (now - min) * zoom;
-    l(x, "#f00");
+    l(nowx, "#f00");
     l((now + 1000 * 60 * 60 - min) * zoom, "#00f");
     l((now + 1000 * 60 * 60 * 24 - min) * zoom, "#00f");
-    return canvas;
+    const f = el("div");
+    f.append(text, String(count), canvas);
+    return f;
 }
 
 function renderCal(year: number, data: Date[]) {
