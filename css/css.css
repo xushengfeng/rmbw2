@@ -740,6 +740,7 @@ div:has(> .translate) > :not(.translate) {
     box-shadow: var(--box-shadow);
     transition: var(--transition);
     font-family: var(--font-family);
+    user-select: none;
 
     & > :nth-child(1) {
         display: flex;
