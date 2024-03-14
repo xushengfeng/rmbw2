@@ -4148,11 +4148,11 @@ settingEl.append(
                 }),
             ]),
             el("div", [
-                "项目开源地址",
                 el(
                     "a",
                     { href: "https://github.com/xushengfeng/xlinkote/", target: "_blank" },
-                    el("img", { img: githubIcon })
+                    "项目开源地址",
+                    el("img", { src: githubIcon })
                 ),
             ]),
             el("div", el("a", { href: "https://github.com/xushengfeng/xlinkote/blob/master/LICENSE" }, "GPL-3.0")),
