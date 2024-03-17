@@ -2876,7 +2876,26 @@ reviewReflashEl.parentElement.append(
 );
 
 const keyboardEl = el("div", { class: "simple-keyboard" });
-const handwriterEl = el("div");
+const handwriterCanvas = el("canvas");
+const handwriterCheck = el("button", iconEl(ok_svg), {
+    style: { display: "none" },
+    onclick: () => {
+        ocrSpell();
+    },
+});
+const handwriterEl = el("div", { class: "spell_write" }, [
+    handwriterCanvas,
+    el("button", {
+        onclick: () => {
+            if (keyboardEl.style.display === "none") {
+                keyboardEl.style.display = "";
+            } else {
+                keyboardEl.style.display = "none";
+            }
+        },
+    }),
+    handwriterCheck,
+]);
 const spellInputEl = el("div", { style: { display: "none" } }, [keyboardEl, handwriterEl]);
 reviewEl.append(spellInputEl);
 
@@ -2913,6 +2932,42 @@ window.addEventListener("keydown", (e) => {
     }
     keyboard.options.onChange(keyboard.getInput());
 });
+
+let spellWriteE: PointerEvent;
+let spellWriteCtx: CanvasRenderingContext2D;
+reviewEl.onpointerdown = (e) => {
+    if (!(reviewType === "spell" && reviewEl.classList.contains("review_show"))) return;
+    console.log(e);
+    if ((e.target as HTMLElement).tagName === "BUTTON") return;
+    e.preventDefault();
+    spellWriteE = e;
+    if (!spellWriteCtx) {
+        spellWriteCtx = handwriterCanvas.getContext("2d");
+        handwriterCanvas.width = window.innerWidth;
+        handwriterCanvas.height = window.innerHeight - 32;
+        handwriterCheck.style.display = "";
+    }
+    spellWriteCtx.moveTo(e.clientX, e.clientY - 32 * 2);
+};
+
+reviewEl.onpointermove = (e) => {
+    if (!spellWriteE) return;
+    const ctx = spellWriteCtx;
+    ctx.lineTo(e.clientX, e.clientY - 32 * 2);
+    ctx.stroke();
+};
+
+window.addEventListener("pointerup", (e) => {
+    spellWriteE = null;
+});
+
+function ocrSpell() {
+    // check
+    // clean
+    handwriterCanvas.width = 0;
+    handwriterCheck.style.display = "none";
+    spellWriteCtx = null;
+}
 
 async function getWordsScope() {
     const books = reviewScope.values();

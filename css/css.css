@@ -902,6 +902,29 @@ div:has(> .translate) > :not(.translate) {
     margin: auto;
 }
 
+.spell_write {
+    position: fixed;
+    top: var(--size0);
+    height: 2em;
+    width: 100dvw;
+    & > :nth-child(1) {
+        position: absolute;
+        left: 0;
+        top: 4px;
+        pointer-events: none;
+    }
+    & > :nth-child(2) {
+        position: absolute;
+        left: 0;
+        top: 4px;
+    }
+    & > :nth-child(3) {
+        position: absolute;
+        right: 0;
+        top: 4px;
+    }
+}
+
 .hg-theme-default {
     touch-action: manipulation;
     user-select: none;
