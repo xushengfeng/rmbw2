@@ -2907,7 +2907,7 @@ window.addEventListener("keydown", (e) => {
     if (!reviewEl.contains(document.elementFromPoint(window.innerWidth / 2, window.innerHeight / 2))) return; // 用于note
     let oldInput = keyboard.getInput();
     if (e.key != "Backspace") {
-        keyboard.setInput(oldInput + e.key);
+        if (e.key.length === 1) keyboard.setInput(oldInput + e.key);
     } else {
         keyboard.setInput(oldInput.slice(0, -1));
     }
