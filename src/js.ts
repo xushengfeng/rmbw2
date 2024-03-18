@@ -2875,7 +2875,11 @@ reviewReflashEl.parentElement.append(
     })
 );
 
-const keyboardEl = el("div", { class: "simple-keyboard" });
+const KEYBOARDDISPLAYPATH = "spell.keyboard.display";
+const keyboardEl = el("div", {
+    class: "simple-keyboard",
+    style: { display: await setting.getItem(KEYBOARDDISPLAYPATH) },
+});
 const handwriterCanvas = el("canvas");
 const handwriterCheck = el("button", iconEl(ok_svg), {
     style: { display: "none" },
@@ -2892,6 +2896,7 @@ const handwriterEl = el("div", { class: "spell_write" }, [
             } else {
                 keyboardEl.style.display = "none";
             }
+            setting.setItem(KEYBOARDDISPLAYPATH, keyboardEl.style.display);
         },
     }),
     handwriterCheck,
