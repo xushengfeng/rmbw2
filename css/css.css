@@ -416,6 +416,7 @@ body {
     border-radius: 50%;
     border: #000 1px solid;
     transform: translate(-50%, -50%);
+    touch-action: none;
 }
 .context_start::after {
     content: "";
@@ -870,6 +871,7 @@ div:has(> .translate) > :not(.translate) {
 
 .review_spell {
     flex-grow: 1;
+    touch-action: none;
     & .diff_add {
         color: color-mix(in srgb, #0f0 80%, var(--color));
     }
