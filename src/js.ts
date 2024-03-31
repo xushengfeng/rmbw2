@@ -3325,7 +3325,7 @@ async function showSpellReview(x: { id: string; card: fsrsjs.Card }) {
     let showTime = time();
     play(word);
     spellCheckF = async (inputWord: string) => {
-        input.innerText = inputWord;
+        input.innerText = inputWord || "|";
         wordEl.innerHTML = "";
         div.classList.remove(SHOWSENWORD);
         if (inputWord === word) {
