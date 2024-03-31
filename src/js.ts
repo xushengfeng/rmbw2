@@ -2797,34 +2797,51 @@ async function getIgnoreWords() {
 async function autoIgnore() {
     const sectionId = (await setting.getItem("wordBook.ignore")) as string;
     if (!sectionId) return;
-    const words = Array.from(bookContentEl.querySelectorAll(`:scope>*>span:not(.${MARKWORD})`)).map((el) =>
-        el.textContent.trim().toLocaleLowerCase()
+    const dialog = el("dialog", { class: "words_select" }) as HTMLDialogElement;
+    const f = el("div");
+    const words = Array.from(
+        new Set(
+            Array.from(bookContentEl.querySelectorAll(`:scope>*>span:not(.${MARKWORD})`)).map((el) =>
+                el.textContent.trim().toLocaleLowerCase()
+            )
+        )
     );
     const section = await getSection(sectionId);
     const oldWords = section.text.trim().split("\n");
-    const dialog = el("dialog", { class: "words_select" }) as HTMLDialogElement;
-    const f = el("div");
     const studyWords = await wordsStore.keys();
-    const newWords = words.filter((w) => !oldWords.includes(w));
-    const newWords1: string[] = [];
-    for (let w of newWords) {
-        newWords1.push(lemmatizer(w), w);
+    const hasLentWords = oldWords.concat(studyWords);
+    const newWords = words;
+    const wordsWithRoot: { src: string; show: string }[] = [];
+    for (const w of newWords) {
+        const r = lemmatizer(w);
+        if (hasLentWords.includes(w) && !hasLentWords.includes(r) && r.length > 1) {
+            wordsWithRoot.push({ src: w, show: r });
+        }
+        if (!hasLentWords.includes(w) && hasLentWords.includes(r)) {
+            wordsWithRoot.push({ src: w, show: w });
+        }
     }
-    Array.from(new Set(newWords1))
-        .filter((w) => !studyWords.includes(w))
-        .filter((w) => !oldWords.includes(w))
-        .filter((w) => w.length > 1)
-        .forEach((w) => {
-            let item = el("label", [el("input", { type: "checkbox", value: w }), w]);
-            f.append(item);
-        });
+    wordsWithRoot.forEach((w) => {
+        let item = el("label", [
+            el("input", { type: "checkbox", value: w.show, class: "ignore_word" }),
+            w.show,
+            el("input", { type: "checkbox", value: w.src }),
+        ]);
+        f.append(item);
+    });
     dialog.append(
         f,
         el("button", iconEl(ok_svg), {
             onclick: async () => {
-                let words = Array.from(f.querySelectorAll("input:checked")).map((el: HTMLInputElement) => el.value);
+                let words = Array.from(f.querySelectorAll("input:checked.ignore_word")).map(
+                    (el: HTMLInputElement) => el.value
+                );
                 section.text = oldWords.concat(words).join("\n");
                 await sectionsStore.setItem(sectionId, section);
+                const wordsX = Array.from(f.querySelectorAll("input:checked:not(.ignore_word)")).map(
+                    (el: HTMLInputElement) => el.value
+                );
+                selectWord(wordsX);
                 dialog.close();
             },
         })
