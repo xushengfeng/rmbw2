@@ -2965,6 +2965,7 @@ reviewEl.onpointerdown = (e) => {
     if (!(reviewType === "spell" && reviewEl.classList.contains("review_show"))) return;
     console.log(e);
     if ((e.target as HTMLElement).tagName === "BUTTON") return;
+    if (keyboardEl.contains(e.target as HTMLElement)) return;
     e.preventDefault();
     spellWriteE = e;
     if (!spellWriteCtx) {
