@@ -3828,6 +3828,7 @@ function renderCal(year: number, data: Date[]) {
             const item = el("div");
             item.title = `${s_date.toLocaleDateString()}  ${count[s_date.toDateString()] ?? 0}`;
             if (v) item.style.backgroundColor = `color-mix(in srgb-linear, #9be9a8, #216e39 ${v * 100}%)`;
+            if (s_date.toDateString() === new Date().toDateString()) item.style.borderWidth = "2px";
             f.append(item);
         }
     }
