@@ -479,6 +479,7 @@ body {
         grid-template-columns: repeat(4, 1fr);
         gap: 8px;
         overflow: scroll;
+        max-height: 80dvh;
         & > div:not(:has(> .icon)) {
             display: flex;
             flex-direction: column;
