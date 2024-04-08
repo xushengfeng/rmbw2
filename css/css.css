@@ -742,6 +742,17 @@ div:has(> .translate) > :not(.translate) {
     }
 }
 
+.tmp_dic {
+    & > div {
+        max-height: 80dvh;
+        max-width: 80dvw;
+        overflow: scroll;
+        & > div {
+            display: flex;
+        }
+    }
+}
+
 #mark_word_list {
     position: fixed;
     display: flex;

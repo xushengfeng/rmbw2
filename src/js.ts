@@ -831,6 +831,42 @@ async function showBookContent(id: string) {
                         })
                     );
                 };
+                if (item.type === "learn") {
+                    p.onclick = () => {
+                        let d = el("dialog", { class: "tmp_dic" }) as HTMLDialogElement;
+                        dialogX(d);
+                        const p = el("div");
+                        d.append(p);
+                        function show() {
+                            p.innerHTML = "";
+                            for (let i of item.c.means) {
+                                p.append(
+                                    el(
+                                        "div",
+                                        el("button", iconEl(pen_svg), {
+                                            onclick: () => {
+                                                addP(i.text, item.text, null, null, (text) => {
+                                                    i.text = text.trim();
+                                                    wordsStore.setItem(item.text, item.c);
+                                                    show();
+                                                });
+                                            },
+                                        }),
+                                        el("div", disCard2(i))
+                                    )
+                                );
+                            }
+                        }
+                        show();
+                        d.append(
+                            el("button", {
+                                onclick: () => {
+                                    d.close();
+                                },
+                            })
+                        );
+                    };
+                }
                 return p;
             }
         );
