@@ -1205,8 +1205,8 @@ changeEditEl.onclick = () => {
     changeEdit(isEdit);
 };
 
-function changePosi(section: section, text: string) {
-    let diff = dmp.diff_main(section.text, text);
+function diffPosi(oldText: string, text: string) {
+    let diff = dmp.diff_main(oldText, text);
     console.log(diff);
     let source: number[] = [0];
     let map: number[] = [0];
@@ -1240,31 +1240,35 @@ function changePosi(section: section, text: string) {
             }
         }
     }
-    source.push(section.text.length);
+    source.push(oldText.length);
     map.push(text.length);
     console.log(source, map);
-    section.words = changeSectionW(section.words, source, map, "index");
-    section.words = changeSectionW(section.words, source, map, "cIndex");
+    return { source, map };
+}
+
+function changePosi(section: section, text: string) {
+    const { source, map } = diffPosi(section.text, text);
+    for (let w in section.words) {
+        section.words[w]["index"] = patchPosi(source, map, section.words[w]["index"]);
+        section.words[w]["cIndex"] = patchPosi(source, map, section.words[w]["cIndex"]);
+    }
     return section;
 }
 
-function changeSectionW(sectionW: section["words"], source: number[], map: number[], key: "index" | "cIndex") {
-    for (let w in sectionW) {
-        let start = sectionW[w][key][0];
-        let end = sectionW[w][key][1];
-        let Start = 0,
-            End = 0;
-        for (let i = 0; i < source.length; i++) {
-            if (source[i] <= start && start <= source[i + 1]) {
-                Start = Math.min(map[i] + (start - source[i]), map[i + 1]);
-            }
-            if (source[i] <= end && end <= source[i + 1]) {
-                End = Math.min(map[i] + (end - source[i]), map[i + 1]);
-            }
+function patchPosi(source: number[], map: number[], index: [number, number]) {
+    let start = index[0];
+    let end = index[1];
+    let Start = 0,
+        End = 0;
+    for (let i = 0; i < source.length; i++) {
+        if (source[i] <= start && start <= source[i + 1]) {
+            Start = Math.min(map[i] + (start - source[i]), map[i + 1]);
         }
-        sectionW[w][key] = [Start, End];
+        if (source[i] <= end && end <= source[i + 1]) {
+            End = Math.min(map[i] + (end - source[i]), map[i + 1]);
+        }
     }
-    return sectionW;
+    return [Start, End] as [number, number];
 }
 
 import diff_match_patch, { Diff } from "diff-match-patch";
