@@ -23,6 +23,9 @@ dependencies:
   fsrs.js:
     specifier: ^1.2.2
     version: 1.2.2
+  fuse.js:
+    specifier: ^7.0.0
+    version: 7.0.0
   hyphen:
     specifier: ^1.10.4
     version: 1.10.4
@@ -789,6 +792,11 @@ packages:
 
   /fsrs.js@1.2.2:
     resolution: {integrity: sha512-LFFPn33/EBbqJoOKmtCfE+Y3LyijQO7ytf/3N6+BlPP/QxI6nlrX6n7IeeKVkjxXVrKxUUvFXTR5K6keSztphg==}
+    engines: {node: '>=10'}
+    dev: false
+
+  /fuse.js@7.0.0:
+    resolution: {integrity: sha512-14F4hBIxqKvD4Zz/XjDc3y94mNZN6pRv3U13Udo0lNLCWRBUsrMv2xwcF/y/Z5sV6+FQW+/ow68cHpm4sunt8Q==}
     engines: {node: '>=10'}
     dev: false
 

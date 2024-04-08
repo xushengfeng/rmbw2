@@ -172,7 +172,8 @@ function vlist(
     blankEl.style.height = iHeight * list.length + gap * list.length + paddingTop + paddingBotton + "px";
     pel.append(blankEl);
     const dataI = "data-v-i";
-    async function show() {
+    async function show(newList?: any[]) {
+        if (newList) list = newList;
         let startI = Math.ceil((pel.scrollTop - paddingTop) / (iHeight + gap));
         let endI = Math.floor((pel.scrollTop - paddingTop + pel.offsetHeight) / (iHeight + gap));
         let buffer = Math.min(Math.floor((endI - startI) / 3), 15);
@@ -185,10 +186,10 @@ function vlist(
             oldRangeList.push(Number(el.getAttribute(dataI)));
         });
         for (let i of oldRangeList) {
-            if (i < startI || endI < i) pel.querySelector(`:scope > [${dataI}="${i}"]`).remove();
+            if (i < startI || endI < i || newList) pel.querySelector(`:scope > [${dataI}="${i}"]`).remove();
         }
         for (let i = startI; i <= endI; i++) {
-            if (oldRangeList.includes(i)) continue;
+            if (oldRangeList.includes(i) && !newList) continue;
             let iel = await f(i, list[i], () => {
                 iel.remove();
                 for (let ii = i + 1; ii <= endI; ii++) {
@@ -213,7 +214,7 @@ function vlist(
     }
     show();
     function s() {
-        requestAnimationFrame(show);
+        requestAnimationFrame(() => show());
     }
     pel.addEventListener("scroll", s);
 
@@ -710,6 +711,8 @@ let wordList: { text: string; c: record; type?: "ignore" | "learn" }[] = [];
 
 let contentP: string[] = [];
 
+import Fuse from "fuse.js";
+
 async function showBookContent(id: string) {
     let s = (await sectionsStore.getItem(id)) as section;
     bookContentContainerEl.innerHTML = "";
@@ -780,6 +783,20 @@ async function showBookContent(id: string) {
         function p(number: number) {
             return el("td", [number.toFixed(1), el("progress", { value: number / l.length })]);
         }
+        const search = el("input", {
+            oninput: () => {
+                const fuse = new Fuse(wordList, {
+                    includeMatches: true,
+                    findAllMatches: true,
+                    useExtendedSearch: true,
+                    includeScore: true,
+                    keys: ["text"],
+                });
+                let fr = fuse.search(search.value);
+                let list = fr.map((i) => i.item);
+                show.show(list.length ? list : wordList);
+            },
+        });
         bookContentContainerEl.append(
             el(
                 "div",
@@ -787,29 +804,35 @@ async function showBookContent(id: string) {
                 el("table", { class: "words_sum" }, [
                     el("tr", [el("th", "词"), el("th", "了解"), el("th", "记忆"), el("th", "拼写")]),
                     el("tr", [el("td", String(l.length)), p(matchWords), p(means1), p(spell)]),
-                ])
+                ]),
+                search
             )
         );
 
-        vlist(bookContentContainerEl, wordList, { iHeight: 24, gap: 8, paddingTop: 120, paddingBotton: 8 }, (i) => {
-            let p = el("p", wordList[i].text);
-            if (wordList[i].type) {
-                p.classList.add(wordList[i].type);
+        const show = vlist(
+            bookContentContainerEl,
+            wordList,
+            { iHeight: 24, gap: 8, paddingTop: 120, paddingBotton: 8 },
+            (i, item: (typeof wordList)[0]) => {
+                let p = el("p", item.text);
+                if (item.type) {
+                    p.classList.add(item.type);
+                }
+                p.oncontextmenu = (e) => {
+                    e.preventDefault();
+                    menuEl.innerHTML = "";
+                    showMenu(e.clientX, e.clientY);
+                    menuEl.append(
+                        el("div", "添加到忽略词表", {
+                            onclick: async () => {
+                                await addIgnore(item.text);
+                            },
+                        })
+                    );
+                };
+                return p;
             }
-            p.oncontextmenu = (e) => {
-                e.preventDefault();
-                menuEl.innerHTML = "";
-                showMenu(e.clientX, e.clientY);
-                menuEl.append(
-                    el("div", "添加到忽略词表", {
-                        onclick: async () => {
-                            await addIgnore(wordList[i].text);
-                        },
-                    })
-                );
-            };
-            return p;
-        });
+        );
 
         setScrollPosi(bookContentContainerEl, contentScrollPosi);
         return;
