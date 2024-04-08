@@ -1650,11 +1650,12 @@ async function showDic(id: string) {
     if (!isSentence) {
         let record = (await wordsStore.getItem(wordx.id)) as record;
         Word = { word: wordx.id, record, ...flatWordCard(record, id) };
+        let s = source2context(wordx, id);
         if (Word.index === -1) {
-            Word.context = source2context(wordx, id);
+            Word.context = s;
         }
-        Share.context = Word.context.text;
-        Share.sourceIndex = Word.context.index;
+        Share.context = s.text;
+        Share.sourceIndex = s.index;
         sourceWord = Word.context.text.slice(...Word.context.index);
     } else {
         Share.context = ((await card2sentence.getItem(wordx.id)) as record2).text;
@@ -1811,7 +1812,8 @@ async function showDic(id: string) {
         }
 
         addMeanEl.onclick = () => {
-            addP("", Word.word, Word.context.text, Word.context.index, async (text) => {
+            addP("", Word.word, Word.context.text, Word.context.index, async (text, sentence, index) => {
+                // todo sentence index
                 let mean = text.trim();
                 Word.text = mean;
                 if (mean) {
@@ -1827,7 +1829,7 @@ async function showDic(id: string) {
         };
 
         editMeanEl.onclick = () => {
-            addP(Word.text, Word.word, Word.context.text, Word.context.index, async (text) => {
+            addP(Word.text, Word.word, Word.context.text, Word.context.index, async (text, sentence, index) => {
                 let mean = text.trim();
                 Word.text = mean;
                 if (mean) {
@@ -1835,6 +1837,13 @@ async function showDic(id: string) {
                         for (let i of Word.record.means) {
                             if (i.card_id === Word.card_id) {
                                 i.text = mean;
+                                for (let x of i.contexts) {
+                                    if (x.source.id === id) {
+                                        x.text = sentence;
+                                        x.index = index;
+                                        break;
+                                    }
+                                }
                                 wordsStore.setItem(Word.word, Word.record);
                                 break;
                             }
@@ -2199,13 +2208,18 @@ function addP(
     word: string,
     sentence: string,
     index: record["means"][0]["contexts"][0]["index"],
-    f: (text: string) => void
+    f: (text: string, sentence?: string, index?: [number, number]) => void
 ) {
     let p = el("p");
+    let sInput1 = el("span", { contentEditable: "true" });
+    let sInput2 = el("span", { contentEditable: "true" });
+    let sourceWord = "";
     if (index) {
-        const sourceWord = sentence.slice(...index);
+        sourceWord = sentence.slice(...index);
         const sourceWordEl = el("span", { class: MARKWORD }, sourceWord, sourceWord != word ? `(${word})` : "");
-        p.append(sentence.slice(0, index[0]), sourceWordEl, sentence.slice(index[1]));
+        sInput1.innerText = sentence.slice(0, index[0]);
+        sInput2.innerText = sentence.slice(index[1]);
+        p.append(sInput1, sourceWordEl, sInput2);
         setTimeout(() => {
             p.scrollLeft = sourceWordEl.offsetLeft - p.offsetWidth / 2;
         }, 100);
@@ -2221,7 +2235,13 @@ function addP(
                 onclick: () => {
                     let mean = textEl.value.trim();
                     div.close();
-                    f(mean);
+                    if (index) {
+                        const newSentence = sInput1.innerText + sourceWord + sInput2.innerText;
+                        console.log(newSentence);
+                        let i = diffPosi(newSentence, sentence);
+                        let nindex = patchPosi(i.source, i.map, index);
+                        f(mean, newSentence, nindex);
+                    } else f(mean);
                 },
             }),
         ]),
