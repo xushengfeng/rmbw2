@@ -1815,7 +1815,6 @@ async function showDic(id: string) {
 
         addMeanEl.onclick = () => {
             addP("", Word.word, Word.context.text, Word.context.index, async (text, sentence, index) => {
-                // todo sentence index
                 let mean = text.trim();
                 Word.text = mean;
                 if (mean) {
@@ -1823,6 +1822,11 @@ async function showDic(id: string) {
                     Word.record = x.record;
                     await changeDicMean(Word.word, x.index);
                     let record = (await wordsStore.getItem(wordx.id)) as record;
+                    record = setRecordContext(record, id, (c) => {
+                        c.text = sentence;
+                        c.index = index;
+                    });
+                    await wordsStore.setItem(wordx.id, record);
                     Word = { word: wordx.id, record, ...flatWordCard(record, id) };
                     visit(true);
                 }
@@ -2251,7 +2255,7 @@ function addP(
                     if (index) {
                         const newSentence = sInput1.innerText + sourceWord + sInput2.innerText;
                         console.log(newSentence);
-                        let i = diffPosi(newSentence, sentence);
+                        let i = diffPosi(sentence, newSentence);
                         let nindex = patchPosi(i.source, i.map, index);
                         f(mean, newSentence, nindex);
                     } else f(mean);
