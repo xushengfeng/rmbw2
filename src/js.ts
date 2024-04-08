@@ -1724,6 +1724,7 @@ async function showDic(id: string) {
         wordx.index[1] = contextEnd;
         wordx.type = "sentence";
         wordx.id = sentenceCardId;
+        if (dicTransContent.value) wordx.visit = true;
         section.words[id] = wordx;
         sectionsStore.setItem(sectionId, section);
 
