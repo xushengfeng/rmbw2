@@ -1550,7 +1550,7 @@ async function showMarkList() {
                                 card2sentence.removeItem(i.s.id);
                             } else {
                                 let record = (await wordsStore.getItem(i.s.id)) as record;
-                                record = await rmWord(record, i.id);
+                                record = rmWord(record, i.id);
                                 await clearWordMean(record);
                                 rmStyle(i.s.index[0]);
                             }
@@ -1674,10 +1674,12 @@ async function showDic(id: string) {
 
     async function changeDicMean(word: string, i: number) {
         if (word != Word.word || i != Word.index) {
-            await rmWord(Word.record, Word.context.source.id);
+            Word.record = rmWord(Word.record, Word.context.source.id);
 
-            if (i != -1) await setWordC(word, i, Word.context);
-            else await clearWordMean(Word.record);
+            if (i != -1) {
+                Word.record = setWordC(Word.record, i, Word.context);
+                await wordsStore.setItem(Word.word, Word.record);
+            } else await clearWordMean(Word.record);
 
             Word.word = word;
             Word.index = i;
@@ -1759,7 +1761,7 @@ async function showDic(id: string) {
 
         await card2sentence.setItem(sentenceCardId, r);
 
-        await rmWord(Word.record, Word.context.source.id);
+        Word.record = rmWord(Word.record, Word.context.source.id);
         clearWordMean(Word.record);
 
         showSentence();
@@ -1834,20 +1836,14 @@ async function showDic(id: string) {
                 Word.text = mean;
                 if (mean) {
                     if (Word.record) {
-                        for (let i of Word.record.means) {
-                            if (i.card_id === Word.card_id) {
-                                i.text = mean;
-                                for (let x of i.contexts) {
-                                    if (x.source.id === id) {
-                                        x.text = sentence;
-                                        x.index = index;
-                                        break;
-                                    }
-                                }
-                                wordsStore.setItem(Word.word, Word.record);
-                                break;
-                            }
-                        }
+                        Word.record = setRecordMean(Word.record, Word.card_id, (i) => {
+                            i.text = mean;
+                        });
+                        Word.record = setRecordContext(Word.record, id, (x) => {
+                            x.text = sentence;
+                            x.index = index;
+                        });
+                        wordsStore.setItem(Word.word, Word.record);
                     }
                 } else {
                     await visit(false);
@@ -2039,17 +2035,13 @@ async function showDic(id: string) {
                 card2sentence.setItem(wordx.id, r);
             } else {
                 const cIndex = [wordx.index[0] - index.start, wordx.index[1] - index.start] as [number, number];
-                if (Word.record)
-                    for (let i of Word.record.means) {
-                        for (let j of i.contexts) {
-                            if (j.source.id === id) {
-                                j.index = cIndex;
-                                j.text = text;
-                                await wordsStore.setItem(Word.word, Word.record);
-                                break;
-                            }
-                        }
-                    }
+                if (Word.record) {
+                    Word.record = setRecordContext(Word.record, id, (j) => {
+                        j.index = cIndex;
+                        j.text = text;
+                    });
+                    await wordsStore.setItem(Word.word, Word.record);
+                }
                 Word.context.text = text;
                 Word.context.index = cIndex;
                 Share.sourceIndex = cIndex;
@@ -2164,11 +2156,10 @@ function source2context(source: section["words"][0], sourceId: string) {
     };
 }
 
-async function rmWord(record: record, sourceId: string) {
+function rmWord(record: record, sourceId: string) {
     let Word = flatWordCard(record, sourceId);
     let i = Word.index;
-    if (i === -1) return;
-    let word = record.word;
+    if (i === -1) return record;
     for (let index in record.means) {
         const m = record.means[index];
         if (Number(index) === i) {
@@ -2176,7 +2167,6 @@ async function rmWord(record: record, sourceId: string) {
             break;
         }
     }
-    await wordsStore.setItem(word, record);
     return record;
 }
 async function clearWordMean(record: record) {
@@ -2201,6 +2191,29 @@ async function clearWordMean(record: record) {
 
 function rmStyle(start: number) {
     bookContentEl.querySelector(`span[data-s="${start}"]`)?.classList?.remove(MARKWORD);
+}
+
+function setRecordMean(record: record, id: string, f: (c: record["means"][0]) => void) {
+    record = structuredClone(record);
+    for (let n of record.means) {
+        if (n.card_id === id) {
+            f(n);
+            return record;
+        }
+    }
+    return record;
+}
+function setRecordContext(record: record, id: string, f: (c: record["means"][0]["contexts"][0]) => void) {
+    record = structuredClone(record);
+    for (let n of record.means) {
+        for (let j of n.contexts) {
+            if (j.source.id === id) {
+                f(j);
+                return record;
+            }
+        }
+    }
+    return record;
 }
 
 function addP(
@@ -2699,15 +2712,13 @@ function newCardAction(id: string) {
 var transCache = localforage.createInstance({ name: "aiCache", storeName: "trans" });
 var ttsCache = localforage.createInstance({ name: "aiCache", storeName: "tts" });
 
-async function setWordC(word: string, meanIndex: number, context: record["means"][0]["contexts"][0]) {
-    let w = (await wordsStore.getItem(word)) as record;
-    if (meanIndex < 0) return;
+function setWordC(w: record, meanIndex: number, context: record["means"][0]["contexts"][0]) {
+    if (meanIndex < 0) return w;
     for (let index in w.means) {
         const i = w.means[index];
         if (Number(index) === meanIndex) {
             if (!i.contexts.includes(context)) i.contexts.push(context);
-            await wordsStore.setItem(word, w);
-            return;
+            return w;
         }
     }
 }
