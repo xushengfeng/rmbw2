@@ -826,6 +826,7 @@ async function showBookContent(id: string) {
                         el("div", "添加到忽略词表", {
                             onclick: async () => {
                                 await addIgnore(item.text);
+                                p.classList.add("ignore");
                             },
                         })
                     );
