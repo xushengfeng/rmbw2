@@ -706,7 +706,7 @@ async function showBookSections(sections: book["sections"]) {
     );
 }
 
-let wordList: { text: string; c: record }[] = [];
+let wordList: { text: string; c: record; type?: "ignore" | "learn" }[] = [];
 
 let contentP: string[] = [];
 
@@ -747,9 +747,10 @@ async function showBookContent(id: string) {
         for (let i of l) {
             let t = i;
             let c: record;
+            let type: "ignore" | "learn" = null;
             if (keys.includes(i)) {
                 c = (await wordsStore.getItem(i)) as record;
-                t = `${t} *`;
+                type = "learn";
                 matchWords++;
                 let r = 0;
                 for (let j of c.means) {
@@ -759,11 +760,12 @@ async function showBookContent(id: string) {
                 }
                 means1 += r / c.means.length;
             } else if (ignoreWords.includes(i)) {
-                t = `${t} **`;
+                type = "ignore";
                 matchWords++;
                 means1 += 1;
             }
-            wordList.push({ text: t, c: c });
+            if (type) wordList.push({ text: t, c: c, type });
+            else wordList.push({ text: t, c: c });
         }
         let spell = 0;
         for (let i of l) {
@@ -779,14 +781,21 @@ async function showBookContent(id: string) {
             return el("td", [number.toFixed(1), el("progress", { value: number / l.length })]);
         }
         bookContentContainerEl.append(
-            el("table", { class: "words_sum" }, [
-                el("tr", [el("th", "词"), el("th", "了解"), el("th", "记忆"), el("th", "拼写")]),
-                el("tr", [el("td", String(l.length)), p(matchWords), p(means1), p(spell)]),
-            ])
+            el(
+                "div",
+                { class: "words_book_top" },
+                el("table", { class: "words_sum" }, [
+                    el("tr", [el("th", "词"), el("th", "了解"), el("th", "记忆"), el("th", "拼写")]),
+                    el("tr", [el("td", String(l.length)), p(matchWords), p(means1), p(spell)]),
+                ])
+            )
         );
 
         vlist(bookContentContainerEl, wordList, { iHeight: 24, gap: 8, paddingTop: 120, paddingBotton: 8 }, (i) => {
             let p = el("p", wordList[i].text);
+            if (wordList[i].type) {
+                p.classList.add(wordList[i].type);
+            }
             p.oncontextmenu = (e) => {
                 e.preventDefault();
                 menuEl.innerHTML = "";

@@ -394,6 +394,22 @@ body {
     &:has(table) {
         & p {
             margin: 0;
+            user-select: none;
+            font-family: var(--font-family);
+            left: calc((100dvw - var(--content-width)) / 2) !important;
+        }
+        & .words_book_top {
+            position: sticky;
+            top: 0;
+            z-index: 1;
+            background-color: var(--bg1);
+            backdrop-filter: var(--blur);
+        }
+        & .ignore {
+            opacity: 0.5;
+        }
+        & .learn {
+            color: green;
         }
     }
 }
@@ -787,6 +803,7 @@ div:has(> .translate) > :not(.translate) {
 #review {
     position: absolute;
     top: 100dvh;
+    z-index: 1;
     background-color: var(--bg1);
     backdrop-filter: var(--blur);
     transition: var(--transition);
