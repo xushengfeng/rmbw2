@@ -886,6 +886,7 @@ div:has(> .translate) > :not(.translate) {
 }
 .review_word > :last-child {
     display: flex;
+    gap: 8px;
     justify-content: center;
 }
 
