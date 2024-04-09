@@ -2364,7 +2364,7 @@ function addP(
             p.scrollLeft = sourceWordEl.offsetLeft - p.offsetWidth / 2;
         }, 100);
     } else p.append(word || sentence);
-    let textEl = el("textarea", { value: text });
+    let textEl = el("textarea", { value: text, autofocus: "true" });
     let aiB = getAiButtons(textEl, word, sentence);
     let div = el("dialog", { class: NOTEDIALOG }, [
         p,
