@@ -2007,6 +2007,8 @@ async function showDic(id: string) {
                 div.append(radio, await disCard2(m));
                 dicDetailsEl.append(div);
             }
+            if (Word.index != -1) dicDetailsEl.classList.add(HIDEMEANS);
+            else dicDetailsEl.classList.remove(HIDEMEANS);
         }
     }
     async function showSentence() {
