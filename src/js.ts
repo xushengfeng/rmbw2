@@ -329,6 +329,9 @@ dicEl.append(
 
 const toastEl = document.getElementById("toast");
 
+const tmpDicEl = el("div", { popover: "auto", class: "tmp_dic" });
+document.body.append(tmpDicEl);
+
 var bookshelfStore = localforage.createInstance({ name: "bookshelf" });
 var sectionsStore = localforage.createInstance({ name: "sections" });
 
@@ -882,10 +885,8 @@ async function showBookContent(id: string) {
                 };
                 if (item.type === "learn") {
                     p.onclick = () => {
-                        let d = el("dialog", { class: "tmp_dic" }) as HTMLDialogElement;
-                        dialogX(d);
-                        const p = el("div");
-                        d.append(p);
+                        const p = tmpDicEl;
+                        p.showPopover();
                         async function show() {
                             p.innerHTML = "";
                             for (let i of item.c.means) {
@@ -907,13 +908,6 @@ async function showBookContent(id: string) {
                             }
                         }
                         show();
-                        d.append(
-                            el("button", {
-                                onclick: () => {
-                                    d.close();
-                                },
-                            })
-                        );
                     };
                 }
                 return p;

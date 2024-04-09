@@ -748,15 +748,13 @@ div:has(> .translate) > :not(.translate) {
 }
 
 .tmp_dic {
+    max-height: 80dvh;
+    max-width: 80dvw;
+    overflow: scroll;
     & > div {
-        max-height: 80dvh;
-        max-width: 80dvw;
-        overflow: scroll;
-        & > div {
-            display: flex;
-            & > :first-child {
-                flex-shrink: 0;
-            }
+        display: flex;
+        & > :first-child {
+            flex-shrink: 0;
         }
     }
 }
