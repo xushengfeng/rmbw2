@@ -4096,7 +4096,7 @@ async function getAllData() {
             l[storeName][k] = v;
         });
     }
-    return JSON.stringify(l);
+    return JSON.stringify(l, null, 2);
 }
 
 async function setAllData(data: string) {
@@ -4170,6 +4170,26 @@ async function setDAV(data: Blob) {
     }).then();
 }
 
+const GitHubConfigPath = {
+    user: "webStore.github.user",
+    repo: "webStore.github.repo",
+    token: "webStore.github.token",
+    path: "webStore.github.path",
+};
+
+async function getGitHub() {
+    const user = (await setting.getItem(GitHubConfigPath.user)) as string;
+    const repo = (await setting.getItem(GitHubConfigPath.repo)) as string;
+    const token = (await setting.getItem(GitHubConfigPath.token)) as string;
+    const path = ((await setting.getItem(GitHubConfigPath.path)) as string) || "data.json";
+    return {
+        url: `https://api.github.com/repos/${user}/${repo}/contents/${path}`,
+        auth: {
+            Authorization: `Bearer ${token}`,
+        },
+    };
+}
+
 let uploadDataEl = el("input", "上传数据", {
     type: "file",
     onchange: () => {
@@ -4180,6 +4200,8 @@ let uploadDataEl = el("input", "上传数据", {
         };
     },
 });
+
+import { encode, decode } from "js-base64";
 
 let asyncEl = el("div", [
     el("h2", "数据"),
@@ -4198,14 +4220,14 @@ let asyncEl = el("div", [
     ]),
     el("div", [
         el("h3", "webDAV"),
-        el("button", "get", {
+        el("button", "↓", {
             onclick: async () => {
                 let data = await getDAV();
                 let str = await xunzip(data);
                 setAllData(JSON.parse(str));
             },
         }),
-        el("button", "set", {
+        el("button", "↑", {
             onclick: async () => {
                 let data = await getAllData();
                 let file = await xzip(data);
@@ -4216,6 +4238,44 @@ let asyncEl = el("div", [
             el("label", ["url：", el("input", { "data-path": DAVConfigPath.url })]),
             el("label", ["用户名：", el("input", { "data-path": DAVConfigPath.user })]),
             el("label", ["密码：", el("input", { "data-path": DAVConfigPath.passwd })]),
+        ]),
+        el("h3", "GitHub"),
+        el("button", "↓", {
+            onclick: async () => {
+                let config = await getGitHub();
+                let data = await fetch(config.url, { headers: { ...config.auth } });
+                let str = decode((await data.json()).content);
+                setAllData(JSON.parse(str));
+            },
+        }),
+        el("button", "↑", {
+            onclick: async () => {
+                let data = await getAllData();
+                let base64 = encode(data);
+                let config = await getGitHub();
+                let sha = await fetch(config.url, { headers: { ...config.auth } });
+                fetch(config.url, {
+                    method: "PUT",
+                    headers: {
+                        ...config.auth,
+                    },
+                    body: JSON.stringify({
+                        message: "更新数据",
+                        content: base64,
+                        sha: (await sha.json()).sha,
+                    }),
+                });
+            },
+        }),
+        el("form", [
+            el("label", ["用户：", el("input", { "data-path": GitHubConfigPath.user })]),
+            el("label", ["仓库（repo）：", el("input", { "data-path": GitHubConfigPath.repo })]),
+            el("label", [
+                "token：",
+                el("input", { "data-path": GitHubConfigPath.token }),
+                el("a", { href: "https://github.com/settings/tokens/new?description=rmbw2&scopes=repo" }, "创建"),
+            ]),
+            el("label", ["path：", el("input", { "data-path": GitHubConfigPath.path })]),
         ]),
     ]),
 ]);

@@ -32,6 +32,9 @@ dependencies:
   intl-segmenter-polyfill:
     specifier: ^0.4.4
     version: 0.4.4
+  js-base64:
+    specifier: ^3.7.7
+    version: 3.7.7
   lemmatizer:
     specifier: ^0.0.1
     version: 0.0.1
@@ -929,6 +932,10 @@ packages:
       has-to-string-tag-x: 1.4.1
       is-object: 1.0.2
     dev: true
+
+  /js-base64@3.7.7:
+    resolution: {integrity: sha512-7rCnleh0z2CkXhH67J8K1Ytz0b2Y+yxTPL+/KOJoa20hfnVQ/3/T6W/KflYI4bRHRagNeXeU2bkNGI3v1oS/lw==}
+    dev: false
 
   /js-mdict@5.0.2:
     resolution: {integrity: sha512-Yj7A7yHyWocp+nMLkwRgDJzh1ckDi99z9Um+86pAVAgIL+kofq7lukQpD1OTIZ+0xJfmpn56MVl4Qdc9HqwdSQ==}
