@@ -257,6 +257,12 @@ booksEl.append(
                 booksEl.classList.add("show_online_book");
             },
         }),
+        el("div", "词典", {
+            onclick: () => {
+                showBook(coreWordBook);
+                booksEl.hidePopover();
+            },
+        }),
     ]),
     localBookEl,
     onlineBookEl
@@ -355,6 +361,7 @@ type section = {
 };
 
 function getBooksById(id: string) {
+    if (id === "0") return coreWordBook;
     return new Promise((re: (a: book) => void) => {
         bookshelfStore.iterate((b: book, k) => {
             if (b.id === id) {
@@ -392,6 +399,28 @@ function newSection() {
     let s: section = { title: "新章节", lastPosi: 0, text: "", words: {} };
     return s;
 }
+
+const ignoreWordSection = "ignore";
+if (!(await sectionsStore.getItem(ignoreWordSection))) {
+    await sectionsStore.setItem(ignoreWordSection, {
+        title: "ignore",
+        lastPosi: 0,
+        text: "",
+        words: {},
+    } as section);
+}
+
+const coreWordBook: book = {
+    canEdit: true,
+    id: "0",
+    language: "en",
+    lastPosi: 0,
+    name: "词典",
+    sections: [ignoreWordSection],
+    type: "word",
+    updateTime: 0,
+    visitTime: 0,
+};
 
 bookBEl.onclick = () => {
     booksEl.showPopover();
@@ -548,7 +577,9 @@ setBookS();
 const bookNameEl = document.getElementById("book_name");
 async function setBookS() {
     if (nowBook.book) {
-        let sectionId = (await getBooksById(nowBook.book)).sections[nowBook.sections];
+        let sectionId = (nowBook.book === "0" ? coreWordBook : await getBooksById(nowBook.book)).sections[
+            nowBook.sections
+        ];
         let section = await getSection(sectionId);
         document.getElementById("book_name").innerText = `${(await getBooksById(nowBook.book)).name} - ${
             section.title
@@ -2896,16 +2927,12 @@ async function getNewWordsFromBook(text: string, books: string[]) {
 }
 
 async function getIgnoreWords() {
-    const sectionId = (await setting.getItem("wordBook.ignore")) as string;
-    if (!sectionId) return [];
-    const section = await getSection(sectionId);
+    const section = await getSection(ignoreWordSection);
     if (!section) return [];
     return section.text.trim().split("\n");
 }
 
 async function autoIgnore() {
-    const sectionId = (await setting.getItem("wordBook.ignore")) as string;
-    if (!sectionId) return;
     const dialog = el("dialog", { class: "words_select" }) as HTMLDialogElement;
     const f = el("div");
     const words = Array.from(
@@ -2915,7 +2942,7 @@ async function autoIgnore() {
             )
         )
     );
-    const section = await getSection(sectionId);
+    const section = await getSection(ignoreWordSection);
     const oldWords = section.text.trim().split("\n");
     const studyWords = await wordsStore.keys();
     const hasLentWords = oldWords.concat(studyWords);
@@ -2946,7 +2973,7 @@ async function autoIgnore() {
                     (el: HTMLInputElement) => el.value
                 );
                 section.text = oldWords.concat(words).join("\n");
-                await sectionsStore.setItem(sectionId, section);
+                await sectionsStore.setItem(ignoreWordSection, section);
                 const wordsX = Array.from(f.querySelectorAll("input:checked:not(.ignore_word)")).map(
                     (el: HTMLInputElement) => el.value
                 );
@@ -2959,14 +2986,12 @@ async function autoIgnore() {
 }
 
 async function addIgnore(word: string) {
-    const sectionId = (await setting.getItem("wordBook.ignore")) as string;
-    if (!sectionId) return;
-    const section = await getSection(sectionId);
+    const section = await getSection(ignoreWordSection);
     const oldWords = section.text.trim().split("\n");
     if (!oldWords.includes(word)) {
         oldWords.push(word);
         section.text = oldWords.join("\n");
-        await sectionsStore.setItem(sectionId, section);
+        await sectionsStore.setItem(ignoreWordSection, section);
     } else {
         return;
     }
@@ -4010,13 +4035,6 @@ async function getIPA(word: string) {
 settingEl.append(uploadIpaDicEl, el("input", { "data-path": "ipa_dics.default" }));
 
 settingEl.append(el("label", ["学习语言", el("input", { "data-path": "lan.learn" })]));
-
-settingEl.append(
-    el("div", [
-        el("h2", "词书"),
-        el("div", [el("label", ["忽略词表", el("input", { "data-path": "wordBook.ignore" })])]),
-    ])
-);
 
 const testSpeedLanEl = el("input");
 const testSpeedContentEl = el("p");
