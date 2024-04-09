@@ -556,6 +556,7 @@ addBookEl.onclick = async () => {
 };
 
 addSectionEL.onclick = async () => {
+    if (nowBook.book === "0") return;
     if (!nowBook.book) nowBook = await newBook();
     let book = await getBooksById(nowBook.book);
     let sid = uuid();
@@ -724,6 +725,7 @@ async function showBookSections(sections: book["sections"]) {
                 nowBook.sections = Number(i);
                 showBookContent(sections[i]);
                 setBookS();
+                if (nowBook.book === "0") return;
                 let book = await getBooksById(nowBook.book);
                 book.lastPosi = nowBook.sections;
                 bookshelfStore.setItem(nowBook.book, book);
@@ -1309,7 +1311,7 @@ async function changeEdit(b: boolean) {
                 section = changePosi(section, editText);
                 section.text = editText;
                 await sectionsStore.setItem(sectionId, section);
-                await bookshelfStore.setItem(nowBook.book, book);
+                if (nowBook.book != "0") await bookshelfStore.setItem(nowBook.book, book);
             }
             showBookContent(sectionId);
         }
