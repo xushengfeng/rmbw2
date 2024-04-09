@@ -410,13 +410,23 @@ if (!(await sectionsStore.getItem(ignoreWordSection))) {
     } as section);
 }
 
+const wordSection = "words";
+if (!(await sectionsStore.getItem(wordSection))) {
+    await sectionsStore.setItem(wordSection, {
+        title: "words",
+        lastPosi: 0,
+        text: "",
+        words: {},
+    } as section);
+}
+
 const coreWordBook: book = {
     canEdit: true,
     id: "0",
     language: "en",
     lastPosi: 0,
     name: "词典",
-    sections: [ignoreWordSection],
+    sections: [wordSection, ignoreWordSection],
     type: "word",
     updateTime: 0,
     visitTime: 0,
@@ -745,7 +755,15 @@ let contentP: string[] = [];
 import Fuse from "fuse.js";
 
 async function showBookContent(id: string) {
-    let s = (await sectionsStore.getItem(id)) as section;
+    let s = await getSection(id);
+    if (id === wordSection) {
+        let l: string[] = [];
+        await wordsStore.iterate((v: record) => {
+            l.push(v.word);
+        });
+        let text = l.join("\n");
+        s.text = text;
+    }
     bookContentContainerEl.innerHTML = "";
     bookContentEl = el("div");
     bookContentContainerEl.append(bookContentEl);
@@ -1289,7 +1307,7 @@ async function changeEdit(b: boolean) {
             let section = await getSection(sectionId);
             book.updateTime = new Date().getTime();
             section.lastPosi = contentScrollPosi;
-            if (editText) {
+            if (editText && sectionId != wordSection) {
                 section = changePosi(section, editText);
                 section.text = editText;
                 await sectionsStore.setItem(sectionId, section);
