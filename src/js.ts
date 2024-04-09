@@ -4175,6 +4175,7 @@ const GitHubConfigPath = {
     repo: "webStore.github.repo",
     token: "webStore.github.token",
     path: "webStore.github.path",
+    download: "webStore.github.download",
 };
 
 async function getGitHub() {
@@ -4187,6 +4188,9 @@ async function getGitHub() {
         auth: {
             Authorization: `Bearer ${token}`,
         },
+        user,
+        repo,
+        path,
     };
 }
 
@@ -4201,7 +4205,7 @@ let uploadDataEl = el("input", "上传数据", {
     },
 });
 
-import { encode, decode } from "js-base64";
+import { encode } from "js-base64";
 
 let asyncEl = el("div", [
     el("h2", "数据"),
@@ -4243,9 +4247,12 @@ let asyncEl = el("div", [
         el("button", "↓", {
             onclick: async () => {
                 let config = await getGitHub();
-                let data = await fetch(config.url, { headers: { ...config.auth } });
-                let str = decode((await data.json()).content);
-                setAllData(JSON.parse(str));
+                let data = await fetch(
+                    (await setting.getItem(GitHubConfigPath.download)) ||
+                        `https://raw.githubusercontent.com/${config.user}/${config.repo}/main/${config.path}`
+                );
+                let str = await data.text();
+                setAllData(str);
             },
         }),
         el("button", "↑", {
@@ -4276,6 +4283,7 @@ let asyncEl = el("div", [
                 el("a", { href: "https://github.com/settings/tokens/new?description=rmbw2&scopes=repo" }, "创建"),
             ]),
             el("label", ["path：", el("input", { "data-path": GitHubConfigPath.path })]),
+            el("label", ["替换下载：", el("input", { "data-path": GitHubConfigPath.download })]),
         ]),
     ]),
 ]);
