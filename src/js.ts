@@ -587,9 +587,7 @@ setBookS();
 const bookNameEl = document.getElementById("book_name");
 async function setBookS() {
     if (nowBook.book) {
-        let sectionId = (nowBook.book === "0" ? coreWordBook : await getBooksById(nowBook.book)).sections[
-            nowBook.sections
-        ];
+        let sectionId = (await getBooksById(nowBook.book)).sections[nowBook.sections];
         let section = await getSection(sectionId);
         document.getElementById("book_name").innerText = `${(await getBooksById(nowBook.book)).name} - ${
             section.title
@@ -886,7 +884,7 @@ async function showBookContent(id: string) {
                         dialogX(d);
                         const p = el("div");
                         d.append(p);
-                        function show() {
+                        async function show() {
                             p.innerHTML = "";
                             for (let i of item.c.means) {
                                 p.append(
@@ -901,7 +899,7 @@ async function showBookContent(id: string) {
                                                 });
                                             },
                                         }),
-                                        el("div", disCard2(i))
+                                        el("div", await disCard2(i))
                                     )
                                 );
                             }
@@ -2010,7 +2008,7 @@ async function showDic(id: string) {
                 };
                 if (Number(i) === Word.index) radio.checked = true;
                 div.onclick = () => radio.click();
-                div.append(radio, disCard2(m));
+                div.append(radio, await disCard2(m));
                 dicDetailsEl.append(div);
             }
         }
@@ -2219,19 +2217,24 @@ function shwoDicEl(mainTextEl: HTMLTextAreaElement, word: string, x: number, y: 
     div.style.top = `min(100dvh - 400px, ${y}px - 400px)`;
     dialogX(div);
 }
-function disCard2(m: record["means"][0]) {
+async function disCard2(m: record["means"][0]) {
     let div = document.createDocumentFragment();
     let disEl = el("p");
     disEl.innerText = m.text;
     let sen = document.createElement("div");
     sen.classList.add("dic_sen");
     for (let s of m.contexts) {
+        let source = s.source;
+        let sectionId = (await getBooksById(source.book)).sections[source.sections];
+        let section = await getSection(sectionId);
+        const t = `${(await getBooksById(source.book)).name} - ${section.title}`;
         sen.append(
             el("div", [
                 el("p", [
                     s.text.slice(0, s.index[0]),
                     el("span", { class: MARKWORD }, s.text.slice(...s.index)),
                     s.text.slice(s.index[1]),
+                    el("span", t),
                 ]),
             ])
         );
@@ -3413,7 +3416,7 @@ async function showWordReview(x: { id: string; card: fsrsjs.Card }, isAi: boolea
         for (let i of d.means) {
             if (i.card_id === x.id) {
                 let div = document.createElement("div");
-                div.append(disCard2(i));
+                div.append(await disCard2(i));
                 dic.innerHTML = "";
                 dic.append(div);
             }
@@ -3583,7 +3586,7 @@ async function showSpellReview(x: { id: string; card: fsrsjs.Card }) {
         })
     );
     for (let i of r.means) {
-        context.append(el("div", disCard2(i)));
+        context.append(el("div", await disCard2(i)));
     }
     const div = document.createElement("div");
     div.append(input, wordEl, context);

@@ -617,6 +617,10 @@ div:has(> .translate) > :not(.translate) {
 
 .dic_sen {
     padding-left: 1rem;
+    & > div > p > :last-child {
+        padding-left: 2em;
+        opacity: 0.5;
+    }
 }
 
 .dic_details > div {
