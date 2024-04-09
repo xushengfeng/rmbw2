@@ -749,6 +749,9 @@ div:has(> .translate) > :not(.translate) {
         overflow: scroll;
         & > div {
             display: flex;
+            & > :first-child {
+                flex-shrink: 0;
+            }
         }
     }
 }
