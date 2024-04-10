@@ -1169,11 +1169,11 @@ async function translateContext() {
     let filter = bookContentEl.querySelector("p > span[data-trans]") ? [] : await transCache.keys();
     let l = Array.from(bookContentEl.querySelectorAll("p > span")) as HTMLSpanElement[];
     for (let i in l) {
-        const r = (await transCache.getItem(l[i].innerText)) as string;
+        const r = (await transCache.getItem(l[i].innerText.trim())) as string;
         if (r) l[i].setAttribute("data-trans", r);
     }
 
-    l = l.filter((i) => !filter.includes(i.innerText));
+    l = l.filter((i) => !filter.includes(i.innerText.trim()));
     const text = l.map((i) => i.innerText);
 
     if (text.length === 0) return;
@@ -1192,7 +1192,7 @@ async function translateContext() {
         if (r["list"].length != text.length) return;
         for (let i in l) {
             l[i].setAttribute("data-trans", r["list"][i]);
-            transCache.setItem(text[i], r["list"][i]);
+            transCache.setItem(text[i].trim(), r["list"][i]);
         }
     });
 }
@@ -1905,7 +1905,7 @@ async function showDic(id: string) {
     dicTransB.onclick = async () => {
         if (!isSentence && !dicTransContent.value) {
             // 单词模式且无翻译（意味着无需重新翻译，只需读取缓存）
-            let text = (await transCache.getItem(Share.context)) as string;
+            let text = (await transCache.getItem(Share.context.trim())) as string;
             if (text) {
                 dicTransContent.value = text;
                 return;
@@ -1931,7 +1931,7 @@ async function showDic(id: string) {
             visit(true);
         }
 
-        transCache.setItem(Share.context, text);
+        transCache.setItem(Share.context.trim(), text);
     };
 
     toSentenceEl.onclick = async () => {
