@@ -733,7 +733,20 @@ div:has(> .translate) > :not(.translate) {
     box-sizing: border-box;
     font-family: var(--font-family);
     font-size: var(--font-size);
-    & > :first-child {
+    & > :nth-child(1) {
+        display: flex;
+        gap: 4px;
+        overflow-x: scroll;
+        & > a {
+            color: var(--color);
+        }
+    }
+    & > :nth-child(2) {
+        display: flex;
+        gap: 4px;
+        overflow-x: scroll;
+    }
+    & > :nth-last-child(2) {
         flex-grow: 1;
         overflow-y: scroll;
         display: flex;

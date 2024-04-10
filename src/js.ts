@@ -2291,16 +2291,53 @@ async function showDic(id: string) {
 
 function shwoDicEl(mainTextEl: HTMLTextAreaElement, word: string, x: number, y: number) {
     let list = el("div");
-    let dic = dics["lw"].get(word);
-    if (dic.isAlias) dic = dics["lw"].get(dic.text);
-    let tmpdiv = el("div");
-    tmpdiv.innerHTML = dic.text;
-    for (let i of tmpdiv.innerText.split("\n").filter((i) => i.trim() != "")) {
-        let p = el("p");
-        p.innerHTML = i;
-        list.appendChild(el("label", [el("input", { type: "checkbox", value: p.innerText }), p]));
+    function showDic(id: string) {
+        list.innerHTML = "";
+        let dic = dics[id].get(word);
+        if (dic.isAlias) dic = dics[id].get(dic.text);
+        let tmpdiv = el("div");
+        tmpdiv.innerHTML = dic.text;
+        for (let i of tmpdiv.innerText.split("\n").filter((i) => i.trim() != "")) {
+            let p = el("p");
+            p.innerHTML = i;
+            list.appendChild(el("label", [el("input", { type: "checkbox", value: p.innerText }), p]));
+        }
     }
+    const localDic = el("div");
+    for (let i in dics) {
+        localDic.append(
+            el("span", i, {
+                onclick: () => {
+                    showDic(i);
+                },
+            })
+        );
+    }
+    if (Object.keys(dics).length) {
+        showDic(Object.keys(dics)[0]);
+    } else {
+        localDic.innerText = "无词典";
+    }
+    const onlineList = el("div");
+    let l: { name: string; url: string }[] = [
+        {
+            name: "剑桥",
+            url: "https://dictionary.cambridge.org/zhs/%E8%AF%8D%E5%85%B8/%E8%8B%B1%E8%AF%AD-%E6%B1%89%E8%AF%AD-%E7%AE%80%E4%BD%93/%s",
+        },
+        { name: "柯林斯", url: "https://www.collinsdictionary.com/zh/dictionary/english-chinese/%s" },
+        { name: "韦氏", url: "https://www.merriam-webster.com/dictionary/%s" },
+        { name: "词源在线", url: "https://www.etymonline.com/cn/word/%s" },
+    ];
+    // todo setting
+    for (let i of l) {
+        onlineList.append(el("a", i.name, { href: i.url.replace("%s", word), target: "_blank" }));
+    }
+    onlineList.onclick = () => {
+        div.close();
+    };
     let div = el("dialog", { class: DICDIALOG }, [
+        onlineList,
+        localDic,
         list,
         el("div", { style: { display: "flex", "justify-content": "flex-end" } }, [
             el("button", iconEl(ok_svg), {
