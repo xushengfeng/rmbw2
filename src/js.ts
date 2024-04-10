@@ -281,6 +281,8 @@ const bookNavEl = document.getElementById("book_nav");
 bookNavEl.append(addSectionEL, bookSectionsEl);
 let bookContentEl = document.getElementById("book_content");
 const bookContentContainerEl = bookContentEl.parentElement;
+const translateAll = document.getElementById("translate_all");
+translateAll.onclick = translateContext;
 const changeStyleEl = document.getElementById("change_style");
 const changeStyleBar = el("div", { popover: "auto", class: "change_style_bar" });
 document.body.append(changeStyleBar);
@@ -1161,6 +1163,38 @@ async function showLisent(text: string) {
         ])
     );
     dialogX(d);
+}
+
+async function translateContext() {
+    let filter = bookContentEl.querySelector("p > span[data-trans]") ? [] : await transCache.keys();
+    let l = Array.from(bookContentEl.querySelectorAll("p > span")) as HTMLSpanElement[];
+    for (let i in l) {
+        const r = (await transCache.getItem(l[i].innerText)) as string;
+        if (r) l[i].setAttribute("data-trans", r);
+    }
+
+    l = l.filter((i) => !filter.includes(i.innerText));
+    const text = l.map((i) => i.innerText);
+
+    if (text.length === 0) return;
+
+    let f = new autoFun.def({ script: [`把输入的语言翻译成中文`], output: "list:[]" });
+    const ff = f.run(text as any);
+    let stopEl = el("button", iconEl(close_svg));
+    stopEl.onclick = () => {
+        ff.stop.abort();
+        pel.remove();
+    };
+    let pel = el("div", [el("p", `AI正在翻译全文`), stopEl]);
+    toastEl.append(pel);
+    ff.result.then((r) => {
+        pel.remove();
+        if (r["list"].length != text.length) return;
+        for (let i in l) {
+            l[i].setAttribute("data-trans", r["list"][i]);
+            transCache.setItem(text[i], r["list"][i]);
+        }
+    });
 }
 
 const bookStyleList = {

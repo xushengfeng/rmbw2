@@ -365,6 +365,13 @@ body {
                     text-decoration: underline wavy #999;
                 }
             }
+            & p > span[data-trans] {
+                display: inline;
+                &::after {
+                    content: attr(data-trans);
+                    display: block;
+                }
+            }
         }
 
         & > :has(:is([data-play], [data-play-l])) {
