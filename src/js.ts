@@ -1241,8 +1241,11 @@ document.body.appendChild(fontListEl);
     setFontElF(bookStyle.fontFamily);
     fontEl.onclick = async () => {
         fontListEl.showPopover();
-        // @ts-ignore
-        const availableFonts = await window.queryLocalFonts();
+        let availableFonts = [];
+        try {
+            // @ts-ignore
+            availableFonts = await window.queryLocalFonts();
+        } catch (error) {}
         let fonts = availableFonts.map((i) => i.fullName) as string[];
         fonts.filter((i) => i != "sans" && i != "serif");
         fonts.unshift("serif", "sans");
