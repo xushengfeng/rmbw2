@@ -404,6 +404,12 @@ body {
             z-index: 1;
             background-color: var(--bg1);
             backdrop-filter: var(--blur);
+            & .sort_words {
+                display: flex;
+                gap: 4px;
+                user-select: none;
+                cursor: pointer;
+            }
         }
         & .ignore {
             opacity: 0.5;

@@ -751,8 +751,6 @@ async function showBookSections(sections: book["sections"]) {
     );
 }
 
-let wordList: { text: string; c: record; type?: "ignore" | "learn" }[] = [];
-
 let contentP: string[] = [];
 
 import Fuse from "fuse.js";
@@ -792,8 +790,6 @@ async function showBookContent(id: string) {
 
     contentP = [];
 
-    wordList = [];
-
     if (isWordBook) showWordBook(s);
     else showNormalBook(s);
 
@@ -803,6 +799,8 @@ async function showBookContent(id: string) {
 }
 
 async function showWordBook(s: section) {
+    const rawWordList: { text: string; c: record; type?: "ignore" | "learn"; means?: number }[] = [];
+    let wordList: typeof rawWordList = [];
     let l = s.text.trim().split("\n");
     let keys = await wordsStore.keys();
     const ignoreWords = await getIgnoreWords();
@@ -812,6 +810,7 @@ async function showWordBook(s: section) {
         let t = i;
         let c: record;
         let type: "ignore" | "learn" = null;
+        let means = 0;
         if (keys.includes(i)) {
             c = (await wordsStore.getItem(i)) as record;
             type = "learn";
@@ -822,14 +821,15 @@ async function showWordBook(s: section) {
                 let retrievability = Math.pow(1 + x.elapsed_days / (9 * x.stability), -1) || 0;
                 r += retrievability;
             }
-            means1 += r / c.means.length;
+            means = r / c.means.length;
         } else if (ignoreWords.includes(i)) {
             type = "ignore";
             matchWords++;
-            means1 += 1;
+            means += 1;
         }
-        if (type) wordList.push({ text: t, c: c, type });
-        else wordList.push({ text: t, c: c });
+        means1 += means;
+        if (type) rawWordList.push({ text: t, c: c, type, means });
+        else rawWordList.push({ text: t, c: c });
     }
     let spell = 0;
     for (let i of l) {
@@ -844,6 +844,7 @@ async function showWordBook(s: section) {
     function p(number: number) {
         return el("td", [number.toFixed(1), el("progress", { value: number / l.length })]);
     }
+    wordList = sortWordList(rawWordList, (await setting.getItem(WordSortPath)) || "raw");
     const search = el("input", {
         oninput: () => {
             const fuse = new Fuse(wordList, {
@@ -858,6 +859,26 @@ async function showWordBook(s: section) {
             show.show(list.length ? list : wordList);
         },
     });
+    const sortEl = el("div", { class: "sort_words" });
+    const sortMap: { type: WordSortType; name: string }[] = [
+        { type: "raw", name: "原始" },
+        { type: "az", name: "字母正序" },
+        { type: "za", name: "字母倒序" },
+        { type: "10", name: "熟悉" },
+        { type: "01", name: "陌生" },
+        { type: "random", name: "随机" },
+    ];
+    for (let i of sortMap) {
+        sortEl.append(
+            el("span", i.name, {
+                onclick: () => {
+                    wordList = sortWordList(rawWordList, i.type);
+                    show.show(wordList);
+                    setting.setItem(WordSortPath, i.type);
+                },
+            })
+        );
+    }
     bookContentContainerEl.append(
         el(
             "div",
@@ -866,7 +887,8 @@ async function showWordBook(s: section) {
                 el("tr", [el("th", "词"), el("th", "了解"), el("th", "记忆"), el("th", "拼写")]),
                 el("tr", [el("td", String(l.length)), p(matchWords), p(means1), p(spell)]),
             ]),
-            search
+            search,
+            sortEl
         )
     );
 
@@ -922,6 +944,41 @@ async function showWordBook(s: section) {
             return p;
         }
     );
+}
+
+const WordSortPath = "words.sort";
+
+type WordSortType = "raw" | "az" | "za" | "10" | "01" | "random";
+
+function sortWordList(
+    list: { text: string; c: record; type?: "ignore" | "learn"; means?: number }[],
+    type: WordSortType
+) {
+    if (type === "raw") return list;
+    if (type === "az")
+        return list.toSorted((a, b) => {
+            return a.text.localeCompare(b.text, bookLan);
+        });
+    if (type === "za")
+        return list.toSorted((a, b) => {
+            return b.text.localeCompare(a.text, bookLan);
+        });
+    if (type === "01") {
+        return list.toSorted((a, b) => (a.means || 0) - (b.means || 0));
+    }
+    if (type === "10") {
+        return list.toSorted((a, b) => (b.means || 0) - (a.means || 0));
+    }
+    const rList: typeof list = [];
+    while (rList.length < list.length) {
+        const i = Math.floor(Math.random() * list.length);
+        const x = list.at(i);
+        if (x) {
+            rList.push(x);
+            list.with(i, null);
+        }
+    }
+    return rList;
 }
 
 function showNormalBook(s: section) {
