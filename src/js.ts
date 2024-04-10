@@ -793,131 +793,138 @@ async function showBookContent(id: string) {
     contentP = [];
 
     wordList = [];
-    if (isWordBook) {
-        let l = s.text.trim().split("\n");
-        let keys = await wordsStore.keys();
-        const ignoreWords = await getIgnoreWords();
-        let matchWords = 0;
-        let means1 = 0;
-        for (let i of l) {
-            let t = i;
-            let c: record;
-            let type: "ignore" | "learn" = null;
-            if (keys.includes(i)) {
-                c = (await wordsStore.getItem(i)) as record;
-                type = "learn";
-                matchWords++;
-                let r = 0;
-                for (let j of c.means) {
-                    let x = (await cardsStore.getItem(j.card_id)) as fsrsjs.Card;
-                    let retrievability = Math.pow(1 + x.elapsed_days / (9 * x.stability), -1) || 0;
-                    r += retrievability;
-                }
-                means1 += r / c.means.length;
-            } else if (ignoreWords.includes(i)) {
-                type = "ignore";
-                matchWords++;
-                means1 += 1;
-            }
-            if (type) wordList.push({ text: t, c: c, type });
-            else wordList.push({ text: t, c: c });
-        }
-        let spell = 0;
-        for (let i of l) {
-            let c = (await spellStore.getItem(i)) as fsrsjs.Card;
-            if (c) {
-                let retrievability = Math.pow(1 + c.elapsed_days / (9 * c.stability), -1) || 0;
-                spell += retrievability;
-            } else if (ignoreWords.includes(i)) {
-                spell += 1;
-            }
-        }
-        function p(number: number) {
-            return el("td", [number.toFixed(1), el("progress", { value: number / l.length })]);
-        }
-        const search = el("input", {
-            oninput: () => {
-                const fuse = new Fuse(wordList, {
-                    includeMatches: true,
-                    findAllMatches: true,
-                    useExtendedSearch: true,
-                    includeScore: true,
-                    keys: ["text"],
-                });
-                let fr = fuse.search(search.value);
-                let list = fr.map((i) => i.item);
-                show.show(list.length ? list : wordList);
-            },
-        });
-        bookContentContainerEl.append(
-            el(
-                "div",
-                { class: "words_book_top" },
-                el("table", { class: "words_sum" }, [
-                    el("tr", [el("th", "词"), el("th", "了解"), el("th", "记忆"), el("th", "拼写")]),
-                    el("tr", [el("td", String(l.length)), p(matchWords), p(means1), p(spell)]),
-                ]),
-                search
-            )
-        );
 
-        const show = vlist(
-            bookContentContainerEl,
-            wordList,
-            { iHeight: 24, gap: 8, paddingTop: 120, paddingBotton: 8 },
-            (i, item: (typeof wordList)[0]) => {
-                let p = el("p", item.text);
-                if (item.type) {
-                    p.classList.add(item.type);
-                }
-                p.oncontextmenu = (e) => {
-                    e.preventDefault();
-                    menuEl.innerHTML = "";
-                    showMenu(e.clientX, e.clientY);
-                    menuEl.append(
-                        el("div", "添加到忽略词表", {
-                            onclick: async () => {
-                                await addIgnore(item.text);
-                                p.classList.add("ignore");
-                            },
-                        })
-                    );
-                };
-                if (item.type === "learn") {
-                    p.onclick = () => {
-                        const p = tmpDicEl;
-                        p.showPopover();
-                        async function show() {
-                            p.innerHTML = "";
-                            for (let i of item.c.means) {
-                                p.append(
-                                    el(
-                                        "div",
-                                        el("button", iconEl(pen_svg), {
-                                            onclick: () => {
-                                                addP(i.text, item.text, null, null, (text) => {
-                                                    i.text = text.trim();
-                                                    wordsStore.setItem(item.text, item.c);
-                                                    show();
-                                                });
-                                            },
-                                        }),
-                                        el("div", await disCard2(i))
-                                    )
-                                );
-                            }
-                        }
-                        show();
-                    };
-                }
-                return p;
-            }
-        );
+    if (isWordBook) showWordBook(s);
+    else showNormalBook(s);
 
-        setScrollPosi(bookContentContainerEl, contentScrollPosi);
-        return;
+    setScrollPosi(bookContentContainerEl, contentScrollPosi);
+
+    if (!isWordBook) bookContentEl.append(dicEl);
+}
+
+async function showWordBook(s: section) {
+    let l = s.text.trim().split("\n");
+    let keys = await wordsStore.keys();
+    const ignoreWords = await getIgnoreWords();
+    let matchWords = 0;
+    let means1 = 0;
+    for (let i of l) {
+        let t = i;
+        let c: record;
+        let type: "ignore" | "learn" = null;
+        if (keys.includes(i)) {
+            c = (await wordsStore.getItem(i)) as record;
+            type = "learn";
+            matchWords++;
+            let r = 0;
+            for (let j of c.means) {
+                let x = (await cardsStore.getItem(j.card_id)) as fsrsjs.Card;
+                let retrievability = Math.pow(1 + x.elapsed_days / (9 * x.stability), -1) || 0;
+                r += retrievability;
+            }
+            means1 += r / c.means.length;
+        } else if (ignoreWords.includes(i)) {
+            type = "ignore";
+            matchWords++;
+            means1 += 1;
+        }
+        if (type) wordList.push({ text: t, c: c, type });
+        else wordList.push({ text: t, c: c });
     }
+    let spell = 0;
+    for (let i of l) {
+        let c = (await spellStore.getItem(i)) as fsrsjs.Card;
+        if (c) {
+            let retrievability = Math.pow(1 + c.elapsed_days / (9 * c.stability), -1) || 0;
+            spell += retrievability;
+        } else if (ignoreWords.includes(i)) {
+            spell += 1;
+        }
+    }
+    function p(number: number) {
+        return el("td", [number.toFixed(1), el("progress", { value: number / l.length })]);
+    }
+    const search = el("input", {
+        oninput: () => {
+            const fuse = new Fuse(wordList, {
+                includeMatches: true,
+                findAllMatches: true,
+                useExtendedSearch: true,
+                includeScore: true,
+                keys: ["text"],
+            });
+            let fr = fuse.search(search.value);
+            let list = fr.map((i) => i.item);
+            show.show(list.length ? list : wordList);
+        },
+    });
+    bookContentContainerEl.append(
+        el(
+            "div",
+            { class: "words_book_top" },
+            el("table", { class: "words_sum" }, [
+                el("tr", [el("th", "词"), el("th", "了解"), el("th", "记忆"), el("th", "拼写")]),
+                el("tr", [el("td", String(l.length)), p(matchWords), p(means1), p(spell)]),
+            ]),
+            search
+        )
+    );
 
+    const show = vlist(
+        bookContentContainerEl,
+        wordList,
+        { iHeight: 24, gap: 8, paddingTop: 120, paddingBotton: 8 },
+        (i, item: (typeof wordList)[0]) => {
+            let p = el("p", item.text);
+            if (item.type) {
+                p.classList.add(item.type);
+            }
+            p.oncontextmenu = (e) => {
+                e.preventDefault();
+                menuEl.innerHTML = "";
+                showMenu(e.clientX, e.clientY);
+                menuEl.append(
+                    el("div", "添加到忽略词表", {
+                        onclick: async () => {
+                            await addIgnore(item.text);
+                            p.classList.add("ignore");
+                        },
+                    })
+                );
+            };
+            if (item.type === "learn") {
+                p.onclick = () => {
+                    const p = tmpDicEl;
+                    p.showPopover();
+                    async function show() {
+                        p.innerHTML = "";
+                        for (let i of item.c.means) {
+                            p.append(
+                                el(
+                                    "div",
+                                    el("button", iconEl(pen_svg), {
+                                        onclick: () => {
+                                            addP(i.text, item.text, null, null, (text) => {
+                                                i.text = text.trim();
+                                                wordsStore.setItem(item.text, item.c);
+                                                show();
+                                            });
+                                        },
+                                    }),
+                                    el("div", await disCard2(i))
+                                )
+                            );
+                        }
+                    }
+                    show();
+                };
+            }
+            return p;
+        }
+    );
+}
+
+function showNormalBook(s: section) {
     const segmenter = new Segmenter(bookLan, { granularity: "word" });
     const sL = Array.from(new Segmenter(bookLan, { granularity: "sentence" }).segment(s.text));
     let plist: { text: string; start: number; end: number; isWord: boolean }[][][] = [[]];
@@ -952,6 +959,7 @@ async function showBookContent(id: string) {
     console.log(plist);
 
     for (let paragraph of plist) {
+        if (paragraph.length === 0) continue;
         let pel: HTMLElement = document.createElement("p");
         let t = paragraph[0]?.[0]?.text.match(/#+$/) && paragraph[0]?.[1]?.text === " ";
         if (t) pel = document.createElement("h" + paragraph[0][0].text.trim().length);
@@ -1016,27 +1024,23 @@ async function showBookContent(id: string) {
 
                 span.classList.add(MARKWORD);
             };
+
+            senEl.oncontextmenu = async (ev) => {
+                ev.preventDefault();
+                const span = ev.target as HTMLSpanElement;
+                if (span.tagName != "SPAN") return;
+                let start = Number(span.getAttribute("data-s"));
+                let end = Number(span.getAttribute("data-e"));
+                let text = await changeEdit(true);
+                text.selectionStart = start;
+                text.selectionEnd = end;
+                text.focus();
+            };
             pel.append(senEl);
         }
 
-        pel.oncontextmenu = async (ev) => {
-            ev.preventDefault();
-            const span = ev.target as HTMLSpanElement;
-            if (span.tagName != "SPAN") return;
-            let start = Number(span.getAttribute("data-s"));
-            let end = Number(span.getAttribute("data-e"));
-            let text = await changeEdit(true);
-            text.selectionStart = start;
-            text.selectionEnd = end;
-            text.focus();
-        };
-
         bookContentEl.append(pel);
     }
-
-    setScrollPosi(bookContentContainerEl, contentScrollPosi);
-
-    bookContentEl.append(dicEl);
 }
 
 let contentScrollPosi = 0;
