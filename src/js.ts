@@ -4395,7 +4395,10 @@ let asyncEl = el("div", [
                 let data = await getAllData();
                 let base64 = encode(data);
                 let config = await getGitHub();
-                let sha = await fetch(config.url, { headers: { ...config.auth } });
+                let sha = "";
+                try {
+                    sha = (await (await fetch(config.url, { headers: { ...config.auth } })).json()).sha;
+                } catch (error) {}
                 fetch(config.url, {
                     method: "PUT",
                     headers: {
@@ -4404,7 +4407,7 @@ let asyncEl = el("div", [
                     body: JSON.stringify({
                         message: "更新数据",
                         content: base64,
-                        sha: (await sha.json()).sha,
+                        sha,
                     }),
                 });
             },
