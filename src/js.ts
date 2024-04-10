@@ -4302,7 +4302,13 @@ async function setDAV(data: Blob) {
         method: "put",
         headers: { Authorization: basicAuth(username, passwd) },
         body: data,
-    }).then();
+    }).then(() => {
+        const p = el("span", "上传成功");
+        toastEl.append(p);
+        setTimeout(() => {
+            p.remove();
+        }, 2000);
+    });
 }
 
 const GitHubConfigPath = {
@@ -4409,6 +4415,12 @@ let asyncEl = el("div", [
                         content: base64,
                         sha,
                     }),
+                }).then(() => {
+                    const p = el("span", "上传成功");
+                    toastEl.append(p);
+                    setTimeout(() => {
+                        p.remove();
+                    }, 2000);
                 });
             },
         }),
