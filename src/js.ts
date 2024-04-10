@@ -919,34 +919,44 @@ async function showBookContent(id: string) {
     }
 
     const segmenter = new Segmenter(bookLan, { granularity: "word" });
-    let segments = segmenter.segment(s.text);
-    let list = Array.from(segments);
-    let plist: { text: string; start: number; end: number; isWord: boolean }[][] = [[]];
-    for (let word of list) {
-        if (/\n+/.test(word.segment)) {
+    const sL = Array.from(new Segmenter(bookLan, { granularity: "sentence" }).segment(s.text));
+    let plist: { text: string; start: number; end: number; isWord: boolean }[][][] = [[]];
+    for (const sentence of sL) {
+        if (/^\n+/.test(sentence.segment)) {
             plist.push([]);
-        } else {
-            if (word.segment === "#" && plist.at(-1)?.at(-1)?.text === "#") {
-                plist.at(-1).at(-1).text += "#";
-                plist.at(-1).at(-1).end += 1;
+            continue;
+        }
+        let sen: (typeof plist)[0][0] = [];
+        plist.at(-1).push(sen); // last p add sen
+        const wL = Array.from(segmenter.segment(sentence.segment));
+        for (let word of wL) {
+            if (word.segment === "#" && sen?.at(-1)?.text === "#") {
+                sen.at(-1).text += "#";
+                sen.at(-1).end += 1;
             } else {
-                plist.at(-1).push({
-                    text: word.segment,
-                    start: word.index,
-                    end: word.index + word.segment.length,
-                    isWord: word.isWordLike,
-                });
+                let s = sentence.index + word.index;
+                if (!/\n+/.test(word.segment))
+                    sen.push({
+                        text: word.segment,
+                        start: s,
+                        end: s + word.segment.length,
+                        isWord: word.isWordLike,
+                    });
             }
         }
+        if (sentence.segment.at(-1) === "\n") {
+            plist.push([]);
+        }
     }
+
     console.log(plist);
 
     for (let paragraph of plist) {
         let pel: HTMLElement = document.createElement("p");
-        let t = paragraph[0]?.text.match(/#+$/) && paragraph[1]?.text === " ";
-        if (t) pel = document.createElement("h" + paragraph[0].text.trim().length);
+        let t = paragraph[0]?.[0]?.text.match(/#+$/) && paragraph[0]?.[1]?.text === " ";
+        if (t) pel = document.createElement("h" + paragraph[0][0].text.trim().length);
 
-        let pText = editText.slice(paragraph[0]?.start ?? null, paragraph.at(-1)?.end ?? null);
+        let pText = editText.slice(paragraph[0]?.[0]?.start ?? null, paragraph.at(-1)?.at(-1)?.end ?? null);
 
         if (pText) {
             let playEl = el("div", iconEl(recume_svg), { "data-play": String(contentP.length) });
@@ -960,64 +970,58 @@ async function showBookContent(id: string) {
 
         contentP.push(pText);
 
-        for (let i in paragraph) {
-            if (t && i === "0") continue;
-            const word = paragraph[i];
-
-            let span = document.createElement("span");
-            span.innerText = word.text;
-            for (let i in s.words) {
-                let index = s.words[i].index;
-                if (index[0] === word.start && index[1] === word.end) {
-                    span.classList.add(MARKWORD);
+        for (const sen of paragraph) {
+            const senEl = el("span");
+            for (const i in sen) {
+                const word = sen[i];
+                if (t && i === "0") continue;
+                let span = document.createElement("span");
+                span.innerText = word.text;
+                for (let i in s.words) {
+                    let index = s.words[i].index;
+                    if (index[0] === word.start && index[1] === word.end) {
+                        span.classList.add(MARKWORD);
+                    }
                 }
+                span.setAttribute("data-s", String(word.start));
+                span.setAttribute("data-e", String(word.end));
+                span.setAttribute("data-i", i);
+                senEl.append(span);
             }
-            span.setAttribute("data-s", String(word.start));
-            span.setAttribute("data-e", String(word.end));
-            span.setAttribute("data-i", i);
-            pel.append(span);
+            senEl.onclick = async (ev) => {
+                let playEl = ev.target as HTMLElement;
+                if (playEl.getAttribute("data-play")) {
+                    pTTS(Number(playEl.getAttribute("data-play")));
+                    return;
+                }
+                if (playEl.getAttribute("data-play-l")) {
+                    showLisent(contentP[Number(playEl.getAttribute("data-play-l"))]);
+                    return;
+                }
+                const span = ev.target as HTMLSpanElement;
+                if (span.tagName != "SPAN") return;
+                const i = span.getAttribute("data-i");
+                if (!i) return;
+                let s = sen[0].start,
+                    e = sen.at(-1).end;
+
+                let id = await saveCard({
+                    dic: "lw",
+                    key: span.innerText,
+                    dindex: -1,
+                    index: { start: Number(span.getAttribute("data-s")), end: Number(span.getAttribute("data-e")) },
+                    pindex: { start: paragraph[0][0].start, end: paragraph.at(-1).at(-1).end },
+                    cindex: { start: s, end: e },
+                });
+                if (span.classList.contains(MARKWORD)) {
+                    showDic(id);
+                }
+
+                span.classList.add(MARKWORD);
+            };
+            pel.append(senEl);
         }
-        pel.onclick = async (ev) => {
-            let playEl = ev.target as HTMLElement;
-            if (playEl.getAttribute("data-play")) {
-                pTTS(Number(playEl.getAttribute("data-play")));
-                return;
-            }
-            if (playEl.getAttribute("data-play-l")) {
-                showLisent(contentP[Number(playEl.getAttribute("data-play-l"))]);
-                return;
-            }
-            const span = ev.target as HTMLSpanElement;
-            if (span.tagName != "SPAN") return;
-            const i = span.getAttribute("data-i");
-            let s = paragraph[0].start,
-                e = paragraph.at(-1).end;
-            let j = Number(i);
-            while (j >= 0 && !paragraph[j].text.match(/[.?!\n]/)) {
-                s = paragraph[j].start;
-                j--;
-            }
-            j = Number(i);
-            while (j < paragraph.length && !paragraph[j].text.match(/[.?!\n]/)) {
-                e = paragraph[j].end;
-                j++;
-            }
-            console.log(s);
 
-            let id = await saveCard({
-                dic: "lw",
-                key: span.innerText,
-                dindex: -1,
-                index: { start: Number(span.getAttribute("data-s")), end: Number(span.getAttribute("data-e")) },
-                pindex: { start: paragraph[0].start, end: paragraph.at(-1).end },
-                cindex: { start: s, end: e },
-            });
-            if (span.classList.contains(MARKWORD)) {
-                showDic(id);
-            }
-
-            span.classList.add(MARKWORD);
-        };
         pel.oncontextmenu = async (ev) => {
             ev.preventDefault();
             const span = ev.target as HTMLSpanElement;

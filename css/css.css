@@ -359,7 +359,7 @@ body {
 
         &:not(textarea) {
             user-select: none;
-            & p > span {
+            & p > span > span {
                 cursor: pointer;
                 &:hover {
                     text-decoration: underline wavy #999;
