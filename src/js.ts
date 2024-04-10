@@ -1006,11 +1006,8 @@ async function showBookContent(id: string) {
                     e = sen.at(-1).end;
 
                 let id = await saveCard({
-                    dic: "lw",
                     key: span.innerText,
-                    dindex: -1,
                     index: { start: Number(span.getAttribute("data-s")), end: Number(span.getAttribute("data-e")) },
-                    pindex: { start: paragraph[0][0].start, end: paragraph.at(-1).at(-1).end },
                     cindex: { start: s, end: e },
                 });
                 if (span.classList.contains(MARKWORD)) {
@@ -2246,11 +2243,8 @@ async function disCard2(m: record["means"][0]) {
 }
 
 async function saveCard(v: {
-    dic: string;
     key: string;
-    dindex: number;
     index: { start: number; end: number };
-    pindex: { start: number; end: number };
     cindex: { start: number; end: number };
 }) {
     let book = await getBooksById(nowBook.book);
