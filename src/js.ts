@@ -1364,6 +1364,7 @@ async function changeEdit(b: boolean) {
             book.updateTime = new Date().getTime();
             section.lastPosi = contentScrollPosi;
             if (editText && sectionId != wordSection) {
+                if (book.type === "word") editText = cleanWordBook(editText);
                 section = changePosi(section, editText);
                 section.text = editText;
                 await sectionsStore.setItem(sectionId, section);
@@ -1378,6 +1379,10 @@ changeEditEl.onclick = () => {
     isEdit = !isEdit;
     changeEdit(isEdit);
 };
+
+function cleanWordBook(text: string) {
+    return Array.from(new Set(text.split("\n"))).join("\n");
+}
 
 function diffPosi(oldText: string, text: string) {
     let diff = dmp.diff_main(oldText, text);
