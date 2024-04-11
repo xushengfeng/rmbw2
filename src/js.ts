@@ -365,16 +365,9 @@ type section = {
     lastPosi: number;
 };
 
-function getBooksById(id: string) {
+async function getBooksById(id: string) {
     if (id === "0") return coreWordBook;
-    return new Promise((re: (a: book) => void) => {
-        bookshelfStore.iterate((b: book, k) => {
-            if (b.id === id) {
-                return re(b);
-            }
-        });
-        return null;
-    });
+    return (await bookshelfStore.getItem(id)) as book;
 }
 async function getSection(id: string) {
     return (await sectionsStore.getItem(id)) as section;
