@@ -906,6 +906,10 @@ div:has(> .translate) > :not(.translate) {
 .review_word > :first-child {
     flex-grow: 1;
     overflow: scroll;
+    & > p > :last-child {
+        padding-left: 2em;
+        opacity: 0.5;
+    }
 }
 .review_word > :nth-child(2) {
     overflow: scroll;

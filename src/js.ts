@@ -3493,7 +3493,7 @@ async function showReview(x: { id: string; card: fsrsjs.Card }, type: review) {
         showSentenceReview(x);
     }
 }
-function crContext(word: record, id: string) {
+async function crContext(word: record, id: string) {
     let context = document.createElement("div");
     if (!word) return context;
     for (let i of word.means) {
@@ -3503,7 +3503,12 @@ function crContext(word: record, id: string) {
                 let span = document.createElement("span");
                 span.classList.add(MARKWORD);
                 span.innerText = c.text.slice(c.index[0], c.index[1]);
-                p.append(c.text.slice(0, c.index[0]), span, c.text.slice(c.index[1]));
+                p.append(
+                    c.text.slice(0, c.index[0]),
+                    span,
+                    c.text.slice(c.index[1]),
+                    el("span", await getTitle(c.source.book, c.source.sections))
+                );
                 context.append(p);
             }
         }
@@ -3524,7 +3529,7 @@ async function showWordReview(x: { id: string; card: fsrsjs.Card }, isAi: boolea
     let div = document.createElement("div");
     let context: HTMLDivElement;
     if (isAi && aiContexts[x.id]?.text) context = await aiContext(x.id);
-    else context = crContext(wordRecord, x.id);
+    else context = await crContext(wordRecord, x.id);
     let hasShowAnswer = false;
     async function showAnswer() {
         hasShowAnswer = true;
