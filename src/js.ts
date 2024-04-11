@@ -4268,44 +4268,6 @@ settingEl.append(uploadIpaDicEl, el("input", { "data-path": "ipa_dics.default" }
 
 settingEl.append(el("label", ["学习语言", el("input", { "data-path": "lan.learn" })]));
 
-const testSpeedLanEl = el("input");
-const testSpeedContentEl = el("p");
-const readSpeedEl = el("input", { type: "number", "data-path": "user.readSpeed" });
-
-settingEl.append(
-    el("div", [
-        el("p", "测试阅读速度"),
-        testSpeedLanEl,
-        el("button", "load", {
-            onclick: async () => {
-                const l: aim = [{ content: `生成一段${testSpeedLanEl.value || "en"}小短文，使用简单词`, role: "user" }];
-                testSpeedContentEl.setAttribute("data-text", await ai(l).text);
-            },
-        }),
-        el("button", "start", {
-            onclick: () => {
-                testSpeedContentEl.setAttribute("data-time", String(time()));
-                testSpeedContentEl.innerText = testSpeedContentEl.getAttribute("data-text");
-            },
-        }),
-        testSpeedContentEl,
-        el("button", "finish", {
-            onclick: () => {
-                const startTime = Number(testSpeedContentEl.getAttribute("data-time"));
-                const text = testSpeedContentEl.innerText;
-                const endTime = time();
-
-                const segmenter = new Segmenter(testSpeedLanEl.value || "en", { granularity: "word" });
-                let segments = segmenter.segment(text);
-                const wordsCount = Array.from(segments).length;
-                readSpeedEl.value = String(Math.round((endTime - startTime) / wordsCount));
-                readSpeedEl.dispatchEvent(new Event("input"));
-            },
-        }),
-        el("label", [readSpeedEl, "ms/word"]),
-    ])
-);
-
 const rmbwJsonName = "rmbw.json";
 const rmbwZipName = "rmbw.zip";
 
@@ -4572,6 +4534,10 @@ async function getCSV() {
     return csv;
 }
 
+const testSpeedLanEl = el("input");
+const testSpeedContentEl = el("p");
+const readSpeedEl = el("input", { type: "number", "data-path": "user.readSpeed" });
+
 settingEl.append(
     el("div", [
         el("h2", "复习"),
@@ -4588,6 +4554,37 @@ settingEl.append(
         }),
         el("br"),
         el("label", ["参数：", el("input", { "data-path": "fsrs.w" })]),
+
+        el("h3", "阅读速度"),
+        el("p", "测试阅读速度"),
+        testSpeedLanEl,
+        el("button", "load", {
+            onclick: async () => {
+                const l: aim = [{ content: `生成一段${testSpeedLanEl.value || "en"}小短文，使用简单词`, role: "user" }];
+                testSpeedContentEl.setAttribute("data-text", await ai(l).text);
+            },
+        }),
+        el("button", "start", {
+            onclick: () => {
+                testSpeedContentEl.setAttribute("data-time", String(time()));
+                testSpeedContentEl.innerText = testSpeedContentEl.getAttribute("data-text");
+            },
+        }),
+        testSpeedContentEl,
+        el("button", "finish", {
+            onclick: () => {
+                const startTime = Number(testSpeedContentEl.getAttribute("data-time"));
+                const text = testSpeedContentEl.innerText;
+                const endTime = time();
+
+                const segmenter = new Segmenter(testSpeedLanEl.value || "en", { granularity: "word" });
+                let segments = segmenter.segment(text);
+                const wordsCount = Array.from(segments).length;
+                readSpeedEl.value = String(Math.round((endTime - startTime) / wordsCount));
+                readSpeedEl.dispatchEvent(new Event("input"));
+            },
+        }),
+        el("label", [readSpeedEl, "ms/word"]),
     ])
 );
 
