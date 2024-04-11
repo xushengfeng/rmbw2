@@ -777,7 +777,12 @@ div:has(> .translate) > :not(.translate) {
     max-height: 80dvh;
     max-width: 80dvw;
     overflow: scroll;
-    & > div {
+    & > :nth-child(1) {
+        display: flex;
+        gap: 1em;
+        overflow-x: scroll;
+    }
+    & > :nth-child(2) {
         display: flex;
         & > :first-child {
             flex-shrink: 0;

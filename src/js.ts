@@ -373,9 +373,9 @@ async function getSection(id: string) {
     return (await sectionsStore.getItem(id)) as section;
 }
 
-async function getTitle(bookId: string, sectionN: string) {
+async function getTitle(bookId: string, sectionN: string, x?: string) {
     let section = await getSection(sectionN);
-    const t = `${(await getBooksById(bookId)).name} - ${section.title}`;
+    const t = `${(await getBooksById(bookId)).name}${x || " - "}${section.title}`;
     return t;
 }
 
@@ -919,6 +919,14 @@ async function showWordBook(s: section) {
                     p.showPopover();
                     async function show() {
                         p.innerHTML = "";
+                        const books = await wordBooksByWord(item.text);
+                        const booksEl = el("div");
+                        for (let i of books) {
+                            const bookN = (await getBooksById(i.book)).name;
+                            const s = (await getSection(i.section)).title;
+                            booksEl.append(el("span", s, { title: bookN }));
+                        }
+                        p.append(booksEl);
                         for (let i of item.c.means) {
                             p.append(
                                 el(
@@ -1663,6 +1671,25 @@ async function sectionSelect(menuEl: HTMLElement, radio?: boolean) {
 
 function getSelectBooks(el: HTMLElement) {
     return Array.from(el.querySelectorAll("input:checked")).map((i: HTMLInputElement) => i.value);
+}
+
+async function wordBooksByWord(word: string) {
+    const l: { book: string; section: string }[] = [];
+    let bookList: book[] = [];
+    await bookshelfStore.iterate((book: book) => {
+        bookList.push(book);
+    });
+    bookList = bookList.filter((b) => b.type === "word");
+    for (let i of bookList) {
+        for (let s of i.sections) {
+            let section = await getSection(s);
+            const wl = section.text.split("\n");
+            if (wl.includes(word)) {
+                l.push({ book: i.id, section: s });
+            }
+        }
+    }
+    return l;
 }
 
 let dics: { [key: string]: Map<string, dic[0]> } = {};
