@@ -1087,6 +1087,25 @@ div:has(> .translate) > :not(.translate) {
     margin-top: var(--size0);
     max-height: calc(100dvh - var(--size0));
     box-sizing: border-box;
+
+    & > .setting_dic {
+        & ul {
+            padding-left: 0;
+        }
+        & li {
+            display: flex;
+            align-items: center;
+            & > span {
+                cursor: pointer;
+            }
+            & > button {
+                --size0: 20px;
+            }
+        }
+        & > div {
+            --size0: 20px;
+        }
+    }
 }
 
 #menu {

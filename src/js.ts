@@ -2289,7 +2289,7 @@ async function showDic(id: string) {
     }
 }
 
-function shwoDicEl(mainTextEl: HTMLTextAreaElement, word: string, x: number, y: number) {
+async function showDicEl(mainTextEl: HTMLTextAreaElement, word: string, x: number, y: number) {
     let list = el("div");
     function showDic(id: string) {
         list.innerHTML = "";
@@ -2319,16 +2319,7 @@ function shwoDicEl(mainTextEl: HTMLTextAreaElement, word: string, x: number, y: 
         localDic.innerText = "无词典";
     }
     const onlineList = el("div");
-    let l: { name: string; url: string }[] = [
-        {
-            name: "剑桥",
-            url: "https://dictionary.cambridge.org/zhs/%E8%AF%8D%E5%85%B8/%E8%8B%B1%E8%AF%AD-%E6%B1%89%E8%AF%AD-%E7%AE%80%E4%BD%93/%s",
-        },
-        { name: "柯林斯", url: "https://www.collinsdictionary.com/zh/dictionary/english-chinese/%s" },
-        { name: "韦氏", url: "https://www.merriam-webster.com/dictionary/%s" },
-        { name: "词源在线", url: "https://www.etymonline.com/cn/word/%s" },
-    ];
-    // todo setting
+    let l: onlineDicsType = await setting.getItem(onlineDicsPath);
     for (let i of l) {
         onlineList.append(el("a", i.name, { href: i.url.replace("%s", word), target: "_blank" }));
     }
@@ -2874,7 +2865,7 @@ function tmpAi(mainTextEl: HTMLTextAreaElement, info: string, x: number, y: numb
 function dicB(mainTextEl: HTMLTextAreaElement, word: string) {
     const dicB = el("button", "词典", {
         onclick: () => {
-            shwoDicEl(mainTextEl, word, dicB.getBoundingClientRect().x, dicB.getBoundingClientRect().y);
+            showDicEl(mainTextEl, word, dicB.getBoundingClientRect().x, dicB.getBoundingClientRect().y);
         },
     });
     return dicB;
@@ -4133,6 +4124,90 @@ const settingEl = document.getElementById("setting");
 document.getElementById("settingb").onclick = () => {
     settingEl.showPopover();
 };
+
+import Sortable from "sortablejs";
+
+const onlineDicsEl = el("ul", { style: { "list-style-type": "none" } });
+const onlineDicsPath = "dics.online";
+type onlineDicsType = { name: string; url: string }[];
+
+function onlineDicItem(name: string, url: string) {
+    const li = el(
+        "li",
+        el("span", { class: "sort_handle" }, "::"),
+        el("input", { value: name }),
+        el("input", { value: url }),
+        el("button", iconEl(close_svg), {
+            onclick: () => {
+                li.remove();
+            },
+        })
+    );
+    return li;
+}
+
+async function showOnlineDics() {
+    const l = ((await setting.getItem(onlineDicsPath)) || []) as onlineDicsType;
+    for (let i of l) {
+        onlineDicsEl.append(onlineDicItem(i.name, i.url));
+    }
+    onlineDicsEl.oninput = () => {
+        saveSortOnlineDics();
+    };
+    new Sortable(onlineDicsEl, {
+        handle: ".sort_handle",
+        onEnd: saveSortOnlineDics,
+    });
+}
+
+const addOnlineDic1El = el("input");
+const addOnlineDic2El = el("input");
+
+if (!(await setting.getItem(onlineDicsPath))) {
+    await setting.setItem(onlineDicsPath, [
+        {
+            name: "剑桥",
+            url: "https://dictionary.cambridge.org/zhs/%E8%AF%8D%E5%85%B8/%E8%8B%B1%E8%AF%AD-%E6%B1%89%E8%AF%AD-%E7%AE%80%E4%BD%93/%s",
+        },
+        { name: "柯林斯", url: "https://www.collinsdictionary.com/zh/dictionary/english-chinese/%s" },
+        { name: "韦氏", url: "https://www.merriam-webster.com/dictionary/%s" },
+        { name: "词源在线", url: "https://www.etymonline.com/cn/word/%s" },
+    ]);
+}
+
+settingEl.append(
+    el(
+        "div",
+        { class: "setting_dic" },
+        el("h3", "在线词典"),
+        onlineDicsEl,
+        el(
+            "div",
+            addOnlineDic1El,
+            addOnlineDic2El,
+            el("button", iconEl(add_svg), {
+                onclick: () => {
+                    onlineDicsEl.append(onlineDicItem(addOnlineDic1El.value, addOnlineDic2El.value));
+                    addOnlineDic1El.value = "";
+                    addOnlineDic2El.value = "";
+                },
+            })
+        )
+    )
+);
+
+showOnlineDics();
+
+async function saveSortOnlineDics() {
+    const l = Array.from(onlineDicsEl.querySelectorAll("li"));
+    const dl: onlineDicsType = [];
+    for (let i of l) {
+        const name = i.querySelectorAll("input")[0].value;
+        const url = i.querySelectorAll("input")[1].value;
+        dl.push({ name, url });
+    }
+    await setting.setItem(onlineDicsPath, dl);
+}
 
 const uploadDicEl = document.getElementById("upload_dic") as HTMLInputElement;
 uploadDicEl.onchange = () => {

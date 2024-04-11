@@ -59,6 +59,9 @@ dependencies:
   simple-keyboard:
     specifier: ^3.7.45
     version: 3.7.45
+  sortablejs:
+    specifier: ^1.15.2
+    version: 1.15.2
   webm-duration-fix:
     specifier: ^1.0.4
     version: 1.0.4
@@ -67,6 +70,9 @@ devDependencies:
   '@types/hyphen':
     specifier: ^1.6.7
     version: 1.6.7
+  '@types/sortablejs':
+    specifier: ^1.15.8
+    version: 1.15.8
   download:
     specifier: ^8.0.0
     version: 8.0.0
@@ -420,6 +426,10 @@ packages:
     resolution: {integrity: sha512-H/+L+UkTV33uf49PH5pCAUBVPNj2nDBXTN+qS1dOwyyg24l3CcicicCA7ca+HMvJBZcFgl5r8e+RR6elsb4Lyw==}
     dependencies:
       '@types/node': 20.11.16
+    dev: true
+
+  /@types/sortablejs@1.15.8:
+    resolution: {integrity: sha512-b79830lW+RZfwaztgs1aVPgbasJ8e7AXtZYHTELNXZPsERt4ymJdjV4OccDbHQAvHrCcFpbF78jkm0R6h/pZVg==}
     dev: true
 
   /@xmldom/xmldom@0.8.10:
@@ -1339,6 +1349,10 @@ packages:
     dependencies:
       is-plain-obj: 1.1.0
     dev: true
+
+  /sortablejs@1.15.2:
+    resolution: {integrity: sha512-FJF5jgdfvoKn1MAKSdGs33bIqLi3LmsgVTliuX6iITj834F+JRQZN90Z93yql8h0K2t0RwDPBmxwlbZfDcxNZA==}
+    dev: false
 
   /source-map-js@1.0.2:
     resolution: {integrity: sha512-R0XvVJ9WusLiqTCEiGCmICCMplcCkIwwR11mOSD9CR5u+IXYdiseeEuXCVAjS54zqwkLcPNnmU4OeJ6tUrWhDw==}
