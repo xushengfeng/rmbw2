@@ -373,9 +373,8 @@ async function getSection(id: string) {
     return (await sectionsStore.getItem(id)) as section;
 }
 
-async function getTitle(bookId: string, sectionN: number) {
-    let sectionId = (await getBooksById(bookId)).sections[sectionN];
-    let section = await getSection(sectionId);
+async function getTitle(bookId: string, sectionN: string) {
+    let section = await getSection(sectionN);
     const t = `${(await getBooksById(bookId)).name} - ${section.title}`;
     return t;
 }
@@ -397,7 +396,7 @@ async function newBook() {
     let s = newSection();
     bookshelfStore.setItem(id, book);
     await sectionsStore.setItem(sid, s);
-    return { book: id, sections: 0 };
+    return { book: id, sections: sid };
 }
 
 function newSection() {
@@ -570,7 +569,7 @@ addSectionEL.onclick = async () => {
     let s = newSection();
     await sectionsStore.setItem(sid, s);
     await bookshelfStore.setItem(nowBook.book, book);
-    nowBook.sections = book.lastPosi;
+    nowBook.sections = book.sections.at(-1);
     showBook(book);
     changeEdit(true);
 };
@@ -581,7 +580,7 @@ document.getElementById("book_sections").onclick = () => {
 
 let nowBook = {
     book: "",
-    sections: NaN,
+    sections: "",
 };
 
 let isWordBook = false;
@@ -593,7 +592,7 @@ setBookS();
 const bookNameEl = document.getElementById("book_name");
 async function setBookS() {
     if (nowBook.book) {
-        let sectionId = (await getBooksById(nowBook.book)).sections[nowBook.sections];
+        let sectionId = nowBook.sections;
         let section = await getSection(sectionId);
         document.getElementById("book_name").innerText = await getTitle(nowBook.book, nowBook.sections);
         bookNameEl.onclick = () => {
@@ -605,7 +604,7 @@ async function setBookS() {
                 titleEl,
                 el("button", iconEl(ok_svg), {
                     onclick: async () => {
-                        let sectionId = (await getBooksById(nowBook.book)).sections[nowBook.sections];
+                        let sectionId = nowBook.sections;
                         let section = await getSection(sectionId);
                         section.title = titleEl.value;
                         await sectionsStore.setItem(sectionId, section);
@@ -698,7 +697,7 @@ async function showBooks() {
 }
 function showBook(book: book) {
     nowBook.book = book.id;
-    nowBook.sections = book.lastPosi;
+    nowBook.sections = book.sections[book.lastPosi];
     showBookSections(book.sections);
     showBookContent(book.sections[book.lastPosi]);
     setBookS();
@@ -725,12 +724,12 @@ async function showBookSections(sections: book["sections"]) {
             sEl.onclick = async () => {
                 sEl.classList.remove(TODOMARK);
 
-                nowBook.sections = Number(i);
+                nowBook.sections = sections[i];
                 showBookContent(sections[i]);
                 setBookS();
                 if (nowBook.book === "0") return;
                 let book = await getBooksById(nowBook.book);
-                book.lastPosi = nowBook.sections;
+                book.lastPosi = Number(i);
                 bookshelfStore.setItem(nowBook.book, book);
             };
             sEl.oncontextmenu = (e) => {
@@ -1394,7 +1393,7 @@ async function changeEdit(b: boolean) {
         bookContentEl = newC;
         if (nowBook.book) {
             let book = await getBooksById(nowBook.book);
-            let sectionId = book.sections[nowBook.sections];
+            let sectionId = nowBook.sections;
             let section = await getSection(sectionId);
             book.updateTime = new Date().getTime();
             section.lastPosi = contentScrollPosi;
@@ -1492,7 +1491,7 @@ changeEdit(false);
 
 async function setEdit() {
     let book = await getBooksById(nowBook.book);
-    let sectionId = book.sections[nowBook.sections];
+    let sectionId = nowBook.sections;
     let section = await getSection(sectionId);
     bookContentContainerEl.innerHTML = "";
     let text = el("textarea");
@@ -1611,8 +1610,7 @@ function textAi(text: string) {
 bookContentContainerEl.onscroll = async () => {
     let n = getScrollPosi(bookContentContainerEl);
     contentScrollPosi = n;
-    let book = await getBooksById(nowBook.book);
-    let sectionId = book.sections[nowBook.sections];
+    let sectionId = nowBook.sections;
     let section = await getSection(sectionId);
     section.lastPosi = n;
     sectionsStore.setItem(sectionId, section);
@@ -1697,7 +1695,7 @@ type record = {
         contexts: {
             text: string;
             index: [number, number]; // 语境定位
-            source: { book: string; sections: number; id: string }; // 原句通过对比计算
+            source: { book: string; sections: string; id: string }; // 原句通过对比计算
         }[];
         card_id: string;
     }[];
@@ -1706,7 +1704,7 @@ type record = {
 type record2 = {
     text: string;
     trans: string;
-    source: { book: string; sections: number; id: string }; // 原句通过对比计算
+    source: { book: string; sections: string; id: string }; // 原句通过对比计算
     note?: string;
 };
 
@@ -1757,8 +1755,7 @@ async function showMarkList() {
                     el("div", "删除", {
                         style: { color: "red" },
                         onclick: async () => {
-                            let book = await getBooksById(nowBook.book);
-                            let sectionId = book.sections[nowBook.sections];
+                            let sectionId = nowBook.sections;
                             let section = await getSection(sectionId);
                             if (i.s.type === "sentence") {
                                 card2sentence.removeItem(i.s.id);
@@ -1782,8 +1779,7 @@ async function showMarkList() {
 }
 
 async function getAllMarks() {
-    let book = await getBooksById(nowBook.book);
-    let sectionId = book.sections[nowBook.sections];
+    let sectionId = nowBook.sections;
     let section = await getSection(sectionId);
     let list: { id: string; s: section["words"][0] }[] = [];
     for (let i in section.words) {
@@ -1847,8 +1843,7 @@ async function showDic(id: string) {
 
     nowDicId = id;
 
-    let book = await getBooksById(nowBook.book);
-    let sectionId = book.sections[nowBook.sections];
+    let sectionId = nowBook.sections;
     let section = await getSection(sectionId);
 
     let wordx = section.words[id];
@@ -2374,8 +2369,7 @@ async function saveCard(v: {
     index: { start: number; end: number };
     cindex: { start: number; end: number };
 }) {
-    let book = await getBooksById(nowBook.book);
-    let sectionId = book.sections[nowBook.sections];
+    let sectionId = nowBook.sections;
     let section = await getSection(sectionId);
     for (let i in section.words) {
         let index = section.words[i].index;
@@ -3005,7 +2999,7 @@ function flatWordCard(record: record, id: string) {
         index: -1,
         card_id: "",
         text: "",
-        context: { index: [NaN, NaN], source: { book: "", sections: 0, id: "" }, text: "" },
+        context: { index: [NaN, NaN], source: { book: "", sections: "", id: "" }, text: "" },
     };
     if (!record) return Word;
     for (let n in record.means) {
