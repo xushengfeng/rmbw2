@@ -373,6 +373,13 @@ async function getSection(id: string) {
     return (await sectionsStore.getItem(id)) as section;
 }
 
+async function getTitle(bookId: string, sectionN: number) {
+    let sectionId = (await getBooksById(bookId)).sections[sectionN];
+    let section = await getSection(sectionId);
+    const t = `${(await getBooksById(bookId)).name} - ${section.title}`;
+    return t;
+}
+
 async function newBook() {
     let id = uuid();
     let sid = uuid();
@@ -588,9 +595,7 @@ async function setBookS() {
     if (nowBook.book) {
         let sectionId = (await getBooksById(nowBook.book)).sections[nowBook.sections];
         let section = await getSection(sectionId);
-        document.getElementById("book_name").innerText = `${(await getBooksById(nowBook.book)).name} - ${
-            section.title
-        }`;
+        document.getElementById("book_name").innerText = await getTitle(nowBook.book, nowBook.sections);
         bookNameEl.onclick = () => {
             let titleEl = el("input", { style: { "font-size": "inherit" } });
             titleEl.value = section.title;
@@ -2348,9 +2353,7 @@ async function disCard2(m: record["means"][0]) {
     sen.classList.add("dic_sen");
     for (let s of m.contexts) {
         let source = s.source;
-        let sectionId = (await getBooksById(source.book)).sections[source.sections];
-        let section = await getSection(sectionId);
-        const t = `${(await getBooksById(source.book)).name} - ${section.title}`;
+        const t = await getTitle(source.book, source.sections);
         sen.append(
             el("div", [
                 el("p", [
