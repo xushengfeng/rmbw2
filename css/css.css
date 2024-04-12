@@ -919,7 +919,7 @@ div:has(> .translate) > :not(.translate) {
     display: flex;
     flex-direction: column;
 }
-.review_word > :first-child {
+.review_word > :nth-child(2) {
     flex-grow: 1;
     overflow: scroll;
     & > p > :last-child {
@@ -927,7 +927,7 @@ div:has(> .translate) > :not(.translate) {
         opacity: 0.5;
     }
 }
-.review_word > :nth-child(2) {
+.review_word > :nth-child(3) {
     overflow: scroll;
 }
 .review_word > :last-child {

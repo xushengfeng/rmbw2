@@ -3613,7 +3613,7 @@ async function showWordReview(x: { id: string; card: fsrsjs.Card }, isAi: boolea
         }
     });
 
-    div.append(context, dic, buttons);
+    div.append(el("div", wordid), context, dic, buttons);
     div.classList.add("review_word");
     reviewViewEl.innerHTML = "";
     reviewViewEl.append(div);
