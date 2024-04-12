@@ -240,6 +240,7 @@ const TRANSLATE = "translate";
 const DICSENTENCE = "dic_sentence";
 const HIDEMEANS = "hide_means";
 const TODOMARK = "to_visit";
+const TODOMARK1 = "to_visit1";
 const NOTEDIALOG = "note_dialog";
 const AIDIALOG = "ai_dialog";
 const DICDIALOG = "dic_dialog";
@@ -493,12 +494,20 @@ function showOnlineBooks(
         div.append(cover);
         title.innerText = book.name;
         div.append(title);
+        bookshelfStore.iterate((v: book, k) => {
+            if (book.id === k) {
+                if (v.updateTime < book.updateTime) {
+                    div.classList.add(TODOMARK1);
+                }
+            }
+        });
         div.onclick = async () => {
             console.log(book);
             let xbook = (await bookshelfStore.getItem(book.id)) as book;
             if (xbook) {
                 if (xbook.updateTime < book.updateTime) {
                     saveBook();
+                    div.classList.remove(TODOMARK1);
                 }
             } else {
                 xbook = {
@@ -557,7 +566,6 @@ function showOnlineBooks(
             }
         };
         onlineBookEl.append(div);
-        console.log(onlineBookEl);
     }
 }
 

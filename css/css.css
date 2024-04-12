@@ -209,18 +209,25 @@ body {
     background-color: var(--bg);
 }
 
-.to_visit {
+.to_visit,
+.to_visit1 {
     position: relative;
 }
-.to_visit::after {
+:is(.to_visit, .to_visit1)::after {
     content: "";
     position: absolute;
     width: 6px;
     height: 6px;
-    top: 0px;
-    right: 0px;
     background-color: #2735bb;
     border-radius: 50%;
+}
+.to_visit::after {
+    top: 0px;
+    right: 0px;
+}
+.to_visit1::after {
+    top: -3px;
+    right: -3px;
 }
 
 .selected_item {
@@ -532,9 +539,10 @@ body {
                 border-radius: 4px;
                 box-shadow: var(--box-shadow);
                 font-size: 2em;
-                word-break: break-all;
+                text-wrap: balance;
                 overflow: hidden;
                 color: #0006;
+                cursor: pointer;
                 & > * {
                     background-color: #dfdfdf;
                     width: 100%;
