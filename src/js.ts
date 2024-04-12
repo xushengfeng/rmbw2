@@ -243,6 +243,7 @@ const TODOMARK = "to_visit";
 const NOTEDIALOG = "note_dialog";
 const AIDIALOG = "ai_dialog";
 const DICDIALOG = "dic_dialog";
+const SELECTEDITEM = "selected_item";
 
 const booksEl = document.getElementById("books");
 const localBookEl = el("div", { class: "books" });
@@ -718,9 +719,10 @@ async function showBookSections(sections: book["sections"]) {
         sections,
         { iHeight: 24, paddingTop: 16, paddingLeft: 16, width: "calc(20vw - 1rem * 2)" },
         async (i) => {
-            let sEl = document.createElement("div");
+            let sEl = el("div");
             let s = await getSection(sections[i]);
             sEl.innerText = sEl.title = s.title || `章节${Number(i) + 1}`;
+            if (nowBook.sections === sections[i]) sEl.classList.add(SELECTEDITEM);
             for (let i in s.words) {
                 if (!s.words[i].visit) {
                     sEl.classList.add(TODOMARK);
@@ -729,6 +731,9 @@ async function showBookSections(sections: book["sections"]) {
             }
             sEl.onclick = async () => {
                 sEl.classList.remove(TODOMARK);
+
+                bookSectionsEl.querySelector(`.${SELECTEDITEM}`).classList.remove(SELECTEDITEM);
+                sEl.classList.add(SELECTEDITEM);
 
                 nowBook.sections = sections[i];
                 showBookContent(sections[i]);

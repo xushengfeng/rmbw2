@@ -223,6 +223,10 @@ body {
     border-radius: 50%;
 }
 
+.selected_item {
+    color: #2735bb;
+}
+
 #book_nav {
     position: absolute;
     top: var(--size0);
