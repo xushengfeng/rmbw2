@@ -181,6 +181,11 @@ function vlist(
         endI += buffer;
         startI = Math.max(0, startI);
         endI = Math.min(list.length - 1, endI);
+        if (list.length < 100 && !newList) {
+            startI = 0;
+            endI = list.length - 1;
+            if (pel.querySelectorAll(`:scope > [${dataI}]`).length === list.length) return;
+        }
         let oldRangeList: number[] = [];
         pel.querySelectorAll(`:scope > [${dataI}]`).forEach((el: HTMLElement) => {
             oldRangeList.push(Number(el.getAttribute(dataI)));
@@ -189,7 +194,6 @@ function vlist(
             if (i < startI || endI < i || newList) pel.querySelector(`:scope > [${dataI}="${i}"]`).remove();
         }
         for (let i = startI; i <= endI; i++) {
-            if (oldRangeList.includes(i) && !newList) continue;
             let iel = await f(i, list[i], () => {
                 iel.remove();
                 for (let ii = i + 1; ii <= endI; ii++) {
@@ -209,7 +213,7 @@ function vlist(
                 ...(style.width ? { width: style.width } : {}),
             });
             iel.setAttribute(dataI, String(i));
-            pel.append(iel);
+            if (!pel.querySelector(`:scope > [${dataI}="${i}"]`) || newList) pel.append(iel);
         }
     }
     show();
