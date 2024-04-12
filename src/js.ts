@@ -479,16 +479,18 @@ function showOnlineBooks(
     onlineBookEl.innerHTML = "";
     for (let book of books) {
         let div = document.createElement("div");
+        const cover = el("div");
+        let bookCover: HTMLElement;
         let title = document.createElement("span");
         if (book.cover) {
-            let bookCover = document.createElement("img");
-            bookCover.src = book.cover;
-            div.append(bookCover);
+            bookCover = document.createElement("img");
+            (bookCover as HTMLImageElement).src = book.cover;
         } else {
-            let bookCover = document.createElement("div");
+            bookCover = document.createElement("div");
             bookCover.innerText = book.name;
-            div.append(bookCover);
         }
+        cover.append(bookCover);
+        div.append(cover);
         title.innerText = book.name;
         div.append(title);
         div.onclick = async () => {
@@ -514,10 +516,14 @@ function showOnlineBooks(
             }
             function saveBook() {
                 let s = [];
+                let count = 0;
                 const fetchPromises = book.sections.map(async (item) => {
                     const { id, path, title } = item;
                     const response = await fetch((await getOnlineBooksUrl()) + "/source/" + path);
                     const content = await response.text();
+                    count++;
+                    const p = (count / book.sections.length) * 100;
+                    bookCover.style.clipPath = `xywh(0 ${100 - p}% 100% 100%)`;
                     return { id, content, title };
                 });
                 Promise.all(fetchPromises)
@@ -655,18 +661,19 @@ async function showBooks() {
     bookList = bookList.toSorted((a, b) => b.visitTime - a.visitTime);
     for (let book of bookList) {
         let bookIEl = document.createElement("div");
+        const cover = el("div");
         let titleEl = document.createElement("span");
         if (book.cover) {
             let bookCover = document.createElement("img");
             bookCover.src = book.cover;
-            bookIEl.append(bookCover);
+            cover.append(bookCover);
         } else {
             let bookCover = document.createElement("div");
             bookCover.innerText = book.name;
-            bookIEl.append(bookCover);
+            cover.append(bookCover);
         }
         titleEl.innerText = book.name;
-        bookIEl.append(titleEl);
+        bookIEl.append(cover, titleEl);
         localBookEl.append(bookIEl);
         bookIEl.onclick = () => {
             showBook(book);

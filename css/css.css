@@ -529,13 +529,17 @@ body {
                 border: none;
                 width: 100px;
                 aspect-ratio: calc(1 / 1.414);
-                background-color: #dfdfdf;
                 border-radius: 4px;
                 box-shadow: var(--box-shadow);
                 font-size: 2em;
                 word-break: break-all;
                 overflow: hidden;
                 color: #0006;
+                & > * {
+                    background-color: #dfdfdf;
+                    width: 100%;
+                    height: 100%;
+                }
             }
             & > :nth-child(2) {
                 max-width: 100px;
