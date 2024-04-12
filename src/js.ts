@@ -996,7 +996,24 @@ function sortWordList(
 
 function showNormalBook(s: section) {
     const segmenter = new Segmenter(bookLan, { granularity: "word" });
-    const sL = Array.from(new Segmenter(bookLan, { granularity: "sentence" }).segment(s.text));
+    const osL = Array.from(new Segmenter(bookLan, { granularity: "sentence" }).segment(s.text));
+    const sL: Intl.SegmentData[] = [];
+    const sx = ["Mr.", "Mrs.", "Ms.", "Miss.", "Dr.", "Prof.", "Capt.", "Lt.", "Sgt.", "Rev.", "Sr.", "Jr."].map(
+        (i) => i + " "
+    );
+    let sxS = sx.map((i) => ` ${i}`);
+    for (let i = 0; i < osL.length; i++) {
+        const seg = osL[i].segment;
+        if (seg.endsWith(" ") && (sx.includes(seg) || sxS.some((i) => seg.endsWith(i)))) {
+            let x = osL[i];
+            const next = osL[i + 1];
+            if (next) x.segment += next.segment;
+            sL.push(x);
+            i++;
+        } else {
+            sL.push(osL[i]);
+        }
+    }
     let plist: { text: string; start: number; end: number; isWord: boolean }[][][] = [[]];
     for (const sentence of sL) {
         if (/^\n+/.test(sentence.segment)) {
