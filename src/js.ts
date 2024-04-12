@@ -335,7 +335,32 @@ dicEl.append(
     dicDetailsEl
 );
 
-const toastEl = document.getElementById("toast");
+function putToast(ele: HTMLElement, time?: number) {
+    let toastEl = document.body.querySelector(".toast") as HTMLElement;
+    if (!toastEl) {
+        toastEl = el("div", { class: "toast", popover: "auto" });
+        document.body.append(toastEl);
+    }
+    toastEl.showPopover();
+    toastEl.append(ele);
+
+    if (time === undefined) time = 2000;
+    if (time) {
+        setTimeout(() => {
+            ele.remove();
+        }, time);
+    }
+
+    const observer = new MutationObserver((mutationsList) => {
+        for (let mutation of mutationsList) {
+            if (mutation.type === "childList" && toastEl.childElementCount === 0) {
+                toastEl.remove();
+                observer.disconnect();
+            }
+        }
+    });
+    observer.observe(toastEl, { childList: true });
+}
 
 const tmpDicEl = el("div", { popover: "auto", class: "tmp_dic" });
 document.body.append(tmpDicEl);
@@ -636,7 +661,7 @@ async function setBookS() {
                             pel.remove();
                         };
                         let pel = el("div", [el("p", `AI正在思考标题`), stopEl]);
-                        toastEl.append(pel);
+                        putToast(pel, 0);
                         ff.result.then((r) => {
                             pel.remove();
                             titleEl.value = r["title"];
@@ -1257,7 +1282,7 @@ async function translateContext() {
         pel.remove();
     };
     let pel = el("div", [el("p", `AI正在翻译全文`), stopEl]);
-    toastEl.append(pel);
+    putToast(pel, 0);
     ff.result.then((r) => {
         pel.remove();
         if (r["list"].length != text.length) return;
@@ -2985,7 +3010,7 @@ function ai(m: aim, text?: string) {
         pel.remove();
     };
     let pel = el("div", [el("p", `AI正在思考${text || ""}`), stopEl]);
-    toastEl.append(pel);
+    putToast(pel, 0);
     return {
         stop: abort,
         text: new Promise(async (re: (text: string) => void, rj: (err: Error) => void) => {
@@ -4469,10 +4494,7 @@ async function setDAV(data: Blob) {
         body: data,
     }).then(() => {
         const p = el("span", "上传成功");
-        toastEl.append(p);
-        setTimeout(() => {
-            p.remove();
-        }, 2000);
+        putToast(p);
     });
 }
 
@@ -4582,10 +4604,7 @@ let asyncEl = el("div", [
                     }),
                 }).then(() => {
                     const p = el("span", "上传成功");
-                    toastEl.append(p);
-                    setTimeout(() => {
-                        p.remove();
-                    }, 2000);
+                    putToast(p);
                 });
             },
         }),

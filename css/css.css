@@ -1183,13 +1183,28 @@ div:has(> .translate) > :not(.translate) {
     width: 100%;
 }
 
-#toast {
+.toast {
     position: fixed;
+    margin: 0;
+    left: auto;
+    top: auto;
     bottom: 16px;
     right: 16px;
     min-width: 100px;
     display: flex;
     flex-direction: column;
+    border: none;
+    padding: 0;
+    gap: 4px;
+    border-radius: 0;
+    padding: 4px;
+    & > * {
+        background-color: var(--bg1);
+        backdrop-filter: var(--blur);
+        padding: 4px;
+        border-radius: 4px;
+        box-shadow: var(--box-shadow);
+    }
 }
 
 .docs {
