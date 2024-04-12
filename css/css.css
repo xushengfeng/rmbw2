@@ -1074,7 +1074,7 @@ div:has(> .translate) > :not(.translate) {
 }
 
 .oneD_plot {
-    display: block;
+    display: inline-flex;
     border: solid 1px transparent;
     transition: var(--transition);
     &:hover {

@@ -4086,38 +4086,44 @@ async function renderCharts() {
 }
 
 function renderCardDue(text: string, data: number[]) {
-    const canvas = el("canvas", { class: "oneD_plot" });
+    const pc = el("div", { class: "oneD_plot" });
     const now = time();
     const zoom = 1 / ((1000 * 60 * 60) / 10);
-    let max = -Infinity,
-        min = Infinity;
-    data.forEach((d) => {
-        if (d > max) max = d;
-        if (d < min) min = d;
+    let _max = -Infinity,
+        _min = Infinity;
+    data.concat([now]).forEach((d) => {
+        if (d > _max) _max = d;
+        if (d < _min) _min = d;
     });
-    max = Math.max(max, now);
-    canvas.width = (max - min) * zoom + 1;
-    canvas.height = 16;
-    const ctx = canvas.getContext("2d");
-    function l(x: number, color: string) {
-        ctx.strokeStyle = color;
-        ctx.beginPath();
-        ctx.moveTo(x, 0);
-        ctx.lineTo(x, 16);
-        ctx.stroke();
-    }
     let count = 0;
-    const nowx = (now - min) * zoom;
-    data.forEach((d) => {
-        const x = (d - min) * zoom;
-        l(x, "#000");
-        if (x < nowx) count++;
-    });
-    l(nowx, "#f00");
-    l((now + 1000 * 60 * 60 - min) * zoom, "#00f");
-    l((now + 1000 * 60 * 60 * 24 - min) * zoom, "#00f");
+    for (let min = _min; min < _max; min += 2048 / zoom) {
+        const max = Math.min(min + 2048 / zoom, _max);
+        const canvas = el("canvas");
+        canvas.width = (max - min) * zoom;
+        if (max === _max) canvas.width++;
+        canvas.height = 16;
+        const ctx = canvas.getContext("2d");
+        function l(x: number, color: string) {
+            ctx.strokeStyle = color;
+            ctx.beginPath();
+            ctx.moveTo(x, 0);
+            ctx.lineTo(x, 16);
+            ctx.stroke();
+        }
+        const nowx = (now - min) * zoom;
+        data.forEach((d) => {
+            if (d < min || max < d) return;
+            const x = (d - min) * zoom;
+            l(x, "#000");
+            if (x < nowx) count++;
+        });
+        l(nowx, "#f00");
+        l((now + 1000 * 60 * 60 - min) * zoom, "#00f");
+        l((now + 1000 * 60 * 60 * 24 - min) * zoom, "#00f");
+        pc.append(canvas);
+    }
     const f = el("div");
-    f.append(text, String(count), canvas);
+    f.append(text, String(count), pc);
     return f;
 }
 
