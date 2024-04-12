@@ -599,7 +599,8 @@ async function setBookS() {
         let sectionId = nowBook.sections;
         let section = await getSection(sectionId);
         document.getElementById("book_name").innerText = await getTitle(nowBook.book, nowBook.sections);
-        bookNameEl.onclick = () => {
+        bookNameEl.onclick = (e) => {
+            if (e.target != bookNameEl) return;
             let titleEl = el("input", { style: { "font-size": "inherit" } });
             titleEl.value = section.title;
             titleEl.select();
@@ -612,6 +613,7 @@ async function setBookS() {
                         let section = await getSection(sectionId);
                         section.title = titleEl.value;
                         await sectionsStore.setItem(sectionId, section);
+                        if (!isWordBook) bookContentEl.querySelector("h1").innerText = section.title;
                         setBookS();
                     },
                 })
@@ -1025,6 +1027,8 @@ function showNormalBook(s: section) {
     }
 
     console.log(plist);
+
+    bookContentEl.append(el("h1", s.title));
 
     for (let paragraph of plist) {
         if (paragraph.length === 0) continue;
