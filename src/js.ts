@@ -3706,7 +3706,7 @@ async function showSpellReview(x: { id: string; card: fsrsjs.Card }) {
         console.log(button);
         if (button === "{tip}") {
             // 暂时展示
-            input.innerText = "";
+            input.innerText = spaceHoder;
             clearKeyboard();
             isPerfect = false;
             play(word);
