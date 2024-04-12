@@ -1039,7 +1039,7 @@ function showNormalBook(s: section) {
     const segmenter = new Segmenter(bookLan, { granularity: "word" });
     const osL = Array.from(new Segmenter(bookLan, { granularity: "sentence" }).segment(s.text));
     const sL: Intl.SegmentData[] = [];
-    const sx = ["Mr.", "Mrs.", "Ms.", "Miss.", "Dr.", "Prof.", "Capt.", "Lt.", "Sgt.", "Rev.", "Sr.", "Jr."].map(
+    const sx = ["Mr.", "Mrs.", "Ms.", "Miss.", "Dr.", "Prof.", "Capt.", "Lt.", "Sgt.", "Rev.", "Sr.", "Jr.", "St."].map(
         (i) => i + " "
     );
     let sxS = sx.map((i) => ` ${i}`);
