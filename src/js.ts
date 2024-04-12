@@ -3102,7 +3102,7 @@ async function autoIgnore() {
     const f = el("div");
     const words = Array.from(
         new Set(
-            Array.from(bookContentEl.querySelectorAll(`:scope>*>span:not(.${MARKWORD})`)).map((el) =>
+            Array.from(bookContentEl.querySelectorAll(`:scope>*>*>span:not(.${MARKWORD})`)).map((el) =>
                 el.textContent.trim().toLocaleLowerCase()
             )
         )
