@@ -2622,7 +2622,8 @@ function aiButtons1(textEl: HTMLTextAreaElement, word: string) {
                 setText(wordAiText.etymology((await wordAi.fix().run({ word }).result) as any));
             },
         }),
-        tmpAiB(textEl, `$这里有个单词${word}`)
+        tmpAiB(textEl, `$这里有个单词${word}`),
+        dicB(textEl, word)
     );
     return buttons;
 }
