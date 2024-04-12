@@ -2422,9 +2422,15 @@ async function disCard2(m: record["means"][0]) {
     let div = document.createDocumentFragment();
     let disEl = el("p");
     disEl.innerText = m.text;
-    let sen = document.createElement("div");
-    sen.classList.add("dic_sen");
-    for (let s of m.contexts) {
+    let sen = await dicSentences(m.contexts);
+    sen.style.paddingLeft = "1em";
+    div.append(el("div", disEl), sen);
+    return div;
+}
+
+async function dicSentences(contexts: record["means"][0]["contexts"]) {
+    const sen = el("div", { class: "dic_sen" });
+    for (let s of contexts) {
         let source = s.source;
         const t = await getTitle(source.book, source.sections);
         sen.append(
@@ -2438,8 +2444,7 @@ async function disCard2(m: record["means"][0]) {
             ])
         );
     }
-    div.append(el("div", disEl), sen);
-    return div;
+    return sen;
 }
 
 async function saveCard(v: {
@@ -3577,19 +3582,7 @@ async function crContext(word: record, id: string) {
     if (!word) return context;
     for (let i of word.means) {
         if (i.card_id === id) {
-            for (let c of i.contexts.toReversed()) {
-                let p = document.createElement("p");
-                let span = document.createElement("span");
-                span.classList.add(MARKWORD);
-                span.innerText = c.text.slice(c.index[0], c.index[1]);
-                p.append(
-                    c.text.slice(0, c.index[0]),
-                    span,
-                    c.text.slice(c.index[1]),
-                    el("span", await getTitle(c.source.book, c.source.sections))
-                );
-                context.append(p);
-            }
+            context = await dicSentences(i.contexts.toReversed());
         }
     }
     return context;
@@ -3617,7 +3610,7 @@ async function showWordReview(x: { id: string; card: fsrsjs.Card }, isAi: boolea
         for (let i of d.means) {
             if (i.card_id === x.id) {
                 let div = document.createElement("div");
-                div.append(await disCard2(i));
+                div.append(i.text);
                 dic.innerHTML = "";
                 dic.append(div);
             }

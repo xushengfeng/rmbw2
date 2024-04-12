@@ -641,7 +641,6 @@ div:has(> .translate) > :not(.translate) {
 }
 
 .dic_sen {
-    padding-left: 1rem;
     & > div > p > :last-child {
         padding-left: 2em;
         opacity: 0.5;
@@ -922,10 +921,6 @@ div:has(> .translate) > :not(.translate) {
 .review_word > :nth-child(2) {
     flex-grow: 1;
     overflow: scroll;
-    & > p > :last-child {
-        padding-left: 2em;
-        opacity: 0.5;
-    }
 }
 .review_word > :nth-child(3) {
     overflow: scroll;
