@@ -236,6 +236,13 @@ body {
     backdrop-filter: var(--blur);
     transition: var(--transition);
     border-radius: 0 1rem 1rem 0;
+    & > :nth-child(2) {
+        & > div {
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+    }
 }
 .book_nav_show {
     left: 0 !important;

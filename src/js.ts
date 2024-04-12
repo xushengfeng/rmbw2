@@ -714,7 +714,7 @@ async function showBookSections(sections: book["sections"]) {
         async (i) => {
             let sEl = document.createElement("div");
             let s = await getSection(sections[i]);
-            sEl.innerText = s.title || `章节${Number(i) + 1}`;
+            sEl.innerText = sEl.title = s.title || `章节${Number(i) + 1}`;
             for (let i in s.words) {
                 if (!s.words[i].visit) {
                     sEl.classList.add(TODOMARK);
