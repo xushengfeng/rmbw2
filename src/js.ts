@@ -608,6 +608,27 @@ async function setBookS() {
             bookNameEl.innerHTML = "";
             bookNameEl.append(
                 titleEl,
+                el("button", "ai", {
+                    onclick: async () => {
+                        let f = new autoFun.def({
+                            input: { text: "string" },
+                            script: [`为输入的文章起个标题`],
+                            output: "title:string",
+                        });
+                        const ff = f.run(editText);
+                        let stopEl = el("button", iconEl(close_svg));
+                        stopEl.onclick = () => {
+                            ff.stop.abort();
+                            pel.remove();
+                        };
+                        let pel = el("div", [el("p", `AI正在思考标题`), stopEl]);
+                        toastEl.append(pel);
+                        ff.result.then((r) => {
+                            pel.remove();
+                            titleEl.value = r["title"];
+                        });
+                    },
+                }),
                 el("button", iconEl(ok_svg), {
                     onclick: async () => {
                         let sectionId = nowBook.sections;
