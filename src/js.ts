@@ -4235,7 +4235,7 @@ function renderCal(year: number, data: Date[]) {
 //###### setting
 const settingEl = document.getElementById("setting");
 document.getElementById("settingb").onclick = () => {
-    settingEl.showPopover();
+    settingEl.togglePopover();
 };
 
 import Sortable from "sortablejs";
