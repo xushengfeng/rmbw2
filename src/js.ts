@@ -2046,26 +2046,29 @@ async function showDic(id: string) {
     }
 
     dicTransB.onclick = async () => {
-        if (!isSentence && !dicTransContent.value) {
-            // 单词模式且无翻译（意味着无需重新翻译，只需读取缓存）
-            let text = (await transCache.getItem(Share.context.trim())) as string;
-            if (text) {
-                dicTransContent.value = text;
-                return;
+        let text = "";
+        if (dicTransContent.value) {
+            text = await runAi();
+        } else {
+            text = (await transCache.getItem(Share.context.trim())) as string;
+            if (!text) {
+                text = await runAi();
             }
         }
-        let output = ai(
-            [
-                {
-                    role: "system",
-                    content: `您是一个翻译引擎，只能将用户的输入文本翻译为${navigator.language}，无法解释。`,
-                },
-                { role: "user", content: Share.context },
-            ],
-            "翻译"
-        );
-        dicTransAi = output.stop;
-        let text = await output.text;
+        function runAi() {
+            let output = ai(
+                [
+                    {
+                        role: "system",
+                        content: `您是一个翻译引擎，只能将用户的输入文本翻译为${navigator.language}，无法解释。`,
+                    },
+                    { role: "user", content: Share.context },
+                ],
+                "翻译"
+            );
+            dicTransAi = output.stop;
+            return output.text;
+        }
         dicTransContent.value = text;
         if (isSentence) {
             let r = (await card2sentence.getItem(wordx.id)) as record2;
