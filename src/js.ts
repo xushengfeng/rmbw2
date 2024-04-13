@@ -3197,7 +3197,7 @@ function flatWordCard(record: record, id: string) {
 function selectWord(words: string[]) {
     bookContentEl.querySelectorAll(`.${TMPMARKWORD}`).forEach((el) => el.classList.remove(TMPMARKWORD));
     bookContentEl.querySelectorAll("span[data-i]").forEach((el: HTMLSpanElement) => {
-        if (words.includes(el.innerText)) {
+        if (words.includes(el.innerText.toLocaleLowerCase())) {
             el.classList.add(TMPMARKWORD);
         }
     });
@@ -3260,7 +3260,7 @@ async function autoIgnore() {
     const section = await getSection(ignoreWordSection);
     const oldWords = section.text.trim().split("\n");
     const studyWords = await wordsStore.keys();
-    const hasLentWords = oldWords.concat(studyWords);
+    const hasLentWords = oldWords.concat(studyWords).map((w) => w.toLocaleLowerCase());
     const newWords = words;
     const wordsWithRoot: { src: string; show: string }[] = [];
     for (const w of newWords) {
