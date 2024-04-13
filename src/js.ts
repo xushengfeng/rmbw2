@@ -3657,7 +3657,7 @@ async function showWordReview(x: { id: string; card: fsrsjs.Card }, isAi: boolea
         for (let i of d.means) {
             if (i.card_id === x.id) {
                 let div = document.createElement("div");
-                div.append(i.text);
+                div.innerText = i.text;
                 dic.innerHTML = "";
                 dic.append(div);
             }
