@@ -4483,6 +4483,24 @@ async function setAllData(data: string) {
             r.last_review = new Date(r.last_review);
         }
     }
+    const wrongL: { [name: string]: { n: number; o: number } } = {};
+    for (const storeName in allData2Store) {
+        const oldLength = await allData2Store[storeName].length();
+        const newLength = Object.keys(json[storeName]).length;
+        if (oldLength > 10 && newLength < 0.5 * oldLength) {
+            wrongL[storeName] = { n: newLength, o: oldLength };
+        }
+    }
+    if (Object.keys(wrongL).length) {
+        let l: string[] = [];
+        for (let i in wrongL) {
+            l.push(`${i}：${wrongL[i].o}->${wrongL[i].n}`);
+        }
+        const r = await confirm(
+            `⚠️以下数据内容发生重大变更，是否继续更新？\n若更新，可能造成数据丢失\n\n${l.join("\n")}`
+        );
+        if (!r) return;
+    }
     for (const storeName in allData2Store) {
         await allData2Store[storeName].clear();
         await allData2Store[storeName].setItems(json[storeName]);
