@@ -917,7 +917,7 @@ async function showWordBook(s: section) {
         } else if (ignoreWords.includes(i)) {
             type = "ignore";
             matchWords++;
-            means += 1;
+            means = 1;
         }
         means1 += means;
         if (type) rawWordList.push({ text: t, c: c, type, means });
@@ -1002,6 +1002,10 @@ async function showWordBook(s: section) {
                         onclick: async () => {
                             await addIgnore(item.text);
                             p.classList.add("ignore");
+                            const item1 = rawWordList.find((i) => i.text === item.text);
+                            const item2 = wordList.find((i) => i.text === item.text);
+                            item.type = item1.type = item2.type = "ignore";
+                            item.means = item1.means = item2.means = 1;
                         },
                     })
                 );
