@@ -819,17 +819,21 @@ async function showBookSections(sections: book["sections"]) {
             book.lastPosi = Number(i);
             bookshelfStore.setItem(nowBook.book, book);
         };
-        sEl.oncontextmenu = (e) => {
+        sEl.oncontextmenu = async (e) => {
             e.preventDefault();
             e.stopPropagation();
             menuEl.innerHTML = "";
+            if ((await getBooksById(nowBook.book)).canEdit) {
+                menuEl.append(
+                    el("div", "重命名", {
+                        onclick: async () => {
+                            const t = await setSectionTitle(s.title);
+                            if (t) sEl.innerText = t;
+                        },
+                    })
+                );
+            }
             menuEl.append(
-                el("div", "重命名", {
-                    onclick: async () => {
-                        const t = await setSectionTitle(s.title);
-                        if (t) sEl.innerText = t;
-                    },
-                }),
                 el("div", "复制id", {
                     onclick: async () => {
                         navigator.clipboard.writeText(sections[i]);
@@ -1135,7 +1139,13 @@ function showNormalBook(s: section) {
 
     console.log(plist);
 
-    bookContentEl.append(el("h1", s.title, { onclick: () => setSectionTitle(s.title) }));
+    bookContentEl.append(
+        el("h1", s.title, {
+            onclick: async () => {
+                if ((await getBooksById(nowBook.book)).canEdit) setSectionTitle(s.title);
+            },
+        })
+    );
 
     for (let paragraph of plist) {
         if (paragraph.length === 0) continue;
