@@ -448,7 +448,7 @@ body {
     text-decoration: underline wavy #999 !important;
 }
 .tmp_mark_word {
-    text-decoration: underline wavy color-mix(in srgb, #999 50%, var(--bg));
+    text-decoration: underline color-mix(in srgb, #999 50%, var(--bg));
 }
 .flash_word {
     text-decoration: underline wavy #2735bb;
