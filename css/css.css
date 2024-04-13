@@ -235,10 +235,11 @@ body {
 }
 
 #book_nav {
+    --w: 60vw;
     position: absolute;
     top: var(--size0);
-    width: 20vw;
-    left: -20vw;
+    width: min(var(--w), 300px);
+    left: calc(-1 * min(var(--w), 300px) - 16px);
     height: calc(100dvh - var(--size0));
     display: flex;
     flex-direction: column;
@@ -252,6 +253,7 @@ body {
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
+            width: calc(100% - 1rem * 2);
         }
     }
 }
@@ -821,7 +823,7 @@ div:has(> .translate) > :not(.translate) {
     right: -100%;
     top: var(--size0);
     height: calc(100dvh - var(--size0));
-    width: 40vw;
+    width: min(60vw, 300px);
     border-radius: 1rem 0 0 1rem;
     box-sizing: border-box;
     padding: 1rem;
@@ -850,7 +852,7 @@ div:has(> .translate) > :not(.translate) {
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
-            max-width: calc(40vw - 16px * 2);
+            max-width: 100%;
         }
     }
 }

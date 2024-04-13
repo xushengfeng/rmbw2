@@ -790,57 +790,52 @@ function showBook(book: book) {
 async function showBookSections(sections: book["sections"]) {
     sections = structuredClone(sections);
     bookSectionsEl.innerHTML = "";
-    vlist(
-        bookSectionsEl,
-        sections,
-        { iHeight: 24, paddingTop: 16, paddingLeft: 16, width: "calc(20vw - 1rem * 2)" },
-        async (i) => {
-            let sEl = el("div");
-            let s = await getSection(sections[i]);
-            sEl.innerText = sEl.title = s.title || `章节${Number(i) + 1}`;
-            if (nowBook.sections === sections[i]) sEl.classList.add(SELECTEDITEM);
-            for (let i in s.words) {
-                if (!s.words[i].visit) {
-                    sEl.classList.add(TODOMARK);
-                    break;
-                }
+    vlist(bookSectionsEl, sections, { iHeight: 24, paddingTop: 16, paddingLeft: 16 }, async (i) => {
+        let sEl = el("div");
+        let s = await getSection(sections[i]);
+        sEl.innerText = sEl.title = s.title || `章节${Number(i) + 1}`;
+        if (nowBook.sections === sections[i]) sEl.classList.add(SELECTEDITEM);
+        for (let i in s.words) {
+            if (!s.words[i].visit) {
+                sEl.classList.add(TODOMARK);
+                break;
             }
-            sEl.onclick = async () => {
-                sEl.classList.remove(TODOMARK);
-
-                bookSectionsEl.querySelector(`.${SELECTEDITEM}`).classList.remove(SELECTEDITEM);
-                sEl.classList.add(SELECTEDITEM);
-
-                nowBook.sections = sections[i];
-                showBookContent(sections[i]);
-                setBookS();
-                if (nowBook.book === "0") return;
-                let book = await getBooksById(nowBook.book);
-                book.lastPosi = Number(i);
-                bookshelfStore.setItem(nowBook.book, book);
-            };
-            sEl.oncontextmenu = (e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                menuEl.innerHTML = "";
-                menuEl.append(
-                    el("div", "重命名", {
-                        onclick: async () => {
-                            const t = await setSectionTitle(s.title);
-                            if (t) sEl.innerText = t;
-                        },
-                    }),
-                    el("div", "复制id", {
-                        onclick: async () => {
-                            navigator.clipboard.writeText(sections[i]);
-                        },
-                    })
-                );
-                showMenu(e.clientX, e.clientY);
-            };
-            return sEl;
         }
-    );
+        sEl.onclick = async () => {
+            sEl.classList.remove(TODOMARK);
+
+            bookSectionsEl.querySelector(`.${SELECTEDITEM}`).classList.remove(SELECTEDITEM);
+            sEl.classList.add(SELECTEDITEM);
+
+            nowBook.sections = sections[i];
+            showBookContent(sections[i]);
+            setBookS();
+            if (nowBook.book === "0") return;
+            let book = await getBooksById(nowBook.book);
+            book.lastPosi = Number(i);
+            bookshelfStore.setItem(nowBook.book, book);
+        };
+        sEl.oncontextmenu = (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            menuEl.innerHTML = "";
+            menuEl.append(
+                el("div", "重命名", {
+                    onclick: async () => {
+                        const t = await setSectionTitle(s.title);
+                        if (t) sEl.innerText = t;
+                    },
+                }),
+                el("div", "复制id", {
+                    onclick: async () => {
+                        navigator.clipboard.writeText(sections[i]);
+                    },
+                })
+            );
+            showMenu(e.clientX, e.clientY);
+        };
+        return sEl;
+    });
 }
 
 let contentP: string[] = [];
@@ -1878,47 +1873,42 @@ markListBarEl.append(autoNewWordEl, markListEl);
 async function showMarkList() {
     markListEl.innerHTML = "";
     let list = await getAllMarks();
-    vlist(
-        markListEl,
-        list,
-        { iHeight: 24, gap: 4, paddingTop: 16, paddingLeft: 16 },
-        (index, i: (typeof list)[0], remove) => {
-            const content = i.s.type === "word" ? i.s.id : editText.slice(i.s.index[0], i.s.index[1]);
+    vlist(markListEl, list, { iHeight: 24, gap: 4, paddingTop: 16 }, (index, i: (typeof list)[0], remove) => {
+        const content = i.s.type === "word" ? i.s.id : editText.slice(i.s.index[0], i.s.index[1]);
 
-            let item = el("div", content, { class: i.s.visit ? "" : TODOMARK });
-            item.onclick = () => {
-                jumpToMark(i.s.cIndex[0]);
-                showDic(i.id);
-            };
-            item.oncontextmenu = (e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                menuEl.innerHTML = "";
-                menuEl.append(
-                    el("div", "删除", {
-                        style: { color: "red" },
-                        onclick: async () => {
-                            let sectionId = nowBook.sections;
-                            let section = await getSection(sectionId);
-                            if (i.s.type === "sentence") {
-                                card2sentence.removeItem(i.s.id);
-                            } else {
-                                let record = (await wordsStore.getItem(i.s.id)) as record;
-                                record = rmWord(record, i.id);
-                                await clearWordMean(record);
-                                rmStyle(i.s.index[0]);
-                            }
-                            delete section.words[i.id];
-                            sectionsStore.setItem(sectionId, section);
-                            remove();
-                        },
-                    })
-                );
-                showMenu(e.clientX, e.clientY);
-            };
-            return item;
-        }
-    );
+        let item = el("div", content, { class: i.s.visit ? "" : TODOMARK });
+        item.onclick = () => {
+            jumpToMark(i.s.cIndex[0]);
+            showDic(i.id);
+        };
+        item.oncontextmenu = (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            menuEl.innerHTML = "";
+            menuEl.append(
+                el("div", "删除", {
+                    style: { color: "red" },
+                    onclick: async () => {
+                        let sectionId = nowBook.sections;
+                        let section = await getSection(sectionId);
+                        if (i.s.type === "sentence") {
+                            card2sentence.removeItem(i.s.id);
+                        } else {
+                            let record = (await wordsStore.getItem(i.s.id)) as record;
+                            record = rmWord(record, i.id);
+                            await clearWordMean(record);
+                            rmStyle(i.s.index[0]);
+                        }
+                        delete section.words[i.id];
+                        sectionsStore.setItem(sectionId, section);
+                        remove();
+                    },
+                })
+            );
+            showMenu(e.clientX, e.clientY);
+        };
+        return item;
+    });
 }
 
 async function getAllMarks() {
