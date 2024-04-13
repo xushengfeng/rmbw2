@@ -1168,7 +1168,7 @@ div:has(> .translate) > :not(.translate) {
     border-radius: 1rem;
     display: grid;
     grid-template-columns: repeat(2, 1fr);
-    grid-template-rows: 1fr auto 1fr;
+    grid-template-rows: 1fr auto auto;
     gap: 4px;
 }
 

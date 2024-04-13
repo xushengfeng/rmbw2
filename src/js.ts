@@ -143,6 +143,10 @@ function interModal(message?: string, iel?: HTMLElement, cancel?: boolean) {
     });
 }
 
+async function alert(message: string) {
+    return await interModal(message, null);
+}
+
 async function confirm(message: string) {
     return Boolean(await interModal(message, null, true));
 }
@@ -2058,6 +2062,7 @@ async function showDic(id: string) {
             r.trans = text;
             await card2sentence.setItem(wordx.id, r);
             visit(true);
+            checkVisitAll(section);
         }
 
         transCache.setItem(Share.context.trim(), text);
@@ -2075,7 +2080,10 @@ async function showDic(id: string) {
         wordx.index[1] = contextEnd;
         wordx.type = "sentence";
         wordx.id = sentenceCardId;
-        if (dicTransContent.value) wordx.visit = true;
+        if (dicTransContent.value) {
+            wordx.visit = true;
+            checkVisitAll(section);
+        }
         section.words[id] = wordx;
         sectionsStore.setItem(sectionId, section);
 
@@ -2173,6 +2181,7 @@ async function showDic(id: string) {
                     visit(true);
                 }
                 search(Word.word);
+                checkVisitAll(section);
             });
         };
 
@@ -2196,6 +2205,7 @@ async function showDic(id: string) {
                     await changeDicMean(Word.word, -1);
                 }
                 search(Word.word);
+                checkVisitAll(section);
             });
         };
 
@@ -2258,6 +2268,7 @@ async function showDic(id: string) {
             r.trans = dicTransContent.value;
             await card2sentence.setItem(wordx.id, r);
             visit(true);
+            checkVisitAll(section);
         };
 
         noteEl.onclick = async () => {
@@ -3062,6 +3073,13 @@ function ai(m: aim, text?: string) {
                 });
         }),
     };
+}
+
+function checkVisitAll(section: section) {
+    const visitAll = Object.values(section.words).every((i) => i.visit);
+    if (visitAll) {
+        alert("🎉恭喜学习完！\n可以在侧栏添加忽略词\n再读一遍文章，检查是否读懂\n最后进行词句复习");
+    }
 }
 
 import * as fsrsjs from "fsrs.js";
