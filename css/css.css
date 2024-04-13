@@ -247,7 +247,7 @@ body {
     backdrop-filter: var(--blur);
     transition: var(--transition);
     border-radius: 0 1rem 1rem 0;
-    & > :nth-child(2) {
+    & > :nth-child(3) {
         & > div {
             white-space: nowrap;
             overflow: hidden;

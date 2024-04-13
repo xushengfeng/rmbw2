@@ -105,11 +105,10 @@ document.body.addEventListener("pointerup", (e) => {
     }
 });
 
-function interModal(message?: string, defaultValue?: string, cancel?: boolean) {
+function interModal(message?: string, iel?: HTMLElement, cancel?: boolean) {
     let dialog = document.createElement("dialog");
     dialog.className = "interModal";
     let me = document.createElement("span");
-    let input = document.createElement("input");
     let cancelEl = document.createElement("button");
     cancelEl.innerText = "取消";
     cancelEl.classList.add("cancel_b");
@@ -117,17 +116,18 @@ function interModal(message?: string, defaultValue?: string, cancel?: boolean) {
     okEl.innerText = "确定";
     okEl.classList.add("ok_b");
     me.innerText = message ?? "";
-    input.value = defaultValue ?? "";
     dialog.append(me);
-    const isPropmt = defaultValue || defaultValue === "";
-    if (isPropmt) dialog.append(input);
+    if (iel) {
+        dialog.append(iel);
+        iel.style.gridArea = "2 / 1 / 3 / 3";
+    }
     if (cancel) dialog.append(cancelEl);
     dialog.append(okEl);
     document.body.append(dialog);
     dialog.showModal();
     return new Promise((re: (name: string | boolean) => void, rj) => {
         okEl.onclick = () => {
-            re(isPropmt ? input.value : true);
+            re(iel ? iel.querySelector("input").value : true);
             dialog.close();
         };
         cancelEl.onclick = () => {
@@ -135,8 +135,10 @@ function interModal(message?: string, defaultValue?: string, cancel?: boolean) {
             dialog.close();
         };
         dialog.onclose = () => {
-            rj();
             dialog.remove();
+        };
+        dialog.oncancel = () => {
+            re(null);
         };
     });
 }
@@ -146,7 +148,7 @@ async function confirm(message: string) {
 }
 
 async function prompt(message?: string, defaultValue?: string) {
-    return (await interModal(message, defaultValue || "", true)) as string;
+    return (await interModal(message, el("input", { value: defaultValue || "" }), true)) as string;
 }
 
 function dialogX(el: HTMLDialogElement) {
@@ -295,8 +297,9 @@ const bookSectionsEl = el("div", {
 const bookBEl = document.getElementById("books_b");
 const addBookEl = el("div", iconEl(add_svg));
 const addSectionEL = el("div", iconEl(add_svg));
+const bookNameEl = el("div");
 const bookNavEl = document.getElementById("book_nav");
-bookNavEl.append(addSectionEL, bookSectionsEl);
+bookNavEl.append(bookNameEl, addSectionEL, bookSectionsEl);
 let bookContentEl = document.getElementById("book_content");
 const bookContentContainerEl = bookContentEl.parentElement;
 const translateAll = document.getElementById("translate_all");
@@ -645,54 +648,54 @@ let bookLan = ((await setting.getItem("lan.learn")) as string) || "en";
 showBooks();
 setBookS();
 
-const bookNameEl = document.getElementById("book_name");
+async function setSectionTitle(title: string) {
+    let titleEl = el("input", { style: { "font-size": "inherit" } });
+    titleEl.value = title;
+    titleEl.select();
+    const iel = el("div");
+    iel.append(
+        titleEl,
+        el("button", "ai", {
+            onclick: async () => {
+                let f = new autoFun.def({
+                    input: { text: "string" },
+                    script: [`为输入的文章起个标题`],
+                    output: "title:string",
+                });
+                const ff = f.run(editText);
+                let stopEl = el("button", iconEl(close_svg));
+                stopEl.onclick = () => {
+                    ff.stop.abort();
+                    pel.remove();
+                };
+                let pel = el("div", [el("p", `AI正在思考标题`), stopEl]);
+                putToast(pel, 0);
+                ff.result.then((r) => {
+                    pel.remove();
+                    titleEl.value = r["title"];
+                });
+            },
+        })
+    );
+    titleEl.focus();
+    const nTitle = (await interModal("重命名章节标题", iel, true)) as string;
+    if (!nTitle) return;
+    let sectionId = nowBook.sections;
+    let section = await getSection(sectionId);
+    section.title = nTitle;
+    await sectionsStore.setItem(sectionId, section);
+    if (!isWordBook) bookContentEl.querySelector("h1").innerText = section.title;
+    setBookS();
+    return nTitle;
+}
+
 async function setBookS() {
     if (nowBook.book) {
+        const bookName = (await getBooksById(nowBook.book)).name;
+        bookNameEl.innerText = bookName;
         let sectionId = nowBook.sections;
         let section = await getSection(sectionId);
-        document.getElementById("book_name").innerText = await getTitle(nowBook.book, nowBook.sections);
-        bookNameEl.onclick = (e) => {
-            if (e.target != bookNameEl) return;
-            let titleEl = el("input", { style: { "font-size": "inherit" } });
-            titleEl.value = section.title;
-            titleEl.select();
-            bookNameEl.innerHTML = "";
-            bookNameEl.append(
-                titleEl,
-                el("button", "ai", {
-                    onclick: async () => {
-                        let f = new autoFun.def({
-                            input: { text: "string" },
-                            script: [`为输入的文章起个标题`],
-                            output: "title:string",
-                        });
-                        const ff = f.run(editText);
-                        let stopEl = el("button", iconEl(close_svg));
-                        stopEl.onclick = () => {
-                            ff.stop.abort();
-                            pel.remove();
-                        };
-                        let pel = el("div", [el("p", `AI正在思考标题`), stopEl]);
-                        putToast(pel, 0);
-                        ff.result.then((r) => {
-                            pel.remove();
-                            titleEl.value = r["title"];
-                        });
-                    },
-                }),
-                el("button", iconEl(ok_svg), {
-                    onclick: async () => {
-                        let sectionId = nowBook.sections;
-                        let section = await getSection(sectionId);
-                        section.title = titleEl.value;
-                        await sectionsStore.setItem(sectionId, section);
-                        if (!isWordBook) bookContentEl.querySelector("h1").innerText = section.title;
-                        setBookS();
-                    },
-                })
-            );
-            titleEl.focus();
-        };
+        if (!isWordBook) bookContentEl.querySelector("h1").innerText = section.title;
     }
 }
 
@@ -821,6 +824,12 @@ async function showBookSections(sections: book["sections"]) {
                 e.stopPropagation();
                 menuEl.innerHTML = "";
                 menuEl.append(
+                    el("div", "重命名", {
+                        onclick: async () => {
+                            const t = await setSectionTitle(s.title);
+                            if (t) sEl.innerText = t;
+                        },
+                    }),
                     el("div", "复制id", {
                         onclick: async () => {
                             navigator.clipboard.writeText(sections[i]);
@@ -1123,7 +1132,7 @@ function showNormalBook(s: section) {
 
     console.log(plist);
 
-    bookContentEl.append(el("h1", s.title));
+    bookContentEl.append(el("h1", s.title, { onclick: () => setSectionTitle(s.title) }));
 
     for (let paragraph of plist) {
         if (paragraph.length === 0) continue;
