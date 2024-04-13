@@ -266,7 +266,7 @@ body {
 }
 #book_buttons > div:has(.icon) {
     height: var(--size0);
-    width: var(--size0);
+    min-width: var(--size0);
     position: relative;
 }
 #change_edit {
@@ -281,6 +281,8 @@ body {
 #book_name {
     flex-grow: 1;
     line-height: var(--size0);
+    overflow: hidden;
+    height: var(--size0);
 }
 
 .change_style_bar {
