@@ -3085,10 +3085,17 @@ function ai(m: aim, text?: string) {
     };
 }
 
+let checkVisit = {
+    section: "",
+    time: 0,
+};
+
 function checkVisitAll(section: section) {
     const visitAll = Object.values(section.words).every((i) => i.visit);
-    if (visitAll) {
+    if (visitAll && (nowBook.sections != checkVisit.section || time() - checkVisit.time > 1000 * 60 * 5)) {
         alert("🎉恭喜学习完！\n可以在侧栏添加忽略词\n再读一遍文章，检查是否读懂\n最后进行词句复习");
+        checkVisit.section = nowBook.sections;
+        checkVisit.time = time();
     }
 }
 
