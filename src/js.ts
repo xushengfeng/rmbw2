@@ -3211,12 +3211,19 @@ async function autoIgnore() {
     const newWords = words;
     const wordsWithRoot: { src: string; show: string }[] = [];
     for (const w of newWords) {
+        if (w.length <= 1) continue;
         const r = lemmatizer(w);
-        if (hasLentWords.includes(w) && !hasLentWords.includes(r) && r.length > 1) {
-            wordsWithRoot.push({ src: w, show: r });
+        if (w === r) {
+            if (!hasLentWords.includes(w)) {
+                wordsWithRoot.push({ src: w, show: w });
+            }
+            continue;
         }
-        if (!hasLentWords.includes(w) && hasLentWords.includes(r)) {
+        if (!hasLentWords.includes(w)) {
             wordsWithRoot.push({ src: w, show: w });
+        }
+        if (!hasLentWords.includes(r) && r.length > 1) {
+            wordsWithRoot.push({ src: w, show: r });
         }
     }
     wordsWithRoot.forEach((w) => {
