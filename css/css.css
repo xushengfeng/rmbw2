@@ -1202,6 +1202,8 @@ div:has(> .translate) > :not(.translate) {
     gap: 4px;
     border-radius: 0;
     padding: 4px;
+    background: none;
+    backdrop-filter: none;
     & > * {
         background-color: var(--bg1);
         backdrop-filter: var(--blur);
