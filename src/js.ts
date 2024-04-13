@@ -105,9 +105,9 @@ document.body.addEventListener("pointerup", (e) => {
     }
 });
 
-function prompt(message?: string, defaultValue?: string) {
+function interModal(message?: string, defaultValue?: string, cancel?: boolean) {
     let dialog = document.createElement("dialog");
-    dialog.id = "prompt";
+    dialog.className = "interModal";
     let me = document.createElement("span");
     let input = document.createElement("input");
     let cancelEl = document.createElement("button");
@@ -118,16 +118,20 @@ function prompt(message?: string, defaultValue?: string) {
     okEl.classList.add("ok_b");
     me.innerText = message ?? "";
     input.value = defaultValue ?? "";
-    dialog.append(me, input, cancelEl, okEl);
+    dialog.append(me);
+    const isPropmt = defaultValue || defaultValue === "";
+    if (isPropmt) dialog.append(input);
+    if (cancel) dialog.append(cancelEl);
+    dialog.append(okEl);
     document.body.append(dialog);
     dialog.showModal();
-    return new Promise((re: (name: string) => void, rj) => {
+    return new Promise((re: (name: string | boolean) => void, rj) => {
         okEl.onclick = () => {
-            re(input.value);
+            re(isPropmt ? input.value : true);
             dialog.close();
         };
         cancelEl.onclick = () => {
-            rj();
+            re(null);
             dialog.close();
         };
         dialog.onclose = () => {
@@ -135,6 +139,14 @@ function prompt(message?: string, defaultValue?: string) {
             dialog.remove();
         };
     });
+}
+
+async function confirm(message: string) {
+    return Boolean(await interModal(message, null, true));
+}
+
+async function prompt(message?: string, defaultValue?: string) {
+    return (await interModal(message, defaultValue || "", true)) as string;
 }
 
 function dialogX(el: HTMLDialogElement) {
@@ -2050,7 +2062,9 @@ async function showDic(id: string) {
 
     toSentenceEl.onclick = async () => {
         if (isSentence) return;
+        if (!(await confirm("这将删除此单词，并将语境转为句子"))) return;
         isSentence = true;
+        rmStyle(wordx.index[0]);
         const sentenceCardId = uuid();
         let contextStart = wordx.index[0] - Share.sourceIndex[0];
         let contextEnd = wordx.index[1] + (Share.context.length - Share.sourceIndex[1]);
@@ -2092,8 +2106,6 @@ async function showDic(id: string) {
         clearWordMean(Word.record);
 
         showSentence();
-
-        rmStyle(wordx.index[0]);
     };
 
     if (!isSentence) play(Word.word);
