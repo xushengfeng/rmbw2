@@ -937,16 +937,27 @@ div:has(> .translate) > :not(.translate) {
     flex-direction: column;
 }
 .review_word > :nth-child(2) {
-    flex-grow: 1;
     overflow: scroll;
 }
 .review_word > :nth-child(3) {
+    flex-grow: 1;
     overflow: scroll;
 }
-.review_word > :last-child {
+:is(.review_word, .review_sentence) > :last-child {
     display: flex;
     gap: 8px;
     justify-content: center;
+    margin: 8px;
+}
+
+.review_sentence {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+}
+.review_sentence > :nth-child(2) {
+    flex-grow: 1;
+    overflow: scroll;
 }
 
 #review_l {

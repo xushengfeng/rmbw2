@@ -4052,7 +4052,7 @@ async function showSentenceReview(x: { id: string; card: fsrsjs.Card }) {
     });
 
     div.append(context, dic, buttons);
-    div.classList.add("review_word");
+    div.classList.add("review_sentence");
     reviewViewEl.innerHTML = "";
     reviewViewEl.append(div);
 }
