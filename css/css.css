@@ -253,7 +253,7 @@ body {
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
-            width: calc(100% - 1rem * 2);
+            max-width: calc(100% - 1rem * 2);
         }
     }
 }
