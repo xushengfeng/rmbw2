@@ -652,7 +652,8 @@ let bookLan = ((await setting.getItem("lan.learn")) as string) || "en";
 showBooks();
 setBookS();
 
-async function setSectionTitle(title: string) {
+async function setSectionTitle() {
+    const title = (await getSection(nowBook.sections)).title;
     let titleEl = el("input", { style: { "font-size": "inherit" } });
     titleEl.value = title;
     titleEl.select();
@@ -827,7 +828,7 @@ async function showBookSections(sections: book["sections"]) {
                 menuEl.append(
                     el("div", "重命名", {
                         onclick: async () => {
-                            const t = await setSectionTitle(s.title);
+                            const t = await setSectionTitle();
                             if (t) sEl.innerText = t;
                         },
                     })
@@ -1142,7 +1143,7 @@ function showNormalBook(s: section) {
     bookContentEl.append(
         el("h1", s.title, {
             onclick: async () => {
-                if ((await getBooksById(nowBook.book)).canEdit) setSectionTitle(s.title);
+                if ((await getBooksById(nowBook.book)).canEdit) setSectionTitle();
             },
         })
     );
