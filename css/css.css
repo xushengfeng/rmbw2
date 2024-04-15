@@ -992,6 +992,7 @@ div:has(> .translate) > :not(.translate) {
         & > span {
             display: inline-block;
             overflow: hidden;
+            flex-shrink: 0;
         }
         --right-c: color-mix(in srgb, #0f0 60%, var(--color));
         --error-c: color-mix(in srgb, #f00 40%, var(--bg));
@@ -1048,6 +1049,11 @@ div:has(> .translate) > :not(.translate) {
 .spell_input {
     font-size: 2em;
     margin: auto;
+    display: flex;
+    align-items: center;
+    & > button {
+        flex-shrink: 0;
+    }
 }
 
 .spell_write {
@@ -1055,6 +1061,10 @@ div:has(> .translate) > :not(.translate) {
     top: var(--size0);
     height: 2em;
     width: 100dvw;
+    pointer-events: none;
+    & > button {
+        pointer-events: all;
+    }
     & > :nth-child(1) {
         position: absolute;
         left: 0;

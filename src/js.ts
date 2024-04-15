@@ -3836,20 +3836,16 @@ async function showSpellReview(x: { id: string; card: fsrsjs.Card }) {
         }
         //错误归位
         if (inputWord.length === word.length && inputWord != word) {
-            inputContent("");
+            input.innerHTML = "";
             const diffEl = await spellDiffWord(word, inputWord);
-            wordEl.append(
-                el(
-                    "div",
-                    { style: { display: "flex" } },
-                    diffEl,
-                    el("button", {
-                        onclick: async () => {
-                            diffEl.innerHTML = (await spellDiffWord(word, inputWord)).innerHTML;
-                            spellErrorAnimate(diffEl);
-                        },
-                    })
-                )
+            input.append(diffEl);
+            input.append(
+                el("button", {
+                    onclick: async () => {
+                        diffEl.innerHTML = (await spellDiffWord(word, inputWord)).innerHTML;
+                        spellErrorAnimate(diffEl);
+                    },
+                })
             );
             spellErrorAnimate(diffEl);
             wordEl.append(await hyphenate(word, { hyphenChar }));
@@ -3926,52 +3922,8 @@ async function showSpellReview(x: { id: string; card: fsrsjs.Card }) {
 
 async function spellDiffWord(rightWord: string, wrongWord: string) {
     let div = el("div");
-    const rightL = (await hyphenate(rightWord, { hyphenChar })).split(hyphenChar);
-
     let diff = dmp.diff_main(wrongWord, rightWord);
-
-    const smallestDiff: typeof diff = [];
-    const diffL: (typeof diff)[] = [];
-    for (let i of rightL) {
-        diffL.push([]);
-    }
-    let rightIndex = 0;
-    let diffLength = 0;
-    // 拆分
-    for (let i of diff) {
-        for (let t of i[1]) {
-            smallestDiff.push([i[0], t]);
-        }
-    }
-    for (let i of smallestDiff) {
-        diffL[rightIndex].push(i);
-        if (i[0] != -1) {
-            diffLength++;
-        }
-        if (diffLength >= rightL[rightIndex].length) {
-            rightIndex++;
-            rightIndex = Math.min(rightIndex, rightL.length - 1);
-            diffLength = 0;
-        }
-    }
-
-    // 合并
-    const newDiffL: Diff[][] = [];
-    for (let i of diffL) {
-        newDiffL.push([]);
-        for (let n = 0; n < i.length; n++) {
-            if (i[n][0] === newDiffL.at(-1)?.at(-1)?.[0]) {
-                newDiffL.at(-1).at(-1)[1] += i[n][1];
-            } else {
-                newDiffL.at(-1).push(i[n]);
-            }
-        }
-    }
-
-    for (let i in newDiffL) {
-        div.append(getDiffWord(newDiffL[i]));
-        if (Number(i) < rightL.length - 1) div.append(hyphenChar);
-    }
+    div.append(getDiffWord(diff));
     return div;
 }
 
