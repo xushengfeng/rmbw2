@@ -3407,8 +3407,10 @@ window.addEventListener("keydown", (e) => {
     if (e.key != "Backspace") {
         if (e.key === ">") {
             spellF("{audio}");
+            return;
         } else if (e.key === "?") {
             spellF("{tip}");
+            return;
         } else if (e.key.length === 1) keyboard.setInput(oldInput + e.key);
     } else {
         keyboard.setInput(oldInput.slice(0, -1));
@@ -3912,6 +3914,7 @@ async function showSpellReview(x: { id: string; card: fsrsjs.Card }) {
     const div = document.createElement("div");
     div.append(input, wordEl, context);
     div.classList.add("review_spell");
+    div.setAttribute("data-state", String(x.card.state));
     reviewViewEl.innerHTML = "";
     reviewViewEl.append(div);
 

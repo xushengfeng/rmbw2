@@ -1023,19 +1023,24 @@ div:has(> .translate) > :not(.translate) {
             }
         }
     }
-    & .mark_word {
+    &:not([data-state="0"]) .mark_word {
         color: transparent;
     }
 }
 
 .spell_sen_word_show {
-    & .mark_word {
-        color: inherit;
+    &:not([data-state="0"]) .mark_word {
+        color: inherit !important;
         filter: blur(0.12em);
         text-decoration: none !important;
         transition: var(--transition);
         &:hover {
             filter: blur(0);
+        }
+    }
+    &[data-state="0"] .spell_input {
+        & > span {
+            filter: none;
         }
     }
 }
