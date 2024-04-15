@@ -1335,17 +1335,18 @@ const bookStyleList = {
     lineHeight: [],
     contentWidth: [],
 };
-const bookStyle = JSON.parse(
-    ((await setting.getItem("setyle.default")) as string) ||
-        JSON.stringify({
-            fontSize: 2,
-            lineHeight: 2,
-            contentWidth: 2,
-            fontFamily: "serif",
-            theme: "auto",
-            paper: true,
-        })
-);
+
+const defaultBookStyle = {
+    fontSize: 2,
+    lineHeight: 2,
+    contentWidth: 2,
+    fontFamily: "serif",
+    theme: "auto",
+    paper: true,
+};
+
+const bookStyle = ((await setting.getItem("style.default")) as typeof defaultBookStyle) || defaultBookStyle;
+
 {
     for (let i = 12; i <= 28; i += 2) {
         bookStyleList.fontSize.push(i);
@@ -1484,7 +1485,7 @@ function setBookStyle() {
         `${bookStyleList.contentWidth[bookStyle.contentWidth]}em`
     );
     bookContentContainerEl.style.background = bookStyle.paper ? "" : "none";
-    setting.setItem("setyle.default", JSON.stringify(bookStyle));
+    setting.setItem("style.default", bookStyle);
 }
 
 function createRangeSetEl(value: number, maxV: number, f: (i: number) => void, minIcon?: string, maxIcon?: string) {
