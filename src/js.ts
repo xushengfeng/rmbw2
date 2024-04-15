@@ -1200,6 +1200,8 @@ function showNormalBook(s: section) {
                 if (span.tagName != "SPAN") return;
                 const i = span.getAttribute("data-i");
                 if (!i) return;
+                if (!span.innerText.trim()) return;
+
                 let s = sen[0].start,
                     e = sen.at(-1).end;
 
