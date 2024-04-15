@@ -931,6 +931,11 @@ div:has(> .translate) > :not(.translate) {
     font-family: var(--font-family);
     font-size: var(--font-size);
 }
+
+.blur_word {
+    filter: blur(0.12em);
+}
+
 .review_word {
     flex-grow: 1;
     display: flex;
@@ -1022,6 +1027,12 @@ div:has(> .translate) > :not(.translate) {
 .spell_sen_word_show {
     & .mark_word {
         color: inherit;
+        filter: blur(0.12em);
+        text-decoration: none !important;
+        transition: var(--transition);
+        &:hover {
+            filter: blur(0);
+        }
     }
 }
 

@@ -3786,18 +3786,28 @@ async function getReadTime(text: string) {
 
 async function showSpellReview(x: { id: string; card: fsrsjs.Card }) {
     const word = x.id;
-    const spaceHoder = "|";
-    let input = el("div", { class: "spell_input", style: { width: "min-content" } }, spaceHoder);
+    let input = el("div", { class: "spell_input", style: { width: "min-content" } });
     input.innerText = word; // 占位计算宽度
     clearKeyboard();
     const SHOWSENWORD = "spell_sen_word_show";
+    const BLURWORD = "blur_word";
     let wordEl = document.createElement("div");
     let isPerfect = false;
     let spellResult: "none" | "right" | "wrong" = "none";
     let showTime = time();
     play(word);
+    function inputContent(inputWord: string) {
+        input.innerHTML = "";
+        if (x.card.state === fsrsjs.State.New) {
+            input.append(inputWord, el("span", word.slice(inputWord.length), { style: { opacity: "0.5" } }));
+        } else if (x.card.state === fsrsjs.State.Learning) {
+            input.append(inputWord, el("span", word.slice(inputWord.length), { class: BLURWORD }));
+        } else {
+            input.innerText = inputWord || "|";
+        }
+    }
     spellCheckF = async (inputWord: string) => {
-        input.innerText = inputWord || "|";
+        inputContent(inputWord);
         wordEl.innerHTML = "";
         div.classList.remove(SHOWSENWORD);
         if (inputWord === word) {
@@ -3820,7 +3830,7 @@ async function showSpellReview(x: { id: string; card: fsrsjs.Card }) {
         }
         //错误归位
         if (inputWord.length === word.length && inputWord != word) {
-            input.innerText = spaceHoder;
+            inputContent("");
             const diffEl = await spellDiffWord(word, inputWord);
             wordEl.append(
                 el(
@@ -3866,11 +3876,11 @@ async function showSpellReview(x: { id: string; card: fsrsjs.Card }) {
         console.log(button);
         if (button === "{tip}") {
             // 暂时展示
-            input.innerText = spaceHoder;
+            input.innerHTML = "";
+            input.append(el("span", { class: BLURWORD }, word));
             clearKeyboard();
             isPerfect = false;
             play(word);
-            wordEl.innerText = await hyphenate(word, { hyphenChar });
             div.classList.add(SHOWSENWORD);
         }
         if (button === "{audio}") {
@@ -3904,7 +3914,7 @@ async function showSpellReview(x: { id: string; card: fsrsjs.Card }) {
     reviewViewEl.append(div);
 
     input.style.width = input.offsetWidth + "px";
-    input.innerText = spaceHoder;
+    inputContent("");
 }
 
 async function spellDiffWord(rightWord: string, wrongWord: string) {
