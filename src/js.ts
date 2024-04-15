@@ -3820,7 +3820,21 @@ async function showSpellReview(x: { id: string; card: fsrsjs.Card }) {
         //错误归位
         if (inputWord.length === word.length && inputWord != word) {
             input.innerText = spaceHoder;
-            wordEl.append(await spellDiffWord(word, inputWord));
+            const diffEl = await spellDiffWord(word, inputWord);
+            wordEl.append(
+                el(
+                    "div",
+                    { style: { display: "flex" } },
+                    diffEl,
+                    el("button", {
+                        onclick: async () => {
+                            diffEl.innerHTML = (await spellDiffWord(word, inputWord)).innerHTML;
+                            spellErrorAnimate(diffEl);
+                        },
+                    })
+                )
+            );
+            spellErrorAnimate(diffEl);
             wordEl.append(await hyphenate(word, { hyphenChar }));
             play(word);
             div.classList.add(SHOWSENWORD);
@@ -3985,6 +3999,28 @@ async function spellAnimate(el: HTMLElement) {
         const e = el.children.item(i) as HTMLElement;
         e.style.opacity = "1";
         await sleep(el.children.item(i).textContent.length * t);
+    }
+}
+
+function spellErrorAnimate(pel: HTMLElement) {
+    for (let i = 0; i < pel.childNodes.length; i++) {
+        if (pel.childNodes[i].nodeName != "SPAN") continue;
+        const el = pel.childNodes[i] as HTMLSpanElement;
+        const w = el.getBoundingClientRect().width + "px";
+        if (el.classList.contains("diff_add")) el.style.width = "0";
+        if (el.classList.contains("diff_remove")) el.style.width = w;
+        setTimeout(() => {
+            el.style.transition = "0.2s";
+            if (el.classList.contains("diff_add")) {
+                el.style.width = w;
+            }
+            if (el.classList.contains("diff_remove")) {
+                el.style.width = "0";
+            }
+            if (el.classList.contains("diff_exchange")) {
+                el.classList.replace("diff_exchange", "diff_exchange1");
+            }
+        }, (i + 1) * 500);
     }
 }
 

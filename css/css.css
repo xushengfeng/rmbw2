@@ -965,20 +965,40 @@ div:has(> .translate) > :not(.translate) {
 .review_spell {
     flex-grow: 1;
     touch-action: none;
-    & .diff_add {
-        color: color-mix(in srgb, #0f0 80%, var(--color));
-    }
-    & .diff_remove {
-        color: color-mix(in srgb, #f00 80%, var(--color));
-    }
-    & .diff_exchange {
-        color: color-mix(in srgb, #f00 80%, var(--color));
-        & > :nth-child(1) {
-            border-right: 1px solid var(--color);
-            border-top: 1px solid var(--color);
+    & div:has(> :is(.diff_add, .diff_remove, .diff_exchange, .diff_exchange1)) {
+        display: flex;
+        & > span {
+            display: inline-block;
+            overflow: hidden;
         }
-        & > :nth-child(2) {
-            border-bottom: 1px solid var(--color);
+        --right-c: color-mix(in srgb, #0f0 60%, var(--color));
+        --error-c: color-mix(in srgb, #f00 40%, var(--bg));
+        & > .diff_exchange1 {
+            display: inline-flex;
+            flex-direction: row-reverse;
+            & > span {
+                color: var(--right-c);
+                border: none;
+            }
+        }
+        & .diff_add {
+            color: var(--right-c);
+        }
+        & .diff_remove {
+            color: var(--error-c);
+        }
+        & .diff_exchange {
+            color: var(--error-c);
+            & > span {
+                display: inline-block;
+            }
+            & > :nth-child(1) {
+                border-right: 1px solid var(--color);
+                border-top: 1px solid var(--color);
+            }
+            & > :nth-child(2) {
+                border-bottom: 1px solid var(--color);
+            }
         }
     }
     & .mark_word {
