@@ -3728,7 +3728,9 @@ async function showWordReview(x: { id: string; card: fsrsjs.Card }, isAi: boolea
         }
     });
 
-    div.append(el("div", wordid), context, dic, buttons);
+    const wordEl = el("div", wordid, { class: "main_word" });
+
+    div.append(wordEl, context, dic, buttons);
     div.classList.add("review_word");
     reviewViewEl.innerHTML = "";
     reviewViewEl.append(div);
