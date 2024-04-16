@@ -734,7 +734,7 @@ div:has(> .translate) > :not(.translate) {
         border: none;
         resize: none;
         font-family: var(--font-family);
-        font-size: var(--font-size);
+        font-size: 1rem;
     }
     & > :last-child {
         display: flex;
