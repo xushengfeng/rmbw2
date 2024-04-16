@@ -3267,20 +3267,25 @@ async function autoIgnore() {
     const hasLentWords = oldWords.concat(studyWords).map((w) => w.toLocaleLowerCase());
     const newWords = words;
     const wordsWithRoot: { src: string; show: string }[] = [];
+    const willShowWords: string[] = [];
     for (const w of newWords) {
         if (w.length <= 1) continue;
+        if (w.match(/[0-9]/)) continue;
         const r = lemmatizer(w);
         if (w === r) {
-            if (!hasLentWords.includes(w)) {
+            if (!hasLentWords.includes(w) && !willShowWords.includes(w)) {
                 wordsWithRoot.push({ src: w, show: w });
+                willShowWords.push(w);
             }
             continue;
         }
-        if (!hasLentWords.includes(w)) {
+        if (!hasLentWords.includes(w) && !willShowWords.includes(w)) {
             wordsWithRoot.push({ src: w, show: w });
+            willShowWords.includes(w);
         }
-        if (!hasLentWords.includes(r) && r.length > 1) {
+        if (!hasLentWords.includes(r) && !willShowWords.includes(r) && r.length > 1) {
             wordsWithRoot.push({ src: w, show: r });
+            willShowWords.push(r);
         }
     }
     wordsWithRoot.forEach((w) => {
