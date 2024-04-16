@@ -748,15 +748,18 @@ async function showBooks() {
         titleEl.innerText = book.name;
         bookIEl.append(cover, titleEl);
         localBookEl.append(bookIEl);
-        bookIEl.onclick = () => {
+        const id = book.id;
+        bookIEl.onclick = async () => {
+            const book = await getBooksById(id);
             showBook(book);
             book.visitTime = new Date().getTime();
             bookshelfStore.setItem(book.id, book);
             booksEl.hidePopover();
         };
-        bookIEl.oncontextmenu = (e) => {
+        bookIEl.oncontextmenu = async (e) => {
             e.preventDefault();
             e.stopPropagation();
+            const book = await getBooksById(id);
             menuEl.innerHTML = "";
             let renameEl = document.createElement("div");
             renameEl.innerText = "重命名";
