@@ -2669,26 +2669,30 @@ function addP(
     } else p.append(word || sentence);
     let textEl = el("textarea", { value: text, autofocus: "true" });
     let aiB = getAiButtons(textEl, word, sentence);
+    const okEl = el("button", iconEl(ok_svg), {
+        onclick: () => {
+            let mean = textEl.value.trim();
+            div.close();
+            if (index) {
+                const newSentence = sInput1.innerText + sourceWord + sInput2.innerText;
+                console.log(newSentence);
+                let i = diffPosi(sentence, newSentence);
+                let nindex = patchPosi(i.source, i.map, index);
+                f(mean, newSentence, nindex);
+            } else f(mean);
+        },
+    });
     let div = el("dialog", { class: NOTEDIALOG }, [
         p,
         textEl,
-        el("div", { style: { display: "flex" } }, [
-            aiB,
-            el("button", iconEl(ok_svg), {
-                onclick: () => {
-                    let mean = textEl.value.trim();
-                    div.close();
-                    if (index) {
-                        const newSentence = sInput1.innerText + sourceWord + sInput2.innerText;
-                        console.log(newSentence);
-                        let i = diffPosi(sentence, newSentence);
-                        let nindex = patchPosi(i.source, i.map, index);
-                        f(mean, newSentence, nindex);
-                    } else f(mean);
-                },
-            }),
-        ]),
+        el("div", { style: { display: "flex" } }, [aiB, okEl]),
     ]) as HTMLDialogElement;
+    textEl.onkeydown = (e) => {
+        if (e.key === "Enter" && e.shiftKey) {
+            e.preventDefault();
+            okEl.click();
+        }
+    };
     dialogX(div);
 }
 
