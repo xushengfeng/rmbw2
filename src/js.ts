@@ -163,9 +163,9 @@ function dialogX(el: HTMLDialogElement) {
     });
 }
 
-function vlist(
+function vlist<ItemType>(
     pel: HTMLElement,
-    list: any[],
+    list: ItemType[],
     style: {
         iHeight: number;
         gap?: number;
@@ -175,7 +175,7 @@ function vlist(
         paddingRight?: number;
         width?: string;
     },
-    f: (index: number, item: any, remove: () => void) => HTMLElement | Promise<HTMLElement>
+    f: (index: number, item: ItemType, remove: () => void) => HTMLElement | Promise<HTMLElement>
 ) {
     let iHeight = style.iHeight;
     let gap = style.gap ?? 0;
@@ -218,16 +218,8 @@ function vlist(
         }
         for (let i = startI; i <= endI; i++) {
             let iel = await f(i, list[i], () => {
-                iel.remove();
-                for (let ii = i + 1; ii <= endI; ii++) {
-                    let afterEl = pel.querySelector(`:scope > [${dataI}="${ii}"]`) as HTMLElement;
-                    if (!afterEl) continue;
-                    afterEl.setAttribute(dataI, String(ii - 1));
-                    afterEl.style.top = Number(afterEl.style.top.slice(0, -2)) - iHeight - gap + "px";
-                }
-                list = list.toSpliced(i, 1); // 这里list和索引都更新，f内部原始索引和list都不变，数据是一致的
-
-                show(); // 补全最后一个元素
+                list = list.toSpliced(i, 1);
+                show(list);
             });
             setStyle(iel, {
                 position: "absolute",
@@ -997,7 +989,7 @@ async function showWordBook(s: section) {
         bookContentContainerEl,
         wordList,
         { iHeight: 24, gap: 8, paddingTop: 120, paddingBotton: 8 },
-        (i, item: (typeof wordList)[0]) => {
+        (i, item) => {
             let p = el("p", item.text);
             if (item.type) {
                 p.classList.add(item.type);
@@ -1896,7 +1888,7 @@ markListBarEl.append(autoNewWordEl, markListEl);
 async function showMarkList() {
     markListEl.innerHTML = "";
     let list = await getAllMarks();
-    vlist(markListEl, list, { iHeight: 24, gap: 4, paddingTop: 16 }, (index, i: (typeof list)[0], remove) => {
+    vlist(markListEl, list, { iHeight: 24, gap: 4, paddingTop: 16 }, (index, i, remove) => {
         const content = i.s.type === "word" ? i.s.id : editText.slice(i.s.index[0], i.s.index[1]);
 
         let item = el("div", content, { class: i.s.visit ? "" : TODOMARK });
