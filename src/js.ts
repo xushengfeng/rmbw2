@@ -187,11 +187,16 @@ function vlist(
     let blankEl = el("div", {
         style: { width: "1px", position: "absolute", top: "0" },
     });
-    blankEl.style.height = iHeight * list.length + gap * list.length + paddingTop + paddingBotton + "px";
+    const setBlankHeight = (len: number) =>
+        (blankEl.style.height = iHeight * len + gap * len + paddingTop + paddingBotton + "px");
+    setBlankHeight(list.length);
     pel.append(blankEl);
     const dataI = "data-v-i";
     async function show(newList?: any[]) {
-        if (newList) list = newList;
+        if (newList) {
+            list = newList;
+            setBlankHeight(list.length);
+        }
         let startI = Math.ceil((pel.scrollTop - paddingTop) / (iHeight + gap));
         let endI = Math.floor((pel.scrollTop - paddingTop + pel.offsetHeight) / (iHeight + gap));
         let buffer = Math.min(Math.floor((endI - startI) / 3), 15);
