@@ -1145,6 +1145,7 @@ div:has(> .translate) > :not(.translate) {
 
 .plot {
     max-width: 90dvw;
+    max-height: 90dvh;
     & > div {
         width: 100%;
         overflow: scroll;
