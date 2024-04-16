@@ -1925,6 +1925,8 @@ async function showMarkList() {
                         delete section.words[i.id];
                         sectionsStore.setItem(sectionId, section);
                         remove();
+
+                        if (i.id === nowDicId && dicEl.classList.contains("dic_show")) hideDicEl.click();
                     },
                 })
             );
