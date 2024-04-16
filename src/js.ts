@@ -2188,9 +2188,9 @@ async function showDic(id: string) {
 
         ttsWordEl.innerText = await getIPA(Word.word);
 
-        let lword = lemmatizer(sourceWord);
+        let lword = lemmatizer(sourceWord.toLocaleLowerCase());
         moreWordsEl.innerHTML = "";
-        for (let w of Array.from(new Set([sourceWord, lword]))) {
+        for (let w of Array.from(new Set([sourceWord, sourceWord.toLocaleLowerCase(), lword]))) {
             let div = document.createElement("span");
             div.innerText = w;
             div.onclick = async () => {
