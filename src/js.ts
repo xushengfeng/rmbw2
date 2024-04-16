@@ -503,7 +503,7 @@ async function getOnlineBooks() {
         });
 }
 
-function showOnlineBooks(
+async function showOnlineBooks(
     books: {
         name: string;
         id: string;
@@ -525,8 +525,10 @@ function showOnlineBooks(
         let bookCover: HTMLElement;
         let title = document.createElement("span");
         if (book.cover) {
+            let src = book.cover;
+            if (src.startsWith("/")) src = (await getOnlineBooksUrl()) + src;
             bookCover = document.createElement("img");
-            (bookCover as HTMLImageElement).src = book.cover;
+            (bookCover as HTMLImageElement).src = src;
         } else {
             bookCover = document.createElement("div");
             bookCover.innerText = book.name;
