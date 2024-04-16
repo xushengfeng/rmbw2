@@ -237,11 +237,11 @@ body {
 }
 
 #book_nav {
-    --w: 60vw;
+    --w: min(60vw, 300px);
     position: absolute;
     top: var(--size0);
-    width: min(var(--w), 300px);
-    left: calc(-1 * min(var(--w), 300px) - 16px);
+    width: var(--w);
+    left: calc(-1 * var(--w) - 16px);
     height: calc(100dvh - var(--size0));
     display: flex;
     flex-direction: column;
@@ -819,13 +819,14 @@ div:has(> .translate) > :not(.translate) {
 }
 
 #mark_word_list {
+    --w: min(60vw, 300px);
     position: fixed;
     display: flex;
     flex-direction: column;
-    right: -100%;
+    right: calc(-1 * var(--w) - 16px);
     top: var(--size0);
     height: calc(100dvh - var(--size0));
-    width: min(60vw, 300px);
+    width: var(--w);
     border-radius: 1rem 0 0 1rem;
     box-sizing: border-box;
     padding: 1rem;
