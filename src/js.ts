@@ -487,6 +487,14 @@ bookBEl.onclick = () => {
     booksEl.showPopover();
 };
 
+var coverCache = localforage.createInstance({ name: "cache", storeName: "cover" });
+
+async function getBookCover(url: string) {
+    let src = url;
+    if (src.startsWith("/")) src = (await getOnlineBooksUrl()) + src;
+    return src;
+}
+
 async function getOnlineBooksUrl() {
     return (
         ((await setting.getItem("onlineBooks.url")) as string) ||
@@ -525,8 +533,7 @@ async function showOnlineBooks(
         let bookCover: HTMLElement;
         let title = document.createElement("span");
         if (book.cover) {
-            let src = book.cover;
-            if (src.startsWith("/")) src = (await getOnlineBooksUrl()) + src;
+            let src = await getBookCover(book.cover);
             bookCover = document.createElement("img");
             (bookCover as HTMLImageElement).src = src;
         } else {
@@ -554,11 +561,9 @@ async function showOnlineBooks(
                 }
             } else {
                 xbook = {
-                    name: book.name,
-                    id: book.id,
+                    ...book,
                     visitTime: 0,
                     updateTime: 0,
-                    type: book.type,
                     sections: [],
                     canEdit: false,
                     lastPosi: 0,
@@ -598,9 +603,17 @@ async function showOnlineBooks(
                                 } as section);
                             }
                         }
+                        for (let i in book) {
+                            xbook[i] = book[i];
+                        }
                         xbook.sections = s;
                         xbook.updateTime = book.updateTime;
                         await bookshelfStore.setItem(book.id, xbook);
+                        if (book.cover) {
+                            let src = await getBookCover(book.cover);
+                            const b = await (await fetch(src)).blob();
+                            coverCache.setItem(book.id, b);
+                        }
                         showBooks();
                     })
                     .catch((error) => {
@@ -717,7 +730,16 @@ async function showBooks() {
         let titleEl = document.createElement("span");
         if (book.cover) {
             let bookCover = document.createElement("img");
-            bookCover.src = book.cover;
+            const c = (await coverCache.getItem(book.id)) as Blob;
+            let url = "";
+            if (c) {
+                url = URL.createObjectURL(c);
+            } else {
+                url = await getBookCover(book.cover);
+                const b = await (await fetch(url)).blob();
+                coverCache.setItem(book.id, b);
+            }
+            bookCover.src = url;
             cover.append(bookCover);
         } else {
             let bookCover = document.createElement("div");
