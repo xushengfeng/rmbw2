@@ -490,8 +490,7 @@ bookBEl.onclick = () => {
 var coverCache = localforage.createInstance({ name: "cache", storeName: "cover" });
 
 async function getBookCover(url: string) {
-    let src = url;
-    if (src.startsWith("/")) src = (await getOnlineBooksUrl()) + src;
+    let src = (await getOnlineBooksUrl()) + "/source/" + url;
     return src;
 }
 
