@@ -816,6 +816,7 @@ function showBook(book: book) {
     setBookS();
     isWordBook = book.type === "word";
     bookLan = book.language;
+    bookContentContainerEl.lang = bookLan;
 }
 async function showBookSections(sections: book["sections"]) {
     sections = structuredClone(sections);
