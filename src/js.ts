@@ -3304,7 +3304,7 @@ async function autoIgnore() {
         )
     );
     const section = await getSection(ignoreWordSection);
-    const markedWords = Object.values(section.words)
+    const markedWords = Object.values((await getSection(nowBook.sections)).words)
         .filter((i) => i.type === "word")
         .map((i) => i.id.toLocaleLowerCase());
     const oldWords = section.text.trim().split("\n");
