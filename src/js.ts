@@ -3294,9 +3294,15 @@ async function autoIgnore() {
         )
     );
     const section = await getSection(ignoreWordSection);
+    const markedWords = Object.values(section.words)
+        .filter((i) => i.type === "word")
+        .map((i) => i.id.toLocaleLowerCase());
     const oldWords = section.text.trim().split("\n");
     const studyWords = await wordsStore.keys();
-    const hasLentWords = oldWords.concat(studyWords).map((w) => w.toLocaleLowerCase());
+    const hasLentWords = oldWords
+        .concat(studyWords)
+        .map((w) => w.toLocaleLowerCase())
+        .filter((w) => !markedWords.includes(w));
     const newWords = words;
     const wordsWithRoot: { src: string; show: string }[] = [];
     const willShowWords: string[] = [];
