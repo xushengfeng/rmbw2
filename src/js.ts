@@ -89,6 +89,8 @@ var setting = localforage.createInstance({
 
 /************************************UI */
 
+document.body.translate = false;
+
 const menuEl = document.getElementById("menu");
 let willShowMenu = false;
 function showMenu(x: number, y: number) {
