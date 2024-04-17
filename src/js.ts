@@ -3312,7 +3312,7 @@ async function autoIgnore() {
     const hasLentWords = oldWords
         .concat(studyWords)
         .map((w) => w.toLocaleLowerCase())
-        .filter((w) => !markedWords.includes(w));
+        .concat(markedWords);
     const newWords = words;
     const wordsWithRoot: { src: string; show: string }[] = [];
     const willShowWords: string[] = [];
