@@ -912,8 +912,8 @@ async function showBookContent(id: string) {
 
     contentP = [];
 
-    if (isWordBook) showWordBook(s);
-    else showNormalBook(s);
+    if (isWordBook) await showWordBook(s);
+    else await showNormalBook(s);
 
     setScrollPosi(bookContentContainerEl, contentScrollPosi);
 
@@ -1115,7 +1115,14 @@ function sortWordList(
     return rList;
 }
 
-function showNormalBook(s: section) {
+async function textTransformer(text: string) {
+    if (await setting.getItem(readerSettingPath.apostrophe)) {
+        text = text.replace(/’(\w)/g, "'$1");
+    }
+    return text;
+}
+
+async function showNormalBook(s: section) {
     const segmenter = new Segmenter(bookLan, { granularity: "word" });
     const osL = Array.from(new Segmenter(bookLan, { granularity: "sentence" }).segment(s.text));
     const sL: Intl.SegmentData[] = [];
@@ -1200,7 +1207,7 @@ function showNormalBook(s: section) {
                 const word = sen[i];
                 if (t && i === "0") continue;
                 let span = document.createElement("span");
-                span.innerText = word.text;
+                span.innerText = await textTransformer(word.text);
                 for (let i in s.words) {
                     let index = s.words[i].index;
                     if (index[0] === word.start && index[1] === word.end) {
@@ -4350,6 +4357,16 @@ const settingEl = document.getElementById("setting");
 document.getElementById("settingb").onclick = () => {
     settingEl.togglePopover();
 };
+
+const readerSettingPath = { apostrophe: "reader.apostrophe" };
+
+settingEl.append(
+    el(
+        "div",
+        el("h2", "阅读器"),
+        el("label", el("input", { type: "checkbox", "data-path": readerSettingPath.apostrophe }), "把’转为'")
+    )
+);
 
 import Sortable from "sortablejs";
 
