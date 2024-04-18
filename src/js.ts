@@ -30,6 +30,7 @@ import { MsEdgeTTS, OUTPUT_FORMAT } from "msedge-tts-browserify";
 
 import pen_svg from "../assets/icons/pen.svg";
 import ok_svg from "../assets/icons/ok.svg";
+import very_ok_svg from "../assets/icons/very_ok.svg";
 import help_svg from "../assets/icons/help.svg";
 import translate_svg from "../assets/icons/translate.svg";
 import left_svg from "../assets/icons/left.svg";
@@ -3860,23 +3861,28 @@ function getReviewCardButtons(id: string, card: fsrsjs.Card, readText: string, f
     const showTime = new Date().getTime();
     let hasClick = false;
     let finishTime = showTime;
+    let quickly = false;
     let b = (rating: fsrsjs.Rating, icon: HTMLElement) => {
         let button = document.createElement("button");
         button.append(icon);
         button.onclick = reviewHotkey[rating].f = async () => {
             if (hasClick) {
+                if (rating === fsrsjs.Rating.Good && quickly) rating = fsrsjs.Rating.Easy;
+                await setReviewCard(id, card, rating, finishTime - showTime);
                 f(rating);
-                if (rating === fsrsjs.Rating.Good && finishTime - showTime < (await getReadTime(readText)) + 400)
-                    rating = fsrsjs.Rating.Easy;
-                setReviewCard(id, card, rating, finishTime - showTime);
                 return;
             }
-            hasClick = true;
-            finishTime = time();
+            await firstClick();
             f(rating);
         };
         return button;
     };
+    async function firstClick() {
+        hasClick = true;
+        finishTime = time();
+        quickly = finishTime - showTime < (await getReadTime(readText)) + 400;
+        if (quickly) goodB.querySelector("img").src = very_ok_svg;
+    }
     let againB = b(fsrsjs.Rating.Again, iconEl(close_svg));
     let hardB = b(fsrsjs.Rating.Hard, iconEl(help_svg));
     let goodB = b(fsrsjs.Rating.Good, iconEl(ok_svg));
@@ -3884,10 +3890,7 @@ function getReviewCardButtons(id: string, card: fsrsjs.Card, readText: string, f
     buttons.append(againB, hardB, goodB);
     return {
         buttons,
-        finish: () => {
-            hasClick = true;
-            finishTime = time();
-        },
+        finish: () => firstClick(),
     };
 }
 
@@ -4267,11 +4270,11 @@ async function pTTS(index: number) {
     }
 }
 
-function setReviewCard(id: string, card: fsrsjs.Card, rating: fsrsjs.Rating, duration: number) {
+async function setReviewCard(id: string, card: fsrsjs.Card, rating: fsrsjs.Rating, duration: number) {
     let now = new Date();
     setCardAction(id, now, rating, card.state, duration);
     let sCards = fsrs.repeat(card, now);
-    cardsStore.setItem(id, sCards[rating].card);
+    await cardsStore.setItem(id, sCards[rating].card);
 }
 function setSpellCard(id: string, card: fsrsjs.Card, rating: fsrsjs.Rating, duration: number) {
     let now = new Date();
