@@ -3806,18 +3806,18 @@ async function showWordReview(x: { id: string; card: fsrsjs.Card }, isAi: boolea
         let d = (await wordsStore.getItem(word)) as record;
         for (let i of d.means) {
             if (i.card_id === x.id) {
-                let div = document.createElement("div");
+                let div = el("div");
                 div.innerText = i.text;
                 dic.innerHTML = "";
                 dic.append(div);
             }
         }
     }
-    context.onclick = reviewHotkey["show"].f = () => {
+    const dic = el("div");
+    dic.onclick = reviewHotkey["show"].f = () => {
         showAnswer();
         buttons.finish();
     };
-    let dic = document.createElement("div");
     let buttons = getReviewCardButtons(x.id, x.card, context.innerText, async (rating) => {
         if (hasShowAnswer) {
             let next = await nextDue(reviewType);
@@ -4098,14 +4098,10 @@ function spellErrorAnimate(pel: HTMLElement) {
 }
 
 async function showSentenceReview(x: { id: string; card: fsrsjs.Card }) {
-    let sentence = (await card2sentence.getItem(x.id)) as record2;
-    let div = document.createElement("div");
-    let context = el("p", sentence.text);
+    const sentence = (await card2sentence.getItem(x.id)) as record2;
+    const div = el("div");
+    const context = el("p", sentence.text);
     let hasShowAnswer = false;
-    context.onclick = reviewHotkey["show"].f = () => {
-        showAnswer();
-        buttons.finish();
-    };
     async function showAnswer() {
         hasShowAnswer = true;
         dic.innerHTML = "";
@@ -4116,7 +4112,11 @@ async function showSentenceReview(x: { id: string; card: fsrsjs.Card }) {
             dic.append(p);
         }
     }
-    let dic = document.createElement("div");
+    const dic = el("div");
+    dic.onclick = reviewHotkey["show"].f = () => {
+        showAnswer();
+        buttons.finish();
+    };
     let buttons = getReviewCardButtons(x.id, x.card, context.innerText, async (rating) => {
         if (hasShowAnswer) {
             let next = await nextDue(reviewType);
