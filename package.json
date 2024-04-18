@@ -25,7 +25,6 @@
         "hyphen": "^1.10.4",
         "intl-segmenter-polyfill": "^0.4.4",
         "js-base64": "^3.7.7",
-        "lemmatizer": "^0.0.1",
         "localforage": "^1.10.0",
         "localforage-setitems": "^1.4.0",
         "mammoth": "^1.7.0",

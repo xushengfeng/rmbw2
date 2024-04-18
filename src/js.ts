@@ -10,8 +10,6 @@ import * as zip from "@zip.js/zip.js";
 
 import mammoth from "mammoth";
 
-import lemmatizer from "lemmatizer";
-
 import { hyphenate } from "hyphen/en";
 const hyphenChar = "·";
 
@@ -516,7 +514,7 @@ async function showOnlineBooks(
     books: {
         name: string;
         id: string;
-        type: "word" | "text";
+        type: "word" | "text" | "package";
         updateTime: number;
         sections: {
             id: string;
@@ -554,6 +552,10 @@ async function showOnlineBooks(
         });
         div.onclick = async () => {
             console.log(book);
+            if (book.type === "package") {
+                saveLanguagePackage(book.language, book.sections);
+                return;
+            }
             let xbook = (await bookshelfStore.getItem(book.id)) as book;
             if (xbook) {
                 if (xbook.updateTime < book.updateTime) {
@@ -569,7 +571,7 @@ async function showOnlineBooks(
                     canEdit: false,
                     lastPosi: 0,
                     language: "en",
-                };
+                } as book;
                 saveBook();
             }
             function saveBook() {
@@ -624,6 +626,30 @@ async function showOnlineBooks(
         };
         onlineBookEl.append(div);
     }
+}
+
+async function saveLanguagePackage(lan: string, section: { id: string; path: string }[]) {
+    const fetchPromises = section.map(async (item) => {
+        const { id, path } = item;
+        const response = await fetch((await getOnlineBooksUrl()) + "/source/" + path);
+        const content = await response.json();
+        return { id, content };
+    });
+    Promise.all(fetchPromises).then(async (results) => {
+        console.log(results);
+        for (let i of results) {
+            const map = new Map();
+            for (let x in i.content) {
+                map.set(x, i.content[x]);
+            }
+            if (i.id === "ipa") {
+                ipaStore.setItem(lan, map);
+            }
+            if (i.id === "variant") {
+                variantStore.setItem(lan, map);
+            }
+        }
+    });
 }
 
 addBookEl.onclick = async () => {
@@ -1857,6 +1883,9 @@ async function wordBooksByWord(word: string) {
     return l;
 }
 
+var ipaStore = localforage.createInstance({ name: "langPack", storeName: "ipa" });
+var variantStore = localforage.createInstance({ name: "langPack", storeName: "variant" });
+
 let dics: { [key: string]: Map<string, dic[0]> } = {};
 var dicStore = localforage.createInstance({ name: "dic" });
 setting.getItem("dics").then(async (l: string[]) => {
@@ -1872,13 +1901,13 @@ type dic = {
     };
 };
 
-let ipaDics: { [key: string]: Map<string, string> } = {};
-var ipaDicStore = localforage.createInstance({ name: "ipa_dic" });
-setting.getItem("ipa_dics").then(async (l: string[]) => {
-    for (let i of l || []) {
-        ipaDics[i] = (await ipaDicStore.getItem(i)) as Map<string, string>;
-    }
-});
+let ipa: Map<string, string | string[]>;
+
+let variant: Map<string, string> = await variantStore.getItem("en");
+
+function lemmatizer(word: string) {
+    return variant.get(word) || word;
+}
 
 type record = {
     word: string;
@@ -4472,42 +4501,26 @@ uploadDicEl.onchange = () => {
     }
 };
 
-const uploadIpaDicEl = el("input", { type: "file" });
-uploadIpaDicEl.onchange = () => {
-    const file = uploadIpaDicEl.files[0];
-    if (file) {
-        const reader = new FileReader();
-        reader.readAsText(file);
-        reader.onload = () => {
-            let dic = JSON.parse(reader.result as string);
-            console.log(dic);
-            const data = Object.values(dic)[0][0];
-            let l = new Map();
-            for (let i in data) {
-                l.set(i, data[i]);
-            }
-            const id = Object.keys(dic)[0];
-            ipaDics[id] = l;
-            ipaDicStore.setItem(id, l);
-            setting.setItem("ipa_dics", Object.keys(ipaDics));
-        };
-    }
-};
-
 async function getIPA(word: string) {
-    const ipaDicsPath = (await setting.getItem("ipa_dics.default")) as string;
-    if (!ipaDicsPath) return "";
-    let l: string[] = [];
-    if (ipaDicsPath.includes(",")) l = ipaDicsPath.split(",").map((i) => i.trim());
-    else l = [ipaDicsPath.trim()];
-    for (let p of l) {
-        const ipa = ipaDics[p]?.get(word);
-        if (ipa) return ipa;
+    if (!ipa) {
+        let lan = bookLan || "en";
+        let i = await ipaStore.getItem(lan);
+        if (!i) return "";
+        ipa = (await i) as Map<string, string | string[]>;
     }
-    return "";
-}
 
-settingEl.append(uploadIpaDicEl, el("input", { "data-path": "ipa_dics.default" }));
+    let r = ipa.get(word);
+    if (!r) return "";
+    if (Array.isArray(r)) {
+        let l: string[] = [];
+        for (let i of r) {
+            l = l.concat(i.split(","));
+        }
+        return l.join(",");
+    } else {
+        return r;
+    }
+}
 
 settingEl.append(el("label", ["学习语言", el("input", { "data-path": "lan.learn" })]));
 

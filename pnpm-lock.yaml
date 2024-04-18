@@ -35,9 +35,6 @@ dependencies:
   js-base64:
     specifier: ^3.7.7
     version: 3.7.7
-  lemmatizer:
-    specifier: ^0.0.1
-    version: 0.0.1
   localforage:
     specifier: ^1.10.0
     version: 1.10.0
@@ -660,14 +657,17 @@ packages:
     resolution: {integrity: sha512-G9wwJMx9DQQzwom8J8e8ErVpI6h/Z5BpYusJCE2Q/2NfgBNYCesyNaCOOskZAhOrw2nmR4D8nYAv4Xv/INIbzw==}
     dependencies:
       en-stemmer: 1.0.3
+    dev: true
 
   /en-lexicon@1.0.11:
     resolution: {integrity: sha512-eanOw9551H6jMRpRK023+Nlss5qnuAi99drXcSUzQySsMrB43teDNbin/AbpOfnemQiTtuZChXYm2kEIR1Mhmg==}
     dependencies:
       en-inflectors: 1.0.12
+    dev: true
 
   /en-stemmer@1.0.3:
     resolution: {integrity: sha512-sBeYsHLqZWACn/mTRLAMdYb/A53s55r4/nCB2UjKK96EBuRQ4t4GKl4V1pW/0hvzdncfYlZRT+JSIRxCtoYqbA==}
+    dev: true
 
   /end-of-stream@1.4.4:
     resolution: {integrity: sha512-+uw1inIHVPQoaVuHzRyXd21icM+cnt4CzD5rW+NC1wjOUSTOs+Te7FOv7AhN7vS9x/oIyhLP5PR1H+phQAHu5Q==}
@@ -985,6 +985,7 @@ packages:
       en-inflectors: 1.0.12
       en-lexicon: 1.0.11
       en-stemmer: 1.0.3
+    dev: true
 
   /levenshtein-edit-distance@3.0.1:
     resolution: {integrity: sha512-/qMCkZbrAF7jZP/voqlkfNrBtEn0TMdhCK7OEBh/zb39t/c3wCnTjwU1ZvrMfQ3OxB8sBQXIpWRMM6FiQJVG3g==}
