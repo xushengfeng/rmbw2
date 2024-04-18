@@ -473,7 +473,7 @@ body {
             }
         }
         & .ignore {
-            opacity: 0.5;
+            color: color-mix(in srgb, var(--color) 60%, transparent);
         }
         & .learn {
             color: green;
@@ -685,7 +685,7 @@ body {
 }
 
 .translate {
-    opacity: 0.6;
+    color: color-mix(in srgb, var(--color) 60%, transparent);
     margin: 0;
 }
 div:has(> .translate) > :not(.translate) {
@@ -695,7 +695,7 @@ div:has(> .translate) > :not(.translate) {
 .dic_sen {
     & > div > p > :last-child {
         padding-left: 2em;
-        opacity: 0.5;
+        color: color-mix(in srgb, var(--color) 60%, transparent);
     }
 }
 
