@@ -1870,6 +1870,17 @@ async function sectionSelect(menuEl: HTMLElement, radio?: boolean) {
     menuEl.innerHTML = "";
     for (let i of bookList) {
         let book = el("div", i.name);
+        if (!radio) {
+            book.append(
+                el("input", {
+                    type: "checkbox",
+                    onclick: (e) => {
+                        const i = e.target as HTMLInputElement;
+                        book.querySelectorAll("input").forEach((x) => (x.checked = i.checked));
+                    },
+                })
+            );
+        }
         for (let s of i.sections) {
             let section = await getSection(s);
             book.append(
