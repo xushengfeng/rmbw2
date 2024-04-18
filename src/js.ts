@@ -992,9 +992,6 @@ async function showWordBook(s: section) {
             spell += 1;
         }
     }
-    function p(number: number) {
-        return el("td", [number.toFixed(1), el("progress", { value: number / l.length })]);
-    }
     wordList = sortWordList(rawWordList, (await setting.getItem(WordSortPath)) || "raw");
     const search = el("input", {
         oninput: () => {
@@ -1034,10 +1031,28 @@ async function showWordBook(s: section) {
         el(
             "div",
             { class: "words_book_top" },
-            el("table", { class: "words_sum" }, [
-                el("tr", [el("th", "词"), el("th", "了解"), el("th", "记忆"), el("th", "拼写")]),
-                el("tr", [el("td", String(l.length)), p(matchWords), p(means1), p(spell)]),
-            ]),
+            el(
+                "div",
+                el(
+                    "div",
+                    `${String(l.length)} ${matchWords} ${means1.toFixed(1)}`,
+                    el(
+                        "div",
+                        { class: "litle_progress" },
+                        el("div", { style: { width: (matchWords / l.length) * 100 + "%", background: "#00f" } }),
+                        el("div", { style: { width: (means1 / l.length) * 100 + "%", background: "#0f0" } })
+                    )
+                ),
+                el(
+                    "div",
+                    `拼写 ${spell.toFixed(1)}`,
+                    el(
+                        "div",
+                        { class: "litle_progress" },
+                        el("div", { style: { width: (spell / l.length) * 100 + "%", background: "#00f" } })
+                    )
+                )
+            ),
             search,
             sortEl
         )

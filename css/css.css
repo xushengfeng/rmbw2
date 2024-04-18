@@ -422,24 +422,54 @@ body {
     & > textarea {
         height: calc(100dvh - 96px);
     }
-    &:has(table) {
+    &:has(.words_book_top) {
         & p {
+            --w: min(90dvw, var(--content-width));
             margin: 0;
             user-select: none;
             font-family: var(--font-family);
-            left: calc((100dvw - var(--content-width)) / 2) !important;
+            left: calc((100dvw - var(--w)) / 2) !important;
+            width: var(--w);
         }
         & .words_book_top {
-            position: sticky;
-            top: 0;
+            position: fixed;
+            top: var(--size0);
+            left: 0;
+            width: 100dvw;
+            padding: 0 16px;
+            box-sizing: border-box;
             z-index: 1;
             background-color: var(--bg1);
             backdrop-filter: var(--blur);
+            & > :first-child {
+                float: right;
+                font-size: 12px;
+            }
+            & .litle_progress {
+                width: 180px;
+                height: 8px;
+                background-color: #0002;
+                position: relative;
+                border-radius: 4px;
+                overflow: hidden;
+                & > div {
+                    height: 100%;
+                    position: absolute;
+                    border-radius: 4px;
+                    top: 0;
+                    right: 0;
+                    background-color: #0f05;
+                }
+            }
             & .sort_words {
                 display: flex;
                 gap: 4px;
                 user-select: none;
                 cursor: pointer;
+                width: max-content;
+                & > span {
+                    flex-shrink: 0;
+                }
             }
         }
         & .ignore {
