@@ -1906,7 +1906,7 @@ let ipa: Map<string, string | string[]>;
 let variant: Map<string, string> = await variantStore.getItem("en");
 
 function lemmatizer(word: string) {
-    return variant.get(word) || word;
+    return variant?.get(word) || word;
 }
 
 type record = {
@@ -3351,17 +3351,6 @@ async function autoIgnore() {
         if (w.length <= 1) continue;
         if (w.match(/[0-9]/)) continue;
         const r = lemmatizer(w);
-        if (w === r) {
-            if (!hasLentWords.includes(w) && !willShowWords.includes(w)) {
-                wordsWithRoot.push({ src: w, show: w });
-                willShowWords.push(w);
-            }
-            continue;
-        }
-        if (!hasLentWords.includes(w) && !willShowWords.includes(w)) {
-            wordsWithRoot.push({ src: w, show: w });
-            willShowWords.includes(w);
-        }
         if (!hasLentWords.includes(r) && !willShowWords.includes(r) && r.length > 1) {
             wordsWithRoot.push({ src: w, show: r });
             willShowWords.push(r);
