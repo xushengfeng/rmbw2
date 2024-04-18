@@ -3813,7 +3813,10 @@ async function showWordReview(x: { id: string; card: fsrsjs.Card }, isAi: boolea
             }
         }
     }
-    context.onclick = reviewHotkey["show"].f = showAnswer;
+    context.onclick = reviewHotkey["show"].f = () => {
+        showAnswer();
+        buttons.finish();
+    };
     let dic = document.createElement("div");
     let buttons = getReviewCardButtons(x.id, x.card, context.innerText, async (rating) => {
         if (hasShowAnswer) {
@@ -3826,7 +3829,7 @@ async function showWordReview(x: { id: string; card: fsrsjs.Card }, isAi: boolea
 
     const wordEl = el("div", wordid, { class: "main_word" });
 
-    div.append(wordEl, context, dic, buttons);
+    div.append(wordEl, context, dic, buttons.buttons);
     div.classList.add("review_word");
     reviewViewEl.innerHTML = "";
     reviewViewEl.append(div);
@@ -3851,18 +3854,20 @@ document.addEventListener("keydown", (e) => {
 function getReviewCardButtons(id: string, card: fsrsjs.Card, readText: string, f: (rating: number) => void) {
     const showTime = new Date().getTime();
     let hasClick = false;
+    let finishTime = showTime;
     let b = (rating: fsrsjs.Rating, icon: HTMLElement) => {
         let button = document.createElement("button");
         button.append(icon);
         button.onclick = reviewHotkey[rating].f = async () => {
             if (hasClick) {
                 f(rating);
+                if (rating === fsrsjs.Rating.Good && finishTime - showTime < (await getReadTime(readText)) + 400)
+                    rating = fsrsjs.Rating.Easy;
+                setReviewCard(id, card, rating, finishTime - showTime);
                 return;
             }
             hasClick = true;
-            if (rating === fsrsjs.Rating.Good && new Date().getTime() - showTime < (await getReadTime(readText)) + 400)
-                rating = fsrsjs.Rating.Easy; // todo 自定义
-            setReviewCard(id, card, rating, time() - showTime);
+            finishTime = time();
             f(rating);
         };
         return button;
@@ -3872,7 +3877,13 @@ function getReviewCardButtons(id: string, card: fsrsjs.Card, readText: string, f
     let goodB = b(fsrsjs.Rating.Good, iconEl(ok_svg));
     let buttons = document.createElement("div");
     buttons.append(againB, hardB, goodB);
-    return buttons;
+    return {
+        buttons,
+        finish: () => {
+            hasClick = true;
+            finishTime = time();
+        },
+    };
 }
 
 async function getReadTime(text: string) {
@@ -4091,7 +4102,10 @@ async function showSentenceReview(x: { id: string; card: fsrsjs.Card }) {
     let div = document.createElement("div");
     let context = el("p", sentence.text);
     let hasShowAnswer = false;
-    context.onclick = reviewHotkey["show"].f = showAnswer;
+    context.onclick = reviewHotkey["show"].f = () => {
+        showAnswer();
+        buttons.finish();
+    };
     async function showAnswer() {
         hasShowAnswer = true;
         dic.innerHTML = "";
@@ -4112,7 +4126,7 @@ async function showSentenceReview(x: { id: string; card: fsrsjs.Card }) {
         }
     });
 
-    div.append(context, dic, buttons);
+    div.append(context, dic, buttons.buttons);
     div.classList.add("review_sentence");
     reviewViewEl.innerHTML = "";
     reviewViewEl.append(div);
