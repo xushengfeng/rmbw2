@@ -4355,11 +4355,12 @@ function renderCal(year: number, data: Date[]) {
         else count[id] = 1;
     }
     const max = Math.max(...Object.values(count));
-    const div = el("div", { class: "cal_plot" });
+    const div = el("div");
     const firstDate = new Date(year, 0, 1);
     const zero2first = (firstDate.getDay() + 1) * 24 * 60 * 60 * 1000;
     let s_date = new Date(firstDate.getTime() - zero2first);
-    const f = document.createDocumentFragment();
+    const f = el("div", { class: "cal_plot" });
+    const title = el("div");
     for (let x = 1; x <= 53; x++) {
         for (let y = 1; y <= 7; y++) {
             s_date = new Date(s_date.getTime() + 24 * 60 * 60 * 1000);
@@ -4367,11 +4368,19 @@ function renderCal(year: number, data: Date[]) {
             const item = el("div");
             item.title = `${s_date.toLocaleDateString()}  ${count[s_date.toDateString()] ?? 0}`;
             if (v) item.style.backgroundColor = `color-mix(in srgb-linear, #9be9a8, #216e39 ${v * 100}%)`;
-            if (s_date.toDateString() === new Date().toDateString()) item.style.borderWidth = "2px";
+            if (s_date.toDateString() === new Date().toDateString()) {
+                item.style.borderWidth = "2px";
+                title.innerText = item.title;
+            }
             f.append(item);
         }
     }
-    div.append(f);
+    f.onclick = (e) => {
+        if (e.target === f) return;
+        const EL = e.target as HTMLElement;
+        title.innerText = EL.title;
+    };
+    div.append(title, f);
     return div;
 }
 
