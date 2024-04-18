@@ -527,22 +527,10 @@ async function showOnlineBooks(
 ) {
     onlineBookEl.innerHTML = "";
     for (let book of books) {
-        let div = document.createElement("div");
-        const cover = el("div");
-        let bookCover: HTMLElement;
-        let title = document.createElement("span");
-        if (book.cover) {
-            let src = await getBookCover(book.cover);
-            bookCover = document.createElement("img");
-            (bookCover as HTMLImageElement).src = src;
-        } else {
-            bookCover = document.createElement("div");
-            bookCover.innerText = book.name;
-        }
-        cover.append(bookCover);
-        div.append(cover);
-        title.innerText = book.name;
-        div.append(title);
+        let url = "";
+        if (book.cover) url = await getBookCover(book.cover);
+        let div = bookEl(book.name, url);
+        let bookCover = div.querySelector("div");
         bookshelfStore.iterate((v: book, k) => {
             if (book.id === k) {
                 if (v.updateTime < book.updateTime) {
@@ -743,6 +731,27 @@ async function setBookS() {
     }
 }
 
+function bookEl(name: string, coverUrl?: string) {
+    let bookIEl = el("div");
+    const cover = el("div");
+    let titleEl = el("span");
+    let bookCover = el("div");
+    bookCover.innerText = name;
+    cover.append(bookCover);
+    if (coverUrl) {
+        let bookCover = el("img");
+        bookCover.src = coverUrl;
+        cover.append(bookCover);
+        bookCover.onerror = () => {
+            bookCover.style.opacity = "0";
+        };
+    } else {
+    }
+    titleEl.innerText = name;
+    bookIEl.append(cover, titleEl);
+    return bookIEl;
+}
+
 async function showBooks() {
     localBookEl.innerHTML = "";
     localBookEl.append(addBookEl);
@@ -752,29 +761,23 @@ async function showBooks() {
     });
     bookList = bookList.toSorted((a, b) => b.visitTime - a.visitTime);
     for (let book of bookList) {
-        let bookIEl = document.createElement("div");
-        const cover = el("div");
-        let titleEl = document.createElement("span");
+        let bookIEl: HTMLDivElement;
         if (book.cover) {
-            let bookCover = document.createElement("img");
             const c = (await coverCache.getItem(book.id)) as Blob;
             let url = "";
             if (c) {
                 url = URL.createObjectURL(c);
             } else {
                 url = await getBookCover(book.cover);
-                const b = await (await fetch(url)).blob();
-                coverCache.setItem(book.id, b);
+                try {
+                    const b = await (await fetch(url)).blob();
+                    coverCache.setItem(book.id, b);
+                } catch (error) {}
             }
-            bookCover.src = url;
-            cover.append(bookCover);
+            bookIEl = bookEl(book.name, url);
         } else {
-            let bookCover = document.createElement("div");
-            bookCover.innerText = book.name;
-            cover.append(bookCover);
+            bookIEl = bookEl(book.name);
         }
-        titleEl.innerText = book.name;
-        bookIEl.append(cover, titleEl);
         localBookEl.append(bookIEl);
         const id = book.id;
         bookIEl.onclick = async () => {
@@ -794,7 +797,7 @@ async function showBooks() {
             renameEl.onclick = async () => {
                 let name = await prompt("更改书名", book.name);
                 if (name) {
-                    titleEl.innerText = name;
+                    bookIEl.querySelector("span").innerText = name;
                     if (bookIEl.innerText) bookIEl.querySelector("div").innerText = name;
                     book.name = name;
                     bookshelfStore.setItem(book.id, book);
