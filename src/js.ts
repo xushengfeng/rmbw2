@@ -2235,17 +2235,19 @@ async function showDic(id: string) {
 
         let lword = lemmatizer(sourceWord.toLocaleLowerCase());
         moreWordsEl.innerHTML = "";
-        for (let w of Array.from(new Set([sourceWord, sourceWord.toLocaleLowerCase(), lword]))) {
-            let div = document.createElement("span");
-            div.innerText = w;
-            div.onclick = async () => {
-                dicWordEl.value = w;
-                await visit(false);
-                await changeDicMean(w, -1);
-                search(w);
-            };
-            moreWordsEl.append(div);
-        }
+        const l = Array.from(new Set([sourceWord, sourceWord.toLocaleLowerCase(), lword]));
+        if (l.length != 1)
+            for (let w of l) {
+                let div = document.createElement("span");
+                div.innerText = w;
+                div.onclick = async () => {
+                    dicWordEl.value = w;
+                    await visit(false);
+                    await changeDicMean(w, -1);
+                    search(w);
+                };
+                moreWordsEl.append(div);
+            }
 
         addMeanEl.onclick = () => {
             addP("", Word.word, Word.context.text, Word.context.index, async (text, sentence, index) => {
