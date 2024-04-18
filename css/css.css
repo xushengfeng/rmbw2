@@ -692,11 +692,9 @@ div:has(> .translate) > :not(.translate) {
     margin: 4px 0;
 }
 
-.dic_sen {
-    & > div > p > :last-child {
-        padding-left: 2em;
-        color: color-mix(in srgb, var(--color) 60%, transparent);
-    }
+.source_title {
+    padding-left: 2em;
+    color: color-mix(in srgb, var(--color) 60%, transparent);
 }
 
 .dic_details > div {

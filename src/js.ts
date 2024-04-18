@@ -426,6 +426,11 @@ async function getTitle(bookId: string, sectionN: string, x?: string) {
     return t;
 }
 
+async function getTitleEl(bookId: string, sectionN: string, x?: string) {
+    const title = await getTitle(bookId, sectionN, x);
+    return el("span", { class: "source_title" }, title);
+}
+
 async function newBook() {
     let id = uuid();
     let sid = uuid();
@@ -2602,14 +2607,14 @@ async function dicSentences(contexts: record["means"][0]["contexts"]) {
     const sen = el("div", { class: "dic_sen" });
     for (let s of contexts) {
         let source = s.source;
-        const t = await getTitle(source.book, source.sections);
+        const t = await getTitleEl(source.book, source.sections);
         sen.append(
             el("div", [
                 el("p", [
                     s.text.slice(0, s.index[0]),
                     el("span", { class: MARKWORD }, s.text.slice(...s.index)),
                     s.text.slice(s.index[1]),
-                    el("span", t),
+                    t,
                 ]),
             ])
         );
@@ -4100,7 +4105,7 @@ function spellErrorAnimate(pel: HTMLElement) {
 async function showSentenceReview(x: { id: string; card: fsrsjs.Card }) {
     const sentence = (await card2sentence.getItem(x.id)) as record2;
     const div = el("div");
-    const context = el("p", sentence.text);
+    const context = el("p", sentence.text, await getTitleEl(sentence.source.book, sentence.source.sections));
     let hasShowAnswer = false;
     async function showAnswer() {
         hasShowAnswer = true;
