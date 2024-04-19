@@ -1216,6 +1216,7 @@ div:has(> .translate) > :not(.translate) {
     margin-top: var(--size0);
     max-height: calc(100dvh - var(--size0));
     box-sizing: border-box;
+    width: 100dvw;
 
     & > .setting_dic {
         & ul {
