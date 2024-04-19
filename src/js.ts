@@ -4658,7 +4658,9 @@ async function setAllData(data: string) {
         await allData2Store[storeName].clear();
         await allData2Store[storeName].setItems(json[storeName]);
     }
-    location.reload();
+    requestIdleCallback(() => {
+        location.reload();
+    });
 }
 
 async function xunzip(file: Blob) {
