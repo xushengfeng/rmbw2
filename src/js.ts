@@ -1179,6 +1179,8 @@ async function textTransformer(text: string) {
     return text;
 }
 
+let wordFreq: { [word: string]: number } = {};
+
 async function showNormalBook(s: section) {
     const segmenter = new Segmenter(bookLan, { granularity: "word" });
     const osL = Array.from(new Segmenter(bookLan, { granularity: "sentence" }).segment(s.text));
@@ -1238,6 +1240,9 @@ async function showNormalBook(s: section) {
         })
     );
 
+    wordFreq = {};
+    let highFreq: string[] = [];
+
     for (let paragraph of plist) {
         if (paragraph.length === 0) continue;
         let pel: HTMLElement = document.createElement("p");
@@ -1275,6 +1280,10 @@ async function showNormalBook(s: section) {
                 span.setAttribute("data-e", String(word.end));
                 span.setAttribute("data-i", i);
                 senEl.append(span);
+
+                const src = lemmatizer(word.text.toLocaleLowerCase());
+                if (wordFreq[src]) wordFreq[src]++;
+                else wordFreq[src] = 1;
             }
             senEl.onclick = async (ev) => {
                 let playEl = ev.target as HTMLElement;
@@ -1300,7 +1309,10 @@ async function showNormalBook(s: section) {
                     index: { start: Number(span.getAttribute("data-s")), end: Number(span.getAttribute("data-e")) },
                     cindex: { start: s, end: e },
                 });
-                if (span.classList.contains(MARKWORD)) {
+                if (
+                    span.classList.contains(MARKWORD) ||
+                    highFreq.includes(lemmatizer(span.innerText.toLocaleLowerCase()))
+                ) {
                     showDic(id);
                 }
 
@@ -1322,6 +1334,10 @@ async function showNormalBook(s: section) {
         }
 
         bookContentEl.append(pel);
+    }
+
+    for (let i in wordFreq) {
+        if (wordFreq[i] >= 3) highFreq.push(i);
     }
 }
 
