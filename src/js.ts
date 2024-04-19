@@ -3369,7 +3369,7 @@ async function getIgnoreWords() {
 }
 
 async function autoIgnore() {
-    const dialog = el("dialog", { class: "words_select" }) as HTMLDialogElement;
+    const dialog = el("dialog", { class: "words_select", lang: bookLan }) as HTMLDialogElement;
     const f = el("div");
     const words = Array.from(
         new Set(
