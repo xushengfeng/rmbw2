@@ -858,6 +858,7 @@ function showBook(book: book) {
     isWordBook = book.type === "word";
     bookLan = book.language;
     bookContentContainerEl.lang = bookLan;
+    bookSectionsEl.lang = bookLan;
 }
 async function showBookSections(sections: book["sections"]) {
     sections = structuredClone(sections);
@@ -2555,6 +2556,7 @@ async function showDic(id: string) {
 
 async function showDicEl(mainTextEl: HTMLTextAreaElement, word: string, x: number, y: number) {
     let list = el("div");
+    list.lang = bookLan;
     function showDic(id: string) {
         list.innerHTML = "";
         let dic = dics[id].get(word);
@@ -2742,6 +2744,7 @@ function addP(
     f: (text: string, sentence?: string, index?: [number, number]) => void
 ) {
     let p = el("p");
+    p.lang = bookLan;
     let sInput1 = el("span", { contentEditable: "true" });
     let sInput2 = el("span", { contentEditable: "true" });
     let sourceWord = "";
