@@ -250,6 +250,7 @@ body {
     backdrop-filter: var(--blur);
     transition: var(--transition);
     border-radius: 0 1rem 1rem 0;
+    font-family: var(--font-family);
     & > :nth-child(3) {
         & > div {
             white-space: nowrap;
@@ -901,6 +902,7 @@ div:has(> .translate) > :not(.translate) {
     display: flex;
     flex-direction: column;
     align-items: end;
+    font-family: var(--font-family);
     & > div {
         max-height: 80dvh;
         display: flex;
