@@ -262,7 +262,7 @@ const AIDIALOG = "ai_dialog";
 const DICDIALOG = "dic_dialog";
 const SELECTEDITEM = "selected_item";
 
-const booksEl = document.getElementById("books");
+const booksEl = document.getElementById("books") as HTMLDialogElement;
 const localBookEl = el("div", { class: "books" });
 const onlineBookEl = el("div", { class: "books", style: { display: "none" } });
 booksEl.append(
@@ -282,7 +282,13 @@ booksEl.append(
         el("div", "词典", {
             onclick: () => {
                 showBook(coreWordBook);
-                booksEl.hidePopover();
+                booksEl.close();
+            },
+        }),
+        el("button", iconEl(close_svg), {
+            style: { "margin-left": "auto" },
+            onclick: () => {
+                booksEl.close();
             },
         }),
     ]),
@@ -490,7 +496,7 @@ const coreWordBook: book = {
 };
 
 bookBEl.onclick = () => {
-    booksEl.showPopover();
+    booksEl.showModal();
 };
 
 var coverCache = localforage.createInstance({ name: "cache", storeName: "cover" });
@@ -652,7 +658,7 @@ addBookEl.onclick = async () => {
     let book = await getBooksById(nowBook.book);
     showBook(book);
     changeEdit(true);
-    booksEl.hidePopover();
+    booksEl.close();
 };
 
 addSectionEL.onclick = async () => {
@@ -791,7 +797,7 @@ async function showBooks() {
             showBook(book);
             book.visitTime = new Date().getTime();
             bookshelfStore.setItem(book.id, book);
-            booksEl.hidePopover();
+            booksEl.close();
         };
         bookIEl.oncontextmenu = async (e) => {
             e.preventDefault();
