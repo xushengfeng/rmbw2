@@ -1200,6 +1200,7 @@ div:has(> .translate) > :not(.translate) {
     grid-template-columns: repeat(53, 16px);
     grid-auto-flow: column;
     gap: 2px;
+    overflow-x: auto;
     & > div {
         border: 1px solid var(--color);
         border-radius: 2px;
