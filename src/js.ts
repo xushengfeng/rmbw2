@@ -1278,7 +1278,8 @@ async function showNormalBook(s: section) {
                 }
                 span.setAttribute("data-s", String(word.start));
                 span.setAttribute("data-e", String(word.end));
-                span.setAttribute("data-i", i);
+                span.setAttribute("data-w", String(word.isWord));
+                span.setAttribute("data-t", word.text);
                 senEl.append(span);
 
                 const src = lemmatizer(word.text.toLocaleLowerCase());
@@ -1297,15 +1298,13 @@ async function showNormalBook(s: section) {
                 }
                 const span = ev.target as HTMLSpanElement;
                 if (span.tagName != "SPAN") return;
-                const i = span.getAttribute("data-i");
-                if (!i) return;
-                if (!span.innerText.trim()) return;
+                if (span.getAttribute("data-w") === "false") return;
 
                 let s = sen[0].start,
                     e = sen.at(-1).end;
 
                 let id = await saveCard({
-                    key: span.innerText,
+                    key: span.getAttribute("data-t"),
                     index: { start: Number(span.getAttribute("data-s")), end: Number(span.getAttribute("data-e")) },
                     cindex: { start: s, end: e },
                 });
@@ -2504,7 +2503,7 @@ async function showDic(id: string) {
                     y = e.clientY + 8;
                 let list = document.elementsFromPoint(x, y);
                 for (let i of list) {
-                    if (i.getAttribute("data-i")) {
+                    if (i.getAttribute("data-t")) {
                         setElPosi(i as HTMLElement, true);
                         index.start = Number(i.getAttribute("data-s"));
                     }
@@ -2515,7 +2514,7 @@ async function showDic(id: string) {
                     y = e.clientY - 8;
                 let list = document.elementsFromPoint(x, y);
                 for (let i of list) {
-                    if (i.getAttribute("data-i")) {
+                    if (i.getAttribute("data-t")) {
                         setElPosi(i as HTMLElement, false);
                         index.end = Number(i.getAttribute("data-e"));
                     }
@@ -3336,7 +3335,7 @@ function flatWordCard(record: record, id: string) {
 
 function selectWord(words: string[]) {
     bookContentEl.querySelectorAll(`.${TMPMARKWORD}`).forEach((el) => el.classList.remove(TMPMARKWORD));
-    bookContentEl.querySelectorAll("span[data-i]").forEach((el: HTMLSpanElement) => {
+    bookContentEl.querySelectorAll("span[data-t]").forEach((el: HTMLSpanElement) => {
         if (words.includes(el.innerText.toLocaleLowerCase())) {
             el.classList.add(TMPMARKWORD);
         }
