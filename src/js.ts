@@ -90,6 +90,10 @@ var setting = localforage.createInstance({
 
 document.body.translate = false;
 
+let learnLang = "en";
+
+document.getElementById("main").lang = learnLang;
+
 const menuEl = document.getElementById("menu");
 let willShowMenu = false;
 function showMenu(x: number, y: number) {
@@ -857,8 +861,6 @@ function showBook(book: book) {
     setBookS();
     isWordBook = book.type === "word";
     bookLan = book.language;
-    bookContentContainerEl.lang = bookLan;
-    bookSectionsEl.lang = bookLan;
 }
 async function showBookSections(sections: book["sections"]) {
     sections = structuredClone(sections);
