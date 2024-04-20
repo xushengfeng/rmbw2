@@ -88,6 +88,8 @@ var setting = localforage.createInstance({
 
 /************************************UI */
 
+navigator?.storage?.persist();
+
 document.body.translate = false;
 
 let learnLang = "en";
