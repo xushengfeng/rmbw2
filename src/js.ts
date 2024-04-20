@@ -1897,6 +1897,7 @@ async function sectionSelect(menuEl: HTMLElement, radio?: boolean) {
             book.append(
                 el("input", {
                     type: "checkbox",
+                    value: "",
                     onclick: (e) => {
                         const i = e.target as HTMLInputElement;
                         book.querySelectorAll("input").forEach((x) => (x.checked = i.checked));
@@ -1919,7 +1920,9 @@ async function sectionSelect(menuEl: HTMLElement, radio?: boolean) {
 }
 
 function getSelectBooks(el: HTMLElement) {
-    return Array.from(el.querySelectorAll("input:checked")).map((i: HTMLInputElement) => i.value);
+    return Array.from(el.querySelectorAll("input:checked"))
+        .map((i: HTMLInputElement) => i.value)
+        .filter((v) => v);
 }
 
 async function wordBooksByWord(word: string) {
