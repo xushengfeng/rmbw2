@@ -4014,6 +4014,7 @@ async function showSpellReview(x: { id: string; card: fsrsjs.Card }) {
                                     cardActionsStore.removeItem(actionId);
                                     spellResult = "none";
                                     wordEl.innerHTML = "";
+                                    inputContent("");
                                 },
                             })
                         );
