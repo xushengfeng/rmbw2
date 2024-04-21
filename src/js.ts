@@ -1184,6 +1184,7 @@ async function textTransformer(text: string) {
 }
 
 let wordFreq: { [word: string]: number } = {};
+let properN: string[] = [];
 
 async function showNormalBook(s: section) {
     const segmenter = new Segmenter(bookLan, { granularity: "word" });
@@ -1246,6 +1247,7 @@ async function showNormalBook(s: section) {
 
     wordFreq = {};
     let highFreq: string[] = [];
+    properN = [];
 
     for (let paragraph of plist) {
         if (paragraph.length === 0) continue;
@@ -1304,6 +1306,8 @@ async function showNormalBook(s: section) {
                 const src = lemmatizer(word.text.toLocaleLowerCase());
                 if (wordFreq[src]) wordFreq[src]++;
                 else wordFreq[src] = 1;
+
+                if (!t && i != "0" && word.text.match(/^[A-Z]/)) properN.push(word.text);
             }
             senEl.onclick = async (ev) => {
                 let playEl = ev.target as HTMLElement;
@@ -3428,9 +3432,11 @@ async function autoIgnore() {
     const newWords = words;
     const wordsWithRoot: { src: string; show: string }[] = [];
     const willShowWords: string[] = [];
+    const properN1 = properN.map((i) => i.toLocaleLowerCase());
     for (const w of newWords) {
         if (w.length <= 1) continue;
         if (w.match(/[0-9]/)) continue;
+        if (properN1.includes(w)) continue;
         const r = lemmatizer(w);
         if (!hasLentWords.includes(r) && !willShowWords.includes(r) && r.length > 1) {
             wordsWithRoot.push({ src: w, show: r });
