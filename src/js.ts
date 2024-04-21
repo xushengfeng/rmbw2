@@ -3437,6 +3437,7 @@ async function autoIgnore() {
         if (w.length <= 1) continue;
         if (w.match(/[0-9]/)) continue;
         if (properN1.includes(w)) continue;
+        if (w.includes("’") || w.includes("'")) continue;
         const r = lemmatizer(w);
         if (!hasLentWords.includes(r) && !willShowWords.includes(r) && r.length > 1) {
             wordsWithRoot.push({ src: w, show: r });
