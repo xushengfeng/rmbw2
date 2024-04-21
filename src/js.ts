@@ -1250,8 +1250,22 @@ async function showNormalBook(s: section) {
     for (let paragraph of plist) {
         if (paragraph.length === 0) continue;
         let pel: HTMLElement = document.createElement("p");
-        let t = paragraph[0]?.[0]?.text.match(/#+$/) && paragraph[0]?.[1]?.text === " ";
-        if (t) pel = document.createElement("h" + paragraph[0][0].text.trim().length);
+        let t = 0;
+        for (let i = 0; i <= 6; i++) {
+            const x = paragraph[0]?.[i]?.text;
+            if (x) {
+                if (x.match(/#+/)) t += x.length;
+                else if (x === " ") break;
+                else {
+                    t = 0;
+                    break;
+                }
+            } else {
+                t = 0;
+                break;
+            }
+        }
+        if (t) pel = document.createElement("h" + t);
 
         let pText = editText.slice(paragraph[0]?.[0]?.start ?? null, paragraph.at(-1)?.at(-1)?.end ?? null);
 
@@ -1267,11 +1281,12 @@ async function showNormalBook(s: section) {
 
         contentP.push(pText);
 
-        for (const sen of paragraph) {
+        for (const si in paragraph) {
+            const sen = paragraph[si];
             const senEl = el("span");
             for (const i in sen) {
                 const word = sen[i];
-                if (t && i === "0") continue;
+                if (si === "0" && Number(i) < t) continue;
                 let span = document.createElement("span");
                 span.innerText = await textTransformer(word.text);
                 for (let i in s.words) {
