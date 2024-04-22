@@ -843,7 +843,7 @@ div:has(> .translate) > :not(.translate) {
         gap: 1em;
         overflow-x: scroll;
     }
-    & > :nth-child(2) {
+    & > :not(:nth-child(1)) {
         display: flex;
         & > :first-child {
             flex-shrink: 0;
