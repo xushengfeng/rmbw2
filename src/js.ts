@@ -1115,6 +1115,25 @@ async function showWordBook(s: section) {
                             booksEl.append(el("span", s, { title: bookN }));
                         }
                         p.append(booksEl);
+                        if (item.c.note) {
+                            const note = el("p");
+                            note.innerText = item.c.note;
+                            p.append(
+                                el(
+                                    "div",
+                                    el("button", iconEl(pen_svg), {
+                                        onclick: () => {
+                                            addP(item.c.note, item.text, null, null, (text) => {
+                                                item.c.note = text.trim();
+                                                wordsStore.setItem(item.text, item.c);
+                                                show();
+                                            });
+                                        },
+                                    }),
+                                    note
+                                )
+                            );
+                        }
                         for (let i of item.c.means) {
                             p.append(
                                 el(
