@@ -1288,6 +1288,12 @@ async function showNormalBook(s: section) {
         }
         if (t) pel = document.createElement("h" + t);
 
+        if (paragraph.length === 1 && paragraph[0].length >= 3 && paragraph[0].every((i) => i.text === "-")) {
+            pel = el("hr");
+            bookContentEl.append(pel);
+            continue;
+        }
+
         let pText = editText.slice(paragraph[0]?.[0]?.start ?? null, paragraph.at(-1)?.at(-1)?.end ?? null);
 
         if (pText) {
