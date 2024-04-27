@@ -20,9 +20,6 @@ dependencies:
   diff-match-patch:
     specifier: ^1.0.5
     version: 1.0.5
-  fsrs.js:
-    specifier: ^1.2.2
-    version: 1.2.2
   fuse.js:
     specifier: ^7.0.0
     version: 7.0.0
@@ -59,6 +56,9 @@ dependencies:
   sortablejs:
     specifier: ^1.15.2
     version: 1.15.2
+  ts-fsrs:
+    specifier: ^3.5.7
+    version: 3.5.7
   webm-duration-fix:
     specifier: ^1.0.4
     version: 1.0.4
@@ -803,11 +803,6 @@ packages:
     dev: true
     optional: true
 
-  /fsrs.js@1.2.2:
-    resolution: {integrity: sha512-LFFPn33/EBbqJoOKmtCfE+Y3LyijQO7ytf/3N6+BlPP/QxI6nlrX6n7IeeKVkjxXVrKxUUvFXTR5K6keSztphg==}
-    engines: {node: '>=10'}
-    dev: false
-
   /fuse.js@7.0.0:
     resolution: {integrity: sha512-14F4hBIxqKvD4Zz/XjDc3y94mNZN6pRv3U13Udo0lNLCWRBUsrMv2xwcF/y/Z5sV6+FQW+/ow68cHpm4sunt8Q==}
     engines: {node: '>=10'}
@@ -1310,6 +1305,10 @@ packages:
     resolution: {integrity: sha512-rp3So07KcdmmKbGvgaNxQSJr7bGVSVk5S9Eq1F+ppbRo70+YeaDxkw5Dd8NPN+GD6bjnYm2VuPuCXmpuYvmCXQ==}
     dev: true
 
+  /seedrandom@3.0.5:
+    resolution: {integrity: sha512-8OwmbklUNzwezjGInmZ+2clQmExQPvomqjL7LFqOYqtmuxRgQYqOD3mHaU+MvZn5FLUeVxVfQjwLZW/n/JFuqg==}
+    dev: false
+
   /seek-bzip@1.0.6:
     resolution: {integrity: sha512-e1QtP3YL5tWww8uKaOCQ18UxIT2laNBXHjV/S2WYCiK4udiv8lkG89KRIoCjUagnAmCBurjF4zEVX2ByBbnCjQ==}
     hasBin: true
@@ -1419,6 +1418,13 @@ packages:
     dependencies:
       escape-string-regexp: 1.0.5
     dev: true
+
+  /ts-fsrs@3.5.7:
+    resolution: {integrity: sha512-xA18Igi1adkuCNgNjKkorjYgZq842+HdgRjatQPDERcrAWMlzM+3BwIbrF/Q0ijYEyw3NcTp3yJIMSO7agBLKQ==}
+    engines: {node: '>=16.0.0'}
+    dependencies:
+      seedrandom: 3.0.5
+    dev: false
 
   /typescript@5.3.3:
     resolution: {integrity: sha512-pXWcraxM0uxAS+tN0AG/BF2TyqmHO014Z070UsJ+pFvYuRSq8KH8DmWpnbXe0pEPDHXZV3FcAbJkijJ5oNEnWw==}

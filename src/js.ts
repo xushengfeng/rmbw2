@@ -28,6 +28,8 @@ import Keyboard from "simple-keyboard";
 
 import { MsEdgeTTS, OUTPUT_FORMAT } from "msedge-tts-browserify";
 
+import { Card, createEmptyCard, generatorParameters, FSRS, Rating, State } from "ts-fsrs";
+
 import pen_svg from "../assets/icons/pen.svg";
 import ok_svg from "../assets/icons/ok.svg";
 import very_ok_svg from "../assets/icons/very_ok.svg";
@@ -962,8 +964,8 @@ async function showWordBook(s: section) {
     const rawWordList: { text: string; c: record; type?: "ignore" | "learn"; means?: number }[] = [];
     let wordList: typeof rawWordList = [];
     let l = s.text.trim().split("\n");
-    const cards: Map<string, fsrsjs.Card> = new Map();
-    await cardsStore.iterate((v: fsrsjs.Card, k) => {
+    const cards: Map<string, Card> = new Map();
+    await cardsStore.iterate((v: Card, k) => {
         cards.set(k, v);
     });
     const words: Map<string, record> = new Map();
@@ -1052,7 +1054,7 @@ async function showWordBook(s: section) {
 
     requestIdleCallback(async () => {
         let spell = 0;
-        await spellStore.iterate((v: fsrsjs.Card, k: string) => {
+        await spellStore.iterate((v: Card, k: string) => {
             if (l.includes(k)) {
                 let retrievability = Math.pow(1 + v.elapsed_days / (9 * v.stability), -1) || 0;
                 spell += retrievability;
@@ -2283,7 +2285,7 @@ async function showDic(id: string) {
             trans: dicTransContent.value,
         };
 
-        let card: fsrsjs.Card;
+        let card: Card;
 
         mf: for (let i of Word.record?.means || []) {
             for (let j of i.contexts) {
@@ -2296,7 +2298,7 @@ async function showDic(id: string) {
         }
         if (!r.source) r.source = source2context(wordx, id).source;
         if (!card) {
-            card = new fsrsjs.Card();
+            card = createEmptyCard();
             newCardAction(sentenceCardId);
         }
         await cardsStore.setItem(sentenceCardId, card);
@@ -3287,12 +3289,8 @@ function checkVisitAll(section: section) {
     }
 }
 
-import * as fsrsjs from "fsrs.js";
-let fsrs = new fsrsjs.FSRS();
 const fsrsW = JSON.parse(await setting.getItem("fsrs.w")) as number[];
-if (fsrsW?.length === 17) {
-    fsrs.p.w = fsrsW;
-}
+let fsrs = new FSRS(generatorParameters(fsrsW?.length === 17 ? { w: fsrsW } : {}));
 
 var cardsStore = localforage.createInstance({ name: "word", storeName: "cards" });
 var wordsStore = localforage.createInstance({ name: "word", storeName: "words" });
@@ -3301,7 +3299,7 @@ var spellStore = localforage.createInstance({ name: "word", storeName: "spell" }
 var card2sentence = localforage.createInstance({ name: "word", storeName: "card2sentence" });
 
 var cardActionsStore = localforage.createInstance({ name: "word", storeName: "actions" });
-function setCardAction(cardId: string, time: Date, rating: fsrsjs.Rating, state: fsrsjs.State, duration: number) {
+function setCardAction(cardId: string, time: Date, rating: Rating, state: State, duration: number) {
     cardActionsStore.setItem(String(time.getTime()), {
         cardId,
         rating,
@@ -3334,14 +3332,14 @@ async function addReviewCardMean(word: string, text: string) {
             word: word,
             means: [],
         };
-        let card2 = new fsrsjs.Card();
+        let card2 = createEmptyCard();
         newCardAction(word);
         await spellStore.setItem(word, card2);
     }
     let cardId = uuid();
     let m = { text, contexts: [], card_id: cardId };
     w.means.push(m);
-    let card = new fsrsjs.Card();
+    let card = createEmptyCard();
     newCardAction(cardId);
     await cardsStore.setItem(cardId, card);
     await card2word.setItem(cardId, word);
@@ -3661,16 +3659,16 @@ async function getFutureReviewDue(days: number) {
     now += days * 24 * 60 * 60 * 1000;
     now = Math.round(now);
     const wordsScope = await getWordsScope();
-    let wordList: { id: string; card: fsrsjs.Card }[] = [];
+    let wordList: { id: string; card: Card }[] = [];
     const wordListTemp: string[] = [];
-    let spellList: { id: string; card: fsrsjs.Card }[] = [];
-    let sentenceList: { id: string; card: fsrsjs.Card }[] = [];
+    let spellList: { id: string; card: Card }[] = [];
+    let sentenceList: { id: string; card: Card }[] = [];
     const sentenceListTemp: string[] = [];
     await card2word.iterate((value: string, key) => {
         if (filterWithScope(value, wordsScope)) wordListTemp.push(key);
     });
     for (let key of wordListTemp) {
-        const card = (await cardsStore.getItem(key)) as fsrsjs.Card;
+        const card = (await cardsStore.getItem(key)) as Card;
         if (card.due.getTime() < now) {
             wordList.push({ id: key, card: card });
         }
@@ -3686,7 +3684,7 @@ async function getFutureReviewDue(days: number) {
         }
     }
     wordList = l;
-    await spellStore.iterate((value: fsrsjs.Card, key) => {
+    await spellStore.iterate((value: Card, key) => {
         if (value.due.getTime() < now) {
             if (filterWithScope(key, wordsScope)) spellList.push({ id: key, card: value });
         }
@@ -3696,7 +3694,7 @@ async function getFutureReviewDue(days: number) {
         sentenceListTemp.push(key);
     });
     for (let key of sentenceListTemp) {
-        const card = (await cardsStore.getItem(key)) as fsrsjs.Card;
+        const card = (await cardsStore.getItem(key)) as Card;
         if (card.due.getTime() < now) {
             sentenceList.push({ id: key, card: card });
         }
@@ -3705,21 +3703,21 @@ async function getFutureReviewDue(days: number) {
 }
 async function getReviewDue(type: review) {
     for (let i of due.word) {
-        let card = (await cardsStore.getItem(i.id)) as fsrsjs.Card;
+        let card = (await cardsStore.getItem(i.id)) as Card;
         i.card = card;
     }
     for (let i of due.spell) {
-        let card = (await spellStore.getItem(i.id)) as fsrsjs.Card;
+        let card = (await spellStore.getItem(i.id)) as Card;
         i.card = card;
     }
     for (let i of due.sentence) {
-        let card = (await cardsStore.getItem(i.id)) as fsrsjs.Card;
+        let card = (await cardsStore.getItem(i.id)) as Card;
         i.card = card;
     }
     let now = new Date().getTime();
-    let wordList: { id: string; card: fsrsjs.Card }[] = [];
-    let spellList: { id: string; card: fsrsjs.Card }[] = [];
-    let sentenceList: { id: string; card: fsrsjs.Card }[] = [];
+    let wordList: { id: string; card: Card }[] = [];
+    let spellList: { id: string; card: Card }[] = [];
+    let sentenceList: { id: string; card: Card }[] = [];
     for (let i of due.word) {
         if (i.card.due.getTime() < now) {
             wordList.push(i);
@@ -3750,15 +3748,15 @@ async function getReviewDue(type: review) {
 let due: {
     word: {
         id: string;
-        card: fsrsjs.Card;
+        card: Card;
     }[];
     spell: {
         id: string;
-        card: fsrsjs.Card;
+        card: Card;
     }[];
     sentence: {
         id: string;
-        card: fsrsjs.Card;
+        card: Card;
     }[];
 } = {
     word: [],
@@ -3816,7 +3814,7 @@ function clearKeyboard() {
 let aiContexts: { [id: string]: { text: string } } = {};
 async function getWordAiContext() {
     const l: { word: string; mean: string }[] = [];
-    const newDue = due.word.filter((i) => i.card.state === fsrsjs.State.Review);
+    const newDue = due.word.filter((i) => i.card.state === State.Review);
     for (let x of newDue) {
         let wordid = (await card2word.getItem(x.id)) as string;
         let wordRecord = (await wordsStore.getItem(wordid)) as record;
@@ -3850,7 +3848,7 @@ async function getWordAiContext() {
     }
 }
 
-async function showReview(x: { id: string; card: fsrsjs.Card }, type: review) {
+async function showReview(x: { id: string; card: Card }, type: review) {
     if (!x) {
         reviewViewEl.innerText = "暂无复习🎉";
         return;
@@ -3883,7 +3881,7 @@ async function aiContext(id: string) {
     context.append(el("p", [l[0], el("span", l[1], { class: MARKWORD }), l[2]]));
     return context;
 }
-async function showWordReview(x: { id: string; card: fsrsjs.Card }, isAi: boolean) {
+async function showWordReview(x: { id: string; card: Card }, isAi: boolean) {
     let wordid = (await card2word.getItem(x.id)) as string;
     let wordRecord = (await wordsStore.getItem(wordid)) as record;
     play(wordRecord.word);
@@ -3943,17 +3941,17 @@ document.addEventListener("keydown", (e) => {
     }
 });
 
-function getReviewCardButtons(id: string, card: fsrsjs.Card, readText: string, f: (rating: number) => void) {
+function getReviewCardButtons(id: string, card: Card, readText: string, f: (rating: number) => void) {
     const showTime = new Date().getTime();
     let hasClick = false;
     let finishTime = showTime;
     let quickly = false;
-    let b = (rating: fsrsjs.Rating, icon: HTMLElement) => {
+    let b = (rating: Rating, icon: HTMLElement) => {
         let button = document.createElement("button");
         button.append(icon);
         button.onclick = reviewHotkey[rating].f = async () => {
             if (hasClick) {
-                if (rating === fsrsjs.Rating.Good && quickly) rating = fsrsjs.Rating.Easy;
+                if (rating === Rating.Good && quickly) rating = Rating.Easy;
                 await setReviewCard(id, card, rating, finishTime - showTime);
                 f(rating);
                 return;
@@ -3969,9 +3967,9 @@ function getReviewCardButtons(id: string, card: fsrsjs.Card, readText: string, f
         quickly = finishTime - showTime < (await getReadTime(readText)) + 400;
         if (quickly) goodB.querySelector("img").src = very_ok_svg;
     }
-    let againB = b(fsrsjs.Rating.Again, iconEl(close_svg));
-    let hardB = b(fsrsjs.Rating.Hard, iconEl(help_svg));
-    let goodB = b(fsrsjs.Rating.Good, iconEl(ok_svg));
+    let againB = b(Rating.Again, iconEl(close_svg));
+    let hardB = b(Rating.Hard, iconEl(help_svg));
+    let goodB = b(Rating.Good, iconEl(ok_svg));
     let buttons = document.createElement("div");
     buttons.append(againB, hardB, goodB);
     return {
@@ -3987,7 +3985,7 @@ async function getReadTime(text: string) {
     return wordsCount * (Number(await setting.getItem("user.readSpeed")) || 100);
 }
 
-async function showSpellReview(x: { id: string; card: fsrsjs.Card }) {
+async function showSpellReview(x: { id: string; card: Card }) {
     const word = x.id;
     let input = el("div", { class: "spell_input", style: { width: "min-content" } });
     input.innerText = word; // 占位计算宽度
@@ -4001,9 +3999,9 @@ async function showSpellReview(x: { id: string; card: fsrsjs.Card }) {
     play(word);
     function inputContent(inputWord: string) {
         input.innerHTML = "";
-        if (x.card.state === fsrsjs.State.New) {
+        if (x.card.state === State.New) {
             input.append(inputWord, el("span", word.slice(inputWord.length), { style: { opacity: "0.5" } }));
-        } else if (x.card.state === fsrsjs.State.Learning) {
+        } else if (x.card.state === State.Learning) {
             input.append(inputWord, el("span", word.slice(inputWord.length), { class: BLURWORD }));
         } else {
             input.innerText = inputWord || "|";
@@ -4025,7 +4023,7 @@ async function showSpellReview(x: { id: string; card: fsrsjs.Card }) {
             await spellAnimate(ele);
 
             if (spellResult === "none")
-                setSpellCard(x.id, x.card, isPerfect ? fsrsjs.Rating.Easy : fsrsjs.Rating.Good, time() - showTime);
+                setSpellCard(x.id, x.card, isPerfect ? Rating.Easy : Rating.Good, time() - showTime);
             spellResult = "right";
             let next = await nextDue(reviewType);
             showReview(next, reviewType);
@@ -4192,7 +4190,7 @@ function spellErrorAnimate(pel: HTMLElement) {
     }
 }
 
-async function showSentenceReview(x: { id: string; card: fsrsjs.Card }) {
+async function showSentenceReview(x: { id: string; card: Card }) {
     const sentence = (await card2sentence.getItem(x.id)) as record2;
     const div = el("div");
     const context = el("p", sentence.text, await getTitleEl(sentence.source.book, sentence.source.sections));
@@ -4357,13 +4355,13 @@ async function pTTS(index: number) {
     }
 }
 
-async function setReviewCard(id: string, card: fsrsjs.Card, rating: fsrsjs.Rating, duration: number) {
+async function setReviewCard(id: string, card: Card, rating: Rating, duration: number) {
     let now = new Date();
     setCardAction(id, now, rating, card.state, duration);
     let sCards = fsrs.repeat(card, now);
     await cardsStore.setItem(id, sCards[rating].card);
 }
-function setSpellCard(id: string, card: fsrsjs.Card, rating: fsrsjs.Rating, duration: number) {
+function setSpellCard(id: string, card: Card, rating: Rating, duration: number) {
     let now = new Date();
     setCardAction(id, now, rating, card.state, duration);
     let sCards = fsrs.repeat(card, now);
@@ -4387,7 +4385,7 @@ async function renderCharts() {
             wordDue.push(m.card_id);
         }
     });
-    await spellStore.iterate((v: fsrsjs.Card, k: string) => {
+    await spellStore.iterate((v: Card, k: string) => {
         if (!filterWithScope(k, wordsScope)) return;
         spellDue.push(v.due.getTime());
     });
@@ -4395,9 +4393,9 @@ async function renderCharts() {
         sentenceDue.push(k);
     });
     const wordDue1: number[] = [];
-    for (let k of wordDue) wordDue1.push(((await cardsStore.getItem(k)) as fsrsjs.Card).due.getTime());
+    for (let k of wordDue) wordDue1.push(((await cardsStore.getItem(k)) as Card).due.getTime());
     const sentenceDue1: number[] = [];
-    for (let k of sentenceDue) sentenceDue1.push(((await cardsStore.getItem(k)) as fsrsjs.Card).due.getTime());
+    for (let k of sentenceDue) sentenceDue1.push(((await cardsStore.getItem(k)) as Card).due.getTime());
 
     cardDue.append(renderCardDue("单词", wordDue1));
     cardDue.append(renderCardDue("拼写", spellDue));
@@ -4410,8 +4408,8 @@ async function renderCharts() {
         (
             v: {
                 cardId: string;
-                rating: fsrsjs.Rating;
-                state: fsrsjs.State;
+                rating: Rating;
+                state: State;
                 duration: number;
             },
             k
@@ -4714,7 +4712,7 @@ async function setAllData(data: string) {
 
     for (let key of ["cards", "spell"]) {
         for (let i in json[key]) {
-            let r = json[key][i] as fsrsjs.Card;
+            let r = json[key][i] as Card;
             r.due = new Date(r.due);
             r.last_review = new Date(r.last_review);
         }
