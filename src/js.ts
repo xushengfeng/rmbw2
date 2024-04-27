@@ -4704,6 +4704,16 @@ async function setAllData(data: string) {
     const tip = el("span", "正在更新……");
     putToast(tip, 0);
     let json = JSON.parse(data) as allData;
+
+    if (Object.keys(json.actions).at(-1) < (await cardActionsStore.keys()).at(-1)) {
+        const r = await confirm(`⚠️本地数据似乎更加新，是否继续更新？\n若更新，可能造成数据丢失`);
+        if (!r) {
+            tip.remove();
+            isSetData = false;
+            return;
+        }
+    }
+
     for (let key of ["cards", "spell"]) {
         for (let i in json[key]) {
             let r = json[key][i] as fsrsjs.Card;
