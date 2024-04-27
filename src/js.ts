@@ -975,6 +975,7 @@ async function showWordBook(s: section) {
     const ignoreWords = await getIgnoreWords();
     let matchWords = 0;
     let means1 = 0;
+    const now = new Date();
     for (let i of l) {
         let t = i;
         let c: record;
@@ -987,9 +988,7 @@ async function showWordBook(s: section) {
             let r = 0;
             for (let j of c.means) {
                 let x = cards.get(j.card_id);
-                const days = Math.max((time() - x.last_review.getTime()) / (24 * 60 * 60 * 1000), 0);
-                let retrievability = Math.pow(1 + days / (9 * x.stability), -1) || 0;
-                r += retrievability;
+                r += fsrs.get_retrievability(x, now, false) || 0;
             }
             means = r / c.means.length;
         } else if (ignoreWords.includes(i)) {
@@ -1056,8 +1055,7 @@ async function showWordBook(s: section) {
         let spell = 0;
         await spellStore.iterate((v: Card, k: string) => {
             if (l.includes(k)) {
-                let retrievability = Math.pow(1 + v.elapsed_days / (9 * v.stability), -1) || 0;
-                spell += retrievability;
+                spell += fsrs.get_retrievability(v, now, false) || 0;
             }
         });
         for (let i of l) if (ignoreWords.includes(i)) spell += 1;
