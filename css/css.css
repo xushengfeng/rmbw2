@@ -698,19 +698,25 @@ div:has(> .translate) > :not(.translate) {
     color: color-mix(in srgb, var(--color) 60%, transparent);
 }
 
-.dic_details > div {
-    border-radius: 0.4rem;
-    padding: 4px;
-    border: solid 1px transparent;
-}
-.dic_details > div:hover {
-    border: dashed 1px var(--color);
-}
-.dic_details > div:has(input[type="radio"]:checked) {
-    border: dashed 1px var(--color);
-}
-.dic_details > div > input[type="radio"] {
-    display: none;
+.dic_details {
+    overflow-y: auto;
+    gap: 1rem;
+    display: flex;
+    flex-direction: column;
+    & > div {
+        border-radius: 0.4rem;
+        padding: 4px;
+        border: solid 1px transparent;
+        &:hover {
+            border: dashed 1px var(--color);
+        }
+        &:has(input[type="radio"]:checked) {
+            border: dashed 1px var(--color);
+        }
+        & > input[type="radio"] {
+            display: none;
+        }
+    }
 }
 
 .hide_means > div:not(:has(input[type="radio"]:checked)) {

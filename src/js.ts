@@ -342,15 +342,7 @@ const dicMinEl = el("button", { style: { minHeight: "24px" } }, iconEl(more_svg)
 const addMeanEl = el("button", { style: { minHeight: "24px" } }, iconEl(add_svg));
 const editMeanEl = el("button", { style: { minHeight: "24px" } }, iconEl(pen_svg));
 const noteEl = el("button", { style: { minHeight: "24px" } }, iconEl(pen_svg));
-const dicDetailsEl = el("div", {
-    style: {
-        overflow: "scroll",
-        gap: "1rem",
-        display: "flex",
-        flexDirection: "column",
-    },
-    class: "dic_details",
-});
+const dicDetailsEl = el("div", { class: "dic_details" });
 
 dicEl.append(
     el("div", { style: { display: "flex" } }, [lastMarkEl, nextMarkEl, toSentenceEl, ttsContextEl, noteEl, hideDicEl]),
