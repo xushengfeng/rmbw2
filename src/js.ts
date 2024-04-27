@@ -4696,7 +4696,13 @@ async function getAllData() {
     return JSON.stringify(l, null, 2);
 }
 
+let isSetData = false;
+
 async function setAllData(data: string) {
+    if (isSetData) return;
+    isSetData = true;
+    const tip = el("span", "正在更新……");
+    putToast(tip, 0);
     let json = JSON.parse(data) as allData;
     for (let key of ["cards", "spell"]) {
         for (let i in json[key]) {
@@ -4721,7 +4727,11 @@ async function setAllData(data: string) {
         const r = await confirm(
             `⚠️以下数据内容发生重大变更，是否继续更新？\n若更新，可能造成数据丢失\n\n${l.join("\n")}`
         );
-        if (!r) return;
+        if (!r) {
+            tip.remove();
+            isSetData = false;
+            return;
+        }
     }
     for (const storeName in allData2Store) {
         await allData2Store[storeName].clear();
