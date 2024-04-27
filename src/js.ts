@@ -970,7 +970,14 @@ async function showWordBook(s: section) {
     const rawWordList: { text: string; c: record; type?: "ignore" | "learn"; means?: number }[] = [];
     let wordList: typeof rawWordList = [];
     let l = s.text.trim().split("\n");
-    let keys = await wordsStore.keys();
+    const cards: Map<string, fsrsjs.Card> = new Map();
+    await cardsStore.iterate((v: fsrsjs.Card, k) => {
+        cards.set(k, v);
+    });
+    const words: Map<string, record> = new Map();
+    await wordsStore.iterate((v: record, k) => {
+        if (l.includes(k)) words.set(k, v);
+    });
     const ignoreWords = await getIgnoreWords();
     let matchWords = 0;
     let means1 = 0;
@@ -979,13 +986,13 @@ async function showWordBook(s: section) {
         let c: record;
         let type: "ignore" | "learn" = null;
         let means = 0;
-        if (keys.includes(i)) {
-            c = (await wordsStore.getItem(i)) as record;
+        if (words.has(i)) {
+            c = words.get(i);
             type = "learn";
             matchWords++;
             let r = 0;
             for (let j of c.means) {
-                let x = (await cardsStore.getItem(j.card_id)) as fsrsjs.Card;
+                let x = cards.get(j.card_id);
                 let retrievability = Math.pow(1 + x.elapsed_days / (9 * x.stability), -1) || 0;
                 r += retrievability;
             }
@@ -998,16 +1005,6 @@ async function showWordBook(s: section) {
         means1 += means;
         if (type) rawWordList.push({ text: t, c: c, type, means });
         else rawWordList.push({ text: t, c: c });
-    }
-    let spell = 0;
-    for (let i of l) {
-        let c = (await spellStore.getItem(i)) as fsrsjs.Card;
-        if (c) {
-            let retrievability = Math.pow(1 + c.elapsed_days / (9 * c.stability), -1) || 0;
-            spell += retrievability;
-        } else if (ignoreWords.includes(i)) {
-            spell += 1;
-        }
     }
     wordList = sortWordList(rawWordList, (await setting.getItem(WordSortPath)) || "raw");
     const search = el("input", {
@@ -1044,36 +1041,44 @@ async function showWordBook(s: section) {
             })
         );
     }
-    bookContentContainerEl.append(
+    const chartEl = el(
+        "div",
         el(
             "div",
-            { class: "words_book_top" },
+            `${String(l.length)} ${matchWords} ${means1.toFixed(1)}`,
             el(
                 "div",
-                el(
-                    "div",
-                    `${String(l.length)} ${matchWords} ${means1.toFixed(1)}`,
-                    el(
-                        "div",
-                        { class: "litle_progress" },
-                        el("div", { style: { width: (matchWords / l.length) * 100 + "%", background: "#00f" } }),
-                        el("div", { style: { width: (means1 / l.length) * 100 + "%", background: "#0f0" } })
-                    )
-                ),
-                el(
-                    "div",
-                    `拼写 ${spell.toFixed(1)}`,
-                    el(
-                        "div",
-                        { class: "litle_progress" },
-                        el("div", { style: { width: (spell / l.length) * 100 + "%", background: "#00f" } })
-                    )
-                )
-            ),
-            search,
-            sortEl
-        )
+                { class: "litle_progress" },
+                el("div", { style: { width: (matchWords / l.length) * 100 + "%", background: "#00f" } }),
+                el("div", { style: { width: (means1 / l.length) * 100 + "%", background: "#0f0" } })
+            )
+        ),
+        el("div", `拼写 加载中`, el("div", { class: "litle_progress" }))
     );
+    bookContentContainerEl.append(el("div", { class: "words_book_top" }, chartEl, search, sortEl));
+
+    requestIdleCallback(async () => {
+        let spell = 0;
+        await spellStore.iterate((v: fsrsjs.Card, k: string) => {
+            if (l.includes(k)) {
+                let retrievability = Math.pow(1 + v.elapsed_days / (9 * v.stability), -1) || 0;
+                spell += retrievability;
+            }
+        });
+        for (let i of l) if (ignoreWords.includes(i)) spell += 1;
+        chartEl.lastElementChild.remove();
+        chartEl.append(
+            el(
+                "div",
+                `拼写 ${spell.toFixed(1)}`,
+                el(
+                    "div",
+                    { class: "litle_progress" },
+                    el("div", { style: { width: (spell / l.length) * 100 + "%", background: "#00f" } })
+                )
+            )
+        );
+    });
 
     const show = vlist(
         bookContentContainerEl,
