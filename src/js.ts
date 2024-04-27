@@ -985,7 +985,8 @@ async function showWordBook(s: section) {
             let r = 0;
             for (let j of c.means) {
                 let x = cards.get(j.card_id);
-                let retrievability = Math.pow(1 + x.elapsed_days / (9 * x.stability), -1) || 0;
+                const days = Math.max((time() - x.last_review.getTime()) / (24 * 60 * 60 * 1000), 0);
+                let retrievability = Math.pow(1 + days / (9 * x.stability), -1) || 0;
                 r += retrievability;
             }
             means = r / c.means.length;
