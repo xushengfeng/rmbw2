@@ -3779,7 +3779,7 @@ reviewModeEl.onclick = () => {
 };
 
 let reviewCount = 0;
-const maxReviewCount = 50;
+const maxReviewCount = Number((await setting.getItem("review.maxCount")) || "30");
 
 async function nextDue(type: review) {
     let x = await getReviewDue(type);
@@ -3873,7 +3873,7 @@ async function showReview(x: { id: string; card: Card }, type: review) {
         reviewViewEl.innerText = "暂无复习🎉";
         return;
     }
-    if (reviewCount === maxReviewCount) {
+    if (maxReviewCount > 0 && reviewCount === maxReviewCount) {
         reviewViewEl.innerText = `连续复习了${maxReviewCount}个项目，休息一下😌\n刷新即可继续复习`;
         return;
     }
@@ -5055,6 +5055,9 @@ settingEl.append(
             },
         }),
         el("label", [readSpeedEl, "ms/word"]),
+        el("h3", "复习休息"),
+        el("input", { type: "number", path: "review.maxCount", value: String(maxReviewCount) }),
+        el("span", "0为不限制，刷新生效"),
     ])
 );
 
