@@ -1190,7 +1190,9 @@ div:has(> .translate) > :not(.translate) {
     max-height: 90dvh;
     & > div {
         width: 100%;
-        overflow: scroll;
+    }
+    & *::-webkit-scrollbar-button {
+        width: 0px;
     }
 }
 
@@ -1198,9 +1200,8 @@ div:has(> .translate) > :not(.translate) {
     display: inline-flex;
     border: solid 1px transparent;
     transition: var(--transition);
-    &:hover {
-        border: solid 1px var(--color);
-    }
+    width: 100%;
+    overflow-x: auto;
 }
 
 .cal_plot {
