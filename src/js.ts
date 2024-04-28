@@ -4648,11 +4648,14 @@ async function getIPA(word: string) {
     if (Array.isArray(r)) {
         let l: string[] = [];
         for (let i of r) {
-            l = l.concat(i.split(","));
+            l = l.concat(i.split(",").map((w) => w.trim()));
         }
         return l.join(",");
     } else {
-        return r;
+        return r
+            .split(",")
+            .map((w) => w.trim())
+            .join(",");
     }
 }
 
