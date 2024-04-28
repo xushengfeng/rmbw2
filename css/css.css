@@ -365,6 +365,7 @@ body {
     overflow-y: scroll;
     overflow-x: hidden;
     scroll-behavior: smooth;
+    outline: none;
     & > :first-child {
         display: block;
         margin: 0 auto;
