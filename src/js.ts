@@ -2151,15 +2151,12 @@ function setDicPosi(el: HTMLElement) {
     }px`;
 }
 
-let dicMeansAi: AbortController;
 let dicTransAi: AbortController;
 
 let nowDicId = "";
 
 async function showDic(id: string) {
-    dicMeansAi?.abort();
     dicTransAi?.abort();
-    dicMeansAi = null;
     dicTransAi = null;
 
     const showClass = "dic_show";
@@ -2430,7 +2427,6 @@ async function showDic(id: string) {
                 radio.name = "dic_means";
                 radio.onclick = () => {
                     if (radio.checked) {
-                        dicMeansAi?.abort();
                         changeDicMean(word, Number(i));
 
                         visit(true);
@@ -2614,9 +2610,7 @@ async function showDic(id: string) {
 
             dicEl.classList.remove(showClass);
 
-            dicMeansAi?.abort();
             dicTransAi?.abort();
-            dicMeansAi = null;
             dicTransAi = null;
         };
     }
