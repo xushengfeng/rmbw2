@@ -3874,7 +3874,7 @@ async function showReview(x: { id: string; card: Card }, type: review) {
         return;
     }
     if (reviewCount === maxReviewCount) {
-        reviewViewEl.innerText = `以连续复习了${maxReviewCount}个项目，走神休息一下吧\n稍后刷新即可继续复习`;
+        reviewViewEl.innerText = `连续复习了${maxReviewCount}个项目，休息一下😌\n刷新即可继续复习`;
         return;
     }
     const isAi = reviewAi.checked;
