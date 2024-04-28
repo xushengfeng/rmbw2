@@ -2436,6 +2436,7 @@ async function showDic(id: string) {
                         visit(true);
                     }
                     editMeanEl.style.display = "";
+                    showWord();
                 };
                 if (Number(i) === Word.index) radio.checked = true;
                 div.onclick = () => radio.click();
