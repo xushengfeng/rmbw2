@@ -3828,7 +3828,7 @@ async function getWordAiContext() {
         const f = new autoFun.def({
             input: { list: "{id:string;word:string;mean:string}[] 单词及释义列表" },
             script: [
-                "为$word及其$mean提供一个例句",
+                `为$word及其$mean提供一个${learnLang}例句`,
                 "例句的单词应该实用且简单",
                 "并用**加粗该单词$word",
                 "无需翻译或做任何解释",
@@ -3837,7 +3837,23 @@ async function getWordAiContext() {
             output: { sentences: "{id:string;sentence:string}[]" },
         });
 
-        const r = await f.run({ list: l as any }).result;
+        const x = f.run({ list: l as any });
+
+        const tipEl = el(
+            "div",
+            el("p", "正在生成AI例句……"),
+            el("button", iconEl(close_svg), {
+                onclick: () => {
+                    tipEl.remove();
+                    x.stop.abort();
+                },
+            })
+        );
+
+        putToast(tipEl, 0);
+
+        const r = await x.result;
+        tipEl.remove();
         if (Array.isArray(r)) {
             rr = r;
         } else {
