@@ -3513,6 +3513,8 @@ const reviewEl = document.getElementById("review");
 reviewBEl.onclick = () => {
     reviewEl.classList.toggle("review_show");
     reviewBEl.classList.remove(TODOMARK);
+
+    reviewCount = 0;
 };
 
 const reviewReflashEl = document.getElementById("review_reflash");
@@ -3776,8 +3778,12 @@ reviewModeEl.onclick = () => {
     reviewReflashEl.click();
 };
 
+let reviewCount = 0;
+const maxReviewCount = 50;
+
 async function nextDue(type: review) {
     let x = await getReviewDue(type);
+    reviewCount++;
     return x;
 }
 
@@ -3787,6 +3793,7 @@ reviewReflashEl.onclick = async () => {
     console.log(l);
     if (reviewAi.checked && reviewType === "word") await getWordAiContext();
     showReview(l, reviewType);
+    reviewCount = 0;
 };
 
 var spellCheckF: (text: string) => void = (text) => console.log(text);
@@ -3801,7 +3808,7 @@ async function getWordAiContext() {
     const newDue = due.word
         .toSorted((a, b) => a.card.due.getTime() - b.card.due.getTime())
         .filter((i) => i.card.state === State.Review)
-        .slice(0, 50);
+        .slice(0, maxReviewCount);
     for (let x of newDue) {
         let wordid = (await card2word.getItem(x.id)) as string;
         let wordRecord = (await wordsStore.getItem(wordid)) as record;
@@ -3848,6 +3855,10 @@ async function getWordAiContext() {
 async function showReview(x: { id: string; card: Card }, type: review) {
     if (!x) {
         reviewViewEl.innerText = "暂无复习🎉";
+        return;
+    }
+    if (reviewCount === maxReviewCount) {
+        reviewViewEl.innerText = `以连续复习了${maxReviewCount}个项目，走神休息一下吧\n稍后刷新即可继续复习`;
         return;
     }
     const isAi = reviewAi.checked;
