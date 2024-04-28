@@ -2237,9 +2237,12 @@ async function showDic(id: string) {
                 [
                     {
                         role: "system",
-                        content: `您是一个翻译引擎，只能将用户的输入文本翻译为${navigator.language}，无法解释。`,
+                        content: `You are a professional, authentic translation engine. You only return the translated text, without any explanations.`,
                     },
-                    { role: "user", content: Share.context },
+                    {
+                        role: "user",
+                        content: `Please translate into ${navigator.language} (avoid explaining the original text):\n\n${Share.context}`,
+                    },
                 ],
                 "翻译"
             );
@@ -3700,18 +3703,6 @@ async function getFutureReviewDue(days: number) {
     return { word: wordList, spell: spellList, sentence: sentenceList };
 }
 async function getReviewDue(type: review) {
-    for (let i of due.word) {
-        let card = (await cardsStore.getItem(i.id)) as Card;
-        i.card = card;
-    }
-    for (let i of due.spell) {
-        let card = (await spellStore.getItem(i.id)) as Card;
-        i.card = card;
-    }
-    for (let i of due.sentence) {
-        let card = (await cardsStore.getItem(i.id)) as Card;
-        i.card = card;
-    }
     let now = new Date().getTime();
     let wordList: { id: string; card: Card }[] = [];
     let spellList: { id: string; card: Card }[] = [];
@@ -4357,13 +4348,33 @@ async function setReviewCard(id: string, card: Card, rating: Rating, duration: n
     let now = new Date();
     setCardAction(id, now, rating, card.state, duration);
     let sCards = fsrs.repeat(card, now);
-    await cardsStore.setItem(id, sCards[rating].card);
+    const nCard = sCards[rating].card;
+    await cardsStore.setItem(id, nCard);
+
+    for (let i of due.word)
+        if (i.id === id) {
+            i.card = structuredClone(nCard);
+            return;
+        }
+    for (let i of due.sentence)
+        if (i.id === id) {
+            i.card = structuredClone(nCard);
+            break;
+        }
 }
 function setSpellCard(id: string, card: Card, rating: Rating, duration: number) {
     let now = new Date();
     setCardAction(id, now, rating, card.state, duration);
     let sCards = fsrs.repeat(card, now);
-    spellStore.setItem(id, sCards[rating].card);
+    const nCard = sCards[rating].card;
+    spellStore.setItem(id, nCard);
+
+    for (let i of due.spell)
+        if (i.id === id) {
+            i.card = structuredClone(nCard);
+            break;
+        }
+
     return String(now.getTime());
 }
 
