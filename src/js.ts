@@ -3797,14 +3797,17 @@ function clearKeyboard() {
 
 let aiContexts: { [id: string]: { text: string } } = {};
 async function getWordAiContext() {
-    const l: { word: string; mean: string }[] = [];
-    const newDue = due.word.filter((i) => i.card.state === State.Review);
+    const l: { id: string; word: string; mean: string }[] = [];
+    const newDue = due.word
+        .toSorted((a, b) => a.card.due.getTime() - b.card.due.getTime())
+        .filter((i) => i.card.state === State.Review)
+        .slice(0, 50);
     for (let x of newDue) {
         let wordid = (await card2word.getItem(x.id)) as string;
         let wordRecord = (await wordsStore.getItem(wordid)) as record;
         for (let i of wordRecord.means) {
             if (i.card_id === x.id) {
-                l.push({ word: wordRecord.word, mean: i.text });
+                l.push({ id: x.id, word: wordRecord.word, mean: i.text });
                 break;
             }
         }
@@ -3812,24 +3815,34 @@ async function getWordAiContext() {
 
     if (l.length === 0) return;
 
-    const f = new autoFun.def({
-        input: { list: "{word:string,mean:string}[] 单词及释义列表" },
-        script: ["为$word及其$expalin提供一个例句，并用**加粗该单词，无需翻译，放到$sentences"],
-        output: { sentences: "{word:string,sentence:string}[]" },
-    });
+    let rr: { id: string; word: string; sentence: string }[] = [];
 
-    const r = await f.run({ list: l as any }).result;
-    let rr: { word: string; sentence: string }[];
-    if (Array.isArray(r)) {
-        rr = r;
-    } else {
-        rr = r["sentences"];
+    try {
+        const f = new autoFun.def({
+            input: { list: "{id:string;word:string;mean:string}[] 单词及释义列表" },
+            script: [
+                "为$word及其$mean提供一个例句",
+                "例句的单词应该实用且简单",
+                "并用**加粗该单词$word",
+                "无需翻译或做任何解释",
+                "把例句放到$sentences",
+            ],
+            output: { sentences: "{id:string;sentence:string}[]" },
+        });
+
+        const r = await f.run({ list: l as any }).result;
+        if (Array.isArray(r)) {
+            rr = r;
+        } else {
+            rr = r["sentences"];
+        }
+    } catch (error) {
+        putToast(el("p", "ai错误"));
     }
 
     aiContexts = {};
-    for (let i in newDue) {
-        aiContexts[newDue[i].id] = { text: rr[i]?.sentence || "" };
-    }
+
+    rr.forEach((i) => (aiContexts[i.id] = { text: i.sentence }));
 }
 
 async function showReview(x: { id: string; card: Card }, type: review) {
