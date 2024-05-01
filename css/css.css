@@ -1255,7 +1255,7 @@ div:has(> .translate) > :not(.translate) {
     transition: var(--transition);
     padding: 4px;
     margin: 0;
-    max-width: 64px !important;
+    max-width: 120px !important;
     min-width: none !important;
     border: none;
     box-shadow: var(--box-shadow);
