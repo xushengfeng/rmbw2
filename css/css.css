@@ -858,6 +858,21 @@ div:has(> .translate) > :not(.translate) {
     }
 }
 
+.words_from {
+    display: grid;
+    grid-template-columns: auto auto 100px;
+    align-items: center;
+    column-gap: 8px;
+    & > span {
+        margin-left: auto;
+    }
+    & > div {
+        height: 8px;
+        background-color: #0f0;
+        border-radius: 16px;
+    }
+}
+
 #mark_word_list {
     --w: min(60vw, 300px);
     position: fixed;

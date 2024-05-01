@@ -1223,6 +1223,29 @@ async function showWordBookMore(wordList: { text: string; c: record; type?: "ign
             })
         )
     );
+    let bookIds: { [id: string]: number } = {};
+    wordList.forEach((w) => {
+        if (w.type === "learn") {
+            w.c.means.forEach((m) => {
+                m.contexts.forEach((c) => {
+                    const id = c.source.book;
+                    if (bookIds[id]) bookIds[id]++;
+                    else bookIds[id] = 1;
+                });
+            });
+        }
+    });
+    const l = Object.entries(bookIds).sort((a, b) => b[1] - a[1]);
+    const max = l[0][1];
+    const pEl = el("div", { class: "words_from" });
+    for (let i of l) {
+        pEl.append(
+            el("span", (await getBooksById(i[0])).name),
+            el("span", i[1]),
+            el("div", { style: { width: (i[1] / max) * 100 + "%" } })
+        );
+    }
+    d.append(el("p", "单词来源"), pEl);
 }
 
 async function textTransformer(text: string) {
