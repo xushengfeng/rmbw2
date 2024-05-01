@@ -1047,7 +1047,12 @@ async function showWordBook(s: section) {
                 el("div", { style: { width: (means1 / l.length) * 100 + "%", background: "#0f0" } })
             )
         ),
-        el("div", `拼写 加载中`, el("div", { class: "litle_progress" }))
+        el("div", `拼写 加载中`, el("div", { class: "litle_progress" })),
+        {
+            onclick: () => {
+                showWordBookMore(wordList);
+            },
+        }
     );
     bookContentContainerEl.append(el("div", { class: "words_book_top" }, chartEl, search, sortEl));
 
@@ -1191,6 +1196,33 @@ function sortWordList(
         }
     }
     return rList;
+}
+
+async function showWordBookMore(wordList: { text: string; c: record; type?: "ignore" | "learn"; means?: number }[]) {
+    const d = el("dialog") as HTMLDialogElement;
+    dialogX(d);
+    const unlearnL = wordList.filter((w) => w.means === undefined);
+    d.append(
+        el(
+            "div",
+            { style: { display: "flex", "flex-direction": "row-reverse" } },
+            el("button", iconEl(close_svg), { onclick: () => d.close() })
+        ),
+        el(
+            "div",
+            el("p", "导出未学习的单词"),
+            el("button", "导出", {
+                onclick: () => {
+                    download(unlearnL.map((i) => i.text).join("\n"), "words.txt");
+                },
+            }),
+            el("button", "复制", {
+                onclick: () => {
+                    navigator.clipboard.writeText(unlearnL.map((i) => i.text).join("\n"));
+                },
+            })
+        )
+    );
 }
 
 async function textTransformer(text: string) {
@@ -4894,17 +4926,21 @@ let uploadDataEl = el("input", "上传数据", {
 
 import { encode } from "js-base64";
 
+function download(text: string, name: string) {
+    let blob = new Blob([text], { type: "text/plain;charset=utf-8" });
+    let a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = name;
+    a.click();
+}
+
 let asyncEl = el("div", [
     el("h2", "数据"),
     el("div", [
         el("button", "导出数据", {
             onclick: async () => {
                 let data = await getAllData();
-                let blob = new Blob([data], { type: "text/plain;charset=utf-8" });
-                let a = document.createElement("a");
-                a.href = URL.createObjectURL(blob);
-                a.download = rmbwJsonName;
-                a.click();
+                download(data, rmbwJsonName);
             },
         }),
         uploadDataEl,
