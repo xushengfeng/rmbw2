@@ -2425,9 +2425,9 @@ async function showDic(id: string) {
                 let radio = document.createElement("input");
                 radio.type = "radio";
                 radio.name = "dic_means";
-                radio.onclick = () => {
+                radio.onclick = async () => {
                     if (radio.checked) {
-                        changeDicMean(word, Number(i));
+                        await changeDicMean(word, Number(i));
 
                         visit(true);
                     }
