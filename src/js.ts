@@ -4492,9 +4492,16 @@ async function renderCharts() {
         sentenceDue.push(k);
     });
     const wordDue1: number[] = [];
-    for (let k of wordDue) wordDue1.push(((await cardsStore.getItem(k)) as Card).due.getTime());
     const sentenceDue1: number[] = [];
-    for (let k of sentenceDue) sentenceDue1.push(((await cardsStore.getItem(k)) as Card).due.getTime());
+    await cardsStore.iterate((v: Card, k) => {
+        if (wordDue.includes(k)) {
+            wordDue1.push(v.due.getTime());
+            return;
+        }
+        if (sentenceDue.includes(k)) {
+            sentenceDue1.push(v.due.getTime());
+        }
+    });
 
     cardDue.append(renderCardDue("单词", wordDue1));
     cardDue.append(renderCardDue("拼写", spellDue));
