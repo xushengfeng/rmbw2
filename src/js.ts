@@ -1241,7 +1241,8 @@ async function showWordBookMore(wordList: { text: string; c: record; type?: "ign
         }
     });
     const l = Object.entries(bookIds).sort((a, b) => b[1] - a[1]);
-    const max = l[0][1];
+    const ignore = wordList.filter((w) => w.type === "ignore").length;
+    const max = Math.max(l[0][1], ignore);
     const pEl = el("div", { class: "words_from" });
     for (let i of l) {
         pEl.append(
@@ -1250,6 +1251,7 @@ async function showWordBookMore(wordList: { text: string; c: record; type?: "ign
             el("div", { style: { width: (i[1] / max) * 100 + "%" } })
         );
     }
+    pEl.append(el("span", "忽略"), el("span", ignore), el("div", { style: { width: (ignore / max) * 100 + "%" } }));
     d.append(el("p", "单词来源"), pEl);
 }
 
