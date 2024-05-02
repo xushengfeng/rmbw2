@@ -393,6 +393,7 @@ var sectionsStore = localforage.createInstance({ name: "sections" });
 
 type book = {
     name: string;
+    shortName?: string;
     id: string;
     visitTime: number;
     updateTime: number;
@@ -427,9 +428,13 @@ async function getSection(id: string) {
     return (await sectionsStore.getItem(id)) as section;
 }
 
+async function getBookShortTitle(bookId: string) {
+    return (await getBooksById(bookId)).shortName || (await getBooksById(bookId)).name;
+}
+
 async function getTitle(bookId: string, sectionN: string, x?: string) {
     let section = await getSection(sectionN);
-    const t = `${(await getBooksById(bookId)).name}${x || " - "}${section.title}`;
+    const t = `${await getBookShortTitle(bookId)}${x || " - "}${section.title}`;
     return t;
 }
 
