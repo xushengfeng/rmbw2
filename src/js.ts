@@ -1253,6 +1253,32 @@ async function showWordBookMore(wordList: { text: string; c: record; type?: "ign
     }
     pEl.append(el("span", "忽略"), el("span", ignore), el("div", { style: { width: (ignore / max) * 100 + "%" } }));
     d.append(el("p", "单词来源"), pEl);
+    d.append(
+        el("p", "添加忽略词到拼写"),
+        el("button", iconEl(add_svg), {
+            onclick: () => {
+                ignoredWordSpell(wordList.filter((w) => w.type === "ignore").map((w) => w.text));
+            },
+        })
+    );
+}
+
+async function ignoredWordSpell(list: string[]) {
+    const keys = await spellStore.keys();
+    list = list.filter((w) => !keys.includes(w));
+    if (list.length === 0) {
+        putToast(el("span", "无新添加词"));
+        return;
+    }
+    const p = await confirm(`确定添加${list[0]}等${list.length}个单词到拼写吗？`);
+    if (!p) return;
+    const now = new Date().getTime() + 1000 * 60;
+    for (let word of list) {
+        const card = createEmptyCard();
+        let sCards = fsrs.repeat(card, now)[Rating.Easy].card;
+        await spellStore.setItem(word, sCards);
+    }
+    putToast(el("span", "已添加"));
 }
 
 async function textTransformer(text: string) {
