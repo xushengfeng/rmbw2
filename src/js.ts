@@ -1063,12 +1063,14 @@ async function showWordBook(s: section) {
 
     requestIdleCallback(async () => {
         let spell = 0;
+        const nl = structuredClone(l);
         await spellStore.iterate((v: Card, k: string) => {
-            if (l.includes(k)) {
+            if (nl.includes(k)) {
                 spell += fsrs.get_retrievability(v, now, false) || 0;
+                nl[nl.indexOf(k)] = null;
             }
         });
-        for (let i of l) if (ignoreWords.includes(i)) spell += 1;
+        for (let i of nl) if (i && ignoreWords.includes(i)) spell += 1;
         chartEl.lastElementChild.remove();
         chartEl.append(
             el(
