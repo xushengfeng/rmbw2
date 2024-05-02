@@ -3557,7 +3557,7 @@ async function addIgnore(word: string) {
 }
 
 setTimeout(async () => {
-    let d = await getFutureReviewDue(0.1);
+    let d = await getFutureReviewDue(0.1, "word", "spell", "sentence");
     let c = 0;
     c += Object.keys(d.word).length + Object.keys(d.spell).length;
     if (c > 0) reviewBEl.classList.add(TODOMARK);
@@ -3707,51 +3707,43 @@ function filterWithScope(word: string, scope: string[]) {
     return !scope || scope.includes(word);
 }
 
-async function getFutureReviewDue(days: number) {
+async function getFutureReviewDue(days: number, ...types: review[]) {
     let now = new Date().getTime();
     now += days * 24 * 60 * 60 * 1000;
     now = Math.round(now);
     const wordsScope = await getWordsScope();
     let wordList: { id: string; card: Card }[] = [];
-    const wordListTemp: string[] = [];
     let spellList: { id: string; card: Card }[] = [];
     let sentenceList: { id: string; card: Card }[] = [];
-    const sentenceListTemp: string[] = [];
-    await card2word.iterate((value: string, key) => {
-        if (filterWithScope(value, wordsScope)) wordListTemp.push(key);
-    });
-    for (let key of wordListTemp) {
-        const card = (await cardsStore.getItem(key)) as Card;
+
+    const dueL: Map<string, Card> = new Map();
+    await cardsStore.iterate((card: Card, k) => {
         if (card.due.getTime() < now) {
-            wordList.push({ id: key, card: card });
-        }
-    }
-    let l: typeof wordList = [];
-    for (let x of wordList) {
-        let wordid = (await card2word.getItem(x.id)) as string;
-        let wordRecord = (await wordsStore.getItem(wordid)) as record;
-        for (let i of wordRecord.means) {
-            if (i.card_id === x.id) {
-                l.push(x);
-            }
-        }
-    }
-    wordList = l;
-    await spellStore.iterate((value: Card, key) => {
-        if (value.due.getTime() < now) {
-            if (filterWithScope(key, wordsScope)) spellList.push({ id: key, card: value });
+            dueL.set(k, card);
         }
     });
 
-    await card2sentence.iterate((value, key) => {
-        sentenceListTemp.push(key);
-    });
-    for (let key of sentenceListTemp) {
-        const card = (await cardsStore.getItem(key)) as Card;
-        if (card.due.getTime() < now) {
-            sentenceList.push({ id: key, card: card });
-        }
-    }
+    if (types.includes("word"))
+        await wordsStore.iterate((v: record, k) => {
+            if (filterWithScope(k, wordsScope)) {
+                for (let m of v.means) {
+                    if (dueL.has(m.card_id)) wordList.push({ id: m.card_id, card: dueL.get(m.card_id) });
+                }
+            }
+        });
+    if (types.includes("spell"))
+        await spellStore.iterate((value: Card, key) => {
+            if (value.due.getTime() < now) {
+                if (filterWithScope(key, wordsScope)) spellList.push({ id: key, card: value });
+            }
+        });
+
+    if (types.includes("sentence"))
+        (await card2sentence.keys()).forEach((key) => {
+            if (dueL.has(key)) {
+                sentenceList.push({ id: key, card: dueL.get(key) });
+            }
+        });
     return { word: wordList, spell: spellList, sentence: sentenceList };
 }
 async function getReviewDue(type: review) {
@@ -3813,7 +3805,8 @@ const reviewSpellEl = document.getElementById("review_spell") as HTMLInputElemen
 const reviewSentenceEl = document.getElementById("review_sentence") as HTMLInputElement;
 
 reviewWordEl.checked = true;
-reviewModeEl.onclick = () => {
+reviewModeEl.onclick = (e) => {
+    if ((e.target as HTMLElement).tagName != "INPUT") return;
     if (reviewWordEl.checked) {
         reviewType = "word";
 
@@ -3843,7 +3836,7 @@ async function nextDue(type: review) {
 }
 
 reviewReflashEl.onclick = async () => {
-    due = await getFutureReviewDue(0.1);
+    due = await getFutureReviewDue(0.1, reviewType);
     let l = await getReviewDue(reviewType);
     console.log(l);
     if (reviewAi.checked && reviewType === "word") await getWordAiContext();
