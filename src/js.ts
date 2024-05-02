@@ -3616,6 +3616,9 @@ const reviewAi = el("input", { type: "checkbox" });
 reviewReflashEl.parentElement.append(el("label", [reviewAi, "ai"]));
 const reviewScope = await sectionSelectEl();
 reviewReflashEl.parentElement.append(reviewScope.el);
+const spellIgnore = el("input", { type: "checkbox" });
+const spellIgnoreP = el("label", [spellIgnore, "排除忽略词"]);
+reviewReflashEl.parentElement.append(spellIgnoreP);
 const reviewViewEl = document.getElementById("review_view");
 reviewReflashEl.parentElement.append(
     el("button", iconEl(chart_svg), {
@@ -3733,13 +3736,14 @@ function ocrSpell() {
 
 async function getWordsScope() {
     const books = reviewScope.values();
-    if (books.length === 0) return;
+    if (books.length === 0) return { words: null, wordsExIgnore: null };
     let words: string[] = [];
     for (let book of books) {
         const w = (await getSection(book)).text.trim().split("\n");
         words.push(...w);
     }
-    return words;
+    const ignore = await getIgnoreWords();
+    return { words, wordsExIgnore: words.filter((i) => !ignore.includes(i)) };
 }
 
 function filterWithScope(word: string, scope: string[]) {
@@ -3750,7 +3754,8 @@ async function getFutureReviewDue(days: number, ...types: review[]) {
     let now = new Date().getTime();
     now += days * 24 * 60 * 60 * 1000;
     now = Math.round(now);
-    const wordsScope = await getWordsScope();
+    const ws = await getWordsScope();
+    const wordsScope = ws.words;
     let wordList: { id: string; card: Card }[] = [];
     let spellList: { id: string; card: Card }[] = [];
     let sentenceList: { id: string; card: Card }[] = [];
@@ -3770,12 +3775,14 @@ async function getFutureReviewDue(days: number, ...types: review[]) {
                 }
             }
         });
-    if (types.includes("spell"))
+    if (types.includes("spell")) {
+        const scope = spellIgnore.checked ? ws.wordsExIgnore : wordsScope;
         await spellStore.iterate((value: Card, key) => {
             if (value.due.getTime() < now) {
-                if (filterWithScope(key, wordsScope)) spellList.push({ id: key, card: value });
+                if (filterWithScope(key, scope)) spellList.push({ id: key, card: value });
             }
         });
+    }
 
     if (types.includes("sentence"))
         (await card2sentence.keys()).forEach((key) => {
@@ -3844,6 +3851,7 @@ const reviewSpellEl = document.getElementById("review_spell") as HTMLInputElemen
 const reviewSentenceEl = document.getElementById("review_sentence") as HTMLInputElement;
 
 reviewWordEl.checked = true;
+spellIgnoreP.style.display = "none";
 reviewModeEl.onclick = (e) => {
     if ((e.target as HTMLElement).tagName != "INPUT") return;
     if (reviewWordEl.checked) {
@@ -3860,6 +3868,11 @@ reviewModeEl.onclick = (e) => {
         reviewType = "spell";
 
         spellInputEl.style.display = "";
+    }
+    if (reviewType === "spell") {
+        spellIgnoreP.style.display = "";
+    } else {
+        spellIgnoreP.style.display = "none";
     }
 
     reviewReflashEl.click();
@@ -4198,23 +4211,25 @@ async function showSpellReview(x: { id: string; card: Card }) {
         }
     };
     let context = el("div");
-    let r = (await wordsStore.getItem(word)) as record;
     context.append(el("div", await getIPA(word)));
-    context.append(
-        el("button", iconEl(pen_svg), {
-            onclick: () => {
-                addP(r.note || "", word, null, null, async (text) => {
-                    let mean = text.trim();
-                    if (r) {
-                        r["note"] = mean;
-                        wordsStore.setItem(word, r);
-                    }
-                });
-            },
-        })
-    );
-    for (let i of r.means) {
-        context.append(el("div", await disCard2(i)));
+    let r = (await wordsStore.getItem(word)) as record;
+    if (r) {
+        context.append(
+            el("button", iconEl(pen_svg), {
+                onclick: () => {
+                    addP(r.note || "", word, null, null, async (text) => {
+                        let mean = text.trim();
+                        if (r) {
+                            r["note"] = mean;
+                            wordsStore.setItem(word, r);
+                        }
+                    });
+                },
+            })
+        );
+        for (let i of r.means) {
+            context.append(el("div", await disCard2(i)));
+        }
     }
     const div = document.createElement("div");
     div.append(input, wordEl, context);
@@ -4506,7 +4521,7 @@ document.body.append(plotEl);
 async function renderCharts() {
     plotEl.innerHTML = "";
     const cardDue = el("div");
-    const wordsScope = await getWordsScope();
+    const wordsScope = (await getWordsScope()).words;
     const wordDue: string[] = [];
     const spellDue: number[] = [];
     const sentenceDue: string[] = [];
