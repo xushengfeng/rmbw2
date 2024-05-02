@@ -364,7 +364,6 @@ body {
     padding: 1rem 24px calc(100dvh - var(--size0));
     overflow-y: scroll;
     overflow-x: hidden;
-    scroll-behavior: smooth;
     outline: none;
     & > :first-child {
         display: block;

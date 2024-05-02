@@ -2196,8 +2196,12 @@ nextMarkEl.onclick = async () => {
     showDic(id);
 };
 function jumpToMark(start: number) {
+    bookContentContainerEl.style.scrollBehavior = "smooth";
     let span = bookContentEl.querySelector(`span[data-s="${start}"]`);
     bookContentContainerEl.scrollTop = span.getBoundingClientRect().top - bookContentEl.getBoundingClientRect().top;
+    bookContentContainerEl.onscrollend = () => {
+        bookContentContainerEl.style.scrollBehavior = "";
+    };
     setTimeout(() => {
         span.classList.remove("flash_word");
     }, 1200);
