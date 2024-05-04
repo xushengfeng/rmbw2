@@ -1161,6 +1161,10 @@ async function showWordBook(s: section) {
                                 )
                             );
                         }
+                    else {
+                        const onlineList = await onlineDicL(item.text);
+                        p.append(onlineList);
+                    }
                 }
                 show();
             };
@@ -2739,11 +2743,7 @@ async function showDicEl(mainTextEl: HTMLTextAreaElement, word: string, x: numbe
     } else {
         localDic.innerText = "无词典";
     }
-    const onlineList = el("div");
-    let l: onlineDicsType = await setting.getItem(onlineDicsPath);
-    for (let i of l) {
-        onlineList.append(el("a", i.name, { href: i.url.replace("%s", word), target: "_blank" }));
-    }
+    const onlineList = await onlineDicL(word);
     onlineList.onclick = () => {
         div.close();
     };
@@ -2768,6 +2768,16 @@ async function showDicEl(mainTextEl: HTMLTextAreaElement, word: string, x: numbe
     div.style.top = `min(100dvh - 400px, ${y}px - 400px)`;
     dialogX(div);
 }
+
+async function onlineDicL(word: string) {
+    const onlineList = el("div", { class: "online_dic" });
+    let l: onlineDicsType = await setting.getItem(onlineDicsPath);
+    for (let i of l) {
+        onlineList.append(el("a", i.name, { href: i.url.replace("%s", word), target: "_blank" }));
+    }
+    return onlineList;
+}
+
 async function disCard2(m: record["means"][0]) {
     let div = document.createDocumentFragment();
     let disEl = el("p");

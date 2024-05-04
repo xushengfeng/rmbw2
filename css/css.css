@@ -800,14 +800,6 @@ div:has(> .translate) > :not(.translate) {
     box-sizing: border-box;
     font-family: var(--font-family);
     font-size: var(--font-size);
-    & > :nth-child(1) {
-        display: flex;
-        gap: 4px;
-        overflow-x: scroll;
-        & > a {
-            color: var(--color);
-        }
-    }
     & > :nth-child(2) {
         display: flex;
         gap: 4px;
@@ -837,6 +829,15 @@ div:has(> .translate) > :not(.translate) {
     }
     &::backdrop {
         background: #0001;
+    }
+}
+
+.online_dic {
+    display: flex;
+    gap: 4px;
+    overflow-x: scroll;
+    & > a {
+        color: var(--color);
     }
 }
 
