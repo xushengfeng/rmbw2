@@ -1111,39 +1111,39 @@ async function showWordBook(s: section) {
                     })
                 );
             };
-            if (item.type === "learn") {
-                p.onclick = () => {
-                    const p = tmpDicEl;
-                    p.showPopover();
-                    async function show() {
-                        p.innerHTML = "";
-                        const books = await wordBooksByWord(item.text);
-                        const booksEl = el("div");
-                        for (let i of books) {
-                            const bookN = (await getBooksById(i.book)).name;
-                            const s = (await getSection(i.section)).title;
-                            booksEl.append(el("span", s, { title: bookN }));
-                        }
-                        p.append(booksEl);
-                        if (item.c.note) {
-                            const note = el("p");
-                            note.innerText = item.c.note;
-                            p.append(
-                                el(
-                                    "div",
-                                    el("button", iconEl(pen_svg), {
-                                        onclick: () => {
-                                            addP(item.c.note, item.text, null, null, (text) => {
-                                                item.c.note = text.trim();
-                                                wordsStore.setItem(item.text, item.c);
-                                                show();
-                                            });
-                                        },
-                                    }),
-                                    note
-                                )
-                            );
-                        }
+            p.onclick = () => {
+                const p = tmpDicEl;
+                p.showPopover();
+                async function show() {
+                    p.innerHTML = "";
+                    const books = await wordBooksByWord(item.text);
+                    const booksEl = el("div");
+                    for (let i of books) {
+                        const bookN = (await getBooksById(i.book)).name;
+                        const s = (await getSection(i.section)).title;
+                        booksEl.append(el("span", s, { title: bookN }));
+                    }
+                    p.append(booksEl);
+                    if (item.c?.note) {
+                        const note = el("p");
+                        note.innerText = item.c.note;
+                        p.append(
+                            el(
+                                "div",
+                                el("button", iconEl(pen_svg), {
+                                    onclick: () => {
+                                        addP(item.c.note, item.text, null, null, (text) => {
+                                            item.c.note = text.trim();
+                                            wordsStore.setItem(item.text, item.c);
+                                            show();
+                                        });
+                                    },
+                                }),
+                                note
+                            )
+                        );
+                    }
+                    if (item.c)
                         for (let i of item.c.means) {
                             p.append(
                                 el(
@@ -1161,10 +1161,9 @@ async function showWordBook(s: section) {
                                 )
                             );
                         }
-                    }
-                    show();
-                };
-            }
+                }
+                show();
+            };
             return p;
         }
     );
