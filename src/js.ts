@@ -1490,7 +1490,7 @@ async function showNormalBook(book: book, s: section) {
                 span.innerText = await textTransformer(word.text);
                 for (let i in s.words) {
                     let index = s.words[i].index;
-                    if (index[0] <= word.start && word.end <= index[1]) {
+                    if (index[0] <= word.start && word.end <= index[1] && s.words[i].type === "word") {
                         span.classList.add(MARKWORD);
                     }
                 }
@@ -2929,7 +2929,7 @@ async function saveCard(v: {
     let section = await getSection(sectionId);
     for (let i in section.words) {
         let index = section.words[i].index;
-        if (index[0] <= v.index.start && v.index.end <= index[1]) {
+        if (index[0] <= v.index.start && v.index.end <= index[1] && section.words[i].type === "word") {
             return i;
         }
     }
