@@ -560,7 +560,6 @@ body {
     }
     & > .books {
         display: grid;
-        grid-template-columns: repeat(4, 1fr);
         gap: 8px;
         overflow: scroll;
         padding: 4px;
@@ -594,6 +593,15 @@ body {
                 max-width: 100px;
                 overflow-wrap: break-word;
             }
+        }
+        @media (min-width: calc(100px * 6 + 8px * 5 + 2em + 6px)) {
+            grid-template-columns: repeat(5, 1fr);
+        }
+        @media (max-width: calc(100px * 6 + 8px * 5 + 2em + 6px)) {
+            grid-template-columns: repeat(5, 1fr);
+        }
+        @media (max-width: calc(100px * 5 + 8px * 4 + 2em + 6px)) {
+            grid-template-columns: repeat(4, 1fr);
         }
         @media (max-width: calc(100px * 4 + 8px * 3 + 2em + 6px)) {
             grid-template-columns: repeat(3, 1fr);
