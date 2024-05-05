@@ -4859,6 +4859,16 @@ if (!(await setting.getItem(onlineDicsPath))) {
     await setting.setItem(onlineDicsPath, defaultOnlineDic);
 }
 
+const moreOnlineDicEl = el("select", el("option", "添加更多"));
+for (let i of defaultOnlineDic) {
+    moreOnlineDicEl.append(el("option", i.name, { value: i.name }));
+}
+moreOnlineDicEl.onchange = () => {
+    const i = defaultOnlineDic.find((i) => i.name === moreOnlineDicEl.value);
+    if (!i) return;
+    onlineDicsEl.append(onlineDicItem(i.name, i.url, i.lan));
+};
+
 settingEl.append(
     el(
         "div",
@@ -4879,7 +4889,8 @@ settingEl.append(
                     addOnlineDic2El.value = "";
                     addOnlineDic3El.value = "";
                 },
-            })
+            }),
+            moreOnlineDicEl
         )
     )
 );
