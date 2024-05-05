@@ -94,10 +94,6 @@ navigator?.storage?.persist();
 
 document.body.translate = false;
 
-let learnLang = "en";
-
-document.getElementById("main").lang = learnLang;
-
 const menuEl = document.getElementById("menu");
 let willShowMenu = false;
 function showMenu(x: number, y: number) {
@@ -4019,7 +4015,7 @@ async function getWordAiContext() {
         const f = new autoFun.def({
             input: { list: "{id:string;word:string;mean:string}[] 单词及释义列表" },
             script: [
-                `为$word及其$mean提供一个${learnLang}例句`,
+                `为$word及其$mean提供一个原语言的例句`,
                 "例句的单词应该实用且简单",
                 "并用**加粗该单词$word",
                 "无需翻译或做任何解释",
