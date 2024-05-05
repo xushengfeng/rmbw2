@@ -3674,12 +3674,13 @@ async function autoIgnore() {
     const willShowWords: string[] = [];
     const properN1 = properN.map((i) => i.toLocaleLowerCase());
     for (const w of newWords) {
-        if (w.length <= 1) continue;
         if (w.match(/[0-9]/)) continue;
+        if (w.trim() === "") continue;
+        if (w === "") continue;
+        if (w.match(/[`~!@#$%^&*()_\-+=<>?:"{}|,.\/;'\\[\]·！#￥（——）：；“”‘’、，|《。》？、【】[\]]/)) continue;
         if (properN1.includes(w)) continue;
-        if (w.includes("’") || w.includes("'")) continue;
         const r = lemmatizer(w);
-        if (!hasLentWords.includes(r) && !willShowWords.includes(r) && r.length > 1) {
+        if (!hasLentWords.includes(r) && !willShowWords.includes(r)) {
             wordsWithRoot.push({ src: w, show: r });
             willShowWords.push(r);
         }
