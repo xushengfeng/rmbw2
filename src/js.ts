@@ -2824,8 +2824,9 @@ async function showDic(id: string) {
 }
 
 async function showDicEl(mainTextEl: HTMLTextAreaElement, word: string, x: number, y: number) {
+    const lan = bookLan;
     let list = el("div");
-    list.lang = bookLan;
+    list.lang = lan;
     function showDic(id: string) {
         list.innerHTML = "";
         let dic = dics[id].get(word);
@@ -2880,8 +2881,10 @@ async function showDicEl(mainTextEl: HTMLTextAreaElement, word: string, x: numbe
 }
 
 async function onlineDicL(word: string) {
+    const lan = bookLan;
     const onlineList = el("div", { class: "online_dic" });
     let l: onlineDicsType = await setting.getItem(onlineDicsPath);
+    l = l.filter((i) => i.lan === lan);
     for (let i of l) {
         onlineList.append(el("a", i.name, { href: i.url.replace("%s", word), target: "_blank" }));
     }
@@ -4805,14 +4808,15 @@ import Sortable from "sortablejs";
 
 const onlineDicsEl = el("ul", { style: { "list-style-type": "none" } });
 const onlineDicsPath = "dics.online";
-type onlineDicsType = { name: string; url: string }[];
+type onlineDicsType = { name: string; url: string; lan: string }[];
 
-function onlineDicItem(name: string, url: string) {
+function onlineDicItem(name: string, url: string, lan: string) {
     const li = el(
         "li",
         el("span", { class: "sort_handle" }, "::"),
         el("input", { value: name }),
         el("input", { value: url }),
+        el("input", { value: lan }),
         el("button", iconEl(close_svg), {
             onclick: () => {
                 li.remove();
@@ -4825,7 +4829,7 @@ function onlineDicItem(name: string, url: string) {
 async function showOnlineDics() {
     const l = ((await setting.getItem(onlineDicsPath)) || []) as onlineDicsType;
     for (let i of l) {
-        onlineDicsEl.append(onlineDicItem(i.name, i.url));
+        onlineDicsEl.append(onlineDicItem(i.name, i.url, i.lan));
     }
     onlineDicsEl.oninput = () => {
         saveSortOnlineDics();
@@ -4838,17 +4842,21 @@ async function showOnlineDics() {
 
 const addOnlineDic1El = el("input");
 const addOnlineDic2El = el("input");
+const addOnlineDic3El = el("input");
+
+const defaultOnlineDic: onlineDicsType = [
+    {
+        name: "剑桥",
+        url: "https://dictionary.cambridge.org/zhs/%E8%AF%8D%E5%85%B8/%E8%8B%B1%E8%AF%AD-%E6%B1%89%E8%AF%AD-%E7%AE%80%E4%BD%93/%s",
+        lan: "en",
+    },
+    { name: "柯林斯", url: "https://www.collinsdictionary.com/zh/dictionary/english-chinese/%s", lan: "en" },
+    { name: "韦氏", url: "https://www.merriam-webster.com/dictionary/%s", lan: "en" },
+    { name: "词源在线", url: "https://www.etymonline.com/cn/word/%s", lan: "en" },
+];
 
 if (!(await setting.getItem(onlineDicsPath))) {
-    await setting.setItem(onlineDicsPath, [
-        {
-            name: "剑桥",
-            url: "https://dictionary.cambridge.org/zhs/%E8%AF%8D%E5%85%B8/%E8%8B%B1%E8%AF%AD-%E6%B1%89%E8%AF%AD-%E7%AE%80%E4%BD%93/%s",
-        },
-        { name: "柯林斯", url: "https://www.collinsdictionary.com/zh/dictionary/english-chinese/%s" },
-        { name: "韦氏", url: "https://www.merriam-webster.com/dictionary/%s" },
-        { name: "词源在线", url: "https://www.etymonline.com/cn/word/%s" },
-    ]);
+    await setting.setItem(onlineDicsPath, defaultOnlineDic);
 }
 
 settingEl.append(
@@ -4861,11 +4869,15 @@ settingEl.append(
             "div",
             addOnlineDic1El,
             addOnlineDic2El,
+            addOnlineDic3El,
             el("button", iconEl(add_svg), {
                 onclick: () => {
-                    onlineDicsEl.append(onlineDicItem(addOnlineDic1El.value, addOnlineDic2El.value));
+                    onlineDicsEl.append(
+                        onlineDicItem(addOnlineDic1El.value, addOnlineDic2El.value, addOnlineDic3El.value)
+                    );
                     addOnlineDic1El.value = "";
                     addOnlineDic2El.value = "";
+                    addOnlineDic3El.value = "";
                 },
             })
         )
@@ -4880,7 +4892,8 @@ async function saveSortOnlineDics() {
     for (let i of l) {
         const name = i.querySelectorAll("input")[0].value;
         const url = i.querySelectorAll("input")[1].value;
-        dl.push({ name, url });
+        const lan = i.querySelectorAll("input")[2].value;
+        dl.push({ name, url, lan });
     }
     await setting.setItem(onlineDicsPath, dl);
 }
