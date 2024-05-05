@@ -4845,6 +4845,7 @@ const addOnlineDic2El = el("input");
 const addOnlineDic3El = el("input");
 
 const defaultOnlineDic: onlineDicsType = [
+    { name: "汉典", url: "https://www.zdic.net/hans/%s", lan: "cn" },
     {
         name: "剑桥",
         url: "https://dictionary.cambridge.org/zhs/%E8%AF%8D%E5%85%B8/%E8%8B%B1%E8%AF%AD-%E6%B1%89%E8%AF%AD-%E7%AE%80%E4%BD%93/%s",
@@ -4867,6 +4868,7 @@ moreOnlineDicEl.onchange = () => {
     const i = defaultOnlineDic.find((i) => i.name === moreOnlineDicEl.value);
     if (!i) return;
     onlineDicsEl.append(onlineDicItem(i.name, i.url, i.lan));
+    saveSortOnlineDics();
 };
 
 settingEl.append(
@@ -4888,6 +4890,7 @@ settingEl.append(
                     addOnlineDic1El.value = "";
                     addOnlineDic2El.value = "";
                     addOnlineDic3El.value = "";
+                    saveSortOnlineDics();
                 },
             }),
             moreOnlineDicEl
