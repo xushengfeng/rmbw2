@@ -327,6 +327,8 @@ const nextMarkEl = el("button", iconEl(right_svg));
 const toSentenceEl = el("button", iconEl(sentence_svg));
 const hideDicEl = el("button", iconEl(close_svg));
 const dicWordEl = el("input", { alt: "单词" });
+const lessWordEl = el("span", "-");
+const moreWordEl = el("span", "+");
 const moreWordsEl = el("div", { class: "more_words" });
 const ttsWordEl = el("button", { style: { width: "auto", height: "auto", "font-size": "inherit" } });
 const ttsContextEl = el("button", iconEl(recume_svg));
@@ -346,6 +348,7 @@ dicEl.append(
     el("div", { style: { display: "flex" } }, [lastMarkEl, nextMarkEl, toSentenceEl, ttsContextEl, noteEl, hideDicEl]),
     el("div", { style: { display: "flex", "flex-wrap": "wrap", "align-items": "center" } }, [
         dicWordEl,
+        el("div", lessWordEl, moreWordEl),
         ttsWordEl,
         moreWordsEl,
     ]),
@@ -1487,7 +1490,7 @@ async function showNormalBook(book: book, s: section) {
                 span.innerText = await textTransformer(word.text);
                 for (let i in s.words) {
                     let index = s.words[i].index;
-                    if (index[0] === word.start && index[1] === word.end) {
+                    if (index[0] <= word.start && word.end <= index[1]) {
                         span.classList.add(MARKWORD);
                     }
                 }
@@ -2257,7 +2260,7 @@ async function showMarkList() {
                             let record = (await wordsStore.getItem(i.s.id)) as record;
                             record = rmWord(record, i.id);
                             await clearWordMean(record);
-                            rmStyle(i.s.index[0]);
+                            rmStyle(i.s.index);
                         }
                         delete section.words[i.id];
                         sectionsStore.setItem(sectionId, section);
@@ -2437,7 +2440,7 @@ async function showDic(id: string) {
         if (isSentence) return;
         if (!(await confirm("这将删除此单词，并将语境转为句子"))) return;
         isSentence = true;
-        rmStyle(wordx.index[0]);
+        rmStyle(wordx.index);
         const sentenceCardId = uuid();
         let contextStart = wordx.index[0] - Share.sourceIndex[0];
         let contextEnd = wordx.index[1] + (Share.context.length - Share.sourceIndex[1]);
@@ -2511,6 +2514,35 @@ async function showDic(id: string) {
             await changeDicMean(newWord, -1);
             search(newWord);
         };
+
+        lessWordEl.onclick = () => {
+            adjustWord("-");
+        };
+        moreWordEl.onclick = () => {
+            adjustWord("+");
+        };
+
+        async function adjustWord(type: "+" | "-") {
+            const sEl = document.querySelector(`span[data-s="${wordx.index[0]}"]`);
+            const eEl = document.querySelector(`span[data-e="${wordx.index[1]}"]`);
+            let e = wordx.index[1];
+            if (!(type === "-" && sEl === eEl)) {
+                const minE = Number(sEl.getAttribute("data-s"));
+                const maxE = wordx.cIndex[1];
+                const nextEl = type === "-" ? eEl.previousElementSibling : eEl.nextElementSibling;
+                const nextE = Number(nextEl.getAttribute("data-e"));
+                e = Math.max(minE, Math.min(maxE, nextE));
+            }
+
+            rmStyle(wordx.index);
+            addStyle([wordx.index[0], e]);
+
+            const word = editText.slice(wordx.index[0], e);
+            section.words[id].id = word;
+            section.words[id].index = [wordx.index[0], e];
+            await sectionsStore.setItem(sectionId, section);
+            showDic(id);
+        }
 
         ttsWordEl.innerText = await getIPA(Word.word);
 
@@ -2894,7 +2926,7 @@ async function saveCard(v: {
     let section = await getSection(sectionId);
     for (let i in section.words) {
         let index = section.words[i].index;
-        if (v.index.start === index[0] && v.index.end === index[1]) {
+        if (index[0] <= v.index.start && v.index.end <= index[1]) {
             return i;
         }
     }
@@ -2952,8 +2984,15 @@ async function clearWordMean(record: record) {
     }
 }
 
-function rmStyle(start: number) {
-    bookContentEl.querySelector(`span[data-s="${start}"]`)?.classList?.remove(MARKWORD);
+function addStyle(x: [number, number]) {
+    for (let i = x[0]; i < x[1]; i++) {
+        bookContentEl.querySelector(`span[data-s="${i}"]`)?.classList?.add(MARKWORD);
+    }
+}
+function rmStyle(x: [number, number]) {
+    for (let i = x[0]; i < x[1]; i++) {
+        bookContentEl.querySelector(`span[data-s="${i}"]`)?.classList?.remove(MARKWORD);
+    }
 }
 
 function setRecordMean(record: record, id: string, f: (c: record["means"][0]) => void) {
