@@ -554,16 +554,23 @@ body {
 #books {
     & > :first-child {
         gap: 4px;
-        & > div {
-            padding: 4px;
+        & > * {
+            cursor: pointer;
         }
     }
-    & > .books {
+    & > :not(:first-child) > :first-child > div {
+        display: flex;
+        gap: 4px;
+        & > * {
+            cursor: pointer;
+        }
+    }
+    & .books {
         display: grid;
         gap: 8px;
         overflow: scroll;
         padding: 4px;
-        max-height: 80dvh;
+        max-height: 70dvh;
         & > div:not(:has(> .icon)) {
             display: flex;
             flex-direction: column;

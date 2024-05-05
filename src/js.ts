@@ -2,7 +2,7 @@
 
 import { el, text, setStyle } from "redom";
 
-import localforage from "localforage";
+import localforage, { key } from "localforage";
 import { extendPrototype } from "localforage-setitems";
 extendPrototype(localforage);
 
@@ -271,13 +271,13 @@ const DICDIALOG = "dic_dialog";
 const SELECTEDITEM = "selected_item";
 
 const booksEl = document.getElementById("books") as HTMLDialogElement;
-const localBookEl = el("div", { class: "books" });
-const onlineBookEl = el("div", { class: "books", style: { display: "none" } });
+const localBookEl = el("div");
+const onlineBookEl = el("div", { style: { display: "none" } });
 booksEl.append(
     el("div", { style: { display: "flex" } }, [
         el("div", "本地书籍", {
             onclick: () => {
-                showBooks();
+                showLocalBooks();
                 booksEl.classList.remove("show_online_book");
             },
         }),
@@ -544,6 +544,33 @@ async function showOnlineBooks(
     }[]
 ) {
     onlineBookEl.innerHTML = "";
+    let grid: HTMLElement;
+
+    const l = selectBook(books, async (list) => {
+        grid?.remove();
+        grid = await showOnlineBooksL(list);
+        l.after(grid);
+    });
+
+    onlineBookEl.append(l);
+}
+
+async function showOnlineBooksL(
+    books: {
+        name: string;
+        id: string;
+        type: "word" | "text" | "package";
+        updateTime: number;
+        sections: {
+            id: string;
+            title: string;
+            path: string;
+        }[];
+        language: string;
+        cover?: string;
+    }[]
+) {
+    const grid = el("div", { class: "books" });
     for (let book of books) {
         let url = "";
         if (book.cover) url = await getBookCover(book.cover);
@@ -623,15 +650,55 @@ async function showOnlineBooks(
                             const b = await (await fetch(src)).blob();
                             coverCache.setItem(book.id, b);
                         }
-                        showBooks();
+                        showLocalBooks();
                     })
                     .catch((error) => {
                         console.error(error);
                     });
             }
         };
-        onlineBookEl.append(div);
+        grid.append(div);
     }
+    return grid;
+}
+
+function selectBook<BOOK extends { type: "word" | "text" | "package"; language: string }>(
+    books: BOOK[],
+    f: (list: BOOK[]) => void
+) {
+    const typeEl = el("div");
+    const lanEl = el("div");
+
+    const tl = Object.keys(Object.groupBy(books, ({ type }) => type));
+    const ll = Object.keys(Object.groupBy(books, ({ language }) => language));
+
+    const x: { type: number | string; lan: number | string } = { type: 0, lan: 0 };
+
+    const map = { word: "词典", text: "文本", package: "包" };
+    function crl(l: string[], text: (text: string) => string, pel: HTMLElement, key: keyof typeof x) {
+        if (l.length > 1)
+            for (let i of [0, ...l]) {
+                pel.append(
+                    el("span", typeof i === "number" ? "全部" : text(i), {
+                        onclick: () => {
+                            x[key] = i;
+                            run();
+                        },
+                    })
+                );
+            }
+    }
+    crl(tl, (t) => map[t], typeEl, "type");
+    crl(ll, (t) => t, lanEl, "lan");
+
+    function run() {
+        let l = books.filter((b) => typeof x.type === "number" || b.type === x.type);
+        l = l.filter((b) => typeof x.lan === "number" || b.language === x.lan);
+        f(l);
+    }
+    run();
+
+    return el("div", typeEl, lanEl);
 }
 
 async function saveLanguagePackage(lan: string, section: { id: string; path: string }[]) {
@@ -694,7 +761,7 @@ let nowBook = {
 let isWordBook = false;
 let bookLan = ((await setting.getItem("lan.learn")) as string) || "en";
 
-showBooks();
+showLocalBooks();
 setBookS();
 
 async function setSectionTitle() {
@@ -770,14 +837,28 @@ function bookEl(name: string, coverUrl?: string) {
     return bookIEl;
 }
 
-async function showBooks() {
-    localBookEl.innerHTML = "";
-    localBookEl.append(addBookEl);
+async function showLocalBooks() {
     let bookList: book[] = [];
     await bookshelfStore.iterate((book: book) => {
         bookList.push(book);
     });
     bookList = bookList.toSorted((a, b) => b.visitTime - a.visitTime);
+
+    localBookEl.innerHTML = "";
+    let grid: HTMLElement;
+
+    const l = selectBook(bookList, async (list) => {
+        grid?.remove();
+        grid = await showLocalBooksL(list);
+        grid.insertAdjacentElement("afterbegin", addBookEl);
+        l.after(grid);
+    });
+
+    localBookEl.append(l);
+}
+
+async function showLocalBooksL(bookList: book[]) {
+    const grid = el("div", { class: "books" });
     for (let book of bookList) {
         let bookIEl: HTMLDivElement;
         if (book.cover) {
@@ -796,7 +877,7 @@ async function showBooks() {
         } else {
             bookIEl = bookEl(book.name);
         }
-        localBookEl.append(bookIEl);
+        grid.append(bookIEl);
         const id = book.id;
         bookIEl.onclick = async () => {
             const book = await getBooksById(id);
@@ -854,6 +935,7 @@ async function showBooks() {
             showMenu(e.clientX, e.clientY);
         };
     }
+    return grid;
 }
 function showBook(book: book) {
     nowBook.book = book.id;
