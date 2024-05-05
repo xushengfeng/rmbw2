@@ -398,6 +398,7 @@ type book = {
     visitTime: number;
     updateTime: number;
     type: "word" | "text";
+    wordSplit?: "grapheme" | "word";
     cover?: string;
     author?: string;
     sections: string[];
@@ -857,14 +858,14 @@ async function showBooks() {
 function showBook(book: book) {
     nowBook.book = book.id;
     nowBook.sections = book.sections[book.lastPosi];
-    showBookSections(book.sections);
-    showBookContent(book.sections[book.lastPosi]);
+    showBookSections(book);
+    showBookContent(book, book.sections[book.lastPosi]);
     setBookS();
     isWordBook = book.type === "word";
     bookLan = book.language;
 }
-async function showBookSections(sections: book["sections"]) {
-    sections = structuredClone(sections);
+async function showBookSections(book: book) {
+    const sections = structuredClone(book.sections);
     bookSectionsEl.innerHTML = "";
     vlist(bookSectionsEl, sections, { iHeight: 24, paddingTop: 16, paddingLeft: 16 }, async (i) => {
         let sEl = el("div");
@@ -884,10 +885,9 @@ async function showBookSections(sections: book["sections"]) {
             sEl.classList.add(SELECTEDITEM);
 
             nowBook.sections = sections[i];
-            showBookContent(sections[i]);
+            showBookContent(book, sections[i]);
             setBookS();
             if (nowBook.book === "0") return;
-            let book = await getBooksById(nowBook.book);
             book.lastPosi = Number(i);
             bookshelfStore.setItem(nowBook.book, book);
         };
@@ -922,7 +922,7 @@ let contentP: string[] = [];
 
 import Fuse from "fuse.js";
 
-async function showBookContent(id: string) {
+async function showBookContent(book: book, id: string) {
     let s = await getSection(id);
     if (id === wordSection) {
         let l: string[] = [];
@@ -958,7 +958,7 @@ async function showBookContent(id: string) {
     contentP = [];
 
     if (isWordBook) await showWordBook(s);
-    else await showNormalBook(s);
+    else await showNormalBook(book, s);
 
     setScrollPosi(bookContentContainerEl, contentScrollPosi);
 
@@ -1296,9 +1296,9 @@ async function textTransformer(text: string) {
 let wordFreq: { [word: string]: number } = {};
 let properN: string[] = [];
 
-async function showNormalBook(s: section) {
-    const segmenter = new Segmenter(bookLan, { granularity: "word" });
-    const osL = Array.from(new Segmenter(bookLan, { granularity: "sentence" }).segment(s.text));
+async function showNormalBook(book: book, s: section) {
+    const segmenter = new Segmenter(book.language, { granularity: book.wordSplit || "word" });
+    const osL = Array.from(new Segmenter(book.language, { granularity: "sentence" }).segment(s.text));
     const sL: Intl.SegmentData[] = [];
     const sx = ["Mr.", "Mrs.", "Ms.", "Miss.", "Dr.", "Prof.", "Capt.", "Lt.", "Sgt.", "Rev.", "Sr.", "Jr.", "St."].map(
         (i) => i + " "
@@ -1785,7 +1785,7 @@ async function changeEdit(b: boolean) {
                 await sectionsStore.setItem(sectionId, section);
                 if (nowBook.book != "0") await bookshelfStore.setItem(nowBook.book, book);
             }
-            showBookContent(sectionId);
+            showBookContent(book, sectionId);
         }
         changeEditEl.innerHTML = icon(pen_svg);
     }
