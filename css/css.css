@@ -107,7 +107,7 @@ body {
 button {
     outline: none;
     color: var(--color);
-    font-family: var(--main-font);
+    font-family: sans-serif;
     border-radius: var(--border-radius);
     background-color: var(--bg);
     height: var(--height);
