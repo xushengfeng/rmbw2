@@ -261,6 +261,7 @@ function vlist<ItemType>(
 }
 
 /************************************main */
+const DICSHOW = "dic_show";
 const MARKWORD = "mark_word";
 const TMPMARKWORD = "tmp_mark_word";
 const TRANSLATE = "translate";
@@ -1537,7 +1538,8 @@ async function showNormalBook(book: book, s: section) {
                 });
                 if (
                     span.classList.contains(MARKWORD) ||
-                    highFreq.includes(lemmatizer(span.innerText.toLocaleLowerCase()))
+                    highFreq.includes(lemmatizer(span.innerText.toLocaleLowerCase())) ||
+                    dicEl.classList.contains(DICSHOW)
                 ) {
                     showDic(id);
                 }
@@ -2273,7 +2275,7 @@ async function showMarkList() {
                         sectionsStore.setItem(sectionId, section);
                         remove();
 
-                        if (i.id === nowDicId && dicEl.classList.contains("dic_show")) hideDicEl.click();
+                        if (i.id === nowDicId && dicEl.classList.contains(DICSHOW)) hideDicEl.click();
                     },
                 })
             );
@@ -2344,8 +2346,7 @@ async function showDic(id: string) {
     dicTransAi?.abort();
     dicTransAi = null;
 
-    const showClass = "dic_show";
-    dicEl.classList.add(showClass);
+    dicEl.classList.add(DICSHOW);
 
     nowDicId = id;
 
@@ -2822,7 +2823,7 @@ async function showDic(id: string) {
             startEl.remove();
             endEl.remove();
 
-            dicEl.classList.remove(showClass);
+            dicEl.classList.remove(DICSHOW);
 
             dicTransAi?.abort();
             dicTransAi = null;
