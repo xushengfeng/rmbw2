@@ -719,8 +719,8 @@ div:has(> .translate) > :not(.translate) {
     display: flex;
     flex-direction: column;
     & > div {
-        border-radius: 0.4rem;
-        padding: 4px;
+        border-radius: 0.4em;
+        padding: 0.4em;
         border: solid 1px transparent;
         &:hover {
             border: dashed 1px var(--color);
@@ -730,6 +730,17 @@ div:has(> .translate) > :not(.translate) {
         }
         & > input[type="radio"] {
             display: none;
+        }
+        & p {
+            margin: 0;
+        }
+        & > :nth-child(2) > p {
+            margin-block-end: 0.4em;
+        }
+        & > .dic_sen {
+            display: flex;
+            flex-direction: column;
+            gap: 0.2em;
         }
     }
 }
