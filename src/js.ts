@@ -4722,10 +4722,9 @@ function renderCardDue(text: string, data: number[]) {
     const pc = el("div", { class: "oneD_plot" });
     const now = time();
     const zoom = 1 / (timeD.h(1) / 10);
-    let _max = -Infinity,
+    let _max = now + timeD.d(7),
         _min = Infinity;
     data.concat([now]).forEach((d) => {
-        if (d > _max) _max = d;
         if (d < _min) _min = d;
     });
     let count = 0;
