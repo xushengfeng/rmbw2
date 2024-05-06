@@ -269,6 +269,7 @@ const DICSENTENCE = "dic_sentence";
 const HIDEMEANS = "hide_means";
 const TODOMARK = "to_visit";
 const TODOMARK1 = "to_visit1";
+const UNREAD = "unread";
 const NOTEDIALOG = "note_dialog";
 const AIDIALOG = "ai_dialog";
 const DICDIALOG = "dic_dialog";
@@ -961,12 +962,8 @@ async function showBookSections(book: book) {
         let s = await getSection(sections[i]);
         sEl.innerText = sEl.title = s.title || `章节${Number(i) + 1}`;
         if (nowBook.sections === sections[i]) sEl.classList.add(SELECTEDITEM);
-        for (let i in s.words) {
-            if (!s.words[i].visit) {
-                sEl.classList.add(TODOMARK);
-                break;
-            }
-        }
+        if (Object.values(s.words).some((i) => !i.visit)) sEl.classList.add(TODOMARK);
+        if (Object.values(s.words).length === 0) sEl.classList.add(UNREAD);
         sEl.onclick = async () => {
             sEl.classList.remove(TODOMARK);
 
