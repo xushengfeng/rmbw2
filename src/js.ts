@@ -77,6 +77,13 @@ function time() {
     return new Date().getTime();
 }
 
+const timeD = {
+    s: (n: number) => n * 1000,
+    m: (n: number) => n * timeD.s(60),
+    h: (n: number) => n * timeD.m(60),
+    d: (n: number) => n * timeD.h(24),
+};
+
 if ("serviceWorker" in navigator) {
     if (import.meta.env.PROD) {
         navigator.serviceWorker.register("/sw.js");
@@ -1358,7 +1365,7 @@ async function ignoredWordSpell(list: string[]) {
     }
     const p = await confirm(`确定添加${list[0]}等${list.length}个单词到拼写吗？`);
     if (!p) return;
-    const now = new Date().getTime() + 1000 * 60;
+    const now = time() + timeD.m(1);
     for (let word of list) {
         const card = createEmptyCard();
         let sCards = fsrs.repeat(card, now)[Rating.Easy].card;
@@ -3502,11 +3509,7 @@ let checkVisit = {
 function checkVisitAll(section: section) {
     const l = Object.values(section.words);
     const visitAll = l.every((i) => i.visit);
-    if (
-        visitAll &&
-        l.length > 1 &&
-        (nowBook.sections != checkVisit.section || time() - checkVisit.time > 1000 * 60 * 5)
-    ) {
+    if (visitAll && l.length > 1 && (nowBook.sections != checkVisit.section || time() - checkVisit.time > timeD.m(5))) {
         alert("🎉恭喜学习完！\n可以在侧栏添加忽略词\n再读一遍文章，检查是否读懂\n最后进行词句复习");
         checkVisit.section = nowBook.sections;
         checkVisit.time = time();
@@ -3887,7 +3890,7 @@ function filterWithScope(word: string, scope: string[]) {
 
 async function getFutureReviewDue(days: number, ...types: review[]) {
     let now = new Date().getTime();
-    now += days * 24 * 60 * 60 * 1000;
+    now += timeD.d(days);
     now = Math.round(now);
     const ws = await getWordsScope();
     const wordsScope = ws.words;
@@ -4718,7 +4721,7 @@ async function renderCharts() {
 function renderCardDue(text: string, data: number[]) {
     const pc = el("div", { class: "oneD_plot" });
     const now = time();
-    const zoom = 1 / ((1000 * 60 * 60) / 10);
+    const zoom = 1 / (timeD.h(1) / 10);
     let _max = -Infinity,
         _min = Infinity;
     data.concat([now]).forEach((d) => {
@@ -4748,8 +4751,8 @@ function renderCardDue(text: string, data: number[]) {
             if (x < nowx) count++;
         });
         l(nowx, "#f00");
-        l((now + 1000 * 60 * 60 - min) * zoom, "#00f");
-        l((now + 1000 * 60 * 60 * 24 - min) * zoom, "#00f");
+        l((now + timeD.h(1) - min) * zoom, "#00f");
+        l((now + timeD.d(1) - min) * zoom, "#00f");
         pc.append(canvas);
     }
     const f = el("div");
@@ -4767,13 +4770,13 @@ function renderCal(year: number, data: Date[]) {
     const max = Math.max(...Object.values(count));
     const div = el("div");
     const firstDate = new Date(year, 0, 1);
-    const zero2first = (firstDate.getDay() + 1) * 24 * 60 * 60 * 1000;
+    const zero2first = (firstDate.getDay() + 1) * timeD.d(1);
     let s_date = new Date(firstDate.getTime() - zero2first);
     const f = el("div", { class: "cal_plot" });
     const title = el("div");
     for (let x = 1; x <= 53; x++) {
         for (let y = 1; y <= 7; y++) {
-            s_date = new Date(s_date.getTime() + 24 * 60 * 60 * 1000);
+            s_date = new Date(s_date.getTime() + timeD.d(1));
             const v = (count[s_date.toDateString()] ?? 0) / max;
             const item = el("div");
             item.title = `${s_date.toLocaleDateString()}  ${count[s_date.toDateString()] ?? 0}`;
