@@ -4767,7 +4767,13 @@ function renderCal(year: number, data: Date[]) {
         if (count[id]) count[id]++;
         else count[id] = 1;
     }
-    const max = Math.max(...Object.values(count));
+    const rl = Object.values(count).toSorted((a, b) => a - b);
+    const l: number[] = [];
+    const width = Math.floor(rl.length / 5);
+    for (let i = 0; i < rl.length; i += width) {
+        l.push(rl[i]);
+    }
+    l.push(rl.at(-1) + 1);
     const div = el("div");
     const firstDate = new Date(year, 0, 1);
     const zero2first = (firstDate.getDay() + 1) * timeD.d(1);
@@ -4777,10 +4783,14 @@ function renderCal(year: number, data: Date[]) {
     for (let x = 1; x <= 53; x++) {
         for (let y = 1; y <= 7; y++) {
             s_date = new Date(s_date.getTime() + timeD.d(1));
-            const v = (count[s_date.toDateString()] ?? 0) / max;
+            const v = count[s_date.toDateString()] ?? 0;
             const item = el("div");
-            item.title = `${s_date.toLocaleDateString()}  ${count[s_date.toDateString()] ?? 0}`;
-            if (v) item.style.backgroundColor = `color-mix(in srgb-linear, #9be9a8, #216e39 ${v * 100}%)`;
+            item.title = `${s_date.toLocaleDateString()}  ${v}`;
+            if (v) {
+                const nvi = l.findIndex((i) => i > v) - 1;
+                const nv = 20 * nvi + 20 * ((v - l[nvi]) / (l[nvi + 1] - l[nvi])); // 赋分算法，但平均分割区间
+                item.style.backgroundColor = `color-mix(in srgb-linear, #9be9a8, #216e39 ${nv}%)`;
+            }
             if (s_date.toDateString() === new Date().toDateString()) {
                 item.style.borderWidth = "2px";
                 title.innerText = item.title;
