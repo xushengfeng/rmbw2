@@ -261,6 +261,8 @@ body {
             overflow: hidden;
             text-overflow: ellipsis;
             max-width: calc(100% - 1rem * 2);
+            cursor: pointer;
+            user-select: none;
         }
     }
 }
