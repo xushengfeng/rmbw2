@@ -5014,7 +5014,45 @@ async function getAllData() {
             l[storeName][k] = v;
         });
     }
-    return JSON.stringify(l, null, 2);
+
+    return jsonStringify(l, (path) => {
+        if (path.length === 4 && path[0] === "sections" && path[2] === "words") {
+            return true;
+        }
+        if (path.length === 3 && !(path[0] === "sections" && path[2] === "words")) {
+            return true;
+        }
+        if (path[0] === "actions" && path.length === 2) {
+            return true;
+        }
+    });
+}
+
+function jsonStringify(value: any, unBr: (path: string[]) => boolean) {
+    let l = [];
+
+    function w(value: any, l: string[]) {
+        let str: string[] = [];
+        for (let i in value) {
+            let path = l.concat(i);
+            const v = value[i];
+            if (typeof v === "object" && v?.constructor === Object) {
+                let isBr = !unBr(path);
+                if (isBr) {
+                    str.push(`"${i}":${w(value[i], path)}`);
+                } else {
+                    str.push(`"${i}":${JSON.stringify(value[i])}`);
+                }
+            } else {
+                let v = value[i];
+                if (typeof v === "undefined") v = null;
+                str.push(`"${i}":${JSON.stringify(v)}`);
+            }
+        }
+        if (str.length === 0) return "{}";
+        return `{\n${str.join(",\n")}\n}`;
+    }
+    return w(value, l);
 }
 
 let isSetData = false;
