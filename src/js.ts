@@ -3525,12 +3525,8 @@ var card2sentence = localforage.createInstance({ name: "word", storeName: "card2
 
 var cardActionsStore = localforage.createInstance({ name: "word", storeName: "actions" });
 function setCardAction(cardId: string, time: Date, rating: Rating, state: State, duration: number) {
-    cardActionsStore.setItem(String(time.getTime()), {
-        cardId,
-        rating,
-        state,
-        duration,
-    });
+    let o = rating ? [cardId, rating, state, duration] : [cardId];
+    cardActionsStore.setItem(String(time.getTime()), o);
 }
 function newCardAction(id: string) {
     setCardAction(id, new Date(), null, null, null);
@@ -4693,24 +4689,14 @@ async function renderCharts() {
 
     const newCard: Date[] = [];
     const reviewCard: Date[] = [];
-    await cardActionsStore.iterate(
-        (
-            v: {
-                cardId: string;
-                rating: Rating;
-                state: State;
-                duration: number;
-            },
-            k
-        ) => {
-            const date = new Date(Number(k));
-            if (!v.rating) {
-                newCard.push(date);
-            } else {
-                reviewCard.push(date);
-            }
+    await cardActionsStore.iterate((v: [string] | [string, Rating, State, number], k) => {
+        const date = new Date(Number(k));
+        if (!v[1]) {
+            newCard.push(date);
+        } else {
+            reviewCard.push(date);
         }
-    );
+    });
     const cal = renderCal(2024, newCard);
     const cal1 = renderCal(2024, reviewCard);
     plotEl.append(el("div", [el("h2", "新卡片"), cal, el("h2", "已复习"), cal1]));
@@ -5015,6 +5001,16 @@ async function getAllData() {
         });
     }
 
+    for (let key of ["cards", "spell"]) {
+        for (let i in l[key]) {
+            let r = l[key][i] as Card;
+            let nr = structuredClone(r) as any;
+            nr.due = r.due.getTime();
+            nr.last_review = r.last_review.getTime();
+            l[key][i] = nr;
+        }
+    }
+
     return jsonStringify(l, (path) => {
         if (path.length === 4 && path[0] === "sections" && path[2] === "words") {
             return true;
@@ -5311,12 +5307,12 @@ async function getCSV() {
     const spChar = ",";
     let text: string[] = [["card_id", "review_time", "review_rating", "review_state", "review_duration"].join(spChar)];
     await cardActionsStore.iterate((v, k) => {
-        if (!v["rating"]) return;
-        const card_id = v["cardId"];
+        if (!v[1]) return;
+        const card_id = v[0];
         const review_time = Number(k);
-        const review_rating = v["rating"];
-        const review_state = v["state"];
-        const review_duration = v["duration"];
+        const review_rating = v[1];
+        const review_state = v[2];
+        const review_duration = v[3];
         let row = [card_id, review_time, review_rating, review_state, review_duration].join(spChar);
         text.push(row);
     });
