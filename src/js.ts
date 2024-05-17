@@ -323,8 +323,10 @@ const bookNavEl = document.getElementById("book_nav");
 bookNavEl.append(bookNameEl, addSectionEL, bookSectionsEl);
 let bookContentEl = document.getElementById("book_content");
 const bookContentContainerEl = bookContentEl.parentElement;
-const translateAll = document.getElementById("translate_all");
-translateAll.onclick = translateContext;
+const paghMore = document.getElementById("pagh_more");
+paghMore.onclick = () => {
+    bookContentEl.classList.toggle("show_p_more");
+};
 const changeStyleEl = document.getElementById("change_style");
 const changeStyleBar = el("div", { popover: "auto", class: "change_style_bar" });
 document.body.append(changeStyleBar);
@@ -1471,20 +1473,6 @@ async function showNormalBook(book: book, s: section) {
             continue;
         }
 
-        let pText = editText.slice(paragraph[0]?.[0]?.start ?? null, paragraph.at(-1)?.at(-1)?.end ?? null);
-
-        if (pText) {
-            let playEl = el("div", iconEl(recume_svg), { "data-play": String(contentP.length) });
-            pel.append(playEl);
-            pel.append(
-                el("div", iconEl(more_svg), {
-                    "data-play-l": String(contentP.length),
-                })
-            );
-        }
-
-        contentP.push(pText);
-
         for (const si in paragraph) {
             const sen = paragraph[si];
             const senEl = el("span");
@@ -1512,15 +1500,6 @@ async function showNormalBook(book: book, s: section) {
                 if (!t && i != "0" && word.text.match(/^[A-Z]/)) properN.push(word.text);
             }
             senEl.onclick = async (ev) => {
-                let playEl = ev.target as HTMLElement;
-                if (playEl.getAttribute("data-play")) {
-                    pTTS(Number(playEl.getAttribute("data-play")));
-                    return;
-                }
-                if (playEl.getAttribute("data-play-l")) {
-                    showLisent(contentP[Number(playEl.getAttribute("data-play-l"))]);
-                    return;
-                }
                 const span = ev.target as HTMLSpanElement;
                 if (span.tagName != "SPAN") return;
                 if (span.getAttribute("data-w") === "false") return;
@@ -1557,6 +1536,39 @@ async function showNormalBook(book: book, s: section) {
             };
             pel.append(senEl);
         }
+
+        const moreEl = el("div", { class: "p_more" });
+
+        let pText = editText.slice(paragraph[0]?.[0]?.start ?? null, paragraph.at(-1)?.at(-1)?.end ?? null);
+        if (pText) {
+            const i = contentP.length;
+            let playEl = el("div", iconEl(recume_svg), {
+                "data-play": "",
+                onclick: () => {
+                    pTTS(i);
+                },
+            });
+            moreEl.append(playEl);
+            moreEl.append(
+                el("div", iconEl(more_svg), {
+                    "data-play-l": "",
+                    onclick: () => {
+                        showLisent(contentP.at(i));
+                    },
+                })
+            );
+        }
+        contentP.push(pText);
+
+        moreEl.append(
+            el("div", iconEl(translate_svg), {
+                onclick: () => {
+                    translateContext(pel);
+                },
+            })
+        );
+
+        pel.append(moreEl);
 
         bookContentEl.append(pel);
     }
@@ -1629,9 +1641,9 @@ async function showLisent(text: string) {
     dialogX(d);
 }
 
-async function translateContext() {
-    let filter = bookContentEl.querySelector("p > span[data-trans]") ? [] : await transCache.keys();
-    let l = Array.from(bookContentEl.querySelectorAll("p > span")) as HTMLSpanElement[];
+async function translateContext(p: HTMLElement) {
+    let filter = p.querySelector(":scope > span[data-trans]") ? [] : await transCache.keys();
+    let l = Array.from(p.querySelectorAll(":scope > span")) as HTMLSpanElement[];
     for (let i in l) {
         const r = (await transCache.getItem(l[i].innerText.trim())) as string;
         if (r) l[i].setAttribute("data-trans", r);

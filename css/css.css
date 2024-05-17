@@ -401,29 +401,22 @@ body {
                 &::after {
                     content: attr(data-trans);
                     display: block;
+                    opacity: 0.5;
                 }
             }
         }
 
-        & > :has(:is([data-play], [data-play-l])) {
-            position: relative;
-            &:hover {
-                > :is([data-play], [data-play-l]) {
-                    opacity: 1;
-                }
+        & > * > .p_more {
+            display: none;
+            opacity: 0.2;
+            & > div {
+                display: inline-block;
             }
         }
-        & > * > :is([data-play], [data-play-l]) {
-            position: absolute;
-            opacity: 0.2;
-            transition: var(--transition);
-        }
-        & > * > [data-play] {
-            left: calc(-1 * var(--size0));
-        }
-        & > * > [data-play-l] {
-            left: calc(-1 * var(--size0));
-            top: var(--size0);
+    }
+    & > .show_p_more {
+        & .p_more {
+            display: inline-block;
         }
     }
     & > textarea {
