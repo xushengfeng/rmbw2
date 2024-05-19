@@ -5017,8 +5017,8 @@ async function getAllData() {
         for (let i in l[key]) {
             let r = l[key][i] as Card;
             let nr = structuredClone(r) as any;
-            nr.due = r.due.getTime();
-            nr.last_review = r.last_review.getTime();
+            nr.due = r.due?.getTime() || 0;
+            nr.last_review = r.last_review?.getTime() || 0;
             l[key][i] = nr;
         }
     }
