@@ -965,7 +965,7 @@ async function showBookSections(book: book) {
         sEl.innerText = sEl.title = s.title || `章节${Number(i) + 1}`;
         if (nowBook.sections === sections[i]) sEl.classList.add(SELECTEDITEM);
         if (Object.values(s.words).some((i) => !i.visit)) sEl.classList.add(TODOMARK);
-        if (Object.values(s.words).length === 0) sEl.classList.add(UNREAD);
+        if (book.type === "text" && Object.values(s.words).length === 0) sEl.classList.add(UNREAD);
         sEl.onclick = async () => {
             sEl.classList.remove(TODOMARK);
 
