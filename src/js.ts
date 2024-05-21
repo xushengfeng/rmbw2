@@ -1354,7 +1354,7 @@ async function showWordBookMore(wordList: { text: string; c: record; type?: "ign
                     wordList
                         .filter((w) => w.type === "ignore")
                         .map((w) => w.text)
-                        .filter((w) => w.includes(" "))
+                        .filter((w) => !w.includes(" "))
                 );
             },
         })
