@@ -1220,7 +1220,7 @@ async function showWordBook(s: section) {
                                 "div",
                                 el("button", iconEl(pen_svg), {
                                     onclick: () => {
-                                        addP(item.c.note, item.text, null, null, (text) => {
+                                        addP(item.c.note, item.text, null, null, null, (text) => {
                                             item.c.note = text.trim();
                                             wordsStore.setItem(item.text, item.c);
                                             show();
@@ -1238,7 +1238,7 @@ async function showWordBook(s: section) {
                                     "div",
                                     el("button", iconEl(pen_svg), {
                                         onclick: () => {
-                                            addP(i.text, item.text, null, null, (text) => {
+                                            addP(i.text, item.text, null, null, null, (text) => {
                                                 i.text = text.trim();
                                                 wordsStore.setItem(item.text, item.c);
                                                 show();
@@ -2217,6 +2217,7 @@ type record = {
             source: { book: string; sections: string; id: string }; // 原句通过对比计算
         }[];
         card_id: string;
+        tags?: bOp;
     }[];
     note?: string;
 };
@@ -2226,6 +2227,66 @@ type record2 = {
     source: { book: string; sections: string; id: string }; // 原句通过对比计算
     note?: string;
 };
+
+enum tOp {
+    and,
+    or,
+    not,
+}
+
+type bOp = [tOp, ...(string | bOp)[]];
+type bOp2 = [tOp, ...string[]];
+type TAG = { c: string; b?: bOp; t: number; n: number };
+type tagMap = { [key: string]: TAG };
+
+function tag(tags: tagMap) {
+    const x = {
+        get: (id: string) => tags[id],
+        getCid: (c: string) => {
+            for (let i in tags) {
+                if (tags[i].c === c) {
+                    return i;
+                }
+            }
+            return null;
+        },
+        getAll: (b: bOp2) => {
+            function w(b: bOp) {
+                const l: bOp = [b[0]];
+                const ids = b.slice(1) as string[];
+                for (let id of ids) {
+                    const t = x.get(id);
+                    if (t.b) {
+                        l.push(w(t.b));
+                    } else {
+                        l.push(id);
+                    }
+                }
+                return l as bOp2;
+            }
+            return w(b);
+        },
+        simplily: (b: bOp) => {
+            return b;
+        },
+        new: (c: string, b?: bOp) => {
+            const id = uuid();
+            const t = time();
+            tags[id] = { c, t, n: 1 };
+            if (b) tags[id]["b"] = b;
+            return tags;
+        },
+        getList: () => {
+            const l: [string, TAG][] = [];
+            for (let i in tags) {
+                l.push([i, tags[i]]);
+            }
+            l.sort((a, b) => a[1].t - b[1].t);
+            return l;
+        },
+    };
+    return x;
+}
 
 const markListBarEl = document.getElementById("mark_word_list");
 const markListEl = el("div");
@@ -2580,7 +2641,7 @@ async function showDic(id: string) {
             }
 
         addMeanEl.onclick = () => {
-            addP("", Word.word, Word.context.text, Word.context.index, async (text, sentence, index) => {
+            addP("", Word.word, Word.context.text, Word.context.index, Word.tag, async (text, sentence, index) => {
                 let mean = text.trim();
                 Word.text = mean;
                 if (mean) {
@@ -2602,7 +2663,7 @@ async function showDic(id: string) {
         };
 
         editMeanEl.onclick = () => {
-            addP(Word.text, Word.word, Word.context.text, Word.context.index, async (text, sentence, index) => {
+            addP(Word.text, Word.word, Word.context.text, Word.context.index, null, async (text, sentence, index) => {
                 let mean = text.trim();
                 Word.text = mean;
                 if (mean) {
@@ -2626,7 +2687,7 @@ async function showDic(id: string) {
         };
 
         noteEl.onclick = () => {
-            addP(Word.record?.note || "", Word.word, null, null, async (text) => {
+            addP(Word.record?.note || "", Word.word, null, null, null, async (text) => {
                 let mean = text.trim();
                 if (Word.record) {
                     Word.record["note"] = mean;
@@ -2689,7 +2750,7 @@ async function showDic(id: string) {
 
         noteEl.onclick = async () => {
             let r = (await card2sentence.getItem(wordx.id)) as record2;
-            addP(r.note || "", null, r.text, null, async (text) => {
+            addP(r.note || "", null, r.text, null, null, async (text) => {
                 let mean = text.trim();
                 r["note"] = mean;
                 await card2sentence.setItem(wordx.id, r);
@@ -3038,12 +3099,65 @@ function setRecordContext(record: record, id: string, f: (c: record["means"][0][
     return record;
 }
 
+async function tagsEl(b: bOp) {
+    const t = tag(await tagsStore.getItem("0"));
+    function item(id: string, c: string) {
+        return el("div", { "data-id": id }, c);
+    }
+    function oEl(b: bOp) {
+        const l = el("div");
+        const classMap = {};
+        const type = b[0];
+        const x = b.slice(1) as (string | bOp)[];
+        for (let i of x) {
+            if (typeof i === "string") {
+                const r = t.get(i);
+                const tel = item(i, r.c);
+                l.append(tel);
+            } else {
+                l.append(oEl(i));
+            }
+        }
+        const add = el("button", "+");
+        add.onclick = () => {
+            const d = el("dialog") as HTMLDialogElement;
+            const l = el("div");
+            let list = t.getList();
+            vlist(l, list, { iHeight: 24 }, (i, v) => {
+                const e = el("span");
+                e.onclick = () => {
+                    add.before(item(v[0], v[1].c));
+                    d.close();
+                };
+                return e;
+            });
+            const si = el("input");
+            const search = el(
+                "div",
+                si,
+                el("button", "+", {
+                    onclick: () => {
+                        if (si.value) t.new(si.value);
+                    },
+                })
+            );
+            d.append(l, search);
+            dialogX(d);
+        };
+        l.append(add);
+        return l;
+    }
+    const l = oEl(b);
+    return l;
+}
+
 function addP(
     text: string,
     word: string,
     sentence: string,
     index: record["means"][0]["contexts"][0]["index"],
-    f: (text: string, sentence?: string, index?: [number, number]) => void
+    tags: bOp,
+    f: (text: string, sentence?: string, index?: [number, number], tags?: bOp) => void
 ) {
     let p = el("p");
     p.lang = bookLan;
@@ -3086,6 +3200,11 @@ function addP(
             okEl.click();
         }
     };
+    console.log(tags);
+
+    if (tags) {
+        tagsEl(tags).then((e) => textEl.after(e));
+    }
     dialogX(div);
 }
 
@@ -3531,6 +3650,7 @@ let fsrs = new FSRS(generatorParameters(fsrsW?.length === 17 ? { w: fsrsW } : {}
 
 var cardsStore = localforage.createInstance({ name: "word", storeName: "cards" });
 var wordsStore = localforage.createInstance({ name: "word", storeName: "words" });
+var tagsStore = localforage.createInstance({ name: "word", storeName: "tags" });
 var card2word = localforage.createInstance({ name: "word", storeName: "card2word" });
 var spellStore = localforage.createInstance({ name: "word", storeName: "spell" });
 var card2sentence = localforage.createInstance({ name: "word", storeName: "card2sentence" });
@@ -3585,6 +3705,7 @@ type flatWord = {
     text: string;
     card_id: record["means"][0]["card_id"];
     context: record["means"][0]["contexts"][0];
+    tag: bOp;
 };
 
 function flatWordCard(record: record, id: string) {
@@ -3593,6 +3714,7 @@ function flatWordCard(record: record, id: string) {
         card_id: "",
         text: "",
         context: { index: [NaN, NaN], source: { book: "", sections: "", id: "" }, text: "" },
+        tag: [tOp.and],
     };
     if (!record) return Word;
     for (let n in record.means) {
@@ -3603,6 +3725,7 @@ function flatWordCard(record: record, id: string) {
                 Word.card_id = i.card_id;
                 Word.text = i.text;
                 Word.context = j;
+                if (i.tags) Word.tag = i.tags;
                 return Word;
             }
         }
@@ -4361,7 +4484,7 @@ async function showSpellReview(x: { id: string; card: Card }) {
         context.append(
             el("button", iconEl(pen_svg), {
                 onclick: () => {
-                    addP(r.note || "", word, null, null, async (text) => {
+                    addP(r.note || "", word, null, null, null, async (text) => {
                         let mean = text.trim();
                         if (r) {
                             r["note"] = mean;
