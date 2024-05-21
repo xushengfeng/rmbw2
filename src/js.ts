@@ -1576,6 +1576,8 @@ async function showNormalBook(book: book, s: section) {
     for (let i in wordFreq) {
         if (wordFreq[i] >= 3) highFreq.push(i);
     }
+
+    bookContentContainerEl.lang = book.language;
 }
 
 let contentScrollPosi = 0;
