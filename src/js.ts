@@ -1350,7 +1350,12 @@ async function showWordBookMore(wordList: { text: string; c: record; type?: "ign
         el("p", "添加忽略词到拼写"),
         el("button", iconEl(add_svg), {
             onclick: () => {
-                ignoredWordSpell(wordList.filter((w) => w.type === "ignore").map((w) => w.text));
+                ignoredWordSpell(
+                    wordList
+                        .filter((w) => w.type === "ignore")
+                        .map((w) => w.text)
+                        .filter((w) => w.includes(" "))
+                );
             },
         })
     );
