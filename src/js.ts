@@ -139,7 +139,12 @@ function interModal(message?: string, iel?: HTMLElement, cancel?: boolean) {
     dialog.showModal();
     return new Promise((re: (name: string | boolean) => void, rj) => {
         okEl.onclick = () => {
-            re(iel ? iel.querySelector("input").value : true);
+            re(
+                (iel as HTMLInputElement)?.value ||
+                    iel?.querySelector("input")?.value ||
+                    iel?.querySelector("textarea")?.value ||
+                    true
+            );
             dialog.close();
         };
         cancelEl.onclick = () => {
@@ -1368,8 +1373,10 @@ async function ignoredWordSpell(list: string[]) {
         putToast(el("span", "无新添加词"));
         return;
     }
-    const p = await confirm(`确定添加${list[0]}等${list.length}个单词到拼写吗？`);
+    const iel = el("textarea", { value: list.sort().join("\n"), style: { height: "200px" } });
+    const p = (await interModal("确定添加以下单词到拼写吗？", iel, true)) as string;
     if (!p) return;
+    list = p.split("\n");
     const now = time() - timeD.d(5);
     for (let word of list) {
         const card = createEmptyCard(now);
