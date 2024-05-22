@@ -4429,6 +4429,14 @@ async function showSpellReview(x: { id: string; card: Card }) {
     let spellResult: "none" | "right" | "wrong" = "none";
     let showTime = time();
     play(word);
+    function matchCapital(input: string, word: string) {
+        const l: string[] = [];
+        for (let i = 0; i < input.length; i++) {
+            if (word[i].match(/[A-Z]/)) l.push(input[i].toLocaleUpperCase());
+            else l.push(input[i]);
+        }
+        return l.join("");
+    }
     function inputContent(inputWord: string) {
         input.innerHTML = "";
         if (x.card.state === State.New) {
@@ -4440,6 +4448,7 @@ async function showSpellReview(x: { id: string; card: Card }) {
         }
     }
     spellCheckF = async (inputWord: string) => {
+        inputWord = matchCapital(inputWord, word);
         inputContent(inputWord);
         wordEl.innerHTML = "";
         div.classList.remove(SHOWSENWORD);
