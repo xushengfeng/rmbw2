@@ -1370,9 +1370,9 @@ async function ignoredWordSpell(list: string[]) {
     }
     const p = await confirm(`确定添加${list[0]}等${list.length}个单词到拼写吗？`);
     if (!p) return;
-    const now = time() + timeD.m(1);
+    const now = time() - timeD.d(5);
     for (let word of list) {
-        const card = createEmptyCard();
+        const card = createEmptyCard(now);
         let sCards = fsrs.repeat(card, now)[Rating.Easy].card;
         await spellStore.setItem(word, sCards);
     }
@@ -3890,9 +3890,13 @@ const reviewAi = el("input", { type: "checkbox" });
 reviewReflashEl.parentElement.append(el("label", [reviewAi, "ai"]));
 const reviewScope = await sectionSelectEl();
 reviewReflashEl.parentElement.append(reviewScope.el);
-const spellIgnore = el("input", { type: "checkbox" });
-const spellIgnoreP = el("label", [spellIgnore, "排除忽略词"]);
-reviewReflashEl.parentElement.append(spellIgnoreP);
+const spellIgnore = el(
+    "select",
+    el("option", "全部", { value: "all" }),
+    el("option", "排除忽略词", { value: "exIgnore" }),
+    el("option", "仅忽略词", { value: "ignore" })
+);
+reviewReflashEl.parentElement.append(spellIgnore);
 const reviewViewEl = document.getElementById("review_view");
 
 let reviewSortType: "正常" | "学习" | "紧急" = "正常";
@@ -3990,6 +3994,7 @@ let spellWriteCtx: CanvasRenderingContext2D;
 reviewEl.onpointerdown = (e) => {
     if (!(reviewType === "spell" && reviewEl.classList.contains("review_show"))) return;
     if (e.clientY > document.querySelector(".spell_input").getBoundingClientRect().bottom) return;
+    if (e.clientY < document.querySelector(".spell_input").getBoundingClientRect().top) return;
     console.log(e);
     e.preventDefault();
     spellWriteE = e;
@@ -4023,17 +4028,18 @@ function ocrSpell() {
 
 async function getWordsScope() {
     const books = reviewScope.values();
-    if (books.length === 0) return { words: null, wordsExIgnore: null };
-    let words: string[] = [];
+    const ignore = await getIgnoreWords();
+    if (books.length === 0) return { words: null, ignore };
+    const words: string[] = [];
     for (let book of books) {
         const w = (await getSection(book)).text.trim().split("\n");
         words.push(...w);
     }
-    const ignore = await getIgnoreWords();
-    return { words, wordsExIgnore: words.filter((i) => !ignore.includes(i)) };
+    return { words, ignore: words.filter((i) => ignore.includes(i)) };
 }
 
-function filterWithScope(word: string, scope: string[]) {
+function filterWithScope(word: string, scope: string[], exScope?: string[]) {
+    if (exScope?.includes(word)) return false;
     return !scope || scope.includes(word);
 }
 
@@ -4063,10 +4069,14 @@ async function getFutureReviewDue(days: number, ...types: review[]) {
             }
         });
     if (types.includes("spell")) {
-        const scope = spellIgnore.checked ? ws.wordsExIgnore : wordsScope;
         await spellStore.iterate((value: Card, key) => {
             if (value.due.getTime() < now) {
-                if (filterWithScope(key, scope)) spellList.push({ id: key, card: value });
+                if (spellIgnore.value === "all")
+                    if (filterWithScope(key, wordsScope)) spellList.push({ id: key, card: value });
+                if (spellIgnore.value === "exIgnore")
+                    if (filterWithScope(key, wordsScope, ws.ignore)) spellList.push({ id: key, card: value });
+                if (spellIgnore.value === "ignore")
+                    if (filterWithScope(key, ws.ignore)) spellList.push({ id: key, card: value });
             }
         });
     }
@@ -4142,7 +4152,7 @@ const reviewSpellEl = document.getElementById("review_spell") as HTMLInputElemen
 const reviewSentenceEl = document.getElementById("review_sentence") as HTMLInputElement;
 
 reviewWordEl.checked = true;
-spellIgnoreP.style.display = "none";
+spellIgnore.style.display = "none";
 reviewModeEl.onclick = (e) => {
     if ((e.target as HTMLElement).tagName != "INPUT") return;
     if (reviewWordEl.checked) {
@@ -4161,9 +4171,9 @@ reviewModeEl.onclick = (e) => {
         spellInputEl.style.display = "";
     }
     if (reviewType === "spell") {
-        spellIgnoreP.style.display = "";
+        spellIgnore.style.display = "";
     } else {
-        spellIgnoreP.style.display = "none";
+        spellIgnore.style.display = "none";
     }
 
     reviewReflashEl.click();
