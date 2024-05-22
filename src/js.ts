@@ -3894,6 +3894,19 @@ const spellIgnore = el("input", { type: "checkbox" });
 const spellIgnoreP = el("label", [spellIgnore, "排除忽略词"]);
 reviewReflashEl.parentElement.append(spellIgnoreP);
 const reviewViewEl = document.getElementById("review_view");
+
+let reviewSortType: "正常" | "学习" | "紧急" = "正常";
+const reviewSortEl = el(
+    "select",
+    [
+        el("option", "正常", { value: "正常" }),
+        el("option", "学习", { value: "学习" }),
+        el("option", "紧急", { value: "紧急" }),
+    ],
+    { onchange: () => (reviewSortType = reviewSortEl.value as typeof reviewSortType) }
+);
+reviewReflashEl.parentElement.append(reviewSortEl);
+
 reviewReflashEl.parentElement.append(
     el("button", iconEl(chart_svg), {
         onclick: () => {
@@ -4086,9 +4099,13 @@ async function getReviewDue(type: review) {
             sentenceList.push(i);
         }
     }
-    wordList.sort((a, b) => a.card.due.getTime() - b.card.due.getTime());
-    spellList.sort((a, b) => a.card.due.getTime() - b.card.due.getTime());
-    sentenceList.sort((a, b) => a.card.due.getTime() - b.card.due.getTime());
+    [wordList, spellList, sentenceList].forEach((x) => x.sort((a, b) => a.card.due.getTime() - b.card.due.getTime()));
+    if (reviewSortType === "学习")
+        [wordList, spellList, sentenceList].forEach((x) => x.sort((a, b) => (a.card.state === State.New ? -1 : 1)));
+    if (reviewSortType === "紧急")
+        [wordList, spellList, sentenceList].forEach((x) =>
+            x.sort((a, b) => fsrs.get_retrievability(a.card, now, false) - fsrs.get_retrievability(b.card, now, false))
+        );
     if (type === "word") {
         return wordList[0];
     } else if (type === "spell") {
