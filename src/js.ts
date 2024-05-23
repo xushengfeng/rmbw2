@@ -1264,6 +1264,21 @@ async function showWordBook(s: section) {
                             const stateEl = el("span", map[card.state]);
                             reviewEl.append(stateEl);
                             if (card.due.getTime() < time()) stateEl.classList.add(TODOMARK);
+                            let hasClick = false;
+                            const buttons = getReviewCardButtons(
+                                i.card_id,
+                                card,
+                                i.text + i.contexts.map((x) => x.text).join(""),
+                                () => {
+                                    if (hasClick) {
+                                        buttons.buttons.remove();
+                                        stateEl.classList.remove(TODOMARK);
+                                    } else {
+                                        hasClick = true;
+                                    }
+                                }
+                            );
+                            reviewEl.append(buttons.buttons);
                         }
                     else {
                         const onlineList = await onlineDicL(item.text);
@@ -4384,7 +4399,7 @@ document.addEventListener("keydown", (e) => {
     }
 });
 
-function getReviewCardButtons(id: string, card: Card, readText: string, f: (rating: number) => void) {
+function getReviewCardButtons(id: string, card: Card, readText: string, f?: (rating: number) => void) {
     const showTime = new Date().getTime();
     let hasClick = false;
     let finishTime = showTime;
@@ -4396,11 +4411,11 @@ function getReviewCardButtons(id: string, card: Card, readText: string, f: (rati
             if (hasClick) {
                 if (rating === Rating.Good && quickly) rating = Rating.Easy;
                 await setReviewCard(id, card, rating, finishTime - showTime);
-                f(rating);
+                if (f) f(rating);
                 return;
             }
             await firstClick();
-            f(rating);
+            if (f) f(rating);
         };
         return button;
     };

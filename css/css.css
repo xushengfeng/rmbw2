@@ -875,11 +875,13 @@ div:has(> .translate) > :not(.translate) {
         gap: 1em;
         overflow-x: scroll;
     }
-    & > :not(:nth-child(1)) {
+    & > :not(:nth-child(1), .online_dic) {
         display: grid;
         grid-template-columns: 32px auto;
         & > :nth-child(3) {
             grid-area: 2 / 2;
+            display: flex;
+            gap: 8px;
         }
     }
 }
