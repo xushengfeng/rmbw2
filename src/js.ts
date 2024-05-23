@@ -1238,21 +1238,32 @@ async function showWordBook(s: section) {
                     }
                     if (item.c)
                         for (let i of item.c.means) {
-                            p.append(
-                                el(
-                                    "div",
-                                    el("button", iconEl(pen_svg), {
-                                        onclick: () => {
-                                            addP(i.text, item.text, null, null, null, (text) => {
-                                                i.text = text.trim();
-                                                wordsStore.setItem(item.text, item.c);
-                                                show();
-                                            });
-                                        },
-                                    }),
-                                    el("div", await disCard2(i))
-                                )
+                            const pel = el(
+                                "div",
+                                el("button", iconEl(pen_svg), {
+                                    onclick: () => {
+                                        addP(i.text, item.text, null, null, null, (text) => {
+                                            i.text = text.trim();
+                                            wordsStore.setItem(item.text, item.c);
+                                            show();
+                                        });
+                                    },
+                                }),
+                                el("div", await disCard2(i))
                             );
+                            p.append(pel);
+                            const reviewEl = el("div");
+                            pel.append(reviewEl);
+                            const card = (await cardsStore.getItem(i.card_id)) as Card;
+                            const map: { [k in State]: string } = {
+                                "0": "新",
+                                "1": "学习中",
+                                "2": "复习",
+                                "3": "重新学习",
+                            };
+                            const stateEl = el("span", map[card.state]);
+                            reviewEl.append(stateEl);
+                            if (card.due.getTime() < time()) stateEl.classList.add(TODOMARK);
                         }
                     else {
                         const onlineList = await onlineDicL(item.text);
