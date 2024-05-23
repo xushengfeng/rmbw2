@@ -2330,15 +2330,13 @@ function tag(tags: tagMap) {
 
 const markListBarEl = document.getElementById("mark_word_list");
 const markListEl = el("div");
-const bookListEl = await sectionSelectEl();
 const autoNewWordEl = el("div", [
-    el("button", "自动", {
+    el("button", "自动标记生词", {
         onclick: async () => {
-            const words = await getNewWords(editText, bookListEl.values());
+            const words = await getNewWords(editText);
             selectWord(words);
         },
     }),
-    bookListEl.el,
     el("button", iconEl(clear_svg), {
         onclick: () => {
             selectWord([]);
@@ -3782,42 +3780,21 @@ function selectWord(words: string[]) {
     });
 }
 
-async function getNewWords(text: string, wordBooks: string[]) {
-    let newWords: string[] = [];
-    if (!wordBooks || !wordBooks.join("")) {
-        newWords = await getNewWordsFromAi(text);
-    } else {
-        newWords = await getNewWordsFromBook(text, wordBooks);
-    }
+async function getNewWords(text: string) {
+    const newWords = await getNewWordsFromBook(text);
     const ignoreWords = await getIgnoreWords();
-    return newWords.filter((w) => !ignoreWords.includes(w));
+    return newWords.filter((w) => !ignoreWords.includes(lemmatizer(w)));
 }
 
-async function getNewWordsFromAi(text: string) {
-    const f = new autoFun.def({
-        input: { des: "描述", text: "string" },
-        script: ["根据des，判读text中的生词", "专有名词、词组不属于生词", "返回生词"],
-        output: { words: "string[]" },
-    });
-    return (await f.run({ des: `我的词汇量是牛津3000 A2`, text: `${text}` }).result)["words"];
-}
-
-async function getNewWordsFromBook(text: string, books: string[]) {
-    let words: string[] = [];
-    for (let book of books) {
-        const w = (await getSection(book)).text.trim().split("\n");
-        const keys = await wordsStore.keys();
-        for (let word of w) {
-            if (!keys.includes(word)) {
-                words.push(word);
-            }
-        }
-    }
+async function getNewWordsFromBook(text: string) {
+    const learnt = await wordsStore.keys();
     const segmenter = new Segmenter(bookLan, { granularity: "word" });
-    let segments = segmenter.segment(text);
-    let list = Array.from(segments).map((i) => i.segment);
-    words = words.filter((w) => list.includes(w));
-    return words;
+    const segments = segmenter.segment(text);
+    const list = Array.from(segments)
+        .filter((i) => i.isWordLike)
+        .map((i) => i.segment)
+        .filter((w) => !learnt.includes(lemmatizer(w)));
+    return list;
 }
 
 async function getIgnoreWords() {
