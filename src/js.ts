@@ -1249,6 +1249,8 @@ async function showWordBook(sectionId: string, s: section) {
                             )
                         );
                     }
+                    const onlineList = await onlineDicL(item.text);
+                    p.append(onlineList);
                     if (item.c)
                         for (let i of item.c.means) {
                             const pel = el(
@@ -1293,10 +1295,6 @@ async function showWordBook(sectionId: string, s: section) {
                             );
                             reviewEl.append(buttons.buttons);
                         }
-                    else {
-                        const onlineList = await onlineDicL(item.text);
-                        p.append(onlineList);
-                    }
                 }
                 show();
             };
