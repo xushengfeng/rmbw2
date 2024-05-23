@@ -1050,7 +1050,7 @@ async function showBookContent(book: book, id: string) {
 
     contentP = [];
 
-    if (isWordBook) await showWordBook(s);
+    if (isWordBook) await showWordBook(id, s);
     else await showNormalBook(book, s);
 
     setScrollPosi(bookContentContainerEl, contentScrollPosi);
@@ -1058,8 +1058,8 @@ async function showBookContent(book: book, id: string) {
     if (!isWordBook) bookContentEl.append(dicEl);
 }
 
-async function showWordBook(s: section) {
-    const rawWordList: { text: string; c: record; type?: "ignore" | "learn"; means?: number }[] = [];
+async function showWordBook(sectionId: string, s: section) {
+    let rawWordList: { text: string; c: record; type?: "ignore" | "learn"; means?: number }[] = [];
     let wordList: typeof rawWordList = [];
     let l = s.text.trim().split("\n");
     const cards: Map<string, Card> = new Map();
@@ -1191,18 +1191,31 @@ async function showWordBook(s: section) {
                 e.preventDefault();
                 menuEl.innerHTML = "";
                 showMenu(e.clientX, e.clientY);
-                menuEl.append(
-                    el("div", "添加到忽略词表", {
-                        onclick: async () => {
-                            await addIgnore(item.text);
-                            p.classList.add("ignore");
-                            const item1 = rawWordList.find((i) => i.text === item.text);
-                            const item2 = wordList.find((i) => i.text === item.text);
-                            item.type = item1.type = item2.type = "ignore";
-                            item.means = item1.means = item2.means = 1;
-                        },
-                    })
-                );
+                if (sectionId === ignoreWordSection)
+                    menuEl.append(
+                        el("div", "移除", {
+                            onclick: async () => {
+                                await removeIgnore(item.text);
+                                p.classList.add("ignore");
+                                rawWordList = rawWordList.filter((w) => w.text != item.text);
+                                wordList = wordList.filter((w) => w.text != item.text);
+                                show.show(wordList);
+                            },
+                        })
+                    );
+                else
+                    menuEl.append(
+                        el("div", "添加到忽略词表", {
+                            onclick: async () => {
+                                await addIgnore(item.text);
+                                p.classList.add("ignore");
+                                const item1 = rawWordList.find((i) => i.text === item.text);
+                                const item2 = wordList.find((i) => i.text === item.text);
+                                item.type = item1.type = item2.type = "ignore";
+                                item.means = item1.means = item2.means = 1;
+                            },
+                        })
+                    );
             };
             p.onclick = () => {
                 const p = tmpDicEl;
@@ -3876,6 +3889,17 @@ async function addIgnore(word: string) {
         await sectionsStore.setItem(ignoreWordSection, section);
     } else {
         return;
+    }
+}
+async function removeIgnore(word: string) {
+    const section = await getSection(ignoreWordSection);
+    const oldWords = section.text.trim().split("\n");
+    if (!oldWords.includes(word)) return;
+    section.text = oldWords.filter((w) => w != word).join("\n");
+    await sectionsStore.setItem(ignoreWordSection, section);
+    if (!(await wordsStore.getItem(word))) {
+        // 移除添加的拼写
+        spellStore.removeItem(word);
     }
 }
 
