@@ -1362,16 +1362,14 @@ function sortWordList(
         const x = m(list);
         return x.ig.concat(x.l.toReversed()).concat(x.ul);
     }
-    const rList: typeof list = [];
-    while (rList.length < list.length) {
-        const i = Math.floor(Math.random() * list.length);
-        const x = list.at(i);
-        if (x) {
-            rList.push(x);
-            list.with(i, null);
-        }
+    let rn = list.length;
+    while (rn) {
+        const r = Math.floor(Math.random() * rn--);
+        const a = structuredClone(list[rn]);
+        list[rn] = list[r];
+        list[r] = a;
     }
-    return rList;
+    return list;
 }
 
 async function showWordBookMore(wordList: { text: string; c: record; type?: "ignore" | "learn"; means?: number }[]) {
