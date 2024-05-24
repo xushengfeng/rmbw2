@@ -863,6 +863,7 @@ div:has(> .translate) > :not(.translate) {
     overflow-x: scroll;
     & > a {
         color: var(--color);
+        flex-shrink: 0;
     }
 }
 
@@ -871,11 +872,19 @@ div:has(> .translate) > :not(.translate) {
     max-width: 80dvw;
     overflow: scroll;
     & > :nth-child(1) {
+        font-weight: bolder;
+        font-size: large;
+        margin-bottom: 8px;
+    }
+    & > :nth-child(2) {
         display: flex;
         gap: 1em;
         overflow-x: scroll;
+        & > span {
+            flex-shrink: 0;
+        }
     }
-    & > :not(:nth-child(1), .online_dic) {
+    & > :not(:nth-child(1), :nth-child(2), .online_dic) {
         display: grid;
         grid-template-columns: 32px auto;
         & > :nth-child(3) {

@@ -1233,8 +1233,10 @@ async function showWordBook(s: section) {
             p.onclick = () => {
                 const p = tmpDicEl;
                 p.showPopover();
+                play(item.text);
                 async function show() {
                     p.innerHTML = "";
+                    p.append(el("div", item.text));
                     const books = await wordBooksByWord(item.text);
                     const booksEl = el("div");
                     for (let i of books) {
