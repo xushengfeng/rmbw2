@@ -4710,7 +4710,7 @@ async function showSpellReview(x: { id: string; card: Card }) {
             context.append(el("div", await disCard2(i)));
         }
     } else {
-        const text = getWordFromDic(word, Object.keys(dics)[0]);
+        const text = await getWordFromDic(word, Object.keys(dics)[0]);
         context.append(el("div", el("div", el("p", text))));
     }
     const div = document.createElement("div");
