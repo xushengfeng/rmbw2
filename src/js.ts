@@ -3058,17 +3058,21 @@ async function showDic(id: string) {
     }
 }
 
+async function getWordFromDic(word: string, id: string) {
+    const d = (await dicStore.getItem(id)) as dic2;
+    let dic = d.dic.get(word);
+    if (dic.isAlias) dic = d.dic.get(dic.text);
+    return dic.text;
+}
+
 async function showDicEl(mainTextEl: HTMLTextAreaElement, word: string, x: number, y: number) {
     const lan = bookLan;
     let list = el("div");
     list.lang = lan;
     async function showDic(id: string) {
-        const d = (await dicStore.getItem(id)) as dic2;
         list.innerHTML = "";
-        let dic = d.dic.get(word);
-        if (dic.isAlias) dic = d.dic.get(dic.text);
         let tmpdiv = el("div");
-        tmpdiv.innerHTML = dic.text;
+        tmpdiv.innerHTML = await getWordFromDic(word, id);
         for (let i of tmpdiv.innerText.split("\n").filter((i) => i.trim() != "")) {
             let p = el("p");
             p.innerHTML = i;
@@ -4705,6 +4709,9 @@ async function showSpellReview(x: { id: string; card: Card }) {
         for (let i of r.means) {
             context.append(el("div", await disCard2(i)));
         }
+    } else {
+        const text = getWordFromDic(word, Object.keys(dics)[0]);
+        context.append(el("div", el("div", el("p", text))));
     }
     const div = document.createElement("div");
     div.append(input, wordEl, context);
