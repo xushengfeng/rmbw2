@@ -1070,6 +1070,17 @@ async function showWordBook(sectionId: string, s: section) {
     await wordsStore.iterate((v: record, k) => {
         if (l.includes(k)) words.set(k, v);
     });
+    for (let i of usSpell) {
+        const learnt: string[] = [];
+        const unlearnt: string[] = [];
+        i.forEach((w) => {
+            if (words.has(w)) learnt.push(w);
+            else unlearnt.push(w);
+        });
+        if (learnt.length === 0) continue;
+        const value = words.get(learnt.at(0));
+        unlearnt.forEach((w) => words.set(w, value));
+    }
     const ignoreWords = await getIgnoreWords();
     let matchWords = 0;
     let means1 = 0;
@@ -2257,6 +2268,58 @@ let variant: Map<string, string> = await variantStore.getItem("en");
 function lemmatizer(word: string) {
     return variant?.get(word) || word;
 }
+
+const usSpell: string[][] = [
+    ["centre", "center"],
+    ["fibre", "fiber"],
+    ["litre", "liter"],
+    ["theatre", "theater"],
+    ["colour", "color"],
+    ["flavour", "flavor"],
+    ["humour", "humor"],
+    ["labour", "labor"],
+    ["harbour", "harbor"],
+    ["apologise", "apologize"],
+    ["organise", "organize"],
+    ["recognise", "recognize"],
+    ["analyse", "analyze"],
+    ["paralyse", "paralyze"],
+    ["leukaemia", "leukemia"],
+    ["manoeuvre", "maneuver"],
+    ["defence", "defense"],
+    ["licence", "license"],
+    ["offence", "offense"],
+    ["analogue", "analog"],
+    ["catalogue", "catalog"],
+    ["dialogue", "dialog"],
+    ["analyse", "analyze"],
+    ["cheque", "check"],
+    ["counsellor", "counselor"],
+    ["criticise", "criticize"],
+    ["doughnut", "donut"],
+    ["fulfil", "fulfill"],
+    ["grey", "gray"],
+    ["honour", "honor"],
+    ["humour", "humor"],
+    ["jewellery", "jewelry"],
+    ["judgement", "judgment"],
+    ["kerb", "curb"],
+    ["labour", "labor"],
+    ["metre", "meter"],
+    ["mould", "mold"],
+    ["neighbour", "neighbor"],
+    ["offence", "offense"],
+    ["pretence", "pretense"],
+    ["programme", "program"],
+    ["pyjamas", "pajamas"],
+    ["realise", "realize"],
+    ["savour", "savor"],
+    ["speciality", "specialty"],
+    ["travelled", "traveled"],
+    ["travelling", "traveling"],
+    ["tyre", "tire"],
+    ["valour", "valor"],
+];
 
 type record = {
     word: string;
@@ -3797,8 +3860,31 @@ async function getNewWords(text: string) {
     return newWords.filter((w) => !ignoreWords.includes(lemmatizer(w)));
 }
 
-async function getNewWordsFromBook(text: string) {
+function fillMutiSpell(rl: string[]) {
+    const l: string[] = [];
+    const m: { [key: string]: string[] } = {};
+    for (let i of usSpell) {
+        for (let j of i) {
+            m[j] = i;
+        }
+    }
+    for (let w of rl) {
+        if (m[w]) {
+            l.push(...m[w]);
+        } else {
+            l.push(w);
+        }
+    }
+    return l;
+}
+
+async function getLearntWords() {
     const learnt = await wordsStore.keys();
+    return fillMutiSpell(learnt);
+}
+
+async function getNewWordsFromBook(text: string) {
+    const learnt = await getLearntWords();
     const segmenter = new Segmenter(bookLan, { granularity: "word" });
     const segments = segmenter.segment(text);
     const list = Array.from(segments)
@@ -3811,7 +3897,8 @@ async function getNewWordsFromBook(text: string) {
 async function getIgnoreWords() {
     const section = await getSection(ignoreWordSection);
     if (!section) return [];
-    return section.text.trim().split("\n");
+    const rl = section.text.trim().split("\n");
+    return fillMutiSpell(rl);
 }
 
 async function autoIgnore() {
@@ -3829,7 +3916,7 @@ async function autoIgnore() {
         .filter((i) => i.type === "word")
         .map((i) => lemmatizer(i.id.toLocaleLowerCase()));
     const oldWords = section.text.trim().split("\n");
-    const studyWords = await wordsStore.keys();
+    const studyWords = await getLearntWords();
     const hasLentWords = oldWords
         .concat(studyWords)
         .map((w) => w.toLocaleLowerCase())
