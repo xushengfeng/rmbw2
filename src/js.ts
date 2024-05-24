@@ -1333,11 +1333,30 @@ function sortWordList(
         return list.toSorted((a, b) => {
             return b.text.localeCompare(a.text, bookLan);
         });
+
+    function m(l: typeof list) {
+        const ig: typeof list = [];
+        const ul: typeof list = [];
+        const learnt: typeof list = [];
+        l.forEach((i) => {
+            if (i.type) {
+                if (i.type === "ignore") ig.push(i);
+                else learnt.push(i);
+            } else ul.push(i);
+        });
+        return {
+            ig,
+            ul,
+            l: learnt.toSorted((a, b) => a.means - b.means),
+        };
+    }
     if (type === "01") {
-        return list.toSorted((a, b) => (a.means || 0) - (b.means || 0));
+        const x = m(list);
+        return x.ul.concat(x.l).concat(x.ig);
     }
     if (type === "10") {
-        return list.toSorted((a, b) => (b.means || 0) - (a.means || 0));
+        const x = m(list);
+        return x.ig.concat(x.l.toReversed()).concat(x.ul);
     }
     const rList: typeof list = [];
     while (rList.length < list.length) {
