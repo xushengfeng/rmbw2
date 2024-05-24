@@ -3061,8 +3061,8 @@ async function showDic(id: string) {
 async function getWordFromDic(word: string, id: string) {
     const d = (await dicStore.getItem(id)) as dic2;
     let dic = d.dic.get(word);
-    if (dic.isAlias) dic = d.dic.get(dic.text);
-    return dic.text;
+    if (dic?.isAlias) dic = d.dic.get(dic.text);
+    return dic?.text || "";
 }
 
 async function showDicEl(mainTextEl: HTMLTextAreaElement, word: string, x: number, y: number) {
