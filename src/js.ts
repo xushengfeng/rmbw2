@@ -1050,7 +1050,7 @@ async function showBookContent(book: book, id: string) {
 
     contentP = [];
 
-    if (isWordBook) await showWordBook(id, s);
+    if (isWordBook) await showWordBook(s);
     else await showNormalBook(book, s);
 
     setScrollPosi(bookContentContainerEl, contentScrollPosi);
@@ -1058,7 +1058,7 @@ async function showBookContent(book: book, id: string) {
     if (!isWordBook) bookContentEl.append(dicEl);
 }
 
-async function showWordBook(sectionId: string, s: section) {
+async function showWordBook(s: section) {
     let rawWordList: { text: string; c: record; type?: "ignore" | "learn"; means?: number }[] = [];
     let wordList: typeof rawWordList = [];
     let l = s.text.trim().split("\n");
@@ -1202,15 +1202,17 @@ async function showWordBook(sectionId: string, s: section) {
                 e.preventDefault();
                 menuEl.innerHTML = "";
                 showMenu(e.clientX, e.clientY);
-                if (sectionId === ignoreWordSection)
+                if (item.type === "ignore")
                     menuEl.append(
-                        el("div", "移除", {
+                        el("div", "从忽略词表移除", {
                             onclick: async () => {
                                 await removeIgnore(item.text);
-                                p.classList.add("ignore");
-                                rawWordList = rawWordList.filter((w) => w.text != item.text);
-                                wordList = wordList.filter((w) => w.text != item.text);
-                                show.show(wordList);
+                                p.classList.remove("ignore");
+                                const item1 = rawWordList.find((i) => i.text === item.text);
+                                const item2 = wordList.find((i) => i.text === item.text);
+                                delete item.type;
+                                delete item1.type;
+                                delete item2.type;
                             },
                         })
                     );
