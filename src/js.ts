@@ -1063,7 +1063,7 @@ async function showBookContent(book: book, id: string) {
 }
 
 async function showWordBook(s: section) {
-    let rawWordList: { text: string; c: record; type?: "ignore" | "learn"; means?: number }[] = [];
+    let rawWordList: { text: string; c: record; id: string; type?: "ignore" | "learn"; means?: number }[] = [];
     let wordList: typeof rawWordList = [];
     let l = s.text.trim().split("\n");
     const cards: Map<string, Card> = new Map();
@@ -1071,19 +1071,17 @@ async function showWordBook(s: section) {
         cards.set(k, v);
     });
     const words: Map<string, record> = new Map();
+    const mayMapWords: Map<string, record> = new Map();
+    const usS = usSpell.flat();
+    const wordMap: { [r: string]: string } = {};
     await wordsStore.iterate((v: record, k) => {
         if (l.includes(k)) words.set(k, v);
+        if (usS.includes(k)) mayMapWords.set(k, v);
     });
-    for (let i of usSpell) {
-        const learnt: string[] = [];
-        const unlearnt: string[] = [];
-        i.forEach((w) => {
-            if (words.has(w)) learnt.push(w);
-            else unlearnt.push(w);
-        });
-        if (learnt.length === 0) continue;
-        const value = words.get(learnt.at(0));
-        unlearnt.forEach((w) => words.set(w, value));
+    for (let i of usS) if (l.includes(i) && !words.has(i)) wordMap[i] = "";
+    for (let i in wordMap) {
+        const list = usSpell.find((w) => w.includes(i));
+        wordMap[i] = list.find((w) => mayMapWords.has(w));
     }
     const ignoreWords = await getIgnoreWords();
     let matchWords = 0;
@@ -1094,8 +1092,8 @@ async function showWordBook(s: section) {
         let c: record;
         let type: "ignore" | "learn" = null;
         let means = 0;
-        if (words.has(i)) {
-            c = words.get(i);
+        if (words.has(i) || mayMapWords.has(wordMap[i])) {
+            c = words.get(i) || mayMapWords.get(wordMap[i]);
             type = "learn";
             matchWords++;
             let r = 0;
@@ -1110,8 +1108,8 @@ async function showWordBook(s: section) {
             means = 1;
         }
         means1 += means;
-        if (type) rawWordList.push({ text: t, c: c, type, means });
-        else rawWordList.push({ text: t, c: c });
+        if (type) rawWordList.push({ text: t, id: wordMap[i] || t, c: c, type, means });
+        else rawWordList.push({ text: t, id: wordMap[i] || t, c: c });
     }
     wordList = sortWordList(rawWordList, (await setting.getItem(WordSortPath)) || "raw");
     const search = el("input", {
@@ -1210,7 +1208,7 @@ async function showWordBook(s: section) {
                     menuEl.append(
                         el("div", "从忽略词表移除", {
                             onclick: async () => {
-                                await removeIgnore(item.text);
+                                await removeIgnore(item.id);
                                 p.classList.remove("ignore");
                                 const item1 = rawWordList.find((i) => i.text === item.text);
                                 const item2 = wordList.find((i) => i.text === item.text);
@@ -1257,9 +1255,9 @@ async function showWordBook(s: section) {
                                 "div",
                                 el("button", iconEl(pen_svg), {
                                     onclick: () => {
-                                        addP(item.c.note, item.text, null, null, null, (text) => {
+                                        addP(item.c.note, item.id, null, null, null, (text) => {
                                             item.c.note = text.trim();
-                                            wordsStore.setItem(item.text, item.c);
+                                            wordsStore.setItem(item.id, item.c);
                                             show();
                                         });
                                     },
@@ -1276,9 +1274,9 @@ async function showWordBook(s: section) {
                                 "div",
                                 el("button", iconEl(pen_svg), {
                                     onclick: () => {
-                                        addP(i.text, item.text, null, null, null, (text) => {
+                                        addP(i.text, item.id, null, null, null, (text) => {
                                             i.text = text.trim();
-                                            wordsStore.setItem(item.text, item.c);
+                                            wordsStore.setItem(item.id, item.c);
                                             show();
                                         });
                                     },
@@ -1327,7 +1325,7 @@ const WordSortPath = "words.sort";
 type WordSortType = "raw" | "az" | "za" | "10" | "01" | "random";
 
 function sortWordList(
-    list: { text: string; c: record; type?: "ignore" | "learn"; means?: number }[],
+    list: { text: string; id: string; c: record; type?: "ignore" | "learn"; means?: number }[],
     type: WordSortType
 ) {
     if (type === "raw") return list;
@@ -2321,6 +2319,7 @@ const usSpell: string[][] = [
     ["theatre", "theater"],
     ["colour", "color"],
     ["flavour", "flavor"],
+    ["favour", "favor"],
     ["humour", "humor"],
     ["labour", "labor"],
     ["harbour", "harbor"],
