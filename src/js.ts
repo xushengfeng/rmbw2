@@ -911,51 +911,31 @@ async function showLocalBooksL(bookList: book[]) {
         };
         bookIEl.oncontextmenu = async (e) => {
             e.preventDefault();
-            e.stopPropagation();
             const book = await getBooksById(id);
-            menuEl.innerHTML = "";
-            let renameEl = document.createElement("div");
-            renameEl.innerText = "重命名";
-            renameEl.onclick = async () => {
-                let name = await prompt("更改书名", book.name);
-                if (name) {
-                    bookIEl.querySelector("span").innerText = name;
-                    if (bookIEl.innerText) bookIEl.querySelector("div").innerText = name;
-                    book.name = name;
-                    bookshelfStore.setItem(book.id, book);
-                    setBookS();
-                }
+            let formEl = el("form", [
+                el("input", { name: "name", value: book.name }),
+                el("input", { name: "language", value: book.language }),
+                el("label", [
+                    "词书",
+                    el("input", { type: "radio", name: "type", value: "word", checked: book.type === "word" }),
+                ]),
+                el("label", [
+                    "书",
+                    el("input", { type: "radio", name: "type", value: "text", checked: book.type === "text" }),
+                ]),
+            ]);
+            let submitEl = el("button", "确定");
+            let metaEl = el("dialog", [el("div", `id: ${book.id}`), formEl, submitEl]) as HTMLDialogElement;
+            submitEl.onclick = () => {
+                let data = new FormData(formEl);
+                data.forEach((v, k) => {
+                    book[k] = v;
+                });
+                bookshelfStore.setItem(book.id, book);
+                metaEl.close();
+                setBookS();
             };
-            let editMetaEl = el("div", "元数据", {
-                onclick: () => {
-                    let formEl = el("form", [
-                        el("input", { name: "name", value: book.name }),
-                        el("input", { name: "language", value: book.language }),
-                        el("label", [
-                            "词书",
-                            el("input", { type: "radio", name: "type", value: "word", checked: book.type === "word" }),
-                        ]),
-                        el("label", [
-                            "书",
-                            el("input", { type: "radio", name: "type", value: "text", checked: book.type === "text" }),
-                        ]),
-                    ]);
-                    let submitEl = el("button", "确定");
-                    let metaEl = el("dialog", [el("div", `id: ${book.id}`), formEl, submitEl]) as HTMLDialogElement;
-                    submitEl.onclick = () => {
-                        let data = new FormData(formEl);
-                        data.forEach((v, k) => {
-                            book[k] = v;
-                        });
-                        bookshelfStore.setItem(book.id, book);
-                        metaEl.close();
-                        setBookS();
-                    };
-                    dialogX(metaEl);
-                },
-            });
-            menuEl.append(renameEl, editMetaEl);
-            showMenu(e.clientX, e.clientY);
+            dialogX(metaEl);
         };
     }
     return grid;
