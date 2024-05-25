@@ -5543,24 +5543,33 @@ let asyncEl = el("div", [
         el("h3", "GitHub"),
         el("button", "↓", {
             onclick: async () => {
+                putToast(el("span", "下载开始"));
                 let config = await getGitHub();
-                let data = await fetch(
+                fetch(
                     (await setting.getItem(GitHubConfigPath.download)) ||
                         `https://raw.githubusercontent.com/${config.user}/${config.repo}/main/${config.path}`
-                );
-                let str = await data.text();
-                setAllData(str);
+                )
+                    .then((data) => data.text())
+                    .then((str) => {
+                        setAllData(str);
+                    })
+                    .catch(() => {
+                        putToast(el("span", "下载失败"), 6000);
+                    });
             },
         }),
         el("button", "↑", {
             onclick: async () => {
+                putToast(el("span", "上传开始"));
                 let data = await getAllData();
                 let base64 = encode(data);
                 let config = await getGitHub();
                 let sha = "";
                 try {
                     sha = (await (await fetch(config.url, { headers: { ...config.auth } })).json()).sha;
-                } catch (error) {}
+                } catch (error) {
+                    putToast(el("span", "上传失败"), 6000);
+                }
                 fetch(config.url, {
                     method: "PUT",
                     headers: {
