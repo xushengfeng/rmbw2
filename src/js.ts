@@ -740,6 +740,10 @@ async function saveLanguagePackage(lan: string, section: { id: string; path: str
                 i.content["lang"] = lan;
                 saveDic(i.content);
             }
+            if (i.id === "map") {
+                wordMapStore.setItem(lan, i.content);
+                usSpell = i.content;
+            }
         }
     });
 }
@@ -2268,6 +2272,7 @@ async function wordBooksByWord(word: string) {
 
 var ipaStore = localforage.createInstance({ name: "langPack", storeName: "ipa" });
 var variantStore = localforage.createInstance({ name: "langPack", storeName: "variant" });
+var wordMapStore = localforage.createInstance({ name: "langPack", storeName: "map" });
 
 let dics: {
     [key: string]: {
@@ -2310,58 +2315,7 @@ function lemmatizer(word: string) {
     return variant?.get(word) || word;
 }
 
-const usSpell: string[][] = [
-    ["centre", "center"],
-    ["fibre", "fiber"],
-    ["litre", "liter"],
-    ["theatre", "theater"],
-    ["colour", "color"],
-    ["flavour", "flavor"],
-    ["favour", "favor"],
-    ["humour", "humor"],
-    ["labour", "labor"],
-    ["harbour", "harbor"],
-    ["apologise", "apologize"],
-    ["organise", "organize"],
-    ["recognise", "recognize"],
-    ["analyse", "analyze"],
-    ["paralyse", "paralyze"],
-    ["leukaemia", "leukemia"],
-    ["manoeuvre", "maneuver"],
-    ["defence", "defense"],
-    ["licence", "license"],
-    ["offence", "offense"],
-    ["analogue", "analog"],
-    ["catalogue", "catalog"],
-    ["dialogue", "dialog"],
-    ["analyse", "analyze"],
-    ["cheque", "check"],
-    ["counsellor", "counselor"],
-    ["criticise", "criticize"],
-    ["doughnut", "donut"],
-    ["fulfil", "fulfill"],
-    ["grey", "gray"],
-    ["honour", "honor"],
-    ["humour", "humor"],
-    ["jewellery", "jewelry"],
-    ["judgement", "judgment"],
-    ["kerb", "curb"],
-    ["labour", "labor"],
-    ["metre", "meter"],
-    ["mould", "mold"],
-    ["neighbour", "neighbor"],
-    ["offence", "offense"],
-    ["pretence", "pretense"],
-    ["programme", "program"],
-    ["pyjamas", "pajamas"],
-    ["realise", "realize"],
-    ["savour", "savor"],
-    ["speciality", "specialty"],
-    ["travelled", "traveled"],
-    ["travelling", "traveling"],
-    ["tyre", "tire"],
-    ["valour", "valor"],
-];
+let usSpell: string[][] = (await wordMapStore.getItem("en")) || [];
 
 type record = {
     word: string;
