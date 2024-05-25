@@ -1964,7 +1964,10 @@ changeEditEl.onclick = () => {
 };
 
 function cleanWordBook(text: string) {
-    return Array.from(new Set(text.split("\n"))).join("\n");
+    return Array.from(new Set(text.split("\n")))
+        .map((w) => w.trim())
+        .filter((i) => i)
+        .join("\n");
 }
 
 function diffPosi(oldText: string, text: string) {
