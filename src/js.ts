@@ -5306,6 +5306,9 @@ async function getAllData() {
     }
 
     return jsonStringify(l, (path) => {
+        if (path.length === 2 && (path[0] === "cards" || path[0] === "spell")) {
+            return true;
+        }
         if (path.length === 4 && path[0] === "sections" && path[2] === "words") {
             return true;
         }
