@@ -5678,7 +5678,7 @@ settingEl.append(
         }),
         el("label", [readSpeedEl, "ms/word"]),
         el("h3", "复习休息"),
-        el("input", { type: "number", path: "review.maxCount", value: String(maxReviewCount) }),
+        el("input", { type: "number", "data-path": "review.maxCount", value: String(maxReviewCount) }),
         el("span", "0为不限制，刷新生效"),
     ])
 );
