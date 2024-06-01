@@ -1107,7 +1107,15 @@ async function showWordBook(s: section) {
             });
             let fr = fuse.search(search.value);
             let list = fr.map((i) => i.item);
-            show.show(list.length ? list : wordList);
+            const nl = list.length ? list : wordList;
+            show.show(nl);
+            if (nl.length === wordList.length) {
+                canRecordScroll = true;
+                setScrollPosi(bookContentContainerEl, contentScrollPosi);
+            } else {
+                canRecordScroll = false;
+                setScrollPosi(bookContentContainerEl, 0);
+            }
         },
     });
     const sortEl = el("div", { class: "sort_words" });
@@ -2162,7 +2170,10 @@ function textAi(text: string) {
     return aiM;
 }
 
+let canRecordScroll = true;
+
 bookContentContainerEl.onscroll = async () => {
+    if (!canRecordScroll) return;
     let n = getScrollPosi(bookContentContainerEl);
     contentScrollPosi = n;
     let sectionId = nowBook.sections;
