@@ -5047,10 +5047,9 @@ function renderCal(year: number, data: Date[]) {
     }
     const rl = Object.values(count).toSorted((a, b) => a - b);
     const l: number[] = [];
-    const width = Math.floor(rl.length / 5);
-    for (let i = 0; i < rl.length; i += width) {
-        l.push(rl[i]);
-    }
+    const c = 6;
+    const width = Math.floor(rl.length / (c - 1));
+    for (let i = 0; i < rl.length; i += width) l.push(rl[i]);
     l.push(rl.at(-1) + 1);
     const div = el("div");
     const firstDate = new Date(year, 0, 1);
@@ -5066,7 +5065,7 @@ function renderCal(year: number, data: Date[]) {
             item.title = `${s_date.toLocaleDateString()}  ${v}`;
             if (v) {
                 const nvi = l.findIndex((i) => i > v) - 1;
-                const nv = 20 * nvi + 20 * ((v - l[nvi]) / (l[nvi + 1] - l[nvi])); // 赋分算法，但平均分割区间
+                const nv = (100 / c) * nvi + (100 / c) * ((v - l[nvi]) / (l[nvi + 1] - l[nvi])); // 赋分算法，但平均分割区间
                 item.style.backgroundColor = `color-mix(in srgb-linear, #9be9a8, #216e39 ${nv}%)`;
             }
             if (s_date.toDateString() === new Date().toDateString()) {
