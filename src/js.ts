@@ -1801,12 +1801,14 @@ document.body.appendChild(fontListEl);
             availableFonts = await window.queryLocalFonts();
         } catch (error) {}
         let fonts = availableFonts.map((i) => i.fullName) as string[];
-        fonts.filter((i) => i != "sans" && i != "serif");
+        fonts = fonts.concat(availableFonts.map((i) => i.family));
+        fonts = Array.from(new Set(fonts));
+        fonts = fonts.filter((i) => i != "sans" && i != "serif").toSorted();
         fonts.unshift("serif", "sans");
         vlist(fontListEl, fonts, { iHeight: 24, paddingLeft: 4, paddingRight: 4 }, (i) => {
             let fontName = fonts[i];
             return el("div", fontName, {
-                style: { "font-family": fontName },
+                style: { "font-family": fontName, "line-height": "24px" },
                 onclick: () => {
                     setFontElF(fontName);
                     bookStyle.fontFamily = fontName;
