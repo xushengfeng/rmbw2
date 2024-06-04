@@ -4512,7 +4512,7 @@ function getReviewCardButtons(id: string, card: Card, readText: string, f?: (rat
     let finishTime = showTime;
     let quickly = false;
     let b = (rating: Rating, icon: HTMLElement) => {
-        let button = document.createElement("button");
+        const button = el("button");
         button.append(icon);
         button.onclick = reviewHotkey[rating].f = async () => {
             if (hasClick) {

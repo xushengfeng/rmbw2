@@ -1048,9 +1048,9 @@ div:has(> .translate) > :not(.translate) {
 }
 :is(.review_word, .review_sentence) > :last-child {
     display: flex;
-    gap: 8px;
+    gap: 16px;
     justify-content: center;
-    margin: 8px;
+    margin: 16px;
 }
 
 .review_sentence {
