@@ -1,8 +1,8 @@
 /// <reference types="vite/client" />
 
-import { el, text, setStyle } from "redom";
+import { el, setStyle } from "redom";
 
-import localforage, { key } from "localforage";
+import localforage from "localforage";
 import { extendPrototype } from "localforage-setitems";
 extendPrototype(localforage);
 
@@ -442,6 +442,16 @@ async function getBooksById(id: string) {
 }
 async function getSection(id: string) {
     return (await sectionsStore.getItem(id)) as section;
+}
+
+async function checkEmptyBook(book: book) {
+    let e = true;
+    for (let sis of book.sections) {
+        if (Object.keys((await getSection(sis)).words).length) {
+            return false;
+        }
+    }
+    return e;
 }
 
 async function getBookShortTitle(bookId: string) {
@@ -924,8 +934,9 @@ async function showLocalBooksL(bookList: book[]) {
                     el("input", { type: "radio", name: "type", value: "text", checked: book.type === "text" }),
                 ]),
             ]);
-            let submitEl = el("button", "确定");
-            let metaEl = el("dialog", [el("div", `id: ${book.id}`), formEl, submitEl]) as HTMLDialogElement;
+            const submitEl = el("button", "确定");
+            const deleteEl = el("button", "删除");
+            let metaEl = el("dialog", [el("div", `id: ${book.id}`), formEl, submitEl, deleteEl]) as HTMLDialogElement;
             submitEl.onclick = () => {
                 let data = new FormData(formEl);
                 data.forEach((v, k) => {
@@ -934,6 +945,19 @@ async function showLocalBooksL(bookList: book[]) {
                 bookshelfStore.setItem(book.id, book);
                 metaEl.close();
                 setBookS();
+            };
+            deleteEl.onclick = async () => {
+                if (await checkEmptyBook(book)) {
+                    await bookshelfStore.removeItem(book.id);
+                    for (const sid of book.sections) {
+                        await sectionsStore.removeItem(sid);
+                    }
+                    putToast(el("span", `删除${book.name}成功`));
+                } else {
+                    putToast(el("span", `删除${book.name}失败，已经标记了单词`));
+                }
+                metaEl.close();
+                showLocalBooks();
             };
             dialogX(metaEl);
         };
