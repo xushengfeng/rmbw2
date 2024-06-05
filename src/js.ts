@@ -2597,8 +2597,8 @@ async function showDic(id: string) {
 
             Word.word = word;
             Word.index = i;
-            section.words[id].id = word;
-            await sectionsStore.setItem(sectionId, section);
+            wordx.id = word;
+            await saveWordX(wordx);
             Word.record = (await wordsStore.getItem(wordx.id)) as record;
         }
     }
@@ -2658,8 +2658,7 @@ async function showDic(id: string) {
             wordx.visit = true;
             checkVisitAll(section);
         }
-        section.words[id] = wordx;
-        sectionsStore.setItem(sectionId, section);
+        await saveWordX(wordx);
 
         let r: record2 = {
             text: Share.context,
@@ -2704,8 +2703,7 @@ async function showDic(id: string) {
 
     async function visit(t: boolean) {
         wordx.visit = t;
-        section.words[id] = wordx;
-        await sectionsStore.setItem(sectionId, section);
+        await saveWordX(wordx);
     }
 
     async function showWord() {
@@ -2744,9 +2742,9 @@ async function showDic(id: string) {
             addStyle([wordx.index[0], e]);
 
             const word = editText.slice(wordx.index[0], e);
-            section.words[id].id = word;
-            section.words[id].index = [wordx.index[0], e];
-            await sectionsStore.setItem(sectionId, section);
+            wordx.id = word;
+            wordx.index[1] = e;
+            await saveWordX(wordx);
             showDic(id);
         }
 
@@ -2825,6 +2823,8 @@ async function showDic(id: string) {
         };
 
         async function search(word: string) {
+            console.log(Word.record);
+
             editMeanEl.style.display = flatWordCard(Word.record, id).index === -1 ? "none" : "";
             if (Word.record) dicDetailsEl.innerHTML = "";
             else {
@@ -2992,8 +2992,8 @@ async function showDic(id: string) {
             let text = editText.slice(index.start, index.end);
             Share.context = text;
             if (isSentence) {
-                section.words[id].index = [index.start, index.end];
-                sectionsStore.setItem(sectionId, section);
+                wordx.index = [index.start, index.end];
+                await saveWordX(wordx);
                 let r = (await card2sentence.getItem(wordx.id)) as record2;
                 r.text = text;
                 card2sentence.setItem(wordx.id, r);
@@ -3011,8 +3011,8 @@ async function showDic(id: string) {
                 Share.sourceIndex = cIndex;
                 Share.context = text;
             }
-            section.words[id].cIndex = [index.start, index.end];
-            sectionsStore.setItem(sectionId, section);
+            wordx.cIndex = [index.start, index.end];
+            await saveWordX(wordx);
             if (!isSentence) {
                 showWord();
             }
@@ -3026,6 +3026,12 @@ async function showDic(id: string) {
             dicTransAi?.abort();
             dicTransAi = null;
         };
+    }
+
+    async function saveWordX(wordX: typeof wordx) {
+        const section = await getSection(sectionId);
+        section.words[id] = wordX;
+        await sectionsStore.setItem(sectionId, section);
     }
 }
 
