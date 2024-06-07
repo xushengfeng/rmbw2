@@ -1378,6 +1378,10 @@ function sortWordList(
         const x = m(list);
         return x.ig.concat(x.l.toReversed()).concat(x.ul);
     }
+    return randomList(list);
+}
+
+function randomList<i>(list: i[]) {
     let rn = list.length;
     while (rn) {
         const r = Math.floor(Math.random() * rn--);
@@ -4045,13 +4049,14 @@ const spellIgnore = el(
 reviewReflashEl.parentElement.append(spellIgnore);
 const reviewViewEl = document.getElementById("review_view");
 
-let reviewSortType: "正常" | "学习" | "紧急" = "正常";
+let reviewSortType: "正常" | "学习" | "紧急" | "随机" = "正常";
 const reviewSortEl = el(
     "select",
     [
         el("option", "正常", { value: "正常" }),
         el("option", "学习", { value: "学习" }),
         el("option", "紧急", { value: "紧急" }),
+        el("option", "随机", { value: "随机" }),
     ],
     { onchange: () => (reviewSortType = reviewSortEl.value as typeof reviewSortType) }
 );
@@ -4262,6 +4267,7 @@ async function getReviewDue(type: review) {
         [wordList, spellList, sentenceList].forEach((x) =>
             x.sort((a, b) => fsrs.get_retrievability(a.card, now, false) - fsrs.get_retrievability(b.card, now, false))
         );
+    if (reviewSortType === "随机") [wordList, spellList, sentenceList].forEach((x) => randomList(x));
     if (type === "word") {
         return wordList[0];
     } else if (type === "spell") {
