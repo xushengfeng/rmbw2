@@ -4144,8 +4144,10 @@ let spellWriteE: PointerEvent;
 let spellWriteCtx: CanvasRenderingContext2D;
 reviewEl.onpointerdown = (e) => {
     if (!(reviewType === "spell" && reviewEl.classList.contains("review_show"))) return;
-    if (e.clientY > document.querySelector(".spell_input").getBoundingClientRect().bottom) return;
-    if (e.clientY < document.querySelector(".spell_input").getBoundingClientRect().top) return;
+    const sEl = document.querySelector(".spell_input");
+    if (!sEl) return;
+    if (e.clientY > sEl.getBoundingClientRect().bottom) return;
+    if (e.clientY < sEl.getBoundingClientRect().top) return;
     console.log(e);
     e.preventDefault();
     spellWriteE = e;
