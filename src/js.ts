@@ -5127,7 +5127,7 @@ function renderCal(year: number, data: Date[]) {
     const rl = Object.values(count).toSorted((a, b) => a - b);
     const l: number[] = [];
     const c = 6;
-    const width = Math.floor(rl.length / (c - 1));
+    const width = Math.floor(rl.length / (c - 1)) || 1;
     for (let i = 0; i < rl.length; i += width) l.push(rl[i]);
     l.push(rl.at(-1) + 1);
     const div = el("div");
