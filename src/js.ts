@@ -332,6 +332,10 @@ const paghMore = document.getElementById("pagh_more");
 paghMore.onclick = () => {
     bookContentEl.classList.toggle("show_p_more");
 };
+const articleAi = document.getElementById("article_ai");
+articleAi.onclick = () => {
+    showArticelAI();
+};
 const changeStyleEl = document.getElementById("change_style");
 const changeStyleBar = el("div", { popover: "auto", class: "change_style_bar" });
 document.body.append(changeStyleBar);
@@ -434,6 +438,7 @@ type section = {
         };
     };
     lastPosi: number;
+    note?: string;
 };
 
 async function getBooksById(id: string) {
@@ -3666,23 +3671,7 @@ function tmpAiB(mainTextEl: HTMLTextAreaElement, info: string) {
 
 function tmpAi(mainTextEl: HTMLTextAreaElement, info: string, x: number, y: number) {
     let textEl = el("textarea", { value: ">" });
-    textEl.onkeyup = async (e) => {
-        if (e.key === "Enter" && !e.shiftKey) {
-            let text = textEl.value.trim();
-            let aiM = textAi(text);
-            if (aiM.at(-1).role != "user") return;
-            if (info) aiM.unshift({ role: "system", content: info });
-            console.log(aiM);
-            let start = textEl.selectionStart;
-            let end = textEl.selectionEnd;
-            let aitext = await ai(aiM, "对话").text;
-            let addText = `ai:\n${aitext}`;
-            let changeText = textEl.value.slice(0, start) + addText + textEl.value.slice(end);
-            textEl.value = changeText;
-            textEl.selectionStart = start;
-            textEl.selectionEnd = start + addText.length;
-        }
-    };
+    aiText(textEl, info);
     let div = el("dialog", { class: AIDIALOG }, [
         textEl,
         el("div", { style: { display: "flex", "justify-content": "flex-end" } }, [
@@ -3700,6 +3689,26 @@ function tmpAi(mainTextEl: HTMLTextAreaElement, info: string, x: number, y: numb
     dialogX(div);
 }
 
+function aiText(textEl: HTMLTextAreaElement, info: string) {
+    textEl.addEventListener("keyup", async (e) => {
+        if (e.key === "Enter" && !e.shiftKey) {
+            let text = textEl.value.trim();
+            let aiM = textAi(text);
+            if (aiM.at(-1).role != "user") return;
+            if (info) aiM.unshift({ role: "system", content: info });
+            console.log(aiM);
+            let start = textEl.selectionStart;
+            let end = textEl.selectionEnd;
+            let aitext = await ai(aiM, "对话").text;
+            let addText = `ai:\n${aitext}`;
+            let changeText = textEl.value.slice(0, start) + addText + textEl.value.slice(end);
+            textEl.value = changeText;
+            textEl.selectionStart = start;
+            textEl.selectionEnd = start + addText.length;
+        }
+    });
+}
+
 function dicB(mainTextEl: HTMLTextAreaElement, word: string) {
     const dicB = el("button", "词典", {
         onclick: () => {
@@ -3707,6 +3716,36 @@ function dicB(mainTextEl: HTMLTextAreaElement, word: string) {
         },
     });
     return dicB;
+}
+
+async function showArticelAI() {
+    if (!nowBook.book || !nowBook.sections) return;
+    const s = await getSection(nowBook.sections);
+    const note = s.note;
+    const text = el("textarea");
+    text.value = note || "> ";
+    text.setSelectionRange(text.value.length, text.value.length);
+    aiText(text, `这是一篇文章：${s.title}\n\n${s.text}`);
+    let div = el("dialog", { class: AIDIALOG }, [
+        text,
+        el("div", { style: { display: "flex", "justify-content": "flex-end" } }, [
+            el("button", iconEl(ok_svg), {
+                onclick: async () => {
+                    let t = text.value.trim();
+                    div.close();
+                    if (t != ">") {
+                        const s = await getSection(nowBook.sections);
+                        s["note"] = t;
+                        sectionsStore.setItem(nowBook.sections, s);
+                    }
+                },
+            }),
+        ]),
+    ]) as HTMLDialogElement;
+    div.style.left = "auto";
+    div.style.right = `0`;
+    div.style.top = `32px`;
+    dialogX(div);
 }
 
 type aim = { role: "system" | "user" | "assistant"; content: string }[];
