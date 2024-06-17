@@ -1472,7 +1472,7 @@ async function ignoredWordSpell(list: string[]) {
     const iel = el("textarea", { value: list.sort().join("\n"), style: { height: "200px" } });
     const p = (await interModal("确定添加以下单词到拼写吗？", iel, true)) as string;
     if (!p) return;
-    list = p.split("\n");
+    list = randomList(p.split("\n"));
     const now = time() - timeD.d(5);
     for (let word of list) {
         const card = createEmptyCard(now);
