@@ -3752,7 +3752,7 @@ function ai(m: aim, text?: string) {
                     return v.json();
                 })
                 .then((t) => {
-                    let answer = t.choices[0].message.content;
+                    let answer = t.message?.content || t.choices[0].message.content;
                     console.log(answer);
                     re(answer);
                 })
