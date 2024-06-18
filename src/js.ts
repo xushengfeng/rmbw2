@@ -979,6 +979,8 @@ function showBook(book: book) {
     bookLan = book.language;
 }
 async function showBookSections(book: book) {
+    addSectionEL.style.display = book.canEdit ? "" : "none";
+
     const sections = structuredClone(book.sections);
     bookSectionsEl.innerHTML = "";
     vlist(bookSectionsEl, sections, { iHeight: 24, paddingTop: 16, paddingLeft: 16 }, async (i) => {
