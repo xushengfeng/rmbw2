@@ -1809,8 +1809,8 @@ const bookStyle = ((await setting.getItem("style.default")) as typeof defaultBoo
     for (let i = 20; i <= 60; i += 5) {
         bookStyleList.contentWidth.push(i);
     }
-    for (let i = 1; i <= 2.6; i += 0.2) {
-        bookStyleList.lineHeight.push(i);
+    for (let i = 10; i <= 26; i += 2) {
+        bookStyleList.lineHeight.push(i / 10);
     }
 }
 
