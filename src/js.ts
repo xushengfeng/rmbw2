@@ -463,15 +463,14 @@ async function getBookShortTitle(bookId: string) {
     return (await getBooksById(bookId)).shortName || (await getBooksById(bookId)).name;
 }
 
-async function getTitle(bookId: string, sectionN: string, x?: string) {
-    let section = await getSection(sectionN);
-    const t = `${await getBookShortTitle(bookId)}${x || " - "}${section.title}`;
-    return t;
-}
-
 async function getTitleEl(bookId: string, sectionN: string, x?: string) {
-    const title = await getTitle(bookId, sectionN, x);
-    return el("span", { class: "source_title" }, title);
+    let section = await getSection(sectionN);
+    const title = `${await getBookShortTitle(bookId)}${x || " - "}${section.title}`;
+    const v = el("span", { class: "source_title" }, title);
+    v.onclick = async () => {
+        showBook(await getBooksById(bookId), sectionN);
+    };
+    return v;
 }
 
 async function newBook() {
@@ -969,11 +968,11 @@ async function showLocalBooksL(bookList: book[]) {
     }
     return grid;
 }
-function showBook(book: book) {
+function showBook(book: book, sid?: string) {
     nowBook.book = book.id;
-    nowBook.sections = book.sections[book.lastPosi];
+    nowBook.sections = sid || book.sections[book.lastPosi];
     showBookSections(book);
-    showBookContent(book, book.sections[book.lastPosi]);
+    showBookContent(book, sid || book.sections[book.lastPosi]);
     setBookS();
     isWordBook = book.type === "word";
     bookLan = book.language;
