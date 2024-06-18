@@ -708,7 +708,8 @@ div:has(> .translate) > :not(.translate) {
 }
 
 .source_title {
-    padding-left: 2em;
+    display: block;
+    text-align: end;
     color: color-mix(in srgb, var(--color) 60%, transparent);
 }
 
