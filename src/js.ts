@@ -802,8 +802,8 @@ let bookLan = ((await setting.getItem("lan.learn")) as string) || "en";
 showLocalBooks();
 setBookS();
 
-async function setSectionTitle() {
-    const title = (await getSection(nowBook.sections)).title;
+async function setSectionTitle(sid: string) {
+    const title = (await getSection(sid)).title;
     let titleEl = el("input", { style: { "font-size": "inherit" } });
     titleEl.value = title;
     titleEl.select();
@@ -835,7 +835,7 @@ async function setSectionTitle() {
     titleEl.focus();
     const nTitle = (await interModal("重命名章节标题", iel, true)) as string;
     if (!nTitle) return;
-    let sectionId = nowBook.sections;
+    let sectionId = sid;
     let section = await getSection(sectionId);
     section.title = nTitle;
     await sectionsStore.setItem(sectionId, section);
@@ -1009,7 +1009,7 @@ async function showBookSections(book: book) {
                 menuEl.append(
                     el("div", "重命名", {
                         onclick: async () => {
-                            const t = await setSectionTitle();
+                            const t = await setSectionTitle(sections[i]);
                             if (t) sEl.innerText = t;
                         },
                     })
@@ -1546,7 +1546,7 @@ async function showNormalBook(book: book, s: section) {
     bookContentEl.append(
         el("h1", s.title, {
             onclick: async () => {
-                if ((await getBooksById(nowBook.book)).canEdit) setSectionTitle();
+                if ((await getBooksById(nowBook.book)).canEdit) setSectionTitle(nowBook.sections);
             },
         })
     );
