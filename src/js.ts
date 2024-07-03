@@ -5600,8 +5600,8 @@ async function getGitHub(fileName: string) {
     const token = (await setting.getItem(GitHubConfigPath.token)) as string;
     const path = ((await setting.getItem(GitHubConfigPath.path)) as string) || "";
     const downloadPath =
-        ((await setting.getItem(GitHubConfigPath.download)) as string) ||
-        (`https://raw.githubusercontent.com/${user}/${repo}/main/${path}` as string);
+        (((await setting.getItem(GitHubConfigPath.download)) as string) ||
+            (`https://raw.githubusercontent.com/${user}/${repo}/main/${path}` as string)) + `/${fileName}`;
     return {
         url: `https://api.github.com/repos/${user}/${repo}/contents/${path}/${fileName}`.replace(
             "contents//",
@@ -5720,7 +5720,7 @@ let asyncEl = el("div", [
                     }
                     setAllData(data, nId);
                 } catch (error) {
-                    putToast(el("span", "下载失败", 6000));
+                    putToast(el("span", "下载失败"), 6000);
                     throw error;
                 }
             },
