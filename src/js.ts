@@ -30,6 +30,8 @@ import { MsEdgeTTS, OUTPUT_FORMAT } from "msedge-tts-browserify";
 
 import { Card, createEmptyCard, generatorParameters, FSRS, Rating, State } from "ts-fsrs";
 
+import spark from "spark-md5";
+
 import pen_svg from "../assets/icons/pen.svg";
 import ok_svg from "../assets/icons/ok.svg";
 import very_ok_svg from "../assets/icons/very_ok.svg";
@@ -5344,12 +5346,19 @@ async function getIPA(word: string) {
 
 settingEl.append(el("label", ["学习语言", el("input", { "data-path": "lan.learn" })]));
 
+const textCacheIdPath = "file.text.id";
+const textCacheId = () => setting.getItem(textCacheIdPath);
+const updataTextId = (id: string) => setting.setItem(textCacheIdPath, id);
+
 const rmbwJsonName = "rmbw.json";
 const rmbwZipName = "rmbw.zip";
 
+const rmbwGithub1 = "data.json";
+const rmbwGithub2 = "text.json";
+
 type allData = {
-    bookshelf: Object;
-    sections: Object;
+    bookshelf: { [key: string]: book };
+    sections: { [key: string]: section };
     cards: Object;
     words: Object;
     spell: Object;
@@ -5368,7 +5377,8 @@ let allData2Store: { [key: string]: LocalForage } = {
     card2sentence: card2sentence,
     actions: cardActionsStore,
 } as { [key in keyof allData]: LocalForage };
-async function getAllData() {
+
+async function toAllData() {
     let l: allData = {
         bookshelf: {},
         sections: {},
@@ -5394,7 +5404,9 @@ async function getAllData() {
             l[key][i] = nr;
         }
     }
-
+    return l;
+}
+function formatAllData(l: allData) {
     return jsonStringify(l, (path) => {
         if (path.length === 2 && (path[0] === "cards" || path[0] === "spell")) {
             return true;
@@ -5409,6 +5421,24 @@ async function getAllData() {
             return true;
         }
     });
+}
+async function getAllData() {
+    let l = await toAllData();
+    return formatAllData(l);
+}
+
+function splitAllData(l: allData) {
+    l = structuredClone(l);
+    const text: { [id: string]: string } = {};
+    for (let i in l.sections) {
+        if (i === ignoreWordSection) continue;
+        const t = l.sections[i].text;
+        delete l.sections[i].text;
+        text[i] = t;
+    }
+    const hash = spark.hash(JSON.stringify(text));
+    l.sections[0] = { lastPosi: 0, text: hash, title: "", words: {} };
+    return { data: l, text, hash: hash };
 }
 
 function jsonStringify(value: any, unBr: (path: string[]) => boolean) {
@@ -5440,12 +5470,11 @@ function jsonStringify(value: any, unBr: (path: string[]) => boolean) {
 
 let isSetData = false;
 
-async function setAllData(data: string) {
+async function setAllData(json: allData, textId?: string) {
     if (isSetData) return;
     isSetData = true;
     const tip = el("span", "正在更新……");
     putToast(tip, 0);
-    let json = JSON.parse(data) as allData;
 
     if (Object.keys(json.actions).at(-1) < (await cardActionsStore.keys()).at(-1)) {
         const r = await confirm(`⚠️本地数据似乎更加新，是否继续更新？\n若更新，可能造成数据丢失`);
@@ -5489,6 +5518,7 @@ async function setAllData(data: string) {
         await allData2Store[storeName].clear();
         await allData2Store[storeName].setItems(json[storeName]);
     }
+    await updataTextId(textId || "");
     requestIdleCallback(() => {
         location.reload();
     });
@@ -5564,16 +5594,23 @@ const GitHubConfigPath = {
     download: "webStore.github.download",
 };
 
-async function getGitHub() {
+async function getGitHub(fileName: string) {
     const user = (await setting.getItem(GitHubConfigPath.user)) as string;
     const repo = (await setting.getItem(GitHubConfigPath.repo)) as string;
     const token = (await setting.getItem(GitHubConfigPath.token)) as string;
-    const path = ((await setting.getItem(GitHubConfigPath.path)) as string) || "data.json";
+    const path = ((await setting.getItem(GitHubConfigPath.path)) as string) || "";
+    const downloadPath =
+        ((await setting.getItem(GitHubConfigPath.download)) as string) ||
+        (`https://raw.githubusercontent.com/${user}/${repo}/main/${path}` as string);
     return {
-        url: `https://api.github.com/repos/${user}/${repo}/contents/${path}`,
+        url: `https://api.github.com/repos/${user}/${repo}/contents/${path}/${fileName}`.replace(
+            "contents//",
+            "contents/"
+        ),
         auth: {
             Authorization: `Bearer ${token}`,
         },
+        fileDownload: downloadPath,
         user,
         repo,
         path,
@@ -5586,7 +5623,7 @@ let uploadDataEl = el("input", "上传数据", {
         let reader = new FileReader();
         reader.readAsText(uploadDataEl.files[0]);
         reader.onload = () => {
-            setAllData(reader.result as string);
+            setAllData(JSON.parse(reader.result as string));
         };
     },
 });
@@ -5599,6 +5636,32 @@ function download(text: string, name: string) {
     a.href = URL.createObjectURL(blob);
     a.download = name;
     a.click();
+}
+
+async function uploadGithub(data: string, fileName: string) {
+    let base64 = encode(data);
+    let config = await getGitHub(fileName);
+    let sha = "";
+    sha = (await (await fetch(config.url, { headers: { ...config.auth } })).json()).sha;
+    const x = {
+        message: "更新数据",
+        content: base64,
+        sha,
+    };
+    if (!sha) delete x.sha;
+    fetch(config.url, {
+        method: "PUT",
+        headers: {
+            ...config.auth,
+        },
+        body: JSON.stringify(x),
+    });
+}
+
+async function downloadGithub(fileName: string) {
+    let config = await getGitHub(fileName);
+    const data = await (await fetch(config.fileDownload)).json();
+    return data;
 }
 
 let asyncEl = el("div", [
@@ -5637,50 +5700,49 @@ let asyncEl = el("div", [
         el("button", "↓", {
             onclick: async () => {
                 putToast(el("span", "下载开始"));
-                let config = await getGitHub();
-                fetch(
-                    (await setting.getItem(GitHubConfigPath.download)) ||
-                        `https://raw.githubusercontent.com/${config.user}/${config.repo}/main/${config.path}`
-                )
-                    .then((data) => data.text())
-                    .then((str) => {
-                        setAllData(str);
-                    })
-                    .catch(() => {
-                        putToast(el("span", "下载失败"), 6000);
-                    });
+                try {
+                    const data = (await downloadGithub(rmbwGithub1)) as allData;
+                    const oldId = await textCacheId();
+                    const nId = data.sections[0]?.text;
+                    if (nId) {
+                        let textData: { [key: string]: string } = {};
+                        if (oldId != nId) {
+                            textData = await downloadGithub(rmbwGithub2);
+                        } else {
+                            await sectionsStore.iterate((v: section, k) => {
+                                textData[k] = v.text;
+                            });
+                        }
+                        for (let i in textData) {
+                            data.sections[i]["text"] = textData[i];
+                        }
+                        delete data.sections[0];
+                    }
+                    setAllData(data, nId);
+                } catch (error) {
+                    putToast(el("span", "下载失败", 6000));
+                    throw error;
+                }
             },
         }),
         el("button", "↑", {
             onclick: async () => {
                 putToast(el("span", "上传开始"));
-                let data = await getAllData();
-                let base64 = encode(data);
-                let config = await getGitHub();
-                let sha = "";
                 try {
-                    sha = (await (await fetch(config.url, { headers: { ...config.auth } })).json()).sha;
+                    const x = await toAllData();
+                    const v = splitAllData(x);
+
+                    const oldId = await textCacheId();
+                    if (oldId != v.hash) {
+                        await uploadGithub(JSON.stringify(v.text, null, 2), rmbwGithub2);
+                    }
+                    await uploadGithub(formatAllData(v.data), rmbwGithub1);
+                    updataTextId(v.hash);
+                    putToast(el("span", "上传成功"));
                 } catch (error) {
                     putToast(el("span", "上传失败"), 6000);
+                    throw error;
                 }
-                fetch(config.url, {
-                    method: "PUT",
-                    headers: {
-                        ...config.auth,
-                    },
-                    body: JSON.stringify({
-                        message: "更新数据",
-                        content: base64,
-                        sha,
-                    }),
-                })
-                    .then(() => {
-                        const p = el("span", "上传成功");
-                        putToast(p);
-                    })
-                    .catch(() => {
-                        putToast(el("span", "上传失败"), 6000);
-                    });
             },
         }),
         el("form", [
