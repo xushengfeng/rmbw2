@@ -20,6 +20,9 @@ dependencies:
   diff-match-patch:
     specifier: ^1.0.5
     version: 1.0.5
+  dkh-ui:
+    specifier: ^0.2.1
+    version: 0.2.1
   fuse.js:
     specifier: ^7.0.0
     version: 7.0.0
@@ -552,6 +555,10 @@ packages:
   /core-util-is@1.0.3:
     resolution: {integrity: sha512-ZQBvi1DcpJ4GDqanjucZ2Hj3wEO5pZDS89BWbkcrvdxksJorwUDDZamX9ldFkp9aw2lmBDLgkObEA4DWNJ9FYQ==}
 
+  /csstype@3.1.3:
+    resolution: {integrity: sha512-M1uQkMl8rQK/szD0LNhtqxIPLpimGm8sOBwU7lLnCpSbTyY3yeU1Vc7l4KT5zT4s/yOxHH5O7tIuuLOCnLADRw==}
+    dev: false
+
   /decode-uri-component@0.2.2:
     resolution: {integrity: sha512-FqUYQ+8o158GyGTrMFJms9qh3CqTKvAqgqsTnkLI8sKu0028orqBhxNMFkFen0zGyg6epACD32pjVk58ngIErQ==}
     engines: {node: '>=0.10'}
@@ -623,6 +630,12 @@ packages:
 
   /dingbat-to-unicode@1.0.1:
     resolution: {integrity: sha512-98l0sW87ZT58pU4i61wa2OHwxbiYSbuxsCBozaVnYX2iCnr3bLM3fIes1/ej7h1YdOKuKt/MLs706TVnALA65w==}
+    dev: false
+
+  /dkh-ui@0.2.1:
+    resolution: {integrity: sha512-ishPBTrHeGqXmGOgzxvRygjEbon8wJZEAqHhdpDpdFvo83HcbF/x5m8k82sMrtdPOBZ3Fp+0AcPeObolUoF4jw==}
+    dependencies:
+      csstype: 3.1.3
     dev: false
 
   /download@8.0.0:

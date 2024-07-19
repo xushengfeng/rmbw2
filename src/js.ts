@@ -2,6 +2,8 @@
 
 import { el, setStyle } from "redom";
 
+import { ele, view, pack, frame } from "dkh-ui";
+
 import localforage from "localforage";
 import { extendPrototype } from "localforage-setitems";
 extendPrototype(localforage);
@@ -4107,7 +4109,7 @@ reviewReflashEl.parentElement.append(reviewSortEl);
 reviewReflashEl.parentElement.append(
     el("button", iconEl(chart_svg), {
         onclick: () => {
-            plotEl.showPopover();
+            plotEl.el.showPopover();
             renderCharts();
         },
     })
@@ -5024,12 +5026,17 @@ function setSpellCard(id: string, card: Card, rating: Rating, duration: number) 
     return String(now.getTime());
 }
 
-const plotEl = el("div", { popover: "auto", class: "plot" });
-document.body.append(plotEl);
+const plotEl = view().attr({ popover: "auto" }).class("plot");
+const cardDue = view();
+const cal1 = newCal();
+const cal2 = newCal();
+plotEl.add([
+    cardDue,
+    view().add([ele("h2").attr({ innerText: "新卡片" }), cal1.el, ele("h2").attr({ innerText: "已复习" }), cal2.el]),
+]);
+document.body.append(plotEl.el);
 
 async function renderCharts() {
-    plotEl.innerHTML = "";
-    const cardDue = el("div");
     const wordsScope = (await getWordsScope()).words;
     const wordDue: string[] = [];
     const spellDue: number[] = [];
@@ -5059,10 +5066,10 @@ async function renderCharts() {
         }
     });
 
-    cardDue.append(renderCardDue("单词", wordDue1));
-    cardDue.append(renderCardDue("拼写", spellDue));
-    cardDue.append(renderCardDue("句子", sentenceDue1));
-    plotEl.append(cardDue);
+    cardDue.el.innerHTML = "";
+    cardDue.add({ el: renderCardDue("单词", wordDue1) });
+    cardDue.add({ el: renderCardDue("拼写", spellDue) });
+    cardDue.add({ el: renderCardDue("句子", sentenceDue1) });
 
     const newCard: Date[] = [];
     const reviewCard: Date[] = [];
@@ -5074,13 +5081,12 @@ async function renderCharts() {
             reviewCard.push(date);
         }
     });
-    const cal = renderCal(2024, newCard);
-    const cal1 = renderCal(2024, reviewCard);
-    plotEl.append(el("div", [el("h2", "新卡片"), cal, el("h2", "已复习"), cal1]));
+    renderCal(2024, newCard, cal1);
+    renderCal(2024, reviewCard, cal2);
 }
 
 function renderCardDue(text: string, data: number[]) {
-    const pc = el("div", { class: "oneD_plot" });
+    const pc = view().class("oneD_plot");
     const now = time();
     const zoom = 1 / (timeD.h(1) / 10);
     let _max = now + timeD.d(7),
@@ -5089,13 +5095,14 @@ function renderCardDue(text: string, data: number[]) {
         if (d < _min) _min = d;
     });
     let count = 0;
+    const list: Array<ReturnType<typeof pack<HTMLElement>>> = [];
     for (let min = _min; min < _max; min += 2048 / zoom) {
         const max = Math.min(min + 2048 / zoom, _max);
-        const canvas = el("canvas");
-        canvas.width = (max - min) * zoom;
-        if (max === _max) canvas.width++;
-        canvas.height = 16;
-        const ctx = canvas.getContext("2d");
+        const canvas = ele("canvas");
+        canvas.el.width = (max - min) * zoom;
+        if (max === _max) canvas.el.width++;
+        canvas.el.height = 16;
+        const ctx = canvas.el.getContext("2d");
         function l(x: number, color: string) {
             ctx.strokeStyle = color;
             ctx.beginPath();
@@ -5113,14 +5120,38 @@ function renderCardDue(text: string, data: number[]) {
         l(nowx, "#f00");
         l((now + timeD.h(1) - min) * zoom, "#00f");
         l((now + timeD.d(1) - min) * zoom, "#00f");
-        pc.append(canvas);
+        list.push(canvas);
     }
+    pc.add(list, 3);
     const f = el("div");
-    f.append(text, String(count), pc);
+    f.append(text, String(count), pc.el);
     return f;
 }
 
-function renderCal(year: number, data: Date[]) {
+function newCal() {
+    const f = view().class("cal_plot");
+    const title = view();
+    const list: Array<ReturnType<typeof view>> = [];
+    for (let x = 1; x <= 53; x++) {
+        for (let y = 1; y <= 7; y++) {
+            const item = view();
+            list.push(item);
+        }
+    }
+    f.add(list, 14, 14);
+    f.on("click", (e) => {
+        if (e.target === f.el) return;
+        const EL = e.target as HTMLElement;
+        title.el.innerText = EL.title;
+    });
+    const div = frame("cal", {
+        0: view(),
+        title,
+        plot: f,
+    });
+    return div;
+}
+function renderCal(year: number, data: Date[], el: typeof cal1) {
     const count: { [key: string]: number } = {};
     for (let d of data) {
         const id = d.toDateString();
@@ -5133,37 +5164,33 @@ function renderCal(year: number, data: Date[]) {
     const width = Math.floor(rl.length / (c - 1)) || 1;
     for (let i = 0; i < rl.length; i += width) l.push(rl[i]);
     l.push(rl.at(-1) + 1);
-    const div = el("div");
     const firstDate = new Date(year, 0, 1);
     const zero2first = (firstDate.getDay() + 1) * timeD.d(1);
     let s_date = new Date(firstDate.getTime() - zero2first);
-    const f = el("div", { class: "cal_plot" });
-    const title = el("div");
+
+    const els = Array.from(el.els.plot.el.children) as HTMLElement[];
     for (let x = 1; x <= 53; x++) {
         for (let y = 1; y <= 7; y++) {
             s_date = new Date(s_date.getTime() + timeD.d(1));
             const v = count[s_date.toDateString()] ?? 0;
-            const item = el("div");
-            item.title = `${s_date.toLocaleDateString()}  ${v}`;
+            const item = pack(els[7 * (x - 1) + y - 1]).attr({
+                title: `${s_date.toLocaleDateString()}  ${v}`,
+            });
             if (v) {
                 const nvi = l.findIndex((i) => i > v) - 1;
                 const nv = (100 / c) * nvi + (100 / c) * ((v - l[nvi]) / (l[nvi + 1] - l[nvi])); // 赋分算法，但平均分割区间
-                item.style.backgroundColor = `color-mix(in srgb-linear, #9be9a8, #216e39 ${nv}%)`;
+                item.style({ "background-color": `color-mix(in srgb-linear, #9be9a8, #216e39 ${nv}%)` });
+            } else {
+                item.style({ "background-color": `none` });
             }
             if (s_date.toDateString() === new Date().toDateString()) {
-                item.style.borderWidth = "2px";
-                title.innerText = item.title;
+                item.style({ "border-width": "2px" });
+                el.els.title.el.innerText = item.el.title;
+            } else {
+                item.style({ "border-width": "" });
             }
-            f.append(item);
         }
     }
-    f.onclick = (e) => {
-        if (e.target === f) return;
-        const EL = e.target as HTMLElement;
-        title.innerText = EL.title;
-    };
-    div.append(title, f);
-    return div;
 }
 
 //###### setting
