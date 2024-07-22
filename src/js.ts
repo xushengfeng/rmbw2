@@ -3508,6 +3508,9 @@ autoFun.config({
     type: "chatgpt",
     url: (await setting.getItem("ai.url")) as string,
     key: await setting.getItem("ai.key"),
+    option: {
+        model: "gpt-4o-mini",
+    },
 });
 
 let wordAi = {
@@ -3757,7 +3760,7 @@ type aim = { role: "system" | "user" | "assistant"; content: string }[];
 
 function ai(m: aim, text?: string) {
     let config = {
-        model: "gpt-3.5-turbo",
+        model: "gpt-4o-mini",
         temperature: 0.5,
         top_p: 1,
         frequency_penalty: 1,
