@@ -5981,10 +5981,10 @@ settingEl.querySelectorAll("[data-path]").forEach(async (el: HTMLElement) => {
                 setting.setItem(path, iel.value);
             });
         }
-    } else if (el.tagName === "SELECT") {
-        (el as HTMLSelectElement).value = value as string;
+    } else if ("value" in el) {
+        el.value = value as string;
         el.onchange = () => {
-            setting.setItem(path, (el as HTMLSelectElement).value);
+            setting.setItem(path, el.value);
         };
     }
 });
