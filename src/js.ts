@@ -4614,6 +4614,8 @@ async function getReadTime(text: string) {
 
 async function showSpellReview(x: { id: string; card: Card }) {
     const word = x.id;
+    const wordSpells = usSpell.find((m) => m.includes(word)) || [word];
+    const maxWidth = Math.max(...wordSpells.map((w) => w.length));
     let input = el("div", { class: "spell_input", style: { width: "min-content" } });
     input.innerText = word; // 占位计算宽度
     clearKeyboard();
@@ -4647,7 +4649,7 @@ async function showSpellReview(x: { id: string; card: Card }) {
         inputContent(inputWord);
         wordEl.innerHTML = "";
         div.classList.remove(SHOWSENWORD);
-        if (inputWord === word) {
+        if (wordSpells.includes(inputWord)) {
             // 正确
             const rightL = (await hyphenate(word, { hyphenChar })).split(hyphenChar);
             const ele = el("div");
@@ -4666,7 +4668,7 @@ async function showSpellReview(x: { id: string; card: Card }) {
             clearKeyboard();
         }
         //错误归位
-        if (inputWord.length === word.length && inputWord != word) {
+        if (inputWord.length === maxWidth && !wordSpells.includes(inputWord)) {
             input.innerHTML = "";
             const diffEl = await spellDiffWord(word, inputWord);
             input.append(diffEl);
