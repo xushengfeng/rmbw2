@@ -393,7 +393,7 @@ body {
             & * > span > span {
                 cursor: pointer;
                 &:hover {
-                    text-decoration: underline wavy #999;
+                    text-decoration: underline #999;
                 }
             }
             & span[data-trans] {
