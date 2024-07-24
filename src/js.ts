@@ -3510,6 +3510,7 @@ autoFun.config({
     key: await setting.getItem("ai.key"),
     option: {
         model: "gpt-4o-mini",
+        ...JSON.parse(await setting.getItem("ai.config")),
     },
 });
 
