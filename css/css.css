@@ -709,7 +709,8 @@ div:has(> .translate) > :not(.translate) {
 
 .source_title {
     display: block;
-    text-align: end;
+    width: fit-content;
+    margin-left: auto;
     color: color-mix(in srgb, var(--color) 60%, transparent);
 }
 
