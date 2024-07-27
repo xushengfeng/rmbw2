@@ -986,6 +986,7 @@ async function showBookSections(book: book) {
 
     const sections = structuredClone(book.sections);
     bookSectionsEl.innerHTML = "";
+    bookSectionsEl.lang = bookLan;
     vlist(bookSectionsEl, sections, { iHeight: 24, paddingTop: 16, paddingLeft: 16 }, async (i) => {
         let sEl = el("div");
         let s = await getSection(sections[i]);
@@ -2456,6 +2457,7 @@ markListBarEl.append(autoNewWordEl, markListEl);
 
 async function showMarkList() {
     markListEl.innerHTML = "";
+    markListEl.lang = bookLan;
     let list = await getAllMarks();
     vlist(markListEl, list, { iHeight: 24, gap: 4, paddingTop: 16 }, (index, i, remove) => {
         const content = i.s.type === "word" ? i.s.id : editText.slice(i.s.index[0], i.s.index[1]);
@@ -4096,6 +4098,7 @@ const spellIgnore = el(
 );
 reviewReflashEl.parentElement.append(spellIgnore);
 const reviewViewEl = document.getElementById("review_view");
+reviewViewEl.lang = bookLan;
 
 let reviewSortType: "正常" | "学习" | "紧急" | "随机" = "正常";
 const reviewSortEl = el(
