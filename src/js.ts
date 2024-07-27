@@ -5156,7 +5156,7 @@ function newCal() {
         title.el.innerText = EL.title;
     });
     const div = frame("cal", {
-        0: view(),
+        _: view(),
         title,
         plot: f,
     });
