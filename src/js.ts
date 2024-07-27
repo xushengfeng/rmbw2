@@ -800,7 +800,7 @@ let nowBook = {
 };
 
 let isWordBook = false;
-let bookLan = ((await setting.getItem("lan.learn")) as string) || "en";
+let studyLan = ((await setting.getItem("lan.learn")) as string) || "en";
 
 showLocalBooks();
 setBookS();
@@ -972,21 +972,23 @@ async function showLocalBooksL(bookList: book[]) {
     }
     return grid;
 }
-function showBook(book: book, sid?: string) {
+async function showBook(book: book, sid?: string) {
+    if (book.language != studyLan) {
+        if (!(await confirm(`书籍语言${book.language}与学习语言${studyLan}不符，是否继续显示书籍？`))) return;
+    }
     nowBook.book = book.id;
     nowBook.sections = sid || book.sections[book.lastPosi];
     showBookSections(book);
     showBookContent(book, sid || book.sections[book.lastPosi]);
     setBookS();
     isWordBook = book.type === "word";
-    bookLan = book.language;
 }
 async function showBookSections(book: book) {
     addSectionEL.style.display = book.canEdit ? "" : "none";
 
     const sections = structuredClone(book.sections);
     bookSectionsEl.innerHTML = "";
-    bookSectionsEl.lang = bookLan;
+    bookSectionsEl.lang = studyLan;
     vlist(bookSectionsEl, sections, { iHeight: 24, paddingTop: 16, paddingLeft: 16 }, async (i) => {
         let sEl = el("div");
         let s = await getSection(sections[i]);
@@ -1358,11 +1360,11 @@ function sortWordList(
     if (type === "raw") return list;
     if (type === "az")
         return list.toSorted((a, b) => {
-            return a.text.localeCompare(b.text, bookLan);
+            return a.text.localeCompare(b.text, studyLan);
         });
     if (type === "za")
         return list.toSorted((a, b) => {
-            return b.text.localeCompare(a.text, bookLan);
+            return b.text.localeCompare(a.text, studyLan);
         });
 
     function m(l: typeof list) {
@@ -2457,7 +2459,7 @@ markListBarEl.append(autoNewWordEl, markListEl);
 
 async function showMarkList() {
     markListEl.innerHTML = "";
-    markListEl.lang = bookLan;
+    markListEl.lang = studyLan;
     let list = await getAllMarks();
     vlist(markListEl, list, { iHeight: 24, gap: 4, paddingTop: 16 }, (index, i, remove) => {
         const content = i.s.type === "word" ? i.s.id : editText.slice(i.s.index[0], i.s.index[1]);
@@ -3059,7 +3061,7 @@ async function getWordFromDic(word: string, id: string) {
 }
 
 async function showDicEl(mainTextEl: HTMLTextAreaElement, word: string, x: number, y: number) {
-    const lan = bookLan;
+    const lan = studyLan;
     let list = el("div");
     list.lang = lan;
     async function showDic(id: string) {
@@ -3114,7 +3116,7 @@ async function showDicEl(mainTextEl: HTMLTextAreaElement, word: string, x: numbe
 }
 
 async function onlineDicL(word: string) {
-    const lan = bookLan;
+    const lan = studyLan;
     const onlineList = el("div", { class: "online_dic" });
     let l: onlineDicsType = await setting.getItem(onlineDicsPath);
     l = l.filter((i) => i.lan === lan);
@@ -3315,7 +3317,7 @@ function addP(
     f: (text: string, sentence?: string, index?: [number, number], tags?: bOp) => void
 ) {
     let p = el("p");
-    p.lang = bookLan;
+    p.lang = studyLan;
     let sInput1 = el("span", { contentEditable: "true" });
     let sInput2 = el("span", { contentEditable: "true" });
     let sourceWord = "";
@@ -3385,7 +3387,7 @@ function aiButtons(textEl: HTMLTextAreaElement, word: string, context: string) {
             onclick: async () => {
                 let text = [];
                 const r = (await autoFun.runList([
-                    { fun: wordAi.mean(bookLan, "zh"), input: { word, context } },
+                    { fun: wordAi.mean(studyLan, "zh"), input: { word, context } },
                     { fun: wordAi.meanEmoji(), input: { word, context } },
                     { fun: wordAi.synOpp(), input: { word, context } },
                 ])) as any[];
@@ -3402,7 +3404,7 @@ function aiButtons(textEl: HTMLTextAreaElement, word: string, context: string) {
         }),
         el("button", "基本意思", {
             onclick: async () => {
-                setText(wordAiText.mean((await wordAi.mean(bookLan, "zh").run({ word, context }).result) as any));
+                setText(wordAiText.mean((await wordAi.mean(studyLan, "zh").run({ word, context }).result) as any));
             },
         }),
         el("button", "音标", {
@@ -3966,7 +3968,7 @@ async function getLearntWords() {
 
 async function getNewWordsFromBook(text: string) {
     const learnt = await getLearntWords();
-    const segmenter = new Segmenter(bookLan, { granularity: "word" });
+    const segmenter = new Segmenter(studyLan, { granularity: "word" });
     const segments = segmenter.segment(text);
     const list = Array.from(segments)
         .filter((i) => i.isWordLike)
@@ -3983,7 +3985,7 @@ async function getIgnoreWords() {
 }
 
 async function autoIgnore() {
-    const dialog = el("dialog", { class: "words_select", lang: bookLan }) as HTMLDialogElement;
+    const dialog = el("dialog", { class: "words_select", lang: studyLan }) as HTMLDialogElement;
     const f = el("div");
     const words = Array.from(
         new Set(
@@ -4098,7 +4100,7 @@ const spellIgnore = el(
 );
 reviewReflashEl.parentElement.append(spellIgnore);
 const reviewViewEl = document.getElementById("review_view");
-reviewViewEl.lang = bookLan;
+reviewViewEl.lang = studyLan;
 
 let reviewSortType: "正常" | "学习" | "紧急" | "随机" = "正常";
 const reviewSortEl = el(
@@ -4609,7 +4611,7 @@ function getReviewCardButtons(id: string, card: Card, readText: string, f?: (rat
 }
 
 async function getReadTime(text: string) {
-    const segmenter = new Segmenter(bookLan, { granularity: "word" });
+    const segmenter = new Segmenter(studyLan, { granularity: "word" });
     let segments = segmenter.segment(text);
     const wordsCount = Array.from(segments).length;
     return wordsCount * (Number(await setting.getItem("user.readSpeed")) || 100);
@@ -5363,7 +5365,7 @@ async function saveDic(dic: dic) {
 
 async function getIPA(word: string) {
     if (!ipa) {
-        let lan = bookLan || "en";
+        let lan = studyLan || "en";
         let i = await ipaStore.getItem(lan);
         if (!i) return "";
         ipa = (await i) as Map<string, string | string[]>;
