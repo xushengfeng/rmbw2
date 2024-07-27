@@ -5042,7 +5042,7 @@ plotEl.add([
 ]);
 document.body.append(plotEl.el);
 
-async function renderCharts() {
+async function renderCardDueAll() {
     const wordsScope = (await getWordsScope()).words;
     const wordDue: string[] = [];
     const spellDue: number[] = [];
@@ -5076,6 +5076,11 @@ async function renderCharts() {
     cardDue.add({ el: renderCardDue("单词", wordDue1) });
     cardDue.add({ el: renderCardDue("拼写", spellDue) });
     cardDue.add({ el: renderCardDue("句子", sentenceDue1) });
+}
+
+async function renderCharts() {
+    renderCardDueAll();
+    cal1.els.title.el.innerText = cal2.els.title.el.innerText = "加载中……";
 
     const newCard: Date[] = [];
     const reviewCard: Date[] = [];
