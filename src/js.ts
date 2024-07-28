@@ -1075,7 +1075,7 @@ async function showBookContent(book: book, id: string) {
 
     contentP = [];
 
-    if (isWordBook) await showWordBook(s);
+    if (isWordBook) await showWordBook(book, s);
     else await showNormalBook(book, s);
 
     setScrollPosi(bookContentContainerEl, contentScrollPosi);
@@ -1083,7 +1083,7 @@ async function showBookContent(book: book, id: string) {
     if (!isWordBook) bookContentEl.append(dicEl);
 }
 
-async function showWordBook(s: section) {
+async function showWordBook(book: book, s: section) {
     let rawWordList: { text: string; c: record; id: string; type?: "ignore" | "learn"; means?: number }[] = [];
     let wordList: typeof rawWordList = [];
     let l = s.text.trim().split("\n");
@@ -1351,6 +1351,8 @@ async function showWordBook(s: section) {
             return p;
         }
     );
+
+    bookContentContainerEl.lang = book.language;
 }
 
 const WordSortPath = "words.sort";
