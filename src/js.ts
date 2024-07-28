@@ -1140,7 +1140,11 @@ async function showWordBook(s: section) {
                 findAllMatches: true,
                 useExtendedSearch: true,
                 includeScore: true,
-                keys: ["text"],
+                keys: [
+                    "text",
+                    "c.note",
+                    { name: "t", getFn: (x) => (x.c ? x.c.means.map((i) => i.text).join("\n") : "") },
+                ],
             });
             let fr = fuse.search(search.value);
             let list = fr.map((i) => i.item);
