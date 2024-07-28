@@ -1205,7 +1205,7 @@ async function showWordBook(book: book, s: section) {
         const nl = structuredClone(l);
         await spellStore.iterate((v: Card, k: string) => {
             if (nl.includes(k)) {
-                spell += fsrs.get_retrievability(v, now, false) || 0;
+                spell += fsrsSpell.get_retrievability(v, now, false) || 0;
                 nl[nl.indexOf(k)] = null;
             }
         });
@@ -1490,7 +1490,7 @@ async function ignoredWordSpell(list: string[]) {
     const now = time() - timeD.d(5);
     for (let word of list) {
         const card = createEmptyCard(now);
-        let sCards = fsrs.repeat(card, now)[Rating.Easy].card;
+        let sCards = fsrsSpell.repeat(card, now)[Rating.Easy].card;
         await spellStore.setItem(word, sCards);
     }
     putToast(el("span", "已添加"));
@@ -3846,8 +3846,13 @@ function checkVisitAll(section: section) {
     }
 }
 
-const fsrsW = JSON.parse(await setting.getItem("fsrs.w")) as number[];
-let fsrs = new FSRS(generatorParameters(fsrsW?.length === 17 ? { w: fsrsW } : {}));
+const fsrsWordW = JSON.parse(await setting.getItem("fsrs.word.w")) as number[];
+const fsrsSpellW = JSON.parse(await setting.getItem("fsrs.spell.w")) as number[];
+const fsrsSenW = JSON.parse(await setting.getItem("fsrs.sen.w")) as number[];
+
+const fsrs = new FSRS(generatorParameters(fsrsWordW?.length === 17 ? { w: fsrsWordW } : {}));
+const fsrsSpell = new FSRS(generatorParameters(fsrsSpellW?.length === 17 ? { w: fsrsSpellW } : {}));
+const fsrsSen = new FSRS(generatorParameters(fsrsSenW?.length === 17 ? { w: fsrsSenW } : {}));
 
 var cardsStore = localforage.createInstance({ name: "word", storeName: "cards" });
 var wordsStore = localforage.createInstance({ name: "word", storeName: "words" });
@@ -4324,10 +4329,18 @@ async function getReviewDue(type: review) {
     [wordList, spellList, sentenceList].forEach((x) => x.sort((a, b) => a.card.due.getTime() - b.card.due.getTime()));
     if (reviewSortType === "学习")
         [wordList, spellList, sentenceList].forEach((x) => x.sort((a, b) => (a.card.state === State.New ? -1 : 1)));
-    if (reviewSortType === "紧急")
-        [wordList, spellList, sentenceList].forEach((x) =>
-            x.sort((a, b) => fsrs.get_retrievability(a.card, now, false) - fsrs.get_retrievability(b.card, now, false))
+    if (reviewSortType === "紧急") {
+        wordList.sort(
+            (a, b) => fsrs.get_retrievability(a.card, now, false) - fsrs.get_retrievability(b.card, now, false)
         );
+        spellList.sort(
+            (a, b) =>
+                fsrsSpell.get_retrievability(a.card, now, false) - fsrsSpell.get_retrievability(b.card, now, false)
+        );
+        sentenceList.sort(
+            (a, b) => fsrsSen.get_retrievability(a.card, now, false) - fsrsSen.get_retrievability(b.card, now, false)
+        );
+    }
     if (reviewSortType === "随机") [wordList, spellList, sentenceList].forEach((x) => randomList(x));
     if (type === "word") {
         return wordList[0];
@@ -5030,7 +5043,7 @@ async function setReviewCard(id: string, card: Card, rating: Rating, duration: n
 function setSpellCard(id: string, card: Card, rating: Rating, duration: number) {
     let now = new Date();
     setCardAction(id, now, rating, card.state, duration);
-    let sCards = fsrs.repeat(card, now);
+    let sCards = fsrsSpell.repeat(card, now);
     const nCard = sCards[rating].card;
     spellStore.setItem(id, nCard);
 
@@ -5679,8 +5692,8 @@ let uploadDataEl = el("input", "上传数据", {
 
 import { encode } from "js-base64";
 
-function download(text: string, name: string) {
-    let blob = new Blob([text], { type: "text/plain;charset=utf-8" });
+function download(text: string, name: string, type?: string) {
+    let blob = new Blob([text], { type: type || "text/plain;charset=utf-8" });
     let a = document.createElement("a");
     a.href = URL.createObjectURL(blob);
     a.download = name;
@@ -5810,12 +5823,24 @@ let asyncEl = el("div", [
 
 settingEl.append(asyncEl);
 
-async function getCSV() {
+async function getCSV(type: "word" | "spell" | "sen") {
+    let l = [];
+    if (type === "word" || type === "sen") {
+        // todo 区分sen
+        await cardsStore.iterate((v, k) => {
+            l.push(k);
+        });
+    } else {
+        await spellStore.iterate((_, k) => {
+            l.push(k);
+        });
+    }
     const spChar = ",";
     let text: string[] = [["card_id", "review_time", "review_rating", "review_state", "review_duration"].join(spChar)];
     await cardActionsStore.iterate((v, k) => {
         if (!v[1]) return;
         const card_id = v[0];
+        if (!l.includes(card_id)) return;
         const review_time = Number(k);
         const review_rating = v[1];
         const review_state = v[2];
@@ -5834,19 +5859,22 @@ const readSpeedEl = el("input", { type: "number", "data-path": "user.readSpeed" 
 settingEl.append(
     el("div", [
         el("h2", "复习"),
-        el("button", "导出", {
+        el("button", "导出词句", {
             onclick: async () => {
-                const csv = await getCSV();
-                const blob = new Blob([csv], { type: "text/csv" });
-                const url = URL.createObjectURL(blob);
-                const a = document.createElement("a");
-                a.href = url;
-                a.download = "review.csv";
-                a.click();
+                const csv = await getCSV("word");
+                download(csv, "review.csv", "text/csv");
+            },
+        }),
+        el("button", "导出拼写", {
+            onclick: async () => {
+                const csv = await getCSV("spell");
+                download(csv, "review_spell.csv", "text/csv");
             },
         }),
         el("br"),
-        el("label", ["参数：", el("input", { "data-path": "fsrs.w" })]),
+        el("label", ["单词参数：", el("input", { "data-path": "fsrs.word.w" })]),
+        el("label", ["拼写参数：", el("input", { "data-path": "fsrs.spell.w" })]),
+        el("label", ["句子参数：", el("input", { "data-path": "fsrs.sen.w" })]),
 
         el("h3", "阅读速度"),
         el("p", "测试阅读速度"),
