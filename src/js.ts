@@ -2,7 +2,7 @@
 
 import { el, setStyle } from "redom";
 
-import { ele, view, pack, frame } from "dkh-ui";
+import { ele, view, pack, frame, a } from "dkh-ui";
 
 import localforage from "localforage";
 import { extendPrototype } from "localforage-setitems";
@@ -5871,6 +5871,8 @@ settingEl.append(
                 download(csv, "review_spell.csv", "text/csv");
             },
         }),
+        el("br"),
+        a("https://huggingface.co/spaces/open-spaced-repetition/fsrs4anki_app", "true").add("参数优化器").el,
         el("br"),
         el("label", ["单词参数：", el("input", { "data-path": "fsrs.word.w" })]),
         el("label", ["拼写参数：", el("input", { "data-path": "fsrs.spell.w" })]),
