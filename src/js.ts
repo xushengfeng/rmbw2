@@ -1199,7 +1199,9 @@ async function showWordBook(book: book, s: section) {
             },
         }
     );
-    bookContentContainerEl.append(el("div", { class: "words_book_top" }, chartEl, search, sortEl));
+    bookContentContainerEl.append(
+        view().class("words_book_top").add([chartEl, search, sortEl]).attr({ lang: navigator.language }).el
+    );
 
     requestIdleCallback(async () => {
         let spell = 0;
