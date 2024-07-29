@@ -15,7 +15,7 @@ import mammoth from "mammoth";
 import { hyphenate } from "hyphen/en";
 const hyphenChar = "·";
 
-var Segmenter = Intl.Segmenter;
+let Segmenter = Intl.Segmenter;
 if (!Segmenter) {
     console.warn("no support Intl.Segmenter");
     import("intl-segmenter-polyfill/dist/bundled").then(async (v) => {
@@ -30,7 +30,7 @@ import Keyboard from "simple-keyboard";
 
 import { MsEdgeTTS, OUTPUT_FORMAT } from "msedge-tts-browserify";
 
-import { Card, createEmptyCard, generatorParameters, FSRS, Rating, State } from "ts-fsrs";
+import { type Card, createEmptyCard, generatorParameters, FSRS, Rating, State } from "ts-fsrs";
 
 import spark from "spark-md5";
 
@@ -68,13 +68,12 @@ function iconEl(src: string) {
 function uuid() {
     if (crypto.randomUUID) {
         return crypto.randomUUID().slice(0, 8);
-    } else {
-        return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, (c) => {
-            const r = (Math.random() * 16) | 0,
-                v = c === "x" ? r : (r & 0x3) | 0x8;
-            return v.toString(16).slice(0, 8);
-        });
     }
+    return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, (c) => {
+        const r = (Math.random() * 16) | 0;
+        const v = c === "x" ? r : (r & 0x3) | 0x8;
+        return v.toString(16).slice(0, 8);
+    });
 }
 
 function time() {
@@ -94,10 +93,14 @@ if ("serviceWorker" in navigator) {
     }
 }
 
-var setting = localforage.createInstance({
+const setting = localforage.createInstance({
     name: "setting",
     driver: localforage.LOCALSTORAGE,
 });
+
+function getSetting(p: string) {
+    return localStorage.getItem(`setting/${p}`) as string;
+}
 
 /************************************UI */
 
@@ -108,8 +111,8 @@ document.body.translate = false;
 const menuEl = document.getElementById("menu");
 let willShowMenu = false;
 function showMenu(x: number, y: number) {
-    menuEl.style.left = x + "px";
-    menuEl.style.top = y + "px";
+    menuEl.style.left = `${x}px`;
+    menuEl.style.top = `${y}px`;
     willShowMenu = true;
     menuEl.onclick = () => menuEl.hidePopover();
 }
@@ -122,13 +125,13 @@ document.body.addEventListener("pointerup", (e) => {
 });
 
 function interModal(message?: string, iel?: HTMLElement, cancel?: boolean) {
-    let dialog = document.createElement("dialog");
+    const dialog = document.createElement("dialog");
     dialog.className = "interModal";
-    let me = document.createElement("span");
-    let cancelEl = document.createElement("button");
+    const me = document.createElement("span");
+    const cancelEl = document.createElement("button");
     cancelEl.innerText = "取消";
     cancelEl.classList.add("cancel_b");
-    let okEl = document.createElement("button");
+    const okEl = document.createElement("button");
     okEl.innerText = "确定";
     okEl.classList.add("ok_b");
     me.innerText = message ?? "";
@@ -198,54 +201,52 @@ function vlist<ItemType>(
     },
     f: (index: number, item: ItemType, remove: () => void) => HTMLElement | Promise<HTMLElement>,
 ) {
-    let iHeight = style.iHeight;
-    let gap = style.gap ?? 0;
+    const iHeight = style.iHeight;
+    const gap = style.gap ?? 0;
     // padding 还需要pel自己设定
-    let paddingTop = style.paddingTop ?? 0;
-    let paddingLeft = style.paddingLeft ?? 0;
-    let paddingBotton = style.paddingBotton ?? 0;
+    const paddingTop = style.paddingTop ?? 0;
+    const paddingLeft = style.paddingLeft ?? 0;
+    const paddingBotton = style.paddingBotton ?? 0;
 
-    let blankEl = el("div", {
+    const blankEl = el("div", {
         style: { width: "1px", position: "absolute", top: "0" },
     });
-    const setBlankHeight = (len: number) =>
-        (blankEl.style.height = iHeight * len + gap * len + paddingTop + paddingBotton + "px");
+    const setBlankHeight = (len: number) => {
+        blankEl.style.height = `${iHeight * len + gap * len + paddingTop + paddingBotton}px`;
+    };
     setBlankHeight(list.length);
     pel.append(blankEl);
     const dataI = "data-v-i";
-    async function show(newList?: any[]) {
+    async function show(newList?: ItemType[]) {
         if (newList) {
-            list = newList;
-            setBlankHeight(list.length);
+            setBlankHeight(newList.length);
         }
         let startI = Math.ceil((pel.scrollTop - paddingTop) / (iHeight + gap));
         let endI = Math.floor((pel.scrollTop - paddingTop + pel.offsetHeight) / (iHeight + gap));
-        let buffer = Math.min(Math.floor((endI - startI) / 3), 15);
+        const buffer = Math.min(Math.floor((endI - startI) / 3), 15);
         startI -= buffer;
         endI += buffer;
         startI = Math.max(0, startI);
-        endI = Math.min(list.length - 1, endI);
-        if (list.length < 100 && !newList) {
+        endI = Math.min(newList.length - 1, endI);
+        const elList = Array.from(pel.querySelectorAll(`:scope > [${dataI}]`).values()) as HTMLElement[];
+        if (newList.length < 100 && !newList) {
             startI = 0;
-            endI = list.length - 1;
-            if (pel.querySelectorAll(`:scope > [${dataI}]`).length === list.length) return;
+            endI = newList.length - 1;
+            if (elList.length === newList.length) return;
         }
-        let oldRangeList: number[] = [];
-        pel.querySelectorAll(`:scope > [${dataI}]`).forEach((el: HTMLElement) => {
-            oldRangeList.push(Number(el.getAttribute(dataI)));
-        });
-        for (let i of oldRangeList) {
+        const oldRangeList: number[] = [];
+        for (const el of elList) oldRangeList.push(Number(el.getAttribute(dataI)));
+        for (const i of oldRangeList) {
             if (i < startI || endI < i || newList) pel.querySelector(`:scope > [${dataI}="${i}"]`).remove();
         }
         for (let i = startI; i <= endI; i++) {
-            let iel = await f(i, list[i], () => {
-                list = list.toSpliced(i, 1);
-                show(list);
+            const iel = await f(i, newList[i], () => {
+                show(newList.toSpliced(i, 1));
             });
             setStyle(iel, {
                 position: "absolute",
-                top: paddingTop + i * (iHeight + gap) + "px",
-                left: paddingLeft + "px",
+                top: `${paddingTop + i * (iHeight + gap)}px`,
+                left: `${paddingLeft}px`,
                 ...(style.width ? { width: style.width } : {}),
             });
             iel.setAttribute(dataI, String(i));
@@ -259,7 +260,7 @@ function vlist<ItemType>(
     pel.addEventListener("scroll", s);
 
     const observer = new MutationObserver((mutationsList) => {
-        for (let mutation of mutationsList) {
+        for (const mutation of mutationsList) {
             if (mutation.type === "childList" && Array.from(mutation.removedNodes).includes(blankEl)) {
                 pel.removeEventListener("scroll", s);
             }
@@ -283,7 +284,7 @@ const NOTEDIALOG = "note_dialog";
 const AIDIALOG = "ai_dialog";
 const DICDIALOG = "dic_dialog";
 const SELECTEDITEM = "selected_item";
-const LITLEPROGRESS = `litle_progress`;
+const LITLEPROGRESS = "litle_progress";
 
 const booksEl = document.getElementById("books") as HTMLDialogElement;
 const localBookEl = el("div");
@@ -382,7 +383,7 @@ dicEl.append(
     dicDetailsEl,
 );
 
-function putToast(ele: HTMLElement, time?: number) {
+function putToast(ele: HTMLElement, time = 2000) {
     let toastEl = document.body.querySelector(".toast") as HTMLElement;
     if (!toastEl) {
         toastEl = el("div", { class: "toast", popover: "auto" });
@@ -391,7 +392,6 @@ function putToast(ele: HTMLElement, time?: number) {
     toastEl.showPopover();
     toastEl.append(ele);
 
-    if (time === undefined) time = 2000;
     if (time) {
         setTimeout(() => {
             ele.remove();
@@ -399,7 +399,7 @@ function putToast(ele: HTMLElement, time?: number) {
     }
 
     const observer = new MutationObserver((mutationsList) => {
-        for (let mutation of mutationsList) {
+        for (const mutation of mutationsList) {
             if (mutation.type === "childList" && toastEl.childElementCount === 0) {
                 toastEl.remove();
                 observer.disconnect();
@@ -412,8 +412,8 @@ function putToast(ele: HTMLElement, time?: number) {
 const tmpDicEl = el("div", { popover: "auto", class: "tmp_dic" });
 document.body.append(tmpDicEl);
 
-var bookshelfStore = localforage.createInstance({ name: "bookshelf" });
-var sectionsStore = localforage.createInstance({ name: "sections" });
+const bookshelfStore = localforage.createInstance({ name: "bookshelf" });
+const sectionsStore = localforage.createInstance({ name: "sections" });
 
 type book = {
     name: string;
@@ -455,8 +455,8 @@ async function getSection(id: string) {
 }
 
 async function checkEmptyBook(book: book) {
-    let e = true;
-    for (let sis of book.sections) {
+    const e = true;
+    for (const sis of book.sections) {
         if (Object.keys((await getSection(sis)).words).length) {
             return false;
         }
@@ -469,7 +469,7 @@ async function getBookShortTitle(bookId: string) {
 }
 
 async function getTitleEl(bookId: string, sectionN: string, x?: string) {
-    let section = await getSection(sectionN);
+    const section = await getSection(sectionN);
     const title = `${await getBookShortTitle(bookId)}${x || " - "}${section.title}`;
     const v = el("span", { class: "source_title" }, title);
     v.onclick = async () => {
@@ -479,9 +479,9 @@ async function getTitleEl(bookId: string, sectionN: string, x?: string) {
 }
 
 async function newBook() {
-    let id = uuid();
-    let sid = uuid();
-    let book: book = {
+    const id = uuid();
+    const sid = uuid();
+    const book: book = {
         name: "新书",
         id: id,
         visitTime: 0,
@@ -492,14 +492,14 @@ async function newBook() {
         lastPosi: 0,
         language: "en",
     };
-    let s = newSection();
+    const s = newSection();
     bookshelfStore.setItem(id, book);
     await sectionsStore.setItem(sid, s);
     return { book: id, sections: sid };
 }
 
 function newSection() {
-    let s: section = { title: "新章节", lastPosi: 0, text: "", words: {} };
+    const s: section = { title: "新章节", lastPosi: 0, text: "", words: {} };
     return s;
 }
 
@@ -539,10 +539,10 @@ bookBEl.onclick = () => {
     booksEl.showModal();
 };
 
-var coverCache = localforage.createInstance({ name: "cache", storeName: "cover" });
+const coverCache = localforage.createInstance({ name: "cache", storeName: "cover" });
 
 async function getBookCover(url: string) {
-    let src = (await getOnlineBooksUrl()) + "/source/" + url;
+    const src = `${await getOnlineBooksUrl()}/source/${url}`;
     return src;
 }
 
@@ -554,7 +554,7 @@ async function getOnlineBooksUrl() {
 }
 
 async function getOnlineBooks() {
-    fetch((await getOnlineBooksUrl()) + "/index.json")
+    fetch(`${await getOnlineBooksUrl()}/index.json`)
         .then((v) => v.json())
         .then((j) => {
             showOnlineBooks(j.books);
@@ -605,11 +605,11 @@ async function showOnlineBooksL(
     }[],
 ) {
     const grid = el("div", { class: "books" });
-    for (let book of books) {
+    for (const book of books) {
         let url = "";
         if (book.cover) url = await getBookCover(book.cover);
-        let div = bookEl(book.name, url);
-        let bookCover = div.querySelector("div");
+        const div = bookEl(book.name, url);
+        const bookCover = div.querySelector("div");
         bookshelfStore.iterate((v: book, k) => {
             if (book.id === k) {
                 if (v.updateTime < book.updateTime) {
@@ -642,11 +642,11 @@ async function showOnlineBooksL(
                 saveBook();
             }
             function saveBook() {
-                let s = [];
+                const s = [];
                 let count = 0;
                 const fetchPromises = book.sections.map(async (item) => {
                     const { id, path, title } = item;
-                    const response = await fetch((await getOnlineBooksUrl()) + "/source/" + path);
+                    const response = await fetch(`${await getOnlineBooksUrl()}/source/${path}`);
                     const content = await response.text();
                     count++;
                     const p = (count / book.sections.length) * 100;
@@ -656,11 +656,11 @@ async function showOnlineBooksL(
                 Promise.all(fetchPromises)
                     .then(async (results) => {
                         console.log(results);
-                        for (let i of results) {
+                        for (const i of results) {
                             s.push(i.id);
-                            let section = (await sectionsStore.getItem(i.id)) as section;
+                            const section = (await sectionsStore.getItem(i.id)) as section;
                             if (section) {
-                                let s = changePosi(section, i.content);
+                                const s = changePosi(section, i.content);
                                 s.text = i.content;
                                 s.title = i.title;
                                 sectionsStore.setItem(i.id, s);
@@ -673,14 +673,14 @@ async function showOnlineBooksL(
                                 } as section);
                             }
                         }
-                        for (let i in book) {
+                        for (const i in book) {
                             xbook[i] = book[i];
                         }
                         xbook.sections = s;
                         xbook.updateTime = book.updateTime;
                         await bookshelfStore.setItem(book.id, xbook);
                         if (book.cover) {
-                            let src = await getBookCover(book.cover);
+                            const src = await getBookCover(book.cover);
                             const b = await (await fetch(src)).blob();
                             coverCache.setItem(book.id, b);
                         }
@@ -711,7 +711,7 @@ function selectBook<BOOK extends { type: "word" | "text" | "package"; language: 
     const map = { word: "词典", text: "文本", package: "包" };
     function crl(l: string[], text: (text: string) => string, pel: HTMLElement, key: keyof typeof x) {
         if (l.length > 1)
-            for (let i of [0, ...l]) {
+            for (const i of [0, ...l]) {
                 pel.append(
                     el("span", typeof i === "number" ? "全部" : text(i), {
                         onclick: () => {
@@ -738,15 +738,15 @@ function selectBook<BOOK extends { type: "word" | "text" | "package"; language: 
 async function saveLanguagePackage(lan: string, section: { id: string; path: string }[]) {
     const fetchPromises = section.map(async (item) => {
         const { id, path } = item;
-        const response = await fetch((await getOnlineBooksUrl()) + "/source/" + path);
+        const response = await fetch(`${await getOnlineBooksUrl()}/source/${path}`);
         const content = await response.json();
         return { id, content };
     });
     Promise.all(fetchPromises).then(async (results) => {
         console.log(results);
-        for (let i of results) {
+        for (const i of results) {
             const map = new Map();
-            for (let x in i.content) {
+            for (const x in i.content) {
                 map.set(x, i.content[x]);
             }
             if (i.id === "ipa") {
@@ -756,7 +756,7 @@ async function saveLanguagePackage(lan: string, section: { id: string; path: str
                 variantStore.setItem(lan, map);
             }
             if (i.id === "dic") {
-                i.content["lang"] = lan;
+                i.content.lang = lan;
                 saveDic(i.content);
             }
             if (i.id === "map") {
@@ -768,9 +768,9 @@ async function saveLanguagePackage(lan: string, section: { id: string; path: str
 }
 
 addBookEl.onclick = async () => {
-    let b = await newBook();
+    const b = await newBook();
     nowBook = b;
-    let book = await getBooksById(nowBook.book);
+    const book = await getBooksById(nowBook.book);
     showBook(book);
     changeEdit(true);
     booksEl.close();
@@ -779,11 +779,11 @@ addBookEl.onclick = async () => {
 addSectionEL.onclick = async () => {
     if (nowBook.book === "0") return;
     if (!nowBook.book) nowBook = await newBook();
-    let book = await getBooksById(nowBook.book);
-    let sid = uuid();
+    const book = await getBooksById(nowBook.book);
+    const sid = uuid();
     book.sections.push(sid);
     book.lastPosi = book.sections.length - 1;
-    let s = newSection();
+    const s = newSection();
     await sectionsStore.setItem(sid, s);
     await bookshelfStore.setItem(nowBook.book, book);
     nowBook.sections = book.sections.at(-1);
@@ -801,14 +801,14 @@ let nowBook = {
 };
 
 let isWordBook = false;
-let studyLan = ((await setting.getItem("lan.learn")) as string) || "en";
+const studyLan = ((await setting.getItem("lan.learn")) as string) || "en";
 
 showLocalBooks();
 setBookS();
 
 async function setSectionTitle(sid: string) {
     const title = (await getSection(sid)).title;
-    let titleEl = el("input", { style: { "font-size": "inherit" } });
+    const titleEl = el("input", { style: { "font-size": "inherit" } });
     titleEl.value = title;
     titleEl.select();
     const iel = el("div");
@@ -816,22 +816,23 @@ async function setSectionTitle(sid: string) {
         titleEl,
         el("button", "ai", {
             onclick: async () => {
-                let f = new autoFun.def({
+                const f = new autoFun.def({
                     input: { text: "string" },
-                    script: [`为输入的文章起个标题`],
+                    script: ["为输入的文章起个标题"],
                     output: "title:string",
                 });
                 const ff = f.run(editText);
-                let stopEl = el("button", iconEl(close_svg));
+                const stopEl = el("button", iconEl(close_svg));
                 stopEl.onclick = () => {
                     ff.stop.abort();
                     pel.remove();
                 };
-                let pel = el("div", [el("p", `AI正在思考标题`), stopEl]);
+                const pel = el("div", [el("p", "AI正在思考标题"), stopEl]);
                 putToast(pel, 0);
                 ff.result.then((r) => {
                     pel.remove();
-                    titleEl.value = r["title"];
+                    // @ts-ignore
+                    titleEl.value = r.title;
                 });
             },
         }),
@@ -839,8 +840,8 @@ async function setSectionTitle(sid: string) {
     titleEl.focus();
     const nTitle = (await interModal("重命名章节标题", iel, true)) as string;
     if (!nTitle) return;
-    let sectionId = sid;
-    let section = await getSection(sectionId);
+    const sectionId = sid;
+    const section = await getSection(sectionId);
     section.title = nTitle;
     await sectionsStore.setItem(sectionId, section);
     if (!isWordBook) bookContentEl.querySelector("h1").innerText = section.title;
@@ -852,21 +853,21 @@ async function setBookS() {
     if (nowBook.book) {
         const bookName = (await getBooksById(nowBook.book)).name;
         bookNameEl.innerText = bookName;
-        let sectionId = nowBook.sections;
-        let section = await getSection(sectionId);
+        const sectionId = nowBook.sections;
+        const section = await getSection(sectionId);
         if (!isWordBook) bookContentEl.querySelector("h1").innerText = section.title;
     }
 }
 
 function bookEl(name: string, coverUrl?: string) {
-    let bookIEl = el("div");
+    const bookIEl = el("div");
     const cover = el("div");
-    let titleEl = el("span");
-    let bookCover = el("div");
+    const titleEl = el("span");
+    const bookCover = el("div");
     bookCover.innerText = name;
     cover.append(bookCover);
     if (coverUrl) {
-        let bookCover = el("img");
+        const bookCover = el("img");
         bookCover.src = coverUrl;
         cover.append(bookCover);
         bookCover.onerror = () => {
@@ -901,7 +902,7 @@ async function showLocalBooks() {
 
 async function showLocalBooksL(bookList: book[]) {
     const grid = el("div", { class: "books" });
-    for (let book of bookList) {
+    for (const book of bookList) {
         let bookIEl: HTMLDivElement;
         if (book.cover) {
             const c = (await coverCache.getItem(book.id)) as Blob;
@@ -931,7 +932,7 @@ async function showLocalBooksL(bookList: book[]) {
         bookIEl.oncontextmenu = async (e) => {
             e.preventDefault();
             const book = await getBooksById(id);
-            let formEl = el("form", [
+            const formEl = el("form", [
                 el("input", { name: "name", value: book.name }),
                 el("input", { name: "language", value: book.language }),
                 el("label", [
@@ -945,9 +946,9 @@ async function showLocalBooksL(bookList: book[]) {
             ]);
             const submitEl = el("button", "确定");
             const deleteEl = el("button", "删除");
-            let metaEl = el("dialog", [el("div", `id: ${book.id}`), formEl, submitEl, deleteEl]) as HTMLDialogElement;
+            const metaEl = el("dialog", [el("div", `id: ${book.id}`), formEl, submitEl, deleteEl]) as HTMLDialogElement;
             submitEl.onclick = () => {
-                let data = new FormData(formEl);
+                const data = new FormData(formEl);
                 data.forEach((v, k) => {
                     book[k] = v;
                 });
@@ -974,7 +975,7 @@ async function showLocalBooksL(bookList: book[]) {
     return grid;
 }
 async function showBook(book: book, sid?: string) {
-    if (book.language != studyLan) {
+    if (book.language !== studyLan) {
         if (!(await confirm(`书籍语言${book.language}与学习语言${studyLan}不符，是否继续显示书籍？`))) return;
     }
     nowBook.book = book.id;
@@ -991,8 +992,8 @@ async function showBookSections(book: book) {
     bookSectionsEl.innerHTML = "";
     bookSectionsEl.lang = studyLan;
     vlist(bookSectionsEl, sections, { iHeight: 24, paddingTop: 16, paddingLeft: 16 }, async (i) => {
-        let sEl = el("div");
-        let s = await getSection(sections[i]);
+        const sEl = el("div");
+        const s = await getSection(sections[i]);
         sEl.innerText = sEl.title = s.title || `章节${Number(i) + 1}`;
         if (nowBook.sections === sections[i]) sEl.classList.add(SELECTEDITEM);
         if (Object.values(s.words).some((i) => !i.visit)) sEl.classList.add(TODOMARK);
@@ -1042,13 +1043,13 @@ let contentP: string[] = [];
 import Fuse from "fuse.js";
 
 async function showBookContent(book: book, id: string) {
-    let s = await getSection(id);
+    const s = await getSection(id);
     if (id === wordSection) {
-        let l: string[] = [];
+        const l: string[] = [];
         await wordsStore.iterate((v: record) => {
             l.push(v.word);
         });
-        let text = l.join("\n");
+        const text = l.join("\n");
         s.text = text;
     }
     bookContentContainerEl.innerHTML = "";
@@ -1085,9 +1086,9 @@ async function showBookContent(book: book, id: string) {
 }
 
 async function showWordBook(book: book, s: section) {
-    let rawWordList: { text: string; c: record; id: string; type?: "ignore" | "learn"; means?: number }[] = [];
+    const rawWordList: { text: string; c: record; id: string; type?: "ignore" | "learn"; means?: number }[] = [];
     let wordList: typeof rawWordList = [];
-    let l = s.text.trim().split("\n");
+    const l = s.text.trim().split("\n");
     const cards: Map<string, Card> = new Map();
     await cardsStore.iterate((v: Card, k) => {
         cards.set(k, v);
@@ -1100,8 +1101,8 @@ async function showWordBook(book: book, s: section) {
         if (l.includes(k)) words.set(k, v);
         if (usS.includes(k)) mayMapWords.set(k, v);
     });
-    for (let i of usS) if (l.includes(i) && !words.has(i)) wordMap[i] = "";
-    for (let i in wordMap) {
+    for (const i of usS) if (l.includes(i) && !words.has(i)) wordMap[i] = "";
+    for (const i in wordMap) {
         const list = usSpell.find((w) => w.includes(i));
         wordMap[i] = list.find((w) => mayMapWords.has(w));
     }
@@ -1109,8 +1110,8 @@ async function showWordBook(book: book, s: section) {
     let matchWords = 0;
     let means1 = 0;
     const now = new Date();
-    for (let i of l) {
-        let t = i;
+    for (const i of l) {
+        const t = i;
         let c: record;
         let type: "ignore" | "learn" = null;
         let means = 0;
@@ -1119,8 +1120,8 @@ async function showWordBook(book: book, s: section) {
             type = "learn";
             matchWords++;
             let r = 0;
-            for (let j of c.means) {
-                let x = cards.get(j.card_id);
+            for (const j of c.means) {
+                const x = cards.get(j.card_id);
                 r += fsrs.get_retrievability(x, now, false) || 0;
             }
             means = r / c.means.length;
@@ -1147,8 +1148,8 @@ async function showWordBook(book: book, s: section) {
                     { name: "t", getFn: (x) => (x.c ? x.c.means.map((i) => i.text).join("\n") : "") },
                 ],
             });
-            let fr = fuse.search(search.value);
-            let list = fr.map((i) => i.item);
+            const fr = fuse.search(search.value);
+            const list = fr.map((i) => i.item);
             const nl = list.length ? list : wordList;
             show.show(nl);
             if (nl.length === wordList.length) {
@@ -1169,7 +1170,7 @@ async function showWordBook(book: book, s: section) {
         { type: "01", name: "陌生" },
         { type: "random", name: "随机" },
     ];
-    for (let i of sortMap) {
+    for (const i of sortMap) {
         sortEl.append(
             el("span", i.name, {
                 onclick: () => {
@@ -1188,11 +1189,11 @@ async function showWordBook(book: book, s: section) {
             el(
                 "div",
                 { class: LITLEPROGRESS },
-                el("div", { style: { width: (matchWords / l.length) * 100 + "%", background: "#00f" } }),
-                el("div", { style: { width: (means1 / l.length) * 100 + "%", background: "#0f0" } }),
+                el("div", { style: { width: `${(matchWords / l.length) * 100}%`, background: "#00f" } }),
+                el("div", { style: { width: `${(means1 / l.length) * 100}%`, background: "#0f0" } }),
             ),
         ),
-        el("div", `拼写 加载中`, el("div", { class: LITLEPROGRESS })),
+        el("div", "拼写 加载中", el("div", { class: LITLEPROGRESS })),
         {
             onclick: () => {
                 showWordBookMore(wordList);
@@ -1212,7 +1213,7 @@ async function showWordBook(book: book, s: section) {
                 nl[nl.indexOf(k)] = null;
             }
         });
-        for (let i of nl) if (i && ignoreWords.includes(i)) spell += 1;
+        for (const i of nl) if (i && ignoreWords.includes(i)) spell += 1;
         chartEl.lastElementChild.remove();
         chartEl.append(
             el(
@@ -1221,7 +1222,7 @@ async function showWordBook(book: book, s: section) {
                 el(
                     "div",
                     { class: LITLEPROGRESS },
-                    el("div", { style: { width: (spell / l.length) * 100 + "%", background: "#00f" } }),
+                    el("div", { style: { width: `${(spell / l.length) * 100}%`, background: "#00f" } }),
                 ),
             ),
         );
@@ -1232,7 +1233,7 @@ async function showWordBook(book: book, s: section) {
         wordList,
         { iHeight: 24, gap: 8, paddingTop: 120, paddingBotton: 8 },
         (i, item) => {
-            let p = el("p", item.text);
+            const p = el("p", item.text);
             if (item.type) {
                 p.classList.add(item.type);
             }
@@ -1248,9 +1249,9 @@ async function showWordBook(book: book, s: section) {
                                 p.classList.remove("ignore");
                                 const item1 = rawWordList.find((i) => i.text === item.text);
                                 const item2 = wordList.find((i) => i.text === item.text);
-                                delete item.type;
-                                delete item1.type;
-                                delete item2.type;
+                                item.type = undefined;
+                                item1.type = undefined;
+                                item2.type = undefined;
                             },
                         }),
                     );
@@ -1277,7 +1278,7 @@ async function showWordBook(book: book, s: section) {
                     p.append(el("div", item.text));
                     const books = await wordBooksByWord(item.text);
                     const booksEl = el("div");
-                    for (let i of books) {
+                    for (const i of books) {
                         const bookN = (await getBooksById(i.book)).name;
                         const s = (await getSection(i.section)).title;
                         booksEl.append(el("span", s, { title: bookN }));
@@ -1305,7 +1306,7 @@ async function showWordBook(book: book, s: section) {
                     const onlineList = await onlineDicL(item.text);
                     p.append(onlineList);
                     if (item.c)
-                        for (let i of item.c.means) {
+                        for (const i of item.c.means) {
                             const pel = el(
                                 "div",
                                 el("button", iconEl(pen_svg), {
@@ -1380,12 +1381,12 @@ function sortWordList(
         const ig: typeof list = [];
         const ul: typeof list = [];
         const learnt: typeof list = [];
-        l.forEach((i) => {
+        for (const i of l) {
             if (i.type) {
                 if (i.type === "ignore") ig.push(i);
                 else learnt.push(i);
             } else ul.push(i);
-        });
+        }
         return {
             ig,
             ul,
@@ -1439,35 +1440,35 @@ async function showWordBookMore(wordList: { text: string; c: record; type?: "ign
             }),
         ),
     );
-    let bookIds: { [id: string]: number } = {};
+    const bookIds: { [id: string]: number } = {};
 
     const wordFamilyMap: Map<string, boolean> = new Map();
 
-    wordList.forEach((w) => {
+    for (const w of wordList) {
         if (w.type === "learn") {
-            w.c.means.forEach((m) => {
-                m.contexts.forEach((c) => {
+            for (const m of w.c.means) {
+                for (const c of m.contexts) {
                     const id = c.source.book;
                     if (bookIds[id]) bookIds[id]++;
                     else bookIds[id] = 1;
-                });
-            });
+                }
+            }
         }
         const rootWord = lemmatizer(w.text);
-        if (wordFamilyMap.get(rootWord) != true) wordFamilyMap.set(rootWord, Boolean(w.type));
-    });
+        if (wordFamilyMap.get(rootWord) !== true) wordFamilyMap.set(rootWord, Boolean(w.type));
+    }
     const l = Object.entries(bookIds).sort((a, b) => b[1] - a[1]);
     const ignore = wordList.filter((w) => w.type === "ignore").length;
     const max = Math.max(l[0][1], ignore);
     const pEl = el("div", { class: "words_from" });
-    for (let i of l) {
+    for (const i of l) {
         pEl.append(
             el("span", (await getBooksById(i[0])).name),
             el("span", i[1]),
-            el("div", { style: { width: (i[1] / max) * 100 + "%" } }),
+            el("div", { style: { width: `${(i[1] / max) * 100}%` } }),
         );
     }
-    pEl.append(el("span", "忽略"), el("span", ignore), el("div", { style: { width: (ignore / max) * 100 + "%" } }));
+    pEl.append(el("span", "忽略"), el("span", ignore), el("div", { style: { width: `${(ignore / max) * 100}%` } }));
     d.append(el("p", "单词来源"), pEl);
     const familyList = Array.from(wordFamilyMap.values());
     d.append(
@@ -1477,7 +1478,7 @@ async function showWordBookMore(wordList: { text: string; c: record; type?: "ign
             .class(LITLEPROGRESS)
             .add([
                 view().style({
-                    width: (familyList.filter((i) => i).length / familyList.length) * 100 + "%",
+                    width: `${(familyList.filter((i) => i).length / familyList.length) * 100}%`,
                     background: "#00f",
                 }),
             ]).el,
@@ -1499,19 +1500,19 @@ async function showWordBookMore(wordList: { text: string; c: record; type?: "ign
 
 async function ignoredWordSpell(list: string[]) {
     const keys = await spellStore.keys();
-    list = list.filter((w) => !keys.includes(w));
-    if (list.length === 0) {
+    const flist = list.filter((w) => !keys.includes(w));
+    if (flist.length === 0) {
         putToast(el("span", "无新添加词"));
         return;
     }
-    const iel = el("textarea", { value: list.sort().join("\n"), style: { height: "200px" } });
+    const iel = el("textarea", { value: flist.sort().join("\n"), style: { height: "200px" } });
     const p = (await interModal("确定添加以下单词到拼写吗？", iel, true)) as string;
     if (!p) return;
-    list = randomList(p.split("\n"));
+    const rlist = randomList(p.split("\n"));
     const now = time() - timeD.d(5);
-    for (let word of list) {
+    for (const word of rlist) {
         const card = createEmptyCard(now);
-        let sCards = fsrsSpell.repeat(card, now)[Rating.Easy].card;
+        const sCards = fsrsSpell.repeat(card, now)[Rating.Easy].card;
         await spellStore.setItem(word, sCards);
     }
     putToast(el("span", "已添加"));
@@ -1519,7 +1520,7 @@ async function ignoredWordSpell(list: string[]) {
 
 async function textTransformer(text: string) {
     if (await setting.getItem(readerSettingPath.apostrophe)) {
-        text = text.replace(/’(\w)/g, "'$1");
+        return text.replace(/’(\w)/g, "'$1");
     }
     return text;
 }
@@ -1532,13 +1533,13 @@ async function showNormalBook(book: book, s: section) {
     const osL = Array.from(new Segmenter(book.language, { granularity: "sentence" }).segment(s.text));
     const sL: Intl.SegmentData[] = [];
     const sx = ["Mr.", "Mrs.", "Ms.", "Miss.", "Dr.", "Prof.", "Capt.", "Lt.", "Sgt.", "Rev.", "Sr.", "Jr.", "St."].map(
-        (i) => i + " ",
+        (i) => `${i} `,
     );
-    let sxS = sx.map((i) => ` ${i}`);
+    const sxS = sx.map((i) => ` ${i}`);
     for (let i = 0; i < osL.length; i++) {
         const seg = osL[i].segment;
         if (seg.endsWith(" ") && (sx.includes(seg) || sxS.some((i) => seg.endsWith(i)))) {
-            let x = osL[i];
+            const x = osL[i];
             const next = osL[i + 1];
             if (next) x.segment += next.segment;
             sL.push(x);
@@ -1547,21 +1548,21 @@ async function showNormalBook(book: book, s: section) {
             sL.push(osL[i]);
         }
     }
-    let plist: { text: string; start: number; end: number; isWord: boolean }[][][] = [[]];
+    const plist: { text: string; start: number; end: number; isWord: boolean }[][][] = [[]];
     for (const sentence of sL) {
         if (/^\n+/.test(sentence.segment)) {
             plist.push([]);
             continue;
         }
-        let sen: (typeof plist)[0][0] = [];
+        const sen: (typeof plist)[0][0] = [];
         plist.at(-1).push(sen); // last p add sen
         const wL = Array.from(segmenter.segment(sentence.segment));
-        for (let word of wL) {
+        for (const word of wL) {
             if (word.segment === "#" && sen?.at(-1)?.text === "#") {
                 sen.at(-1).text += "#";
                 sen.at(-1).end += 1;
             } else {
-                let s = sentence.index + word.index;
+                const s = sentence.index + word.index;
                 if (!/\n+/.test(word.segment))
                     sen.push({
                         text: word.segment,
@@ -1587,10 +1588,10 @@ async function showNormalBook(book: book, s: section) {
     );
 
     wordFreq = {};
-    let highFreq: string[] = [];
+    const highFreq: string[] = [];
     properN = [];
 
-    for (let paragraph of plist) {
+    for (const paragraph of plist) {
         if (paragraph.length === 0) continue;
         let pel: HTMLElement = document.createElement("p");
         let t = 0;
@@ -1608,7 +1609,7 @@ async function showNormalBook(book: book, s: section) {
                 break;
             }
         }
-        if (t) pel = document.createElement("h" + t);
+        if (t) pel = document.createElement(`h${t}`);
 
         if (paragraph.length === 1 && paragraph[0].length >= 3 && paragraph[0].every((i) => i.text === "-")) {
             pel = el("hr");
@@ -1622,10 +1623,10 @@ async function showNormalBook(book: book, s: section) {
             for (const i in sen) {
                 const word = sen[i];
                 if (si === "0" && Number(i) < t) continue;
-                let span = document.createElement("span");
+                const span = document.createElement("span");
                 span.innerText = await textTransformer(word.text);
-                for (let i in s.words) {
-                    let index = s.words[i].index;
+                for (const i in s.words) {
+                    const index = s.words[i].index;
                     if (index[0] <= word.start && word.end <= index[1] && s.words[i].type === "word") {
                         span.classList.add(MARKWORD);
                     }
@@ -1640,17 +1641,17 @@ async function showNormalBook(book: book, s: section) {
                 if (wordFreq[src]) wordFreq[src]++;
                 else wordFreq[src] = 1;
 
-                if (!t && i != "0" && word.text.match(/^[A-Z]/)) properN.push(word.text);
+                if (!t && i !== "0" && word.text.match(/^[A-Z]/)) properN.push(word.text);
             }
             senEl.onclick = async (ev) => {
                 const span = ev.target as HTMLSpanElement;
-                if (span.tagName != "SPAN") return;
+                if (span.tagName !== "SPAN") return;
                 if (span.getAttribute("data-w") === "false") return;
 
-                let s = sen[0].start,
-                    e = sen.at(-1).end;
+                const s = sen[0].start;
+                const e = sen.at(-1).end;
 
-                let id = await saveCard({
+                const id = await saveCard({
                     key: span.getAttribute("data-t"),
                     index: { start: Number(span.getAttribute("data-s")), end: Number(span.getAttribute("data-e")) },
                     cindex: { start: s, end: e },
@@ -1669,10 +1670,10 @@ async function showNormalBook(book: book, s: section) {
             senEl.oncontextmenu = async (ev) => {
                 ev.preventDefault();
                 const span = ev.target as HTMLSpanElement;
-                if (span.tagName != "SPAN") return;
-                let start = Number(span.getAttribute("data-s"));
-                let end = Number(span.getAttribute("data-e"));
-                let text = await changeEdit(true);
+                if (span.tagName !== "SPAN") return;
+                const start = Number(span.getAttribute("data-s"));
+                const end = Number(span.getAttribute("data-e"));
+                const text = await changeEdit(true);
                 text.selectionStart = start;
                 text.selectionEnd = end;
                 text.focus();
@@ -1682,10 +1683,10 @@ async function showNormalBook(book: book, s: section) {
 
         const moreEl = el("div", { class: "p_more" });
 
-        let pText = editText.slice(paragraph[0]?.[0]?.start ?? null, paragraph.at(-1)?.at(-1)?.end ?? null);
+        const pText = editText.slice(paragraph[0]?.[0]?.start ?? null, paragraph.at(-1)?.at(-1)?.end ?? null);
         if (pText) {
             const i = contentP.length;
-            let playEl = el("div", iconEl(recume_svg), {
+            const playEl = el("div", iconEl(recume_svg), {
                 "data-play": "",
                 onclick: () => {
                     pTTS(i);
@@ -1716,7 +1717,7 @@ async function showNormalBook(book: book, s: section) {
         bookContentEl.append(pel);
     }
 
-    for (let i in wordFreq) {
+    for (const i in wordFreq) {
         if (wordFreq[i] >= 3) highFreq.push(i);
     }
 
@@ -1728,7 +1729,7 @@ function setScrollPosi(el: HTMLElement, posi: number) {
     el.scrollTop = posi * (el.scrollHeight - el.offsetHeight);
 }
 function getScrollPosi(el: HTMLElement) {
-    let n = el.scrollTop / (el.scrollHeight - el.offsetHeight);
+    const n = el.scrollTop / (el.scrollHeight - el.offsetHeight);
     return n;
 }
 
@@ -1746,7 +1747,7 @@ async function showLisent(text: string) {
     function playEl() {
         const l = textEl.value.split("\n");
         playsEl.innerHTML = "";
-        for (let s of l) {
+        for (const s of l) {
             const pEl = el("button", iconEl(recume_svg));
             pEl.onclick = () => {
                 runTTS(s);
@@ -1787,9 +1788,9 @@ async function showLisent(text: string) {
 }
 
 async function translateContext(p: HTMLElement) {
-    let filter = p.querySelector(":scope > span[data-trans]") ? [] : await transCache.keys();
+    const filter = p.querySelector(":scope > span[data-trans]") ? [] : await transCache.keys();
     let l = Array.from(p.querySelectorAll(":scope > span")) as HTMLSpanElement[];
-    for (let i in l) {
+    for (const i in l) {
         const r = (await transCache.getItem(l[i].innerText.trim())) as string;
         if (r) l[i].setAttribute("data-trans", r);
     }
@@ -1799,21 +1800,24 @@ async function translateContext(p: HTMLElement) {
 
     if (text.length === 0) return;
 
-    let f = new autoFun.def({ script: [`把输入的语言翻译成中文`], output: "list:[]" });
+    const f = new autoFun.def({ script: ["把输入的语言翻译成中文"], output: "list:[]" });
     const ff = f.run(text as any);
-    let stopEl = el("button", iconEl(close_svg));
+    const stopEl = el("button", iconEl(close_svg));
     stopEl.onclick = () => {
         ff.stop.abort();
         pel.remove();
     };
-    let pel = el("div", [el("p", `AI正在翻译全文`), stopEl]);
+    const pel = el("div", [el("p", "AI正在翻译全文"), stopEl]);
     putToast(pel, 0);
     ff.result.then((r) => {
         pel.remove();
-        if (r["list"].length != text.length) return;
-        for (let i in l) {
-            l[i].setAttribute("data-trans", r["list"][i]);
-            transCache.setItem(text[i].trim(), r["list"][i]);
+        // @ts-ignore
+        if (r.list.length !== text.length) return;
+        for (const i in l) {
+            // @ts-ignore
+            l[i].setAttribute("data-trans", r.list[i]);
+            // @ts-ignore
+            transCache.setItem(text[i].trim(), r.list[i]);
         }
     });
 }
@@ -1835,24 +1839,22 @@ const defaultBookStyle = {
 
 const bookStyle = ((await setting.getItem("style.default")) as typeof defaultBookStyle) || defaultBookStyle;
 
-{
-    for (let i = 12; i <= 28; i += 2) {
-        bookStyleList.fontSize.push(i);
-    }
-    bookStyleList.fontSize.push(32, 40, 56, 72, 96, 128);
-    for (let i = 20; i <= 60; i += 5) {
-        bookStyleList.contentWidth.push(i);
-    }
-    for (let i = 10; i <= 26; i += 2) {
-        bookStyleList.lineHeight.push(i / 10);
-    }
+for (let i = 12; i <= 28; i += 2) {
+    bookStyleList.fontSize.push(i);
+}
+bookStyleList.fontSize.push(32, 40, 56, 72, 96, 128);
+for (let i = 20; i <= 60; i += 5) {
+    bookStyleList.contentWidth.push(i);
+}
+for (let i = 10; i <= 26; i += 2) {
+    bookStyleList.lineHeight.push(i / 10);
 }
 
 changeStyleEl.onclick = () => {
     changeStyleBar.togglePopover();
 };
 
-let fontListEl = el("div", {
+const fontListEl = el("div", {
     popover: "auto",
     class: "font_list",
 });
@@ -1871,10 +1873,10 @@ document.body.appendChild(fontListEl);
         let fonts = availableFonts.map((i) => i.fullName) as string[];
         fonts = fonts.concat(availableFonts.map((i) => i.family));
         fonts = Array.from(new Set(fonts));
-        fonts = fonts.filter((i) => i != "sans" && i != "serif").toSorted();
+        fonts = fonts.filter((i) => i !== "sans" && i !== "serif").toSorted();
         fonts.unshift("serif", "sans");
         vlist(fontListEl, fonts, { iHeight: 24, paddingLeft: 4, paddingRight: 4 }, (i) => {
-            let fontName = fonts[i];
+            const fontName = fonts[i];
             return el("div", fontName, {
                 style: { "font-family": fontName, "line-height": "24px" },
                 onclick: () => {
@@ -1889,7 +1891,7 @@ document.body.appendChild(fontListEl);
         fontEl.innerText = name;
         fontEl.style.fontFamily = name;
     }
-    let fontSize = createRangeSetEl(
+    const fontSize = createRangeSetEl(
         bookStyle.fontSize,
         bookStyleList.fontSize.length - 1,
         (i) => {
@@ -1899,7 +1901,7 @@ document.body.appendChild(fontListEl);
         font_small_svg,
         font_large_svg,
     );
-    let lineHeight = createRangeSetEl(
+    const lineHeight = createRangeSetEl(
         bookStyle.lineHeight,
         bookStyleList.lineHeight.length - 1,
         (i) => {
@@ -1909,7 +1911,7 @@ document.body.appendChild(fontListEl);
         line_height_small_svg,
         line_height_large_svg,
     );
-    let contentWidth = createRangeSetEl(
+    const contentWidth = createRangeSetEl(
         bookStyle.contentWidth,
         bookStyleList.contentWidth.length - 1,
         (i) => {
@@ -1919,7 +1921,7 @@ document.body.appendChild(fontListEl);
         content_width_small_svg,
         content_width_large_svg,
     );
-    let themeSelect = el("div", { class: "theme_select" }, [
+    const themeSelect = el("div", { class: "theme_select" }, [
         themeI("auto", "自动", "#fff", "#000"),
         themeI("light", "亮色", "#fff", "#000"),
         themeI("classical", "古典", "#eceae6", "#000"),
@@ -1944,13 +1946,13 @@ document.body.appendChild(fontListEl);
             ],
         );
     }
-    (themeSelect.querySelector("input[value='" + bookStyle.theme + "']") as HTMLInputElement).checked = true;
-    themeSelect.querySelectorAll("input").forEach((el) => {
+    (themeSelect.querySelector(`input[value='${bookStyle.theme}']`) as HTMLInputElement).checked = true;
+    for (const el of themeSelect.querySelectorAll("input")) {
         el.addEventListener("change", (e) => {
             bookStyle.theme = (e.target as HTMLInputElement).value;
             setBookStyle();
         });
-    });
+    }
     const paperI = el("input", {
         type: "checkbox",
         onchange: () => {
@@ -1986,20 +1988,21 @@ function createRangeSetEl(value: number, maxV: number, f: (i: number) => void, m
     if (maxIcon) max.append(iconEl(maxIcon));
     const p = el("span");
     setV();
+    let v = value;
     min.onclick = () => {
-        value--;
-        value = Math.max(value, 0);
+        v--;
+        v = Math.max(v, 0);
         setV();
-        f(value);
+        f(v);
     };
     max.onclick = () => {
-        value++;
-        value = Math.min(value, maxV);
+        v++;
+        v = Math.min(v, maxV);
         setV();
-        f(value);
+        f(v);
     };
     function setV() {
-        p.innerText = String(value + 1);
+        p.innerText = String(v + 1);
     }
     div.append(min, p, max);
     return div;
@@ -2013,28 +2016,27 @@ async function changeEdit(b: boolean) {
     if (isEdit) {
         changeEditEl.innerHTML = icon(ok_svg);
         return setEdit();
-    } else {
-        let newC = el("div");
-        bookContentContainerEl.innerHTML = "";
-        bookContentContainerEl.append(newC);
-        bookContentEl = newC;
-        if (nowBook.book) {
-            let book = await getBooksById(nowBook.book);
-            let sectionId = nowBook.sections;
-            let section = await getSection(sectionId);
-            book.updateTime = new Date().getTime();
-            section.lastPosi = contentScrollPosi;
-            if (editText && sectionId != wordSection) {
-                if (book.type === "word") editText = cleanWordBook(editText);
-                section = changePosi(section, editText);
-                section.text = editText;
-                await sectionsStore.setItem(sectionId, section);
-                if (nowBook.book != "0") await bookshelfStore.setItem(nowBook.book, book);
-            }
-            showBookContent(book, sectionId);
-        }
-        changeEditEl.innerHTML = icon(pen_svg);
     }
+    const newC = el("div");
+    bookContentContainerEl.innerHTML = "";
+    bookContentContainerEl.append(newC);
+    bookContentEl = newC;
+    if (nowBook.book) {
+        const book = await getBooksById(nowBook.book);
+        const sectionId = nowBook.sections;
+        let section = await getSection(sectionId);
+        book.updateTime = new Date().getTime();
+        section.lastPosi = contentScrollPosi;
+        if (editText && sectionId !== wordSection) {
+            if (book.type === "word") editText = cleanWordBook(editText);
+            section = changePosi(section, editText);
+            section.text = editText;
+            await sectionsStore.setItem(sectionId, section);
+            if (nowBook.book !== "0") await bookshelfStore.setItem(nowBook.book, book);
+        }
+        showBookContent(book, sectionId);
+    }
+    changeEditEl.innerHTML = icon(pen_svg);
 }
 changeEditEl.onclick = () => {
     isEdit = !isEdit;
@@ -2049,23 +2051,22 @@ function cleanWordBook(text: string) {
 }
 
 function diffPosi(oldText: string, text: string) {
-    let diff = dmp.diff_main(oldText, text);
+    const diff = dmp.diff_main(oldText, text);
     console.log(diff);
-    let source: number[] = [0];
-    let map: number[] = [0];
+    const source: number[] = [0];
+    const map: number[] = [0];
     if (diff.at(-1)[0] === 1) diff.push([0, ""]);
-    let p0 = 0,
-        p1 = 0;
+    let p0 = 0;
+    let p1 = 0;
     for (let i = 0; i < diff.length; i++) {
-        let d = diff[i];
-        let dn = diff[i + 1];
+        const d = diff[i];
+        const dn = diff[i + 1];
         if (d[0] === -1 && dn && dn[0] === 1) {
             p0 += d[1].length;
             p1 += dn[1].length;
             source.push(p0);
             map.push(p1);
             i++;
-            continue;
         } else {
             if (d[0] === 0) {
                 p0 += d[1].length;
@@ -2091,18 +2092,18 @@ function diffPosi(oldText: string, text: string) {
 
 function changePosi(section: section, text: string) {
     const { source, map } = diffPosi(section.text, text);
-    for (let w in section.words) {
-        section.words[w]["index"] = patchPosi(source, map, section.words[w]["index"]);
-        section.words[w]["cIndex"] = patchPosi(source, map, section.words[w]["cIndex"]);
+    for (const w in section.words) {
+        section.words[w].index = patchPosi(source, map, section.words[w].index);
+        section.words[w].cIndex = patchPosi(source, map, section.words[w].cIndex);
     }
     return section;
 }
 
 function patchPosi(source: number[], map: number[], index: [number, number]) {
-    let start = index[0];
-    let end = index[1];
-    let Start = 0,
-        End = 0;
+    const start = index[0];
+    const end = index[1];
+    let Start = 0;
+    let End = 0;
     for (let i = 0; i < source.length; i++) {
         if (source[i] <= start && start <= source[i + 1]) {
             Start = Math.min(map[i] + (start - source[i]), map[i + 1]);
@@ -2114,37 +2115,39 @@ function patchPosi(source: number[], map: number[], index: [number, number]) {
     return [Start, End] as [number, number];
 }
 
-import diff_match_patch, { Diff } from "diff-match-patch";
-var dmp = new diff_match_patch();
+import diff_match_patch, { type Diff } from "diff-match-patch";
+const dmp = new diff_match_patch();
 
 changeEdit(false);
 
 async function setEdit() {
-    let book = await getBooksById(nowBook.book);
-    let sectionId = nowBook.sections;
-    let section = await getSection(sectionId);
+    const book = await getBooksById(nowBook.book);
+    const sectionId = nowBook.sections;
+    const section = await getSection(sectionId);
     bookContentContainerEl.innerHTML = "";
-    let text = el("textarea");
+    const text = el("textarea");
     text.disabled = !book.canEdit;
     bookContentContainerEl.append(text);
     bookContentEl = text;
     text.value = section.text;
     setScrollPosi(text, contentScrollPosi);
     setScrollPosi(bookContentContainerEl, 0);
+    // biome-ignore lint:add getText
     window["getText"] = () => text.value;
+    // biome-ignore lint:^
     window["setText"] = (str: string) => (text.value = editText = str);
     text.oninput = () => {
         editText = text.value;
     };
     text.onkeyup = async (e) => {
         if (e.key === "Enter" && !e.shiftKey) {
-            let l = text.value.split("\n");
+            const l = text.value.split("\n");
             let index = 0;
-            let aiRange: { s: number; e: number }[] = [];
+            const aiRange: { s: number; e: number }[] = [];
             const startMark = "=ai=";
             const endMark = "====";
             let hasAi = false;
-            for (let i of l) {
+            for (const i of l) {
                 if (i === startMark) {
                     hasAi = true;
                     aiRange.push({ s: index + startMark.length, e: index + startMark.length });
@@ -2157,23 +2160,23 @@ async function setEdit() {
                 }
                 index += i.length + 1;
             }
-            let range = aiRange.find((r) => r.s <= text.selectionStart && text.selectionEnd <= r.e);
+            const range = aiRange.find((r) => r.s <= text.selectionStart && text.selectionEnd <= r.e);
             if (!range) return;
-            let aiM = textAi(text.value.slice(range.s, range.e));
+            const aiM = textAi(text.value.slice(range.s, range.e));
             aiM.unshift({ role: "system", content: `This is a passage: ${text.value.slice(0, aiRange[0].s)}` });
             console.log(aiM);
-            let start = text.selectionStart;
-            let end = text.selectionEnd;
-            let aitext = await ai(aiM, "对话").text;
-            let addText = `ai:\n${aitext}`;
-            let changeText = text.value.slice(0, start) + addText + text.value.slice(end);
+            const start = text.selectionStart;
+            const end = text.selectionEnd;
+            const aitext = await ai(aiM, "对话").text;
+            const addText = `ai:\n${aitext}`;
+            const changeText = text.value.slice(0, start) + addText + text.value.slice(end);
             text.value = changeText;
             editText = changeText;
             text.selectionStart = start;
             text.selectionEnd = start + addText.length;
         }
     };
-    let upel = document.createElement("input");
+    const upel = document.createElement("input");
     upel.type = "file";
     upel.onchange = () => {
         const file = upel.files[0];
@@ -2198,7 +2201,7 @@ async function setEdit() {
                 if (fileType === "text") {
                     t = reader.result as string;
                 } else if (fileType === "docx") {
-                    let result = await mammoth.extractRawText({ arrayBuffer: reader.result as ArrayBuffer });
+                    const result = await mammoth.extractRawText({ arrayBuffer: reader.result as ArrayBuffer });
                     t = result.value;
                 }
                 text.value = t;
@@ -2216,13 +2219,13 @@ async function setEdit() {
 }
 
 function textAi(text: string) {
-    let l = text.split("\n");
+    const l = text.split("\n");
     let index = 0;
     const ignoreMark = "//";
     const userMark = ">";
     const aiMark = "ai:";
-    let aiM: aim = [];
-    for (let i of l) {
+    const aiM: aim = [];
+    for (const i of l) {
         if (i.startsWith(aiMark)) {
             aiM.push({ role: "assistant", content: i.replace(aiMark, "").trim() });
         } else if (i.startsWith(userMark)) {
@@ -2231,7 +2234,7 @@ function textAi(text: string) {
             index += i.length + 1;
             continue;
         } else {
-            if (aiM.length) aiM.at(-1).content += "\n" + i;
+            if (aiM.length) aiM.at(-1).content += `\n${i}`;
         }
         index += i.length + 1;
     }
@@ -2244,10 +2247,10 @@ let canRecordScroll = true;
 
 bookContentContainerEl.onscroll = async () => {
     if (!canRecordScroll) return;
-    let n = getScrollPosi(bookContentContainerEl);
+    const n = getScrollPosi(bookContentContainerEl);
     contentScrollPosi = n;
-    let sectionId = nowBook.sections;
-    let section = await getSection(sectionId);
+    const sectionId = nowBook.sections;
+    const section = await getSection(sectionId);
     section.lastPosi = n;
     sectionsStore.setItem(sectionId, section);
 };
@@ -2281,8 +2284,8 @@ async function sectionSelect(menuEl: HTMLElement, radio?: boolean) {
     });
     bookList = bookList.filter((b) => b.type === "word");
     menuEl.innerHTML = "";
-    for (let i of bookList) {
-        let book = el("div", i.name);
+    for (const i of bookList) {
+        const book = el("div", i.name);
         if (!radio) {
             book.append(
                 el("input", {
@@ -2290,13 +2293,13 @@ async function sectionSelect(menuEl: HTMLElement, radio?: boolean) {
                     value: "",
                     onclick: (e) => {
                         const i = e.target as HTMLInputElement;
-                        book.querySelectorAll("input").forEach((x) => (x.checked = i.checked));
+                        for (const x of book.querySelectorAll("input").values()) x.checked = i.checked;
                     },
                 }),
             );
         }
-        for (let s of i.sections) {
-            let section = await getSection(s);
+        for (const s of i.sections) {
+            const section = await getSection(s);
             book.append(
                 el("label", [
                     el("input", { type: radio ? "radio" : "checkbox", value: s, name: "books" }),
@@ -2322,9 +2325,9 @@ async function wordBooksByWord(word: string) {
         bookList.push(book);
     });
     bookList = bookList.filter((b) => b.type === "word");
-    for (let i of bookList) {
-        for (let s of i.sections) {
-            let section = await getSection(s);
+    for (const i of bookList) {
+        for (const s of i.sections) {
+            const section = await getSection(s);
             const wl = section.text.split("\n");
             if (wl.includes(word)) {
                 l.push({ book: i.id, section: s });
@@ -2334,24 +2337,24 @@ async function wordBooksByWord(word: string) {
     return l;
 }
 
-var ipaStore = localforage.createInstance({ name: "langPack", storeName: "ipa" });
-var variantStore = localforage.createInstance({ name: "langPack", storeName: "variant" });
-var wordMapStore = localforage.createInstance({ name: "langPack", storeName: "map" });
+const ipaStore = localforage.createInstance({ name: "langPack", storeName: "ipa" });
+const variantStore = localforage.createInstance({ name: "langPack", storeName: "variant" });
+const wordMapStore = localforage.createInstance({ name: "langPack", storeName: "map" });
 
-let dics: {
+const dics: {
     [key: string]: {
         id: string;
         lang: string;
     };
 } = {};
-var dicStore = localforage.createInstance({ name: "dic" });
+const dicStore = localforage.createInstance({ name: "dic" });
 setting.getItem("dics").then(async (l: string[]) => {
-    for (let i of l || []) {
+    for (const i of l || []) {
         dics[i] = (await dicStore.getItem(i)) as dic2;
     }
 });
 dicStore.iterate((v: dic2, k) => {
-    delete v.dic;
+    v.dic = undefined;
     dics[k] = v;
 });
 
@@ -2373,7 +2376,7 @@ type dic2 = bdic & {
 
 let ipa: Map<string, string | string[]>;
 
-let variant: Map<string, string> = await variantStore.getItem("en");
+const variant: Map<string, string> = await variantStore.getItem("en");
 
 function lemmatizer(word: string) {
     return variant?.get(word) || word;
@@ -2403,9 +2406,9 @@ type record2 = {
 };
 
 enum tOp {
-    and,
-    or,
-    not,
+    and = 0,
+    or = 1,
+    not = 2,
 }
 
 type bOp = [tOp, ...(string | bOp)[]];
@@ -2417,7 +2420,7 @@ function tag(tags: tagMap) {
     const x = {
         get: (id: string) => tags[id],
         getCid: (c: string) => {
-            for (let i in tags) {
+            for (const i in tags) {
                 if (tags[i].c === c) {
                     return i;
                 }
@@ -2428,7 +2431,7 @@ function tag(tags: tagMap) {
             function w(b: bOp) {
                 const l: bOp = [b[0]];
                 const ids = b.slice(1) as string[];
-                for (let id of ids) {
+                for (const id of ids) {
                     const t = x.get(id);
                     if (t.b) {
                         l.push(w(t.b));
@@ -2447,12 +2450,12 @@ function tag(tags: tagMap) {
             const id = uuid();
             const t = time();
             tags[id] = { c, t, n: 1 };
-            if (b) tags[id]["b"] = b;
+            if (b) tags[id].b = b;
             return tags;
         },
         getList: () => {
             const l: [string, TAG][] = [];
-            for (let i in tags) {
+            for (const i in tags) {
                 l.push([i, tags[i]]);
             }
             l.sort((a, b) => a[1].t - b[1].t);
@@ -2487,11 +2490,11 @@ markListBarEl.append(autoNewWordEl, markListEl);
 async function showMarkList() {
     markListEl.innerHTML = "";
     markListEl.lang = studyLan;
-    let list = await getAllMarks();
+    const list = await getAllMarks();
     vlist(markListEl, list, { iHeight: 24, gap: 4, paddingTop: 16 }, (index, i, remove) => {
         const content = i.s.type === "word" ? i.s.id : editText.slice(i.s.index[0], i.s.index[1]);
 
-        let item = el("div", content, { class: i.s.visit ? "" : TODOMARK });
+        const item = el("div", content, { class: i.s.visit ? "" : TODOMARK });
         item.onclick = () => {
             jumpToMark(i.s.cIndex[0]);
             showDic(i.id);
@@ -2504,8 +2507,8 @@ async function showMarkList() {
                 el("div", "删除", {
                     style: { color: "red" },
                     onclick: async () => {
-                        let sectionId = nowBook.sections;
-                        let section = await getSection(sectionId);
+                        const sectionId = nowBook.sections;
+                        const section = await getSection(sectionId);
                         if (i.s.type === "sentence") {
                             card2sentence.removeItem(i.s.id);
                         } else {
@@ -2529,10 +2532,10 @@ async function showMarkList() {
 }
 
 async function getAllMarks() {
-    let sectionId = nowBook.sections;
-    let section = await getSection(sectionId);
+    const sectionId = nowBook.sections;
+    const section = await getSection(sectionId);
     let list: { id: string; s: section["words"][0] }[] = [];
-    for (let i in section.words) {
+    for (const i in section.words) {
         list.push({ id: i, s: section.words[i] });
     }
     list = list.toSorted((a, b) => a.s.index[0] - b.s.index[0]);
@@ -2541,27 +2544,27 @@ async function getAllMarks() {
 
 lastMarkEl.onclick = async () => {
     if (!nowDicId) return;
-    let list = await getAllMarks();
+    const list = await getAllMarks();
     let index = list.findIndex((i) => i.id === nowDicId);
     index--;
     index = index < 0 ? 0 : index;
-    let id = list[index].id;
+    const id = list[index].id;
     jumpToMark(list[index].s.cIndex[0]);
     showDic(id);
 };
 nextMarkEl.onclick = async () => {
     if (!nowDicId) return;
-    let list = await getAllMarks();
+    const list = await getAllMarks();
     let index = list.findIndex((i) => i.id === nowDicId);
     index++;
     index = index >= list.length ? list.length - 1 : index;
-    let id = list[index].id;
+    const id = list[index].id;
     jumpToMark(list[index].s.cIndex[0]);
     showDic(id);
 };
 function jumpToMark(start: number) {
     bookContentContainerEl.style.scrollBehavior = "smooth";
-    let span = bookContentEl.querySelector(`span[data-s="${start}"]`);
+    const span = bookContentEl.querySelector(`span[data-s="${start}"]`);
     bookContentContainerEl.scrollTop = span.getBoundingClientRect().top - bookContentEl.getBoundingClientRect().top;
     bookContentContainerEl.onscrollend = () => {
         bookContentContainerEl.style.scrollBehavior = "";
@@ -2591,23 +2594,23 @@ async function showDic(id: string) {
 
     nowDicId = id;
 
-    let sectionId = nowBook.sections;
-    let section = await getSection(sectionId);
+    const sectionId = nowBook.sections;
+    const section = await getSection(sectionId);
 
-    let wordx = section.words[id];
+    const wordx = section.words[id];
 
     let Word: { word: string; record: record } & flatWord;
 
-    let Share = {
+    const Share = {
         context: "",
         sourceIndex: [0, 0],
     };
     let isSentence = wordx.type === "sentence";
     let sourceWord = "";
     if (!isSentence) {
-        let record = (await wordsStore.getItem(wordx.id)) as record;
+        const record = (await wordsStore.getItem(wordx.id)) as record;
         Word = { word: wordx.id, record, ...flatWordCard(record, id) };
-        let s = source2context(wordx, id);
+        const s = source2context(wordx, id);
         if (Word.index === -1) {
             Word.context = s;
         }
@@ -2630,10 +2633,10 @@ async function showDic(id: string) {
     }
 
     async function changeDicMean(word: string, i: number) {
-        if (word != Word.word || i != Word.index) {
+        if (word !== Word.word || i !== Word.index) {
             Word.record = rmWord(Word.record, Word.context.source.id);
 
-            if (i != -1) {
+            if (i !== -1) {
                 Word.record = setWordC(Word.record, i, Word.context);
                 await wordsStore.setItem(Word.word, Word.record);
             } else await clearWordMean(Word.record);
@@ -2657,11 +2660,12 @@ async function showDic(id: string) {
             }
         }
         function runAi() {
-            let output = ai(
+            const output = ai(
                 [
                     {
                         role: "system",
-                        content: `You are a professional, authentic translation engine. You only return the translated text, without any explanations.`,
+                        content:
+                            "You are a professional, authentic translation engine. You only return the translated text, without any explanations.",
                     },
                     {
                         role: "user",
@@ -2675,7 +2679,7 @@ async function showDic(id: string) {
         }
         dicTransContent.value = text;
         if (isSentence) {
-            let r = (await card2sentence.getItem(wordx.id)) as record2;
+            const r = (await card2sentence.getItem(wordx.id)) as record2;
             r.trans = text;
             await card2sentence.setItem(wordx.id, r);
             visit(true);
@@ -2691,8 +2695,8 @@ async function showDic(id: string) {
         isSentence = true;
         rmStyle(wordx.index);
         const sentenceCardId = uuid();
-        let contextStart = wordx.index[0] - Share.sourceIndex[0];
-        let contextEnd = wordx.index[1] + (Share.context.length - Share.sourceIndex[1]);
+        const contextStart = wordx.index[0] - Share.sourceIndex[0];
+        const contextEnd = wordx.index[1] + (Share.context.length - Share.sourceIndex[1]);
         wordx.index[0] = contextStart;
         wordx.index[1] = contextEnd;
         wordx.type = "sentence";
@@ -2703,7 +2707,7 @@ async function showDic(id: string) {
         }
         await saveWordX(wordx);
 
-        let r: record2 = {
+        const r: record2 = {
             text: Share.context,
             source: null,
             trans: dicTransContent.value,
@@ -2711,8 +2715,8 @@ async function showDic(id: string) {
 
         let card: Card;
 
-        mf: for (let i of Word.record?.means || []) {
-            for (let j of i.contexts) {
+        mf: for (const i of Word.record?.means || []) {
+            for (const j of i.contexts) {
                 if (j.source.id === id) {
                     r.source = j.source;
                     card = await cardsStore.getItem(i.card_id);
@@ -2756,7 +2760,7 @@ async function showDic(id: string) {
         search(Word.word);
         dicWordEl.value = Word.word;
         dicWordEl.onchange = async () => {
-            let newWord = dicWordEl.value.trim();
+            const newWord = dicWordEl.value.trim();
             await visit(false);
             await changeDicMean(newWord, -1);
             search(newWord);
@@ -2793,12 +2797,12 @@ async function showDic(id: string) {
 
         ttsWordEl.innerText = await getIPA(Word.word);
 
-        let lword = lemmatizer(sourceWord.toLocaleLowerCase());
+        const lword = lemmatizer(sourceWord.toLocaleLowerCase());
         moreWordsEl.innerHTML = "";
         const l = Array.from(new Set([sourceWord, sourceWord.toLocaleLowerCase(), lword]));
-        if (l.length != 1)
-            for (let w of l) {
-                let div = document.createElement("span");
+        if (l.length !== 1)
+            for (const w of l) {
+                const div = document.createElement("span");
                 div.innerText = w;
                 div.onclick = async () => {
                     dicWordEl.value = w;
@@ -2811,7 +2815,7 @@ async function showDic(id: string) {
 
         addMeanEl.onclick = () => {
             addP("", Word.word, Word.context.text, Word.context.index, Word.tag, async (text, sentence, index) => {
-                let mean = text.trim();
+                const mean = text.trim();
                 Word.text = mean;
                 if (mean) {
                     const x = await addReviewCardMean(Word.word, mean);
@@ -2833,7 +2837,7 @@ async function showDic(id: string) {
 
         editMeanEl.onclick = () => {
             addP(Word.text, Word.word, Word.context.text, Word.context.index, null, async (text, sentence, index) => {
-                let mean = text.trim();
+                const mean = text.trim();
                 Word.text = mean;
                 if (mean) {
                     if (Word.record) {
@@ -2857,9 +2861,9 @@ async function showDic(id: string) {
 
         noteEl.onclick = () => {
             addP(Word.record?.note || "", Word.word, null, null, null, async (text) => {
-                let mean = text.trim();
+                const mean = text.trim();
                 if (Word.record) {
-                    Word.record["note"] = mean;
+                    Word.record.note = mean;
                     wordsStore.setItem(Word.word, Word.record);
                 }
             });
@@ -2874,11 +2878,11 @@ async function showDic(id: string) {
                 dicDetailsEl.innerText = "请添加义项";
                 return;
             }
-            let means = Word.record.means;
-            for (let i in means) {
+            const means = Word.record.means;
+            for (const i in means) {
                 const m = means[i];
-                let div = document.createElement("div");
-                let radio = document.createElement("input");
+                const div = document.createElement("div");
+                const radio = document.createElement("input");
                 radio.type = "radio";
                 radio.name = "dic_means";
                 radio.onclick = async () => {
@@ -2895,7 +2899,7 @@ async function showDic(id: string) {
                 div.append(radio, await disCard2(m));
                 dicDetailsEl.append(div);
             }
-            if (Word.index != -1) dicDetailsEl.classList.add(HIDEMEANS);
+            if (Word.index !== -1) dicDetailsEl.classList.add(HIDEMEANS);
             else dicDetailsEl.classList.remove(HIDEMEANS);
         }
     }
@@ -2912,7 +2916,7 @@ async function showDic(id: string) {
         }
 
         dicTransContent.onchange = async () => {
-            let r = (await card2sentence.getItem(wordx.id)) as record2;
+            const r = (await card2sentence.getItem(wordx.id)) as record2;
             r.trans = dicTransContent.value;
             await card2sentence.setItem(wordx.id, r);
             visit(true);
@@ -2920,10 +2924,10 @@ async function showDic(id: string) {
         };
 
         noteEl.onclick = async () => {
-            let r = (await card2sentence.getItem(wordx.id)) as record2;
+            const r = (await card2sentence.getItem(wordx.id)) as record2;
             addP(r.note || "", null, r.text, null, null, async (text) => {
-                let mean = text.trim();
-                r["note"] = mean;
+                const mean = text.trim();
+                r.note = mean;
                 await card2sentence.setItem(wordx.id, r);
             });
         };
@@ -2945,40 +2949,42 @@ async function showDic(id: string) {
             contextStart = wordx.index[0] - Share.sourceIndex[0];
             contextEnd = wordx.index[1] + (Share.context.length - Share.sourceIndex[1]);
         }
-        let startEl = document.createElement("div");
-        let endEl = document.createElement("div");
+        const startEl = document.createElement("div");
+        const endEl = document.createElement("div");
         const startClass = "context_start";
         const endClass = "context_end";
         startEl.classList.add(startClass);
         endEl.classList.add(endClass);
-        bookContentEl.querySelector("." + startClass)?.remove();
-        bookContentEl.querySelector("." + endClass)?.remove();
+        bookContentEl.querySelector(`.${startClass}`)?.remove();
+        bookContentEl.querySelector(`.${endClass}`)?.remove();
         bookContentEl.append(startEl, endEl);
         function setElPosi(el: HTMLElement, left: boolean) {
             function getOffset(el: HTMLElement) {
-                let pel = bookContentEl;
-                let r = el.getBoundingClientRect();
-                let r0 = pel.getBoundingClientRect();
+                const pel = bookContentEl;
+                const r = el.getBoundingClientRect();
+                const r0 = pel.getBoundingClientRect();
                 return { left: r.left - r0.left, top: r.top - (r0.top - pel.scrollTop) };
             }
             if (left) {
+                let nel = el;
                 if (!isSentence && Number(el.getAttribute("data-s")) > wordx.index[0]) {
-                    el = bookContentEl.querySelector(`span[data-s="${wordx.index[0]}"]`);
+                    nel = bookContentEl.querySelector(`span[data-s="${wordx.index[0]}"]`);
                 }
-                startEl.style.left = getOffset(el).left + "px";
-                startEl.style.top = getOffset(el).top + "px";
+                startEl.style.left = `${getOffset(nel).left}px`;
+                startEl.style.top = `${getOffset(nel).top}px`;
             } else {
+                let nel = el;
                 if (!isSentence && Number(el.getAttribute("data-s")) < wordx.index[0]) {
-                    el = bookContentEl.querySelector(`span[data-s="${wordx.index[0]}"]`);
+                    nel = bookContentEl.querySelector(`span[data-s="${wordx.index[0]}"]`);
                 }
-                endEl.style.left = getOffset(el).left + el.offsetWidth + "px";
-                endEl.style.top = getOffset(el).top + el.offsetHeight + "px";
+                endEl.style.left = `${getOffset(nel).left + nel.offsetWidth}px`;
+                endEl.style.top = `${getOffset(nel).top + nel.offsetHeight}px`;
             }
         }
         function matchRangeEl(n: number, left: boolean) {
             for (let i = 0; i < editText.length - n + 1; i++) {
-                for (let ii of [-1, 1]) {
-                    let el = bookContentEl.querySelector(
+                for (const ii of [-1, 1]) {
+                    const el = bookContentEl.querySelector(
                         `span[data-${left ? "s" : "e"}="${n + i * ii}"]`,
                     ) as HTMLElement;
                     if (el) {
@@ -2987,12 +2993,12 @@ async function showDic(id: string) {
                 }
             }
         }
-        let contextStartEl = matchRangeEl(contextStart, true);
-        let contextEndEl = matchRangeEl(contextEnd, false);
+        const contextStartEl = matchRangeEl(contextStart, true);
+        const contextEndEl = matchRangeEl(contextEnd, false);
         setElPosi(contextStartEl, true);
         setElPosi(contextEndEl, false);
-        let down = { start: false, end: false };
-        let index = { start: contextStart, end: contextEnd };
+        const down = { start: false, end: false };
+        const index = { start: contextStart, end: contextEnd };
         startEl.onpointerdown = (e) => {
             down.start = true;
         };
@@ -3001,10 +3007,10 @@ async function showDic(id: string) {
         };
         document.onpointermove = (e) => {
             if (down.start) {
-                let x = e.clientX,
-                    y = e.clientY + 8;
-                let list = document.elementsFromPoint(x, y);
-                for (let i of list) {
+                const x = e.clientX;
+                const y = e.clientY + 8;
+                const list = document.elementsFromPoint(x, y);
+                for (const i of list) {
                     if (i.getAttribute("data-t")) {
                         setElPosi(i as HTMLElement, true);
                         index.start = Number(i.getAttribute("data-s"));
@@ -3012,10 +3018,10 @@ async function showDic(id: string) {
                 }
             }
             if (down.end) {
-                let x = e.clientX,
-                    y = e.clientY - 8;
-                let list = document.elementsFromPoint(x, y);
-                for (let i of list) {
+                const x = e.clientX;
+                const y = e.clientY - 8;
+                const list = document.elementsFromPoint(x, y);
+                for (const i of list) {
                     if (i.getAttribute("data-t")) {
                         setElPosi(i as HTMLElement, false);
                         index.end = Number(i.getAttribute("data-e"));
@@ -3032,12 +3038,12 @@ async function showDic(id: string) {
             down.end = false;
         };
         async function saveChange() {
-            let text = editText.slice(index.start, index.end);
+            const text = editText.slice(index.start, index.end);
             Share.context = text;
             if (isSentence) {
                 wordx.index = [index.start, index.end];
                 await saveWordX(wordx);
-                let r = (await card2sentence.getItem(wordx.id)) as record2;
+                const r = (await card2sentence.getItem(wordx.id)) as record2;
                 r.text = text;
                 card2sentence.setItem(wordx.id, r);
             } else {
@@ -3087,20 +3093,20 @@ async function getWordFromDic(word: string, id: string) {
 
 async function showDicEl(mainTextEl: HTMLTextAreaElement, word: string, x: number, y: number) {
     const lan = studyLan;
-    let list = el("div");
+    const list = el("div");
     list.lang = lan;
     async function showDic(id: string) {
         list.innerHTML = "";
-        let tmpdiv = el("div");
+        const tmpdiv = el("div");
         tmpdiv.innerHTML = await getWordFromDic(word, id);
-        for (let i of tmpdiv.innerText.split("\n").filter((i) => i.trim() != "")) {
-            let p = el("p");
+        for (const i of tmpdiv.innerText.split("\n").filter((i) => i.trim() !== "")) {
+            const p = el("p");
             p.innerHTML = i;
             list.appendChild(el("label", [el("input", { type: "checkbox", value: p.innerText }), p]));
         }
     }
     const localDic = el("div");
-    for (let i in dics) {
+    for (const i in dics) {
         localDic.append(
             el("span", i, {
                 onclick: () => {
@@ -3118,7 +3124,7 @@ async function showDicEl(mainTextEl: HTMLTextAreaElement, word: string, x: numbe
     onlineList.onclick = () => {
         div.close();
     };
-    let div = el("dialog", { class: DICDIALOG }, [
+    const div = el("dialog", { class: DICDIALOG }, [
         onlineList,
         localDic,
         list,
@@ -3126,7 +3132,7 @@ async function showDicEl(mainTextEl: HTMLTextAreaElement, word: string, x: numbe
             el("button", iconEl(ok_svg), {
                 onclick: () => {
                     // 获取所有checked的值
-                    let checkedValues = Array.from(list.querySelectorAll("input[type='checkbox']:checked")).map(
+                    const checkedValues = Array.from(list.querySelectorAll("input[type='checkbox']:checked")).map(
                         (el: HTMLInputElement) => el.value,
                     );
                     mainTextEl.setRangeText(checkedValues.join("\n"));
@@ -3145,17 +3151,17 @@ async function onlineDicL(word: string) {
     const onlineList = el("div", { class: "online_dic" });
     let l: onlineDicsType = await setting.getItem(onlineDicsPath);
     l = l.filter((i) => i.lan === lan);
-    for (let i of l) {
+    for (const i of l) {
         onlineList.append(el("a", i.name, { href: i.url.replace("%s", word), target: "_blank" }));
     }
     return onlineList;
 }
 
 async function disCard2(m: record["means"][0]) {
-    let div = document.createDocumentFragment();
-    let disEl = el("p");
+    const div = document.createDocumentFragment();
+    const disEl = el("p");
     disEl.innerText = m.text;
-    let sen = await dicSentences(m.contexts);
+    const sen = await dicSentences(m.contexts);
     sen.style.paddingLeft = "1em";
     div.append(el("div", disEl), sen);
     return div;
@@ -3163,8 +3169,8 @@ async function disCard2(m: record["means"][0]) {
 
 async function dicSentences(contexts: record["means"][0]["contexts"]) {
     const sen = el("div", { class: "dic_sen" });
-    for (let s of contexts) {
-        let source = s.source;
+    for (const s of contexts) {
+        const source = s.source;
         const t = await getTitleEl(source.book, source.sections);
         sen.append(
             el("div", [
@@ -3185,10 +3191,10 @@ async function saveCard(v: {
     index: { start: number; end: number };
     cindex: { start: number; end: number };
 }) {
-    let sectionId = nowBook.sections;
-    let section = await getSection(sectionId);
-    for (let i in section.words) {
-        let index = section.words[i].index;
+    const sectionId = nowBook.sections;
+    const section = await getSection(sectionId);
+    for (const i in section.words) {
+        const index = section.words[i].index;
         if (index[0] <= v.index.start && v.index.end <= index[1] && section.words[i].type === "word") {
             return i;
         }
@@ -3215,13 +3221,13 @@ function source2context(source: section["words"][0], sourceId: string) {
 }
 
 function rmWord(record: record, sourceId: string) {
-    let Word = flatWordCard(record, sourceId);
-    let i = Word.index;
+    const Word = flatWordCard(record, sourceId);
+    const i = Word.index;
     if (i === -1) return record;
-    for (let index in record.means) {
+    for (const index in record.means) {
         const m = record.means[index];
         if (Number(index) === i) {
-            m.contexts = m.contexts.filter((c) => c.source.id != sourceId);
+            m.contexts = m.contexts.filter((c) => c.source.id !== sourceId);
             break;
         }
     }
@@ -3229,8 +3235,8 @@ function rmWord(record: record, sourceId: string) {
 }
 async function clearWordMean(record: record) {
     if (!record) return;
-    let means: record["means"] = [];
-    for (let m of record.means) {
+    const means: record["means"] = [];
+    for (const m of record.means) {
         if (m.contexts.length === 0) {
             await card2word.removeItem(m.card_id);
             await cardsStore.removeItem(m.card_id);
@@ -3258,9 +3264,9 @@ function rmStyle(x: [number, number]) {
     }
 }
 
-function setRecordMean(record: record, id: string, f: (c: record["means"][0]) => void) {
-    record = structuredClone(record);
-    for (let n of record.means) {
+function setRecordMean(orecord: record, id: string, f: (c: record["means"][0]) => void) {
+    const record = structuredClone(orecord);
+    for (const n of record.means) {
         if (n.card_id === id) {
             f(n);
             return record;
@@ -3268,10 +3274,10 @@ function setRecordMean(record: record, id: string, f: (c: record["means"][0]) =>
     }
     return record;
 }
-function setRecordContext(record: record, id: string, f: (c: record["means"][0]["contexts"][0]) => void) {
-    record = structuredClone(record);
-    for (let n of record.means) {
-        for (let j of n.contexts) {
+function setRecordContext(orecord: record, id: string, f: (c: record["means"][0]["contexts"][0]) => void) {
+    const record = structuredClone(orecord);
+    for (const n of record.means) {
+        for (const j of n.contexts) {
             if (j.source.id === id) {
                 f(j);
                 return record;
@@ -3291,7 +3297,7 @@ async function tagsEl(b: bOp) {
         const classMap = {};
         const type = b[0];
         const x = b.slice(1) as (string | bOp)[];
-        for (let i of x) {
+        for (const i of x) {
             if (typeof i === "string") {
                 const r = t.get(i);
                 const tel = item(i, r.c);
@@ -3304,7 +3310,7 @@ async function tagsEl(b: bOp) {
         add.onclick = () => {
             const d = el("dialog") as HTMLDialogElement;
             const l = el("div");
-            let list = t.getList();
+            const list = t.getList();
             vlist(l, list, { iHeight: 24 }, (i, v) => {
                 const e = el("span");
                 e.onclick = () => {
@@ -3341,14 +3347,14 @@ function addP(
     tags: bOp,
     f: (text: string, sentence?: string, index?: [number, number], tags?: bOp) => void,
 ) {
-    let p = el("p");
+    const p = el("p");
     p.lang = studyLan;
-    let sInput1 = el("span", { contentEditable: "true" });
-    let sInput2 = el("span", { contentEditable: "true" });
+    const sInput1 = el("span", { contentEditable: "true" });
+    const sInput2 = el("span", { contentEditable: "true" });
     let sourceWord = "";
     if (index) {
         sourceWord = sentence.slice(...index);
-        const sourceWordEl = el("span", { class: MARKWORD }, sourceWord, sourceWord != word ? `(${word})` : "");
+        const sourceWordEl = el("span", { class: MARKWORD }, sourceWord, sourceWord !== word ? `(${word})` : "");
         sInput1.innerText = sentence.slice(0, index[0]);
         sInput2.innerText = sentence.slice(index[1]);
         p.append(sInput1, sourceWordEl, sInput2);
@@ -3356,22 +3362,22 @@ function addP(
             p.scrollLeft = sourceWordEl.offsetLeft - p.offsetWidth / 2;
         }, 100);
     } else p.append(word || sentence);
-    let textEl = el("textarea", { value: text, autofocus: "true" });
-    let aiB = getAiButtons(textEl, word, sentence);
+    const textEl = el("textarea", { value: text, autofocus: "true" });
+    const aiB = getAiButtons(textEl, word, sentence);
     const okEl = el("button", iconEl(ok_svg), {
         onclick: () => {
-            let mean = textEl.value.trim();
+            const mean = textEl.value.trim();
             div.close();
             if (index) {
                 const newSentence = sInput1.innerText + sourceWord + sInput2.innerText;
                 console.log(newSentence);
-                let i = diffPosi(sentence, newSentence);
-                let nindex = patchPosi(i.source, i.map, index);
+                const i = diffPosi(sentence, newSentence);
+                const nindex = patchPosi(i.source, i.map, index);
                 f(mean, newSentence, nindex);
             } else f(mean);
         },
     });
-    let div = el("dialog", { class: NOTEDIALOG }, [
+    const div = el("dialog", { class: NOTEDIALOG }, [
         p,
         textEl,
         el("div", { style: { display: "flex" } }, [aiB, okEl]),
@@ -3393,13 +3399,11 @@ function addP(
 function getAiButtons(textEl: HTMLTextAreaElement, word: string, sentence: string) {
     if (word && sentence) {
         return aiButtons(textEl, word, sentence);
-    } else {
-        if (word) {
-            return aiButtons1(textEl, word);
-        } else {
-            return aiButtons2(textEl, sentence);
-        }
     }
+    if (word) {
+        return aiButtons1(textEl, word);
+    }
+    return aiButtons2(textEl, sentence);
 }
 
 function aiButtons(textEl: HTMLTextAreaElement, word: string, context: string) {
@@ -3410,7 +3414,7 @@ function aiButtons(textEl: HTMLTextAreaElement, word: string, context: string) {
     buttons.append(
         el("button", "所有", {
             onclick: async () => {
-                let text = [];
+                const text = [];
                 const r = (await autoFun.runList([
                     { fun: wordAi.mean(studyLan, "zh"), input: { word, context } },
                     { fun: wordAi.meanEmoji(), input: { word, context } },
@@ -3480,12 +3484,12 @@ function aiButtons1(textEl: HTMLTextAreaElement, word: string) {
 }
 
 function wordFix2str(f: { type: "prefix" | "root" | "suffix"; t: string; dis: string }[]) {
-    let text = [];
-    for (let ff of f) {
+    const text = [];
+    for (const ff of f) {
         let t = ff.t;
-        if (ff.type === "prefix") t = t + "-";
-        if (ff.type === "suffix") t = "-" + t;
-        if (ff.dis) t += " (" + ff.dis + ")";
+        if (ff.type === "prefix") t = `${t}-`;
+        if (ff.type === "suffix") t = `-${t}`;
+        if (ff.dis) t += ` (${ff.dis})`;
         text.push(t);
     }
     return text;
@@ -3499,7 +3503,7 @@ function aiButtons2(textEl: HTMLTextAreaElement, sentence: string) {
     buttons.append(
         el("button", "分析", {
             onclick: async () => {
-                let t = sentenceGm(await sentenceAi.gm(sentence));
+                const t = sentenceGm(await sentenceAi.gm(sentence));
                 setText(t);
             },
         }),
@@ -3516,7 +3520,7 @@ function aiButtons2(textEl: HTMLTextAreaElement, sentence: string) {
 function sentenceGm(t: senNode) {
     function get(T: senNode) {
         let text = "";
-        for (let t of T) {
+        for (const t of T) {
             if (typeof t === "string") {
                 text += t;
             } else {
@@ -3543,9 +3547,9 @@ autoFun.config({
     },
 });
 
-let wordAi = {
+const wordAi = {
     mean: (sourceLan: string, userLan: string) => {
-        let f = new autoFun.def({
+        const f = new autoFun.def({
             input: { word: "string 单词", context: "string 单词所在的语境" },
             output: {
                 mean1: `string ${sourceLan}释义`,
@@ -3560,19 +3564,19 @@ let wordAi = {
         return f;
     },
     meanEmoji: () => {
-        let f = new autoFun.def({
+        const f = new autoFun.def({
             input: { word: "string 单词" },
-            output: { mean: `string 用emoji表示的意思` },
-            script: [`根据context中word的意思，返回emoji`],
+            output: { mean: "string 用emoji表示的意思" },
+            script: ["根据context中word的意思，返回emoji"],
         });
         return f;
     },
     synOpp: () => {
-        let f = new autoFun.def({
+        const f = new autoFun.def({
             input: { word: "string 单词", context: "string 单词所在的语境" },
-            output: { list0: `string[] 同义词`, list1: `string[] 近义词`, list2: `string[] 近义词` },
+            output: { list0: "string[] 同义词", list1: "string[] 近义词", list2: "string[] 近义词" },
             script: [
-                `判断context中word的意思`,
+                "判断context中word的意思",
                 "若存在该语境下能进行同义替换的词，添加到list0同义词表，同义词应比word更简单",
                 "克制地添加若干近义词到list1",
                 "克制地添加若干反义词到list2",
@@ -3581,10 +3585,10 @@ let wordAi = {
         return f;
     },
     fix: () => {
-        let f = new autoFun.def({
+        const f = new autoFun.def({
             input: { word: "string 单词" },
             output: { list: `{ type: "prefix" | "root" | "suffix"; t: string; dis: string }[]词根词缀列表` },
-            script: [`分析word词根词缀`, "根据测试例,依次将词根词缀添加到list"],
+            script: ["分析word词根词缀", "根据测试例,依次将词根词缀添加到list"],
             test: {
                 input: "unbelievably",
                 output: {
@@ -3600,31 +3604,31 @@ let wordAi = {
         return f;
     },
     etymology: () => {
-        let f = new autoFun.def({
+        const f = new autoFun.def({
             input: { word: "string 单词" },
-            output: { list: `string[]词源` },
-            script: [`分析word词源并返回他们`],
+            output: { list: "string[]词源" },
+            script: ["分析word词源并返回他们"],
         });
         return f;
     },
 };
 
-let wordAiText = {
+const wordAiText = {
     mean: (x: { mean1: string; mean2: string }) => {
-        return x.mean1 + "\n" + x.mean2;
+        return `${x.mean1}\n${x.mean2}`;
     },
     meanEmoji: (x: { mean: string }) => {
         return x.mean;
     },
     synOpp: (x: { list0: string[]; list1: string[]; list2: string[] }) => {
-        let text = [];
+        const text = [];
         if (x.list0?.length) text.push(`= ${x.list0.join(", ")}`);
         if (x.list1?.length) text.push(`≈ ${x.list1.join(", ")}`);
         if (x.list2?.length) text.push(`- ${x.list2.join(", ")}`);
         return text.join("\n");
     },
     fix: (f: { list: { type: "prefix" | "root" | "suffix"; t: string; dis: string }[] }) => {
-        let text = wordFix2str(f.list);
+        const text = wordFix2str(f.list);
         return text.join(" + ");
     },
     etymology: (x: { list: string[] }) => {
@@ -3634,12 +3638,12 @@ let wordAiText = {
 
 type senNode = ({ text: senNode; isPost: boolean } | string)[];
 
-let sentenceAi = {
+const sentenceAi = {
     gm: async (sentence: string) => {
         type splitS = ({ text: string; isPost: boolean } | string)[];
-        let f = new autoFun.def({
+        const f = new autoFun.def({
             input: { sentence: "string 句子" },
-            output: { split: `({ text: string; isPost: boolean } | string)[]` },
+            output: { split: "({ text: string; isPost: boolean } | string)[]" },
             script: [
                 "分析sentence修饰成分和被修饰成分",
                 "被修饰成分包括主谓宾核心词或词组，修饰成分包括具有限定或修饰的词、词组或从句",
@@ -3672,24 +3676,25 @@ let sentenceAi = {
             ],
         });
         async function splitSen(sentence: string) {
-            let t: senNode = [];
-            let l = (await f.run(`sentence:${sentence}`).result)["split"] as splitS;
-            for (let i of l) {
+            const t: senNode = [];
+            // @ts-ignore
+            const l = (await f.run(`sentence:${sentence}`).result).split as splitS;
+            for (const i of l) {
                 if (typeof i === "string") {
                     t.push(i);
                 } else {
-                    let x: senNode[0] = { text: [i.text], isPost: i.isPost };
+                    const x: senNode[0] = { text: [i.text], isPost: i.isPost };
                     x.text = await splitSen(i.text);
                 }
             }
             return t;
         }
-        let x = await splitSen(sentence);
+        const x = await splitSen(sentence);
         console.log(x);
         return x;
     },
     split: (sentence: string) => {
-        let f = new autoFun.def({
+        const f = new autoFun.def({
             input: { sentence: "string 长句子" },
             output: { shortSentences: "string[] 短句子" },
             script: ["将sentence改写成几个短句，输出到shortSentences"],
@@ -3708,16 +3713,16 @@ function tmpAiB(mainTextEl: HTMLTextAreaElement, info: string) {
 }
 
 function tmpAi(mainTextEl: HTMLTextAreaElement, info: string, x: number, y: number) {
-    let textEl = el("textarea", { value: ">" });
+    const textEl = el("textarea", { value: ">" });
     aiText(textEl, info);
-    let div = el("dialog", { class: AIDIALOG }, [
+    const div = el("dialog", { class: AIDIALOG }, [
         textEl,
         el("div", { style: { display: "flex", "justify-content": "flex-end" } }, [
             el("button", iconEl(ok_svg), {
                 onclick: () => {
-                    let mean = textEl.value.trim();
+                    const mean = textEl.value.trim();
                     div.close();
-                    if (mean != ">") mainTextEl.setRangeText("\n" + mean);
+                    if (mean !== ">") mainTextEl.setRangeText(`\n${mean}`);
                 },
             }),
         ]),
@@ -3730,16 +3735,16 @@ function tmpAi(mainTextEl: HTMLTextAreaElement, info: string, x: number, y: numb
 function aiText(textEl: HTMLTextAreaElement, info: string) {
     textEl.addEventListener("keyup", async (e) => {
         if (e.key === "Enter" && !e.shiftKey) {
-            let text = textEl.value.trim();
-            let aiM = textAi(text);
-            if (aiM.at(-1).role != "user") return;
+            const text = textEl.value.trim();
+            const aiM = textAi(text);
+            if (aiM.at(-1).role !== "user") return;
             if (info) aiM.unshift({ role: "system", content: info });
             console.log(aiM);
-            let start = textEl.selectionStart;
-            let end = textEl.selectionEnd;
-            let aitext = await ai(aiM, "对话").text;
-            let addText = `ai:\n${aitext}`;
-            let changeText = textEl.value.slice(0, start) + addText + textEl.value.slice(end);
+            const start = textEl.selectionStart;
+            const end = textEl.selectionEnd;
+            const aitext = await ai(aiM, "对话").text;
+            const addText = `ai:\n${aitext}`;
+            const changeText = textEl.value.slice(0, start) + addText + textEl.value.slice(end);
             textEl.value = changeText;
             textEl.selectionStart = start;
             textEl.selectionEnd = start + addText.length;
@@ -3764,16 +3769,16 @@ async function showArticelAI() {
     text.value = note || "> ";
     text.setSelectionRange(text.value.length, text.value.length);
     aiText(text, `这是一篇文章：${s.title}\n\n${s.text}`);
-    let div = el("dialog", { class: AIDIALOG }, [
+    const div = el("dialog", { class: AIDIALOG }, [
         text,
         el("div", { style: { display: "flex", "justify-content": "flex-end" } }, [
             el("button", iconEl(ok_svg), {
                 onclick: async () => {
-                    let t = text.value.trim();
+                    const t = text.value.trim();
                     div.close();
-                    if (t != ">") {
+                    if (t !== ">") {
                         const s = await getSection(nowBook.sections);
-                        s["note"] = t;
+                        s.note = t;
                         sectionsStore.setItem(nowBook.sections, s);
                     }
                 },
@@ -3781,15 +3786,15 @@ async function showArticelAI() {
         ]),
     ]) as HTMLDialogElement;
     div.style.left = "auto";
-    div.style.right = `0`;
-    div.style.top = `32px`;
+    div.style.right = "0";
+    div.style.top = "32px";
     dialogX(div);
 }
 
 type aim = { role: "system" | "user" | "assistant"; content: string }[];
 
 function ai(m: aim, text?: string) {
-    let config = {
+    const config = {
         model: "gpt-4o-mini",
         temperature: 0.5,
         top_p: 1,
@@ -3799,58 +3804,58 @@ function ai(m: aim, text?: string) {
     };
     let userConfig = localStorage.getItem("setting/ai.config");
     if (userConfig) {
-        let c = (JSON.parse(userConfig).messages = m);
+        const c = JSON.parse(userConfig);
+        c.messages = m;
         userConfig = JSON.stringify(c);
     } else {
         userConfig = JSON.stringify(config);
     }
-    let abort = new AbortController();
-    let stopEl = el("button", iconEl(close_svg));
+    const abort = new AbortController();
+    const stopEl = el("button", iconEl(close_svg));
     stopEl.onclick = () => {
         abort.abort();
         pel.remove();
     };
-    let pel = el("div", [el("p", `AI正在思考${text || ""}`), stopEl]);
+    const pel = el("div", [el("p", `AI正在思考${text || ""}`), stopEl]);
     putToast(pel, 0);
+    const url = getSetting("ai.url");
+    const key = getSetting("ai.key");
     return {
         stop: abort,
-        text: new Promise(async (re: (text: string) => void, rj: (err: Error) => void) => {
-            fetch(((await setting.getItem("ai.url")) as string) || `https://api.openai.com/v1/chat/completions`, {
-                method: "POST",
-                headers: {
-                    Authorization: `Bearer ${(await setting.getItem("ai.key")) as string}`,
-                    "content-type": "application/json",
-                },
-                body: userConfig,
-                signal: abort.signal,
+        text: fetch(url || "https://api.openai.com/v1/chat/completions", {
+            method: "POST",
+            headers: {
+                Authorization: `Bearer ${key}`,
+                "content-type": "application/json",
+            },
+            body: userConfig,
+            signal: abort.signal,
+        })
+            .then((v) => {
+                pel.remove();
+                return v.json();
             })
-                .then((v) => {
+            .then((t) => {
+                const answer = t.message?.content || t.choices[0].message.content;
+                console.log(answer);
+                return answer as string;
+            })
+            .catch((e) => {
+                if (e.name === "AbortError") {
                     pel.remove();
-                    return v.json();
-                })
-                .then((t) => {
-                    let answer = t.message?.content || t.choices[0].message.content;
-                    console.log(answer);
-                    re(answer);
-                })
-                .catch((e) => {
-                    if (e.name === "AbortError") {
-                        pel.remove();
-                        return;
-                    }
-                    pel.innerHTML = "";
-                    let escEl = el("button", iconEl(close_svg));
-                    escEl.onclick = () => {
-                        pel.remove();
-                    };
-                    pel.append(el("p", `AI处理${text || ""}时出现错误`), el("div", [escEl]));
-                    rj;
-                });
-        }),
+                    return "";
+                }
+                pel.innerHTML = "";
+                const escEl = el("button", iconEl(close_svg));
+                escEl.onclick = () => {
+                    pel.remove();
+                };
+                pel.append(el("p", `AI处理${text || ""}时出现错误`), el("div", [escEl]));
+            }),
     };
 }
 
-let checkVisit = {
+const checkVisit = {
     section: "",
     time: 0,
 };
@@ -3858,7 +3863,11 @@ let checkVisit = {
 function checkVisitAll(section: section) {
     const l = Object.values(section.words);
     const visitAll = l.every((i) => i.visit);
-    if (visitAll && l.length > 1 && (nowBook.sections != checkVisit.section || time() - checkVisit.time > timeD.m(5))) {
+    if (
+        visitAll &&
+        l.length > 1 &&
+        (nowBook.sections !== checkVisit.section || time() - checkVisit.time > timeD.m(5))
+    ) {
         alert("🎉恭喜学习完！\n可以在侧栏添加忽略词\n再读一遍文章，检查是否读懂\n最后进行词句复习");
         checkVisit.section = nowBook.sections;
         checkVisit.time = time();
@@ -3873,28 +3882,28 @@ const fsrs = new FSRS(generatorParameters(fsrsWordW?.length === 17 ? { w: fsrsWo
 const fsrsSpell = new FSRS(generatorParameters(fsrsSpellW?.length === 17 ? { w: fsrsSpellW } : {}));
 const fsrsSen = new FSRS(generatorParameters(fsrsSenW?.length === 17 ? { w: fsrsSenW } : {}));
 
-var cardsStore = localforage.createInstance({ name: "word", storeName: "cards" });
-var wordsStore = localforage.createInstance({ name: "word", storeName: "words" });
-var tagsStore = localforage.createInstance({ name: "word", storeName: "tags" });
-var card2word = localforage.createInstance({ name: "word", storeName: "card2word" });
-var spellStore = localforage.createInstance({ name: "word", storeName: "spell" });
-var card2sentence = localforage.createInstance({ name: "word", storeName: "card2sentence" });
+const cardsStore = localforage.createInstance({ name: "word", storeName: "cards" });
+const wordsStore = localforage.createInstance({ name: "word", storeName: "words" });
+const tagsStore = localforage.createInstance({ name: "word", storeName: "tags" });
+const card2word = localforage.createInstance({ name: "word", storeName: "card2word" });
+const spellStore = localforage.createInstance({ name: "word", storeName: "spell" });
+const card2sentence = localforage.createInstance({ name: "word", storeName: "card2sentence" });
 
-var cardActionsStore = localforage.createInstance({ name: "word", storeName: "actions" });
+const cardActionsStore = localforage.createInstance({ name: "word", storeName: "actions" });
 function setCardAction(cardId: string, time: Date, rating: Rating, state: State, duration: number) {
-    let o = rating ? [cardId, rating, state, duration] : [cardId];
+    const o = rating ? [cardId, rating, state, duration] : [cardId];
     cardActionsStore.setItem(String(time.getTime()), o);
 }
 function newCardAction(id: string) {
     setCardAction(id, new Date(), null, null, null);
 }
 
-var transCache = localforage.createInstance({ name: "aiCache", storeName: "trans" });
-var ttsCache = localforage.createInstance({ name: "aiCache", storeName: "tts" });
+const transCache = localforage.createInstance({ name: "aiCache", storeName: "trans" });
+const ttsCache = localforage.createInstance({ name: "aiCache", storeName: "tts" });
 
 function setWordC(w: record, meanIndex: number, context: record["means"][0]["contexts"][0]) {
     if (meanIndex < 0) return w;
-    for (let index in w.means) {
+    for (const index in w.means) {
         const i = w.means[index];
         if (Number(index) === meanIndex) {
             if (!i.contexts.includes(context)) i.contexts.push(context);
@@ -3910,14 +3919,14 @@ async function addReviewCardMean(word: string, text: string) {
             word: word,
             means: [],
         };
-        let card2 = createEmptyCard();
+        const card2 = createEmptyCard();
         newCardAction(word);
         await spellStore.setItem(word, card2);
     }
-    let cardId = uuid();
-    let m = { text, contexts: [], card_id: cardId };
+    const cardId = uuid();
+    const m = { text, contexts: [], card_id: cardId };
     w.means.push(m);
-    let card = createEmptyCard();
+    const card = createEmptyCard();
     newCardAction(cardId);
     await cardsStore.setItem(cardId, card);
     await card2word.setItem(cardId, word);
@@ -3934,17 +3943,17 @@ type flatWord = {
 };
 
 function flatWordCard(record: record, id: string) {
-    let Word: flatWord = {
+    const Word: flatWord = {
         index: -1,
         card_id: "",
         text: "",
-        context: { index: [NaN, NaN], source: { book: "", sections: "", id: "" }, text: "" },
+        context: { index: [Number.NaN, Number.NaN], source: { book: "", sections: "", id: "" }, text: "" },
         tag: [tOp.and],
     };
     if (!record) return Word;
-    for (let n in record.means) {
+    for (const n in record.means) {
         const i = record.means[n];
-        for (let j of i.contexts) {
+        for (const j of i.contexts) {
             if (j.source.id === id) {
                 Word.index = Number(n);
                 Word.card_id = i.card_id;
@@ -3959,12 +3968,14 @@ function flatWordCard(record: record, id: string) {
 }
 
 function selectWord(words: string[]) {
-    bookContentEl.querySelectorAll(`.${TMPMARKWORD}`).forEach((el) => el.classList.remove(TMPMARKWORD));
-    bookContentEl.querySelectorAll("span[data-t]").forEach((el: HTMLSpanElement) => {
+    for (const el of bookContentEl.querySelectorAll(`.${TMPMARKWORD}`)) {
+        el.classList.remove(TMPMARKWORD);
+    }
+    for (const el of Array.from(bookContentEl.querySelectorAll("span[data-t]")) as HTMLSpanElement[]) {
         if (words.includes(el.innerText.toLocaleLowerCase())) {
             el.classList.add(TMPMARKWORD);
         }
-    });
+    }
 }
 
 async function getNewWords(text: string) {
@@ -3976,12 +3987,12 @@ async function getNewWords(text: string) {
 function fillMutiSpell(rl: string[]) {
     const l: string[] = [];
     const m: { [key: string]: string[] } = {};
-    for (let i of usSpell) {
-        for (let j of i) {
+    for (const i of usSpell) {
+        for (const j of i) {
             m[j] = i;
         }
     }
-    for (let w of rl) {
+    for (const w of rl) {
         if (m[w]) {
             l.push(...m[w]);
         } else {
@@ -4050,19 +4061,19 @@ async function autoIgnore() {
             willShowWords.push(r);
         }
     }
-    wordsWithRoot.forEach((w) => {
-        let item = el("label", [
+    for (const w of wordsWithRoot) {
+        const item = el("label", [
             el("input", { type: "checkbox", value: w.show, class: "ignore_word" }),
             w.show,
             el("input", { type: "checkbox", value: w.src }),
         ]);
         f.append(item);
-    });
+    }
     dialog.append(
         f,
         el("button", iconEl(ok_svg), {
             onclick: async () => {
-                let words = Array.from(f.querySelectorAll("input:checked.ignore_word")).map(
+                const words = Array.from(f.querySelectorAll("input:checked.ignore_word")).map(
                     (el: HTMLInputElement) => el.value,
                 );
                 section.text = oldWords.concat(words).join("\n");
@@ -4093,7 +4104,7 @@ async function removeIgnore(word: string) {
     const section = await getSection(ignoreWordSection);
     const oldWords = section.text.trim().split("\n");
     if (!oldWords.includes(word)) return;
-    section.text = oldWords.filter((w) => w != word).join("\n");
+    section.text = oldWords.filter((w) => w !== word).join("\n");
     await sectionsStore.setItem(ignoreWordSection, section);
     if (!(await wordsStore.getItem(word))) {
         // 移除添加的拼写
@@ -4102,7 +4113,7 @@ async function removeIgnore(word: string) {
 }
 
 setTimeout(async () => {
-    let d = await getFutureReviewDue(0.1, "word", "spell", "sentence");
+    const d = await getFutureReviewDue(0.1, "word", "spell", "sentence");
     let c = 0;
     c += Object.keys(d.word).length + Object.keys(d.spell).length;
     if (c > 0) reviewBEl.classList.add(TODOMARK);
@@ -4141,7 +4152,11 @@ const reviewSortEl = el(
         el("option", "紧急", { value: "紧急" }),
         el("option", "随机", { value: "随机" }),
     ],
-    { onchange: () => (reviewSortType = reviewSortEl.value as typeof reviewSortType) },
+    {
+        onchange: () => {
+            reviewSortType = reviewSortEl.value as typeof reviewSortType;
+        },
+    },
 );
 reviewReflashEl.parentElement.append(reviewSortEl);
 
@@ -4183,12 +4198,12 @@ const handwriterEl = el("div", { class: "spell_write" }, [
 const spellInputEl = el("div", { style: { display: "none" } }, [keyboardEl, handwriterEl]);
 reviewEl.append(spellInputEl);
 
-let keyboard = new Keyboard(keyboardEl, {
+const keyboard = new Keyboard(keyboardEl, {
     onChange: (text) => spellCheckF(text),
     onKeyPress: (button) => {
         if (button === "{shift}") {
-            let currentLayout = keyboard.options.layoutName;
-            let shiftToggle = currentLayout === "default" ? "shift" : "default";
+            const currentLayout = keyboard.options.layoutName;
+            const shiftToggle = currentLayout === "default" ? "shift" : "default";
 
             keyboard.setOptions({
                 layoutName: shiftToggle,
@@ -4208,15 +4223,17 @@ let keyboard = new Keyboard(keyboardEl, {
 window.addEventListener("keydown", (e) => {
     if (!(reviewType === "spell" && reviewEl.classList.contains("review_show"))) return;
     if (!reviewEl.contains(document.elementFromPoint(window.innerWidth / 2, window.innerHeight / 2))) return; // 用于note
-    let oldInput = keyboard.getInput();
-    if (e.key != "Backspace") {
+    const oldInput = keyboard.getInput();
+    if (e.key !== "Backspace") {
         if (e.key === ">") {
             spellF("{audio}");
             return;
-        } else if (e.key === "?") {
+        }
+        if (e.key === "?") {
             spellF("{tip}");
             return;
-        } else if (e.key.length === 1) keyboard.setInput(oldInput + e.key);
+        }
+        if (e.key.length === 1) keyboard.setInput(oldInput + e.key);
     } else {
         keyboard.setInput(oldInput.slice(0, -1));
     }
@@ -4267,7 +4284,7 @@ async function getWordsScope() {
     const ignore = await getIgnoreWords();
     if (books.length === 0) return { words: null, ignore };
     const words: string[] = [];
-    for (let book of books) {
+    for (const book of books) {
         const w = (await getSection(book)).text.trim().split("\n");
         words.push(...w);
     }
@@ -4285,9 +4302,9 @@ async function getFutureReviewDue(days: number, ...types: review[]) {
     now = Math.round(now);
     const ws = await getWordsScope();
     const wordsScope = ws.words;
-    let wordList: { id: string; card: Card }[] = [];
-    let spellList: { id: string; card: Card }[] = [];
-    let sentenceList: { id: string; card: Card }[] = [];
+    const wordList: { id: string; card: Card }[] = [];
+    const spellList: { id: string; card: Card }[] = [];
+    const sentenceList: { id: string; card: Card }[] = [];
 
     const dueL: Map<string, Card> = new Map();
     await cardsStore.iterate((card: Card, k) => {
@@ -4299,7 +4316,7 @@ async function getFutureReviewDue(days: number, ...types: review[]) {
     if (types.includes("word"))
         await wordsStore.iterate((v: record, k) => {
             if (filterWithScope(k, wordsScope)) {
-                for (let m of v.means) {
+                for (const m of v.means) {
                     if (dueL.has(m.card_id)) wordList.push({ id: m.card_id, card: dueL.get(m.card_id) });
                 }
             }
@@ -4318,36 +4335,36 @@ async function getFutureReviewDue(days: number, ...types: review[]) {
     }
 
     if (types.includes("sentence"))
-        (await card2sentence.keys()).forEach((key) => {
+        for (const key of await card2sentence.keys()) {
             if (dueL.has(key)) {
                 sentenceList.push({ id: key, card: dueL.get(key) });
             }
-        });
+        }
     return { word: wordList, spell: spellList, sentence: sentenceList };
 }
 async function getReviewDue(type: review) {
-    let now = new Date().getTime();
-    let wordList: { id: string; card: Card }[] = [];
-    let spellList: { id: string; card: Card }[] = [];
-    let sentenceList: { id: string; card: Card }[] = [];
-    for (let i of due.word) {
+    const now = new Date().getTime();
+    const wordList: { id: string; card: Card }[] = [];
+    const spellList: { id: string; card: Card }[] = [];
+    const sentenceList: { id: string; card: Card }[] = [];
+    for (const i of due.word) {
         if (i.card.due.getTime() < now) {
             wordList.push(i);
         }
     }
-    for (let i of due.spell) {
+    for (const i of due.spell) {
         if (i.card.due.getTime() < now) {
             spellList.push(i);
         }
     }
-    for (let i of due.sentence) {
+    for (const i of due.sentence) {
         if (i.card.due.getTime() < now) {
             sentenceList.push(i);
         }
     }
-    [wordList, spellList, sentenceList].forEach((x) => x.sort((a, b) => a.card.due.getTime() - b.card.due.getTime()));
+    for (const x of [wordList, spellList, sentenceList]) x.sort((a, b) => a.card.due.getTime() - b.card.due.getTime());
     if (reviewSortType === "学习")
-        [wordList, spellList, sentenceList].forEach((x) => x.sort((a, b) => (a.card.state === State.New ? -1 : 1)));
+        for (const x of [wordList, spellList, sentenceList]) x.sort((a, b) => (a.card.state === State.New ? -1 : 1));
     if (reviewSortType === "紧急") {
         wordList.sort(
             (a, b) => fsrs.get_retrievability(a.card, now, false) - fsrs.get_retrievability(b.card, now, false),
@@ -4360,14 +4377,14 @@ async function getReviewDue(type: review) {
             (a, b) => fsrsSen.get_retrievability(a.card, now, false) - fsrsSen.get_retrievability(b.card, now, false),
         );
     }
-    if (reviewSortType === "随机") [wordList, spellList, sentenceList].forEach((x) => randomList(x));
+    if (reviewSortType === "随机") for (const x of [wordList, spellList, sentenceList]) randomList(x);
     if (type === "word") {
         return wordList[0];
-    } else if (type === "spell") {
-        return spellList[0];
-    } else {
-        return sentenceList[0];
     }
+    if (type === "spell") {
+        return spellList[0];
+    }
+    return sentenceList[0];
 }
 
 let due: {
@@ -4390,7 +4407,7 @@ let due: {
 };
 
 type review = "word" | "spell" | "sentence";
-var reviewType: review = "word";
+let reviewType: review = "word";
 const reviewModeEl = document.getElementById("review_mode");
 const reviewWordEl = document.getElementById("review_word") as HTMLInputElement;
 const reviewSpellEl = document.getElementById("review_spell") as HTMLInputElement;
@@ -4399,7 +4416,7 @@ const reviewSentenceEl = document.getElementById("review_sentence") as HTMLInput
 reviewWordEl.checked = true;
 spellIgnore.style.display = "none";
 reviewModeEl.onclick = (e) => {
-    if ((e.target as HTMLElement).tagName != "INPUT") return;
+    if ((e.target as HTMLElement).tagName !== "INPUT") return;
     if (reviewWordEl.checked) {
         reviewType = "word";
 
@@ -4428,22 +4445,22 @@ let reviewCount = 0;
 const maxReviewCount = Number((await setting.getItem("review.maxCount")) || "30");
 
 async function nextDue(type: review) {
-    let x = await getReviewDue(type);
+    const x = await getReviewDue(type);
     reviewCount++;
     return x;
 }
 
 reviewReflashEl.onclick = async () => {
     due = await getFutureReviewDue(0.1, reviewType);
-    let l = await getReviewDue(reviewType);
+    const l = await getReviewDue(reviewType);
     console.log(l);
     if (reviewAi.checked && reviewType === "word") await getWordAiContext();
     showReview(l, reviewType);
     reviewCount = 0;
 };
 
-var spellCheckF: (text: string) => void = (text) => console.log(text);
-var spellF: (text: string) => void = (text) => console.log(text);
+let spellCheckF: (text: string) => void = (text) => console.log(text);
+let spellF: (text: string) => void = (text) => console.log(text);
 function clearKeyboard() {
     keyboard.clearInput();
 }
@@ -4455,10 +4472,10 @@ async function getWordAiContext() {
         .toSorted((a, b) => a.card.due.getTime() - b.card.due.getTime())
         .filter((i) => i.card.state === State.Review)
         .slice(0, maxReviewCount);
-    for (let x of newDue) {
-        let wordid = (await card2word.getItem(x.id)) as string;
-        let wordRecord = (await wordsStore.getItem(wordid)) as record;
-        for (let i of wordRecord.means) {
+    for (const x of newDue) {
+        const wordid = (await card2word.getItem(x.id)) as string;
+        const wordRecord = (await wordsStore.getItem(wordid)) as record;
+        for (const i of wordRecord.means) {
             if (i.card_id === x.id) {
                 l.push({ id: x.id, word: wordRecord.word, mean: i.text });
                 break;
@@ -4474,7 +4491,7 @@ async function getWordAiContext() {
         const f = new autoFun.def({
             input: { list: "{id:string;word:string;mean:string}[] 单词及释义列表" },
             script: [
-                `为$word及其$mean提供一个原语言的例句`,
+                "为$word及其$mean提供一个原语言的例句",
                 "例句的单词应该实用且简单",
                 "并用**加粗该单词$word",
                 "无需翻译或做任何解释",
@@ -4503,7 +4520,8 @@ async function getWordAiContext() {
         if (Array.isArray(r)) {
             rr = r;
         } else {
-            rr = r["sentences"];
+            // @ts-ignore
+            rr = r.sentences;
         }
     } catch (error) {
         putToast(el("p", "ai错误"));
@@ -4511,7 +4529,7 @@ async function getWordAiContext() {
 
     aiContexts = {};
 
-    rr.forEach((i) => (aiContexts[i.id] = { text: i.sentence }));
+    for (const i of rr) aiContexts[i.id] = { text: i.sentence };
 }
 
 async function showReview(x: { id: string; card: Card }, type: review) {
@@ -4537,7 +4555,7 @@ async function showReview(x: { id: string; card: Card }, type: review) {
 async function crContext(word: record, id: string) {
     let context = document.createElement("div");
     if (!word) return context;
-    for (let i of word.means) {
+    for (const i of word.means) {
         if (i.card_id === id) {
             context = await dicSentences(i.contexts.toReversed());
         }
@@ -4545,28 +4563,28 @@ async function crContext(word: record, id: string) {
     return context;
 }
 async function aiContext(id: string) {
-    let context = document.createElement("div");
+    const context = document.createElement("div");
     const text = aiContexts[id].text;
     const l = text.split(/\*\*(.+)\*\*/);
     context.append(el("p", [l[0], el("span", l[1], { class: MARKWORD }), l[2]]));
     return context;
 }
 async function showWordReview(x: { id: string; card: Card }, isAi: boolean) {
-    let wordid = (await card2word.getItem(x.id)) as string;
-    let wordRecord = (await wordsStore.getItem(wordid)) as record;
+    const wordid = (await card2word.getItem(x.id)) as string;
+    const wordRecord = (await wordsStore.getItem(wordid)) as record;
     play(wordRecord.word);
-    let div = document.createElement("div");
+    const div = document.createElement("div");
     let context: HTMLDivElement;
     if (isAi && aiContexts[x.id]?.text) context = await aiContext(x.id);
     else context = await crContext(wordRecord, x.id);
     let hasShowAnswer = false;
     async function showAnswer() {
         hasShowAnswer = true;
-        let word = (await card2word.getItem(x.id)) as string;
-        let d = (await wordsStore.getItem(word)) as record;
-        for (let i of d.means) {
+        const word = (await card2word.getItem(x.id)) as string;
+        const d = (await wordsStore.getItem(word)) as record;
+        for (const i of d.means) {
             if (i.card_id === x.id) {
-                let div = el("div");
+                const div = el("div");
                 div.innerText = i.text;
                 dic.innerHTML = "";
                 dic.append(div);
@@ -4574,13 +4592,13 @@ async function showWordReview(x: { id: string; card: Card }, isAi: boolean) {
         }
     }
     const dic = el("div");
-    dic.onclick = reviewHotkey["show"].f = () => {
+    dic.onclick = reviewHotkey.show.f = () => {
         showAnswer();
         buttons.finish();
     };
-    let buttons = getReviewCardButtons(x.id, x.card, context.innerText, async (rating) => {
+    const buttons = getReviewCardButtons(x.id, x.card, context.innerText, async (rating) => {
         if (hasShowAnswer) {
-            let next = await nextDue(reviewType);
+            const next = await nextDue(reviewType);
             showReview(next, reviewType);
         } else {
             showAnswer();
@@ -4595,7 +4613,7 @@ async function showWordReview(x: { id: string; card: Card }, isAi: boolean) {
     reviewViewEl.append(div);
 }
 
-var reviewHotkey: { [key: string]: { f: () => void; key: string } } = {
+const reviewHotkey: { [key: string]: { f: () => void; key: string } } = {
     1: { key: "1", f: () => {} },
     2: { key: "2", f: () => {} },
     3: { key: "3", f: () => {} },
@@ -4603,8 +4621,8 @@ var reviewHotkey: { [key: string]: { f: () => void; key: string } } = {
 };
 
 document.addEventListener("keydown", (e) => {
-    if (!reviewEl.classList.contains("review_show") && reviewType != "spell") return;
-    for (let i in reviewHotkey) {
+    if (!reviewEl.classList.contains("review_show") && reviewType !== "spell") return;
+    for (const i in reviewHotkey) {
         if (e.key === reviewHotkey[i].key) {
             reviewHotkey[i].f();
         }
@@ -4616,14 +4634,15 @@ function getReviewCardButtons(id: string, card: Card, readText: string, f?: (rat
     let hasClick = false;
     let finishTime = showTime;
     let quickly = false;
-    let b = (rating: Rating, icon: HTMLElement) => {
+    const b = (rating: Rating, icon: HTMLElement) => {
         const button = el("button");
         button.append(icon);
         button.onclick = reviewHotkey[rating].f = async () => {
             if (hasClick) {
-                if (rating === Rating.Good && quickly) rating = Rating.Easy;
-                await setReviewCard(id, card, rating, finishTime - showTime);
-                if (f) f(rating);
+                let r = rating;
+                if (rating === Rating.Good && quickly) r = Rating.Easy;
+                await setReviewCard(id, card, r, finishTime - showTime);
+                if (f) f(r);
                 return;
             }
             await firstClick();
@@ -4637,10 +4656,10 @@ function getReviewCardButtons(id: string, card: Card, readText: string, f?: (rat
         quickly = finishTime - showTime < (await getReadTime(readText)) + 400;
         if (quickly) goodB.querySelector("img").src = very_ok_svg;
     }
-    let againB = b(Rating.Again, iconEl(close_svg));
-    let hardB = b(Rating.Hard, iconEl(help_svg));
-    let goodB = b(Rating.Good, iconEl(ok_svg));
-    let buttons = document.createElement("div");
+    const againB = b(Rating.Again, iconEl(close_svg));
+    const hardB = b(Rating.Hard, iconEl(help_svg));
+    const goodB = b(Rating.Good, iconEl(ok_svg));
+    const buttons = document.createElement("div");
     buttons.append(againB, hardB, goodB);
     return {
         buttons,
@@ -4650,7 +4669,7 @@ function getReviewCardButtons(id: string, card: Card, readText: string, f?: (rat
 
 async function getReadTime(text: string) {
     const segmenter = new Segmenter(studyLan, { granularity: "word" });
-    let segments = segmenter.segment(text);
+    const segments = segmenter.segment(text);
     const wordsCount = Array.from(segments).length;
     return wordsCount * (Number(await setting.getItem("user.readSpeed")) || 100);
 }
@@ -4659,15 +4678,15 @@ async function showSpellReview(x: { id: string; card: Card }) {
     const word = x.id;
     const wordSpells = usSpell.find((m) => m.includes(word)) || [word];
     const maxWidth = Math.max(...wordSpells.map((w) => w.length));
-    let input = el("div", { class: "spell_input", style: { width: "min-content" } });
+    const input = el("div", { class: "spell_input", style: { width: "min-content" } });
     input.innerText = word; // 占位计算宽度
     clearKeyboard();
     const SHOWSENWORD = "spell_sen_word_show";
     const BLURWORD = "blur_word";
-    let wordEl = document.createElement("div");
+    const wordEl = document.createElement("div");
     let isPerfect = false;
     let spellResult: "none" | "right" | "wrong" = "none";
-    let showTime = time();
+    const showTime = time();
     play(word);
     function matchCapital(input: string, word: string) {
         const l: string[] = [];
@@ -4687,8 +4706,8 @@ async function showSpellReview(x: { id: string; card: Card }) {
             input.innerText = inputWord || "|";
         }
     }
-    spellCheckF = async (inputWord: string) => {
-        inputWord = matchCapital(inputWord, word);
+    spellCheckF = async (rawInputWord: string) => {
+        const inputWord = matchCapital(rawInputWord, word);
         inputContent(inputWord);
         wordEl.innerHTML = "";
         div.classList.remove(SHOWSENWORD);
@@ -4696,7 +4715,7 @@ async function showSpellReview(x: { id: string; card: Card }) {
             // 正确
             const rightL = (await hyphenate(word, { hyphenChar })).split(hyphenChar);
             const ele = el("div");
-            for (let i of rightL) {
+            for (const i of rightL) {
                 ele.append(el("span", i));
             }
             input.innerHTML = "";
@@ -4706,7 +4725,7 @@ async function showSpellReview(x: { id: string; card: Card }) {
             if (spellResult === "none")
                 setSpellCard(x.id, x.card, isPerfect ? Rating.Easy : Rating.Good, time() - showTime);
             spellResult = "right";
-            let next = await nextDue(reviewType);
+            const next = await nextDue(reviewType);
             showReview(next, reviewType);
             clearKeyboard();
         }
@@ -4730,8 +4749,8 @@ async function showSpellReview(x: { id: string; card: Card }) {
             if (spellResult === "none") {
                 const oldCard = x.card;
                 const actionId = setSpellCard(x.id, x.card, 1, time() - showTime);
-                let diff = dmp.diff_main(inputWord, word);
-                const f = diff.filter((i) => i[0] != 0);
+                const diff = dmp.diff_main(inputWord, word);
+                const f = diff.filter((i) => i[0] !== 0);
                 if (f.length === 2) {
                     if (f[0][0] === -1 && f[0][1].length === 1 && f[1][0] === 1 && f[1][1].length === 1)
                         wordEl.append(
@@ -4767,24 +4786,24 @@ async function showSpellReview(x: { id: string; card: Card }) {
             play(word);
         }
     };
-    let context = el("div");
+    const context = el("div");
     context.append(el("div", await getIPA(word)));
-    let r = (await wordsStore.getItem(word)) as record;
+    const r = (await wordsStore.getItem(word)) as record;
     if (r) {
         context.append(
             el("button", iconEl(pen_svg), {
                 onclick: () => {
                     addP(r.note || "", word, null, null, null, async (text) => {
-                        let mean = text.trim();
+                        const mean = text.trim();
                         if (r) {
-                            r["note"] = mean;
+                            r.note = mean;
                             wordsStore.setItem(word, r);
                         }
                     });
                 },
             }),
         );
-        for (let i of r.means) {
+        for (const i of r.means) {
             context.append(el("div", await disCard2(i)));
         }
     } else {
@@ -4798,13 +4817,13 @@ async function showSpellReview(x: { id: string; card: Card }) {
     reviewViewEl.innerHTML = "";
     reviewViewEl.append(div);
 
-    input.style.width = input.offsetWidth + "px";
+    input.style.width = `${input.offsetWidth}px`;
     inputContent("");
 }
 
 async function spellDiffWord(rightWord: string, wrongWord: string) {
-    let div = el("div");
-    let diff = dmp.diff_main(wrongWord, rightWord);
+    const div = el("div");
+    const diff = dmp.diff_main(wrongWord, rightWord);
     div.append(getDiffWord(diff));
     return div;
 }
@@ -4839,10 +4858,10 @@ async function spellAnimate(el: HTMLElement) {
             }, ms);
         });
     }
-    Array.from(el.children).forEach((el: HTMLElement) => {
-        el.style.opacity = "0.2";
-        el.style.transition = "0.2s";
-    });
+    for (const nel of Array.from(el.children) as HTMLElement[]) {
+        nel.style.opacity = "0.2";
+        nel.style.transition = "0.2s";
+    }
 
     const t = 160;
 
@@ -4856,9 +4875,9 @@ async function spellAnimate(el: HTMLElement) {
 
 function spellErrorAnimate(pel: HTMLElement) {
     for (let i = 0; i < pel.childNodes.length; i++) {
-        if (pel.childNodes[i].nodeName != "SPAN") continue;
+        if (pel.childNodes[i].nodeName !== "SPAN") continue;
         const el = pel.childNodes[i] as HTMLSpanElement;
-        const w = el.getBoundingClientRect().width + "px";
+        const w = `${el.getBoundingClientRect().width}px`;
         if (el.classList.contains("diff_add")) el.style.width = "0";
         if (el.classList.contains("diff_remove")) el.style.width = w;
         setTimeout(
@@ -4889,19 +4908,19 @@ async function showSentenceReview(x: { id: string; card: Card }) {
         dic.innerHTML = "";
         dic.append(el("p", { class: TRANSLATE }, sentence.trans));
         if (sentence.note) {
-            let p = el("p");
+            const p = el("p");
             p.innerText = sentence.note;
             dic.append(p);
         }
     }
     const dic = el("div");
-    dic.onclick = reviewHotkey["show"].f = () => {
+    dic.onclick = reviewHotkey.show.f = () => {
         showAnswer();
         buttons.finish();
     };
-    let buttons = getReviewCardButtons(x.id, x.card, context.innerText, async (rating) => {
+    const buttons = getReviewCardButtons(x.id, x.card, context.innerText, async (rating) => {
         if (hasShowAnswer) {
-            let next = await nextDue(reviewType);
+            const next = await nextDue(reviewType);
             showReview(next, reviewType);
         } else {
             showAnswer();
@@ -4914,11 +4933,11 @@ async function showSentenceReview(x: { id: string; card: Card }) {
     reviewViewEl.append(div);
 }
 
-let audioEl = <HTMLAudioElement>document.getElementById("audio");
-let pTTSEl = <HTMLAudioElement>document.getElementById("pTTS");
+const audioEl = <HTMLAudioElement>document.getElementById("audio");
+const pTTSEl = <HTMLAudioElement>document.getElementById("pTTS");
 
 function play(word: string) {
-    audioEl.src = "https://dict.youdao.com/dictvoice?le=eng&type=1&audio=" + word;
+    audioEl.src = `https://dict.youdao.com/dictvoice?le=eng&type=1&audio=${word}`;
     audioEl.play();
 }
 
@@ -4945,13 +4964,13 @@ async function getTTS(text: string) {
         (await setting.getItem(ttsVoiceConfig)) || "en-GB-LibbyNeural",
         OUTPUT_FORMAT.WEBM_24KHZ_16BIT_MONO_OPUS,
     );
-    text = await ttsNormalize(text);
-    let b = (await ttsCache.getItem(text)) as Blob;
+    const nText = await ttsNormalize(text);
+    const b = (await ttsCache.getItem(nText)) as Blob;
     if (b) {
         return URL.createObjectURL(b);
     }
 
-    const readable = tts.toStream(text);
+    const readable = tts.toStream(nText);
     let base = new Uint8Array();
     readable.on("data", (data: Uint8Array) => {
         console.log("DATA RECEIVED");
@@ -4959,7 +4978,7 @@ async function getTTS(text: string) {
         base = concat(base, data);
     });
     function concat(array1: Uint8Array, array2: Uint8Array) {
-        let mergedArray = new Uint8Array(array1.length + array2.length);
+        const mergedArray = new Uint8Array(array1.length + array2.length);
         mergedArray.set(array1);
         mergedArray.set(array2, array1.length);
         return mergedArray;
@@ -4990,8 +5009,8 @@ async function runTTS(text: string) {
 }
 
 async function localTTS(text: string) {
-    text = await ttsNormalize(text);
-    const utterThis = new SpeechSynthesisUtterance(text);
+    const nText = await ttsNormalize(text);
+    const utterThis = new SpeechSynthesisUtterance(nText);
     const voices = window.speechSynthesis.getVoices();
     const sv = ((await setting.getItem(ttsVoiceConfig)) as string) || "en-GB-LibbyNeural";
     for (let i = 0; i < voices.length; i++) {
@@ -5017,8 +5036,8 @@ pttsEl.append(autoPlayTTSEl);
 let autoPlay = false;
 
 async function pTTS(index: number) {
-    let text = contentP.at(index);
-    let nextplay = () => {
+    const text = contentP.at(index);
+    const nextplay = () => {
         if (autoPlay) {
             if (index + 1 < contentP.length) {
                 pTTS(index + 1);
@@ -5037,7 +5056,7 @@ async function pTTS(index: number) {
         const utterThis = await localTTS(text);
         utterThis.onend = nextplay;
     } else {
-        let url = await getTTS(text);
+        const url = await getTTS(text);
         pTTSEl.src = url;
         pTTSEl.play();
         pTTSEl.onended = nextplay;
@@ -5045,31 +5064,31 @@ async function pTTS(index: number) {
 }
 
 async function setReviewCard(id: string, card: Card, rating: Rating, duration: number) {
-    let now = new Date();
+    const now = new Date();
     setCardAction(id, now, rating, card.state, duration);
-    let sCards = fsrs.repeat(card, now);
+    const sCards = fsrs.repeat(card, now);
     const nCard = sCards[rating].card;
     await cardsStore.setItem(id, nCard);
 
-    for (let i of due.word)
+    for (const i of due.word)
         if (i.id === id) {
             i.card = structuredClone(nCard);
             return;
         }
-    for (let i of due.sentence)
+    for (const i of due.sentence)
         if (i.id === id) {
             i.card = structuredClone(nCard);
             break;
         }
 }
 function setSpellCard(id: string, card: Card, rating: Rating, duration: number) {
-    let now = new Date();
+    const now = new Date();
     setCardAction(id, now, rating, card.state, duration);
-    let sCards = fsrsSpell.repeat(card, now);
+    const sCards = fsrsSpell.repeat(card, now);
     const nCard = sCards[rating].card;
     spellStore.setItem(id, nCard);
 
-    for (let i of due.spell)
+    for (const i of due.spell)
         if (i.id === id) {
             i.card = structuredClone(nCard);
             break;
@@ -5095,7 +5114,7 @@ async function renderCardDueAll() {
     const sentenceDue: string[] = [];
     await wordsStore.iterate((v: record, k: string) => {
         if (!filterWithScope(k, wordsScope)) return;
-        for (let m of v.means) {
+        for (const m of v.means) {
             wordDue.push(m.card_id);
         }
     });
@@ -5146,11 +5165,9 @@ function renderCardDue(text: string, data: number[]) {
     const pc = view().class("oneD_plot");
     const now = time();
     const zoom = 1 / (timeD.h(1) / 10);
-    let _max = now + timeD.d(7),
-        _min = Infinity;
-    data.concat([now]).forEach((d) => {
-        if (d < _min) _min = d;
-    });
+    const _max = now + timeD.d(7);
+    let _min = Number.POSITIVE_INFINITY;
+    for (const d of data.concat([now])) if (d < _min) _min = d;
     let count = 0;
     const list: Array<ReturnType<typeof pack<HTMLElement>>> = [];
     for (let min = _min; min < _max; min += 2048 / zoom) {
@@ -5168,12 +5185,12 @@ function renderCardDue(text: string, data: number[]) {
             ctx.stroke();
         }
         const nowx = (now - min) * zoom;
-        data.forEach((d) => {
-            if (d < min || max < d) return;
+        for (const d of data) {
+            if (d < min || max < d) continue;
             const x = (d - min) * zoom;
             l(x, "#000");
             if (x < nowx) count++;
-        });
+        }
         l(nowx, "#f00");
         l((now + timeD.h(1) - min) * zoom, "#00f");
         l((now + timeD.d(1) - min) * zoom, "#00f");
@@ -5210,7 +5227,7 @@ function newCal() {
 }
 function renderCal(year: number, data: Date[], el: typeof cal1) {
     const count: { [key: string]: number } = {};
-    for (let d of data) {
+    for (const d of data) {
         const id = d.toDateString();
         if (count[id]) count[id]++;
         else count[id] = 1;
@@ -5238,7 +5255,7 @@ function renderCal(year: number, data: Date[], el: typeof cal1) {
                 const nv = (100 / c) * nvi + (100 / c) * ((v - l[nvi]) / (l[nvi + 1] - l[nvi])); // 赋分算法，但平均分割区间
                 item.style({ "background-color": `color-mix(in srgb-linear, #9be9a8, #216e39 ${nv}%)` });
             } else {
-                item.style({ "background-color": `none` });
+                item.style({ "background-color": "none" });
             }
             if (s_date.toDateString() === new Date().toDateString()) {
                 item.style({ "border-width": "2px" });
@@ -5290,7 +5307,7 @@ function onlineDicItem(name: string, url: string, lan: string) {
 
 async function showOnlineDics() {
     const l = ((await setting.getItem(onlineDicsPath)) || []) as onlineDicsType;
-    for (let i of l) {
+    for (const i of l) {
         onlineDicsEl.append(onlineDicItem(i.name, i.url, i.lan));
     }
     onlineDicsEl.oninput = () => {
@@ -5323,7 +5340,7 @@ if (!(await setting.getItem(onlineDicsPath))) {
 }
 
 const moreOnlineDicEl = el("select", el("option", "添加更多"));
-for (let i of defaultOnlineDic) {
+for (const i of defaultOnlineDic) {
     moreOnlineDicEl.append(el("option", i.name, { value: i.name }));
 }
 moreOnlineDicEl.onchange = () => {
@@ -5365,7 +5382,7 @@ showOnlineDics();
 async function saveSortOnlineDics() {
     const l = Array.from(onlineDicsEl.querySelectorAll("li"));
     const dl: onlineDicsType = [];
-    for (let i of l) {
+    for (const i of l) {
         const name = i.querySelectorAll("input")[0].value;
         const url = i.querySelectorAll("input")[1].value;
         const lan = i.querySelectorAll("input")[2].value;
@@ -5381,7 +5398,7 @@ uploadDicEl.onchange = () => {
         const reader = new FileReader();
         reader.readAsText(file);
         reader.onload = () => {
-            let dic = JSON.parse(reader.result as string);
+            const dic = JSON.parse(reader.result as string);
             console.log(dic);
             saveDic(dic);
         };
@@ -5391,41 +5408,40 @@ uploadDicEl.onchange = () => {
 async function saveDic(dic: dic) {
     const ndic = {};
     const id = dic.id;
-    let l = new Map();
-    for (let i in dic.dic) {
+    const l = new Map();
+    for (const i in dic.dic) {
         l.set(i, dic.dic[i]);
     }
-    for (let x in dic) {
+    for (const x in dic) {
         if (x === "dic") ndic[x] = l;
         else ndic[x] = dic[x];
     }
     await dicStore.setItem(id, ndic);
-    delete dic.dic;
+    dic.dic = undefined;
     dics[id] = dic;
 }
 
 async function getIPA(word: string) {
     if (!ipa) {
-        let lan = studyLan || "en";
-        let i = await ipaStore.getItem(lan);
+        const lan = studyLan || "en";
+        const i = await ipaStore.getItem(lan);
         if (!i) return "";
         ipa = (await i) as Map<string, string | string[]>;
     }
 
-    let r = ipa.get(word);
+    const r = ipa.get(word);
     if (!r) return "";
     if (Array.isArray(r)) {
         let l: string[] = [];
-        for (let i of r) {
+        for (const i of r) {
             l = l.concat(i.split(",").map((w) => w.trim()));
         }
         return l.join(",");
-    } else {
-        return r
-            .split(",")
-            .map((w) => w.trim())
-            .join(",");
     }
+    return r
+        .split(",")
+        .map((w) => w.trim())
+        .join(",");
 }
 
 settingEl.append(el("label", ["学习语言", el("input", { "data-path": "lan.learn" })]));
@@ -5443,15 +5459,15 @@ const rmbwGithub2 = "text.json";
 type allData = {
     bookshelf: { [key: string]: book };
     sections: { [key: string]: section };
-    cards: Object;
-    words: Object;
-    spell: Object;
-    card2word: Object;
-    card2sentence: Object;
-    actions: Object;
+    cards: object;
+    words: object;
+    spell: object;
+    card2word: object;
+    card2sentence: object;
+    actions: object;
 };
 
-let allData2Store: { [key: string]: LocalForage } = {
+const allData2Store: { [key: string]: LocalForage } = {
     bookshelf: bookshelfStore,
     sections: sectionsStore,
     cards: cardsStore,
@@ -5463,7 +5479,7 @@ let allData2Store: { [key: string]: LocalForage } = {
 } as { [key in keyof allData]: LocalForage };
 
 async function toAllData() {
-    let l: allData = {
+    const l: allData = {
         bookshelf: {},
         sections: {},
         cards: {},
@@ -5479,10 +5495,10 @@ async function toAllData() {
         });
     }
 
-    for (let key of ["cards", "spell"]) {
-        for (let i in l[key]) {
-            let r = l[key][i] as Card;
-            let nr = structuredClone(r) as any;
+    for (const key of ["cards", "spell"]) {
+        for (const i in l[key]) {
+            const r = l[key][i] as Card;
+            const nr = structuredClone(r) as any;
             nr.due = r.due?.getTime() || 0;
             nr.last_review = r.last_review?.getTime() || 0;
             l[key][i] = nr;
@@ -5507,17 +5523,17 @@ function formatAllData(l: allData) {
     });
 }
 async function getAllData() {
-    let l = await toAllData();
+    const l = await toAllData();
     return formatAllData(l);
 }
 
-function splitAllData(l: allData) {
-    l = structuredClone(l);
+function splitAllData(dl: allData) {
+    const l = structuredClone(dl);
     const text: { [id: string]: string } = {};
-    for (let i in l.sections) {
+    for (const i in l.sections) {
         if (i === ignoreWordSection) continue;
         const t = l.sections[i].text;
-        delete l.sections[i].text;
+        l.sections[i].text = undefined;
         text[i] = t;
     }
     const hash = spark.hash(JSON.stringify(text));
@@ -5525,16 +5541,16 @@ function splitAllData(l: allData) {
     return { data: l, text, hash: hash };
 }
 
-function jsonStringify(value: any, unBr: (path: string[]) => boolean) {
-    let l = [];
+function jsonStringify(value: unknown, unBr: (path: string[]) => boolean) {
+    const l = [];
 
-    function w(value: any, l: string[]) {
-        let str: string[] = [];
-        for (let i in value) {
-            let path = l.concat(i);
+    function w(value: object, l: string[]) {
+        const str: string[] = [];
+        for (const i in value) {
+            const path = l.concat(i);
             const v = value[i];
             if (typeof v === "object" && v?.constructor === Object) {
-                let isBr = !unBr(path);
+                const isBr = !unBr(path);
                 if (isBr) {
                     str.push(`"${i}":${w(value[i], path)}`);
                 } else {
@@ -5549,7 +5565,7 @@ function jsonStringify(value: any, unBr: (path: string[]) => boolean) {
         if (str.length === 0) return "{}";
         return `{\n${str.join(",\n")}\n}`;
     }
-    return w(value, l);
+    return w(value as object, l);
 }
 
 let isSetData = false;
@@ -5561,7 +5577,7 @@ async function setAllData(json: allData, textId?: string) {
     putToast(tip, 0);
 
     if (Object.keys(json.actions).at(-1) < (await cardActionsStore.keys()).at(-1)) {
-        const r = await confirm(`⚠️本地数据似乎更加新，是否继续更新？\n若更新，可能造成数据丢失`);
+        const r = await confirm("⚠️本地数据似乎更加新，是否继续更新？\n若更新，可能造成数据丢失");
         if (!r) {
             tip.remove();
             isSetData = false;
@@ -5569,9 +5585,9 @@ async function setAllData(json: allData, textId?: string) {
         }
     }
 
-    for (let key of ["cards", "spell"]) {
-        for (let i in json[key]) {
-            let r = json[key][i] as Card;
+    for (const key of ["cards", "spell"]) {
+        for (const i in json[key]) {
+            const r = json[key][i] as Card;
             r.due = new Date(r.due);
             r.last_review = new Date(r.last_review);
         }
@@ -5585,8 +5601,8 @@ async function setAllData(json: allData, textId?: string) {
         }
     }
     if (Object.keys(wrongL).length) {
-        let l: string[] = [];
-        for (let i in wrongL) {
+        const l: string[] = [];
+        for (const i in wrongL) {
             l.push(`${i}：${wrongL[i].o}->${wrongL[i].n}`);
         }
         const r = await confirm(
@@ -5619,7 +5635,7 @@ async function xunzip(file: Blob) {
 }
 
 function xzip(data: string) {
-    let fs = new zip.fs.FS();
+    const fs = new zip.fs.FS();
     fs.addText(rmbwJsonName, data);
     return fs.exportBlob();
 }
@@ -5630,7 +5646,7 @@ function basicAuth(username: string, passwd: string) {
 
 function joinFilePath(baseurl: string, name: string) {
     let url = baseurl;
-    if (url.at(-1) != "/") url += "/";
+    if (url.at(-1) !== "/") url += "/";
     url += rmbwZipName;
     return url;
 }
@@ -5641,8 +5657,8 @@ async function getDAV() {
     const baseurl = (await setting.getItem(DAVConfigPath.url)) as string;
     const username = (await setting.getItem(DAVConfigPath.user)) as string;
     const passwd = (await setting.getItem(DAVConfigPath.passwd)) as string;
-    let url = joinFilePath(baseurl, rmbwZipName);
-    let data = (
+    const url = joinFilePath(baseurl, rmbwZipName);
+    const data = (
         await fetch(url, {
             method: "get",
             headers: { Authorization: basicAuth(username, passwd) },
@@ -5655,7 +5671,7 @@ async function setDAV(data: Blob) {
     const baseurl = (await setting.getItem(DAVConfigPath.url)) as string;
     const username = (await setting.getItem(DAVConfigPath.user)) as string;
     const passwd = (await setting.getItem(DAVConfigPath.passwd)) as string;
-    let url = joinFilePath(baseurl, rmbwZipName);
+    const url = joinFilePath(baseurl, rmbwZipName);
     fetch(url, {
         method: "put",
         headers: { Authorization: basicAuth(username, passwd) },
@@ -5683,9 +5699,10 @@ async function getGitHub(fileName: string) {
     const repo = (await setting.getItem(GitHubConfigPath.repo)) as string;
     const token = (await setting.getItem(GitHubConfigPath.token)) as string;
     const path = ((await setting.getItem(GitHubConfigPath.path)) as string) || "";
-    const downloadPath =
-        (((await setting.getItem(GitHubConfigPath.download)) as string) ||
-            (`https://raw.githubusercontent.com/${user}/${repo}/main/${path}` as string)) + `/${fileName}`;
+    const downloadPath = `${
+        ((await setting.getItem(GitHubConfigPath.download)) as string) ||
+        (`https://raw.githubusercontent.com/${user}/${repo}/main/${path}` as string)
+    }/${fileName}`;
     return {
         url: `https://api.github.com/repos/${user}/${repo}/contents/${path}/${fileName}`.replace(
             "contents//",
@@ -5701,10 +5718,10 @@ async function getGitHub(fileName: string) {
     };
 }
 
-let uploadDataEl = el("input", "上传数据", {
+const uploadDataEl = el("input", "上传数据", {
     type: "file",
     onchange: () => {
-        let reader = new FileReader();
+        const reader = new FileReader();
         reader.readAsText(uploadDataEl.files[0]);
         reader.onload = () => {
             setAllData(JSON.parse(reader.result as string));
@@ -5715,16 +5732,16 @@ let uploadDataEl = el("input", "上传数据", {
 import { encode } from "js-base64";
 
 function download(text: string, name: string, type?: string) {
-    let blob = new Blob([text], { type: type || "text/plain;charset=utf-8" });
-    let a = document.createElement("a");
+    const blob = new Blob([text], { type: type || "text/plain;charset=utf-8" });
+    const a = document.createElement("a");
     a.href = URL.createObjectURL(blob);
     a.download = name;
     a.click();
 }
 
 async function uploadGithub(data: string, fileName: string, m: string) {
-    let base64 = encode(data);
-    let config = await getGitHub(fileName);
+    const base64 = encode(data);
+    const config = await getGitHub(fileName);
     let sha = "";
     sha = (await (await fetch(config.url, { headers: { ...config.auth } })).json()).sha;
     const x = {
@@ -5732,7 +5749,7 @@ async function uploadGithub(data: string, fileName: string, m: string) {
         content: base64,
         sha,
     };
-    if (!sha) delete x.sha;
+    if (!sha) x.sha = undefined;
     fetch(config.url, {
         method: "PUT",
         headers: {
@@ -5743,17 +5760,17 @@ async function uploadGithub(data: string, fileName: string, m: string) {
 }
 
 async function downloadGithub(fileName: string) {
-    let config = await getGitHub(fileName);
+    const config = await getGitHub(fileName);
     const data = await (await fetch(config.fileDownload)).json();
     return data;
 }
 
-let asyncEl = el("div", [
+const asyncEl = el("div", [
     el("h2", "数据"),
     el("div", [
         el("button", "导出数据", {
             onclick: async () => {
-                let data = await getAllData();
+                const data = await getAllData();
                 download(data, rmbwJsonName);
             },
         }),
@@ -5763,15 +5780,15 @@ let asyncEl = el("div", [
         el("h3", "webDAV"),
         el("button", "↓", {
             onclick: async () => {
-                let data = await getDAV();
-                let str = await xunzip(data);
+                const data = await getDAV();
+                const str = await xunzip(data);
                 setAllData(JSON.parse(str));
             },
         }),
         el("button", "↑", {
             onclick: async () => {
-                let data = await getAllData();
-                let file = await xzip(data);
+                const data = await getAllData();
+                const file = await xzip(data);
                 setDAV(file);
             },
         }),
@@ -5790,17 +5807,17 @@ let asyncEl = el("div", [
                     const nId = data.sections[0]?.text;
                     if (nId) {
                         let textData: { [key: string]: string } = {};
-                        if (oldId != nId) {
+                        if (oldId !== nId) {
                             textData = await downloadGithub(rmbwGithub2);
                         } else {
                             await sectionsStore.iterate((v: section, k) => {
                                 textData[k] = v.text;
                             });
                         }
-                        for (let i in textData) {
-                            data.sections[i]["text"] = textData[i];
+                        for (const i in textData) {
+                            data.sections[i].text = textData[i];
                         }
-                        delete data.sections[0];
+                        data.sections[0] = undefined;
                     }
                     setAllData(data, nId);
                 } catch (error) {
@@ -5817,7 +5834,7 @@ let asyncEl = el("div", [
                     const v = splitAllData(x);
 
                     const oldId = await textCacheId();
-                    if (oldId != v.hash) {
+                    if (oldId !== v.hash) {
                         await uploadGithub(JSON.stringify(v.text, null, 2), rmbwGithub2, "更新文本");
                     }
                     await uploadGithub(formatAllData(v.data), rmbwGithub1, "更新数据");
@@ -5846,7 +5863,7 @@ let asyncEl = el("div", [
 settingEl.append(asyncEl);
 
 async function getCSV(type: "word" | "spell" | "sen") {
-    let l = [];
+    const l = [];
     if (type === "word" || type === "sen") {
         // todo 区分sen
         await cardsStore.iterate((v, k) => {
@@ -5858,7 +5875,9 @@ async function getCSV(type: "word" | "spell" | "sen") {
         });
     }
     const spChar = ",";
-    let text: string[] = [["card_id", "review_time", "review_rating", "review_state", "review_duration"].join(spChar)];
+    const text: string[] = [
+        ["card_id", "review_time", "review_rating", "review_state", "review_duration"].join(spChar),
+    ];
     await cardActionsStore.iterate((v, k) => {
         if (!v[1]) return;
         const card_id = v[0];
@@ -5867,7 +5886,7 @@ async function getCSV(type: "word" | "spell" | "sen") {
         const review_rating = v[1];
         const review_state = v[2];
         const review_duration = v[3];
-        let row = [card_id, review_time, review_rating, review_state, review_duration].join(spChar);
+        const row = [card_id, review_time, review_rating, review_state, review_duration].join(spChar);
         text.push(row);
     });
     const csv = text.join("\n");
@@ -5923,7 +5942,7 @@ settingEl.append(
                 const endTime = time();
 
                 const segmenter = new Segmenter(testSpeedLanEl.value || "en", { granularity: "word" });
-                let segments = segmenter.segment(text);
+                const segments = segmenter.segment(text);
                 const wordsCount = Array.from(segments).length;
                 readSpeedEl.value = String(Math.round((endTime - startTime) / wordsCount));
                 readSpeedEl.dispatchEvent(new Event("input"));
@@ -5941,28 +5960,28 @@ const ttsEngineEl = el("select", { "data-path": ttsEngineConfig }, [
     el("option", "微软", { value: "ms" }),
 ]);
 
-let loadTTSVoicesEl = el("button", "load");
-let voicesListEl = el("select");
+const loadTTSVoicesEl = el("button", "load");
+const voicesListEl = el("select");
 loadTTSVoicesEl.onclick = async () => {
     voicesListEl.innerHTML = "";
     if ((await getTtsEngine()) === "browser") {
         const list = speechSynthesis.getVoices();
-        for (let v of list) {
-            let text = `${v.name.replace(/Microsoft (\w+) Online \(Natural\)/, "$1")}`;
-            let op = el("option", text, { value: v.name });
+        for (const v of list) {
+            const text = `${v.name.replace(/Microsoft (\w+) Online \(Natural\)/, "$1")}`;
+            const op = el("option", text, { value: v.name });
             voicesListEl.append(op);
         }
     } else {
-        let list = await tts.getVoices();
-        for (let v of list) {
-            let text = `${v.Gender === "Male" ? "♂️" : "♀️"} ${v.FriendlyName.replace(/Microsoft (\w+) Online \(Natural\)/, "$1")}`;
-            let op = el("option", text, { value: v.ShortName });
+        const list = await tts.getVoices();
+        for (const v of list) {
+            const text = `${v.Gender === "Male" ? "♂️" : "♀️"} ${v.FriendlyName.replace(/Microsoft (\w+) Online \(Natural\)/, "$1")}`;
+            const op = el("option", text, { value: v.ShortName });
             voicesListEl.append(op);
         }
     }
     voicesListEl.value = await setting.getItem(ttsVoiceConfig);
     voicesListEl.onchange = () => {
-        let name = voicesListEl.value;
+        const name = voicesListEl.value;
         tts.setMetadata(name, OUTPUT_FORMAT.WEBM_24KHZ_16BIT_MONO_OPUS);
         setting.setItem(ttsVoiceConfig, name);
         ttsCache.clear();
@@ -6031,11 +6050,11 @@ settingEl.append(
     ]),
 );
 
-settingEl.querySelectorAll("[data-path]").forEach(async (el: HTMLElement) => {
+for (const el of Array.from(settingEl.querySelectorAll("[data-path]")) as HTMLElement[]) {
     const path = el.getAttribute("data-path");
-    let value = await setting.getItem(path);
+    const value = await setting.getItem(path);
     if (el.tagName === "INPUT") {
-        let iel = el as HTMLInputElement;
+        const iel = el as HTMLInputElement;
         if (iel.type === "checkbox") {
             iel.checked = value as boolean;
             iel.addEventListener("input", () => {
@@ -6058,4 +6077,4 @@ settingEl.querySelectorAll("[data-path]").forEach(async (el: HTMLElement) => {
             setting.setItem(path, el.value);
         };
     }
-});
+}
