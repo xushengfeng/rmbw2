@@ -38,6 +38,7 @@
         "webm-duration-fix": "^1.0.4"
     },
     "devDependencies": {
+        "@biomejs/biome": "1.8.3",
         "@types/hyphen": "^1.6.7",
         "@types/sortablejs": "^1.15.8",
         "download": "^8.0.0",

@@ -147,7 +147,7 @@ function interModal(message?: string, iel?: HTMLElement, cancel?: boolean) {
                 (iel as HTMLInputElement)?.value ||
                     iel?.querySelector("input")?.value ||
                     iel?.querySelector("textarea")?.value ||
-                    true
+                    true,
             );
             dialog.close();
         };
@@ -196,7 +196,7 @@ function vlist<ItemType>(
         paddingRight?: number;
         width?: string;
     },
-    f: (index: number, item: ItemType, remove: () => void) => HTMLElement | Promise<HTMLElement>
+    f: (index: number, item: ItemType, remove: () => void) => HTMLElement | Promise<HTMLElement>,
 ) {
     let iHeight = style.iHeight;
     let gap = style.gap ?? 0;
@@ -316,7 +316,7 @@ booksEl.append(
         }),
     ]),
     localBookEl,
-    onlineBookEl
+    onlineBookEl,
 );
 const bookSectionsEl = el("div", {
     style: {
@@ -379,7 +379,7 @@ dicEl.append(
     ]),
     el("div", { style: { display: "flex" } }, [dicTransB, dicTransContent]),
     el("div", { style: { display: "flex" } }, [dicMinEl, addMeanEl, editMeanEl]),
-    dicDetailsEl
+    dicDetailsEl,
 );
 
 function putToast(ele: HTMLElement, time?: number) {
@@ -575,7 +575,7 @@ async function showOnlineBooks(
         }[];
         language: string;
         cover?: string;
-    }[]
+    }[],
 ) {
     onlineBookEl.innerHTML = "";
     let grid: HTMLElement;
@@ -602,7 +602,7 @@ async function showOnlineBooksL(
         }[];
         language: string;
         cover?: string;
-    }[]
+    }[],
 ) {
     const grid = el("div", { class: "books" });
     for (let book of books) {
@@ -698,7 +698,7 @@ async function showOnlineBooksL(
 
 function selectBook<BOOK extends { type: "word" | "text" | "package"; language: string }>(
     books: BOOK[],
-    f: (list: BOOK[]) => void
+    f: (list: BOOK[]) => void,
 ) {
     const typeEl = el("div");
     const lanEl = el("div");
@@ -718,7 +718,7 @@ function selectBook<BOOK extends { type: "word" | "text" | "package"; language: 
                             x[key] = i;
                             run();
                         },
-                    })
+                    }),
                 );
             }
     }
@@ -834,7 +834,7 @@ async function setSectionTitle(sid: string) {
                     titleEl.value = r["title"];
                 });
             },
-        })
+        }),
     );
     titleEl.focus();
     const nTitle = (await interModal("重命名章节标题", iel, true)) as string;
@@ -1021,7 +1021,7 @@ async function showBookSections(book: book) {
                             const t = await setSectionTitle(sections[i]);
                             if (t) sEl.innerText = t;
                         },
-                    })
+                    }),
                 );
             }
             menuEl.append(
@@ -1029,7 +1029,7 @@ async function showBookSections(book: book) {
                     onclick: async () => {
                         navigator.clipboard.writeText(sections[i]);
                     },
-                })
+                }),
             );
             showMenu(e.clientX, e.clientY);
         };
@@ -1071,7 +1071,7 @@ async function showBookContent(book: book, id: string) {
                             await getTTS(contentP[i]);
                         }
                 },
-            })
+            }),
         );
 
     contentP = [];
@@ -1177,7 +1177,7 @@ async function showWordBook(book: book, s: section) {
                     show.show(wordList);
                     setting.setItem(WordSortPath, i.type);
                 },
-            })
+            }),
         );
     }
     const chartEl = el(
@@ -1189,18 +1189,18 @@ async function showWordBook(book: book, s: section) {
                 "div",
                 { class: LITLEPROGRESS },
                 el("div", { style: { width: (matchWords / l.length) * 100 + "%", background: "#00f" } }),
-                el("div", { style: { width: (means1 / l.length) * 100 + "%", background: "#0f0" } })
-            )
+                el("div", { style: { width: (means1 / l.length) * 100 + "%", background: "#0f0" } }),
+            ),
         ),
         el("div", `拼写 加载中`, el("div", { class: LITLEPROGRESS })),
         {
             onclick: () => {
                 showWordBookMore(wordList);
             },
-        }
+        },
     );
     bookContentContainerEl.append(
-        view().class("words_book_top").add([chartEl, search, sortEl]).attr({ lang: navigator.language }).el
+        view().class("words_book_top").add([chartEl, search, sortEl]).attr({ lang: navigator.language }).el,
     );
 
     requestIdleCallback(async () => {
@@ -1221,9 +1221,9 @@ async function showWordBook(book: book, s: section) {
                 el(
                     "div",
                     { class: LITLEPROGRESS },
-                    el("div", { style: { width: (spell / l.length) * 100 + "%", background: "#00f" } })
-                )
-            )
+                    el("div", { style: { width: (spell / l.length) * 100 + "%", background: "#00f" } }),
+                ),
+            ),
         );
     });
 
@@ -1252,7 +1252,7 @@ async function showWordBook(book: book, s: section) {
                                 delete item1.type;
                                 delete item2.type;
                             },
-                        })
+                        }),
                     );
                 else
                     menuEl.append(
@@ -1265,7 +1265,7 @@ async function showWordBook(book: book, s: section) {
                                 item.type = item1.type = item2.type = "ignore";
                                 item.means = item1.means = item2.means = 1;
                             },
-                        })
+                        }),
                     );
             };
             p.onclick = () => {
@@ -1298,8 +1298,8 @@ async function showWordBook(book: book, s: section) {
                                         });
                                     },
                                 }),
-                                note
-                            )
+                                note,
+                            ),
                         );
                     }
                     const onlineList = await onlineDicL(item.text);
@@ -1317,7 +1317,7 @@ async function showWordBook(book: book, s: section) {
                                         });
                                     },
                                 }),
-                                el("div", await disCard2(i))
+                                el("div", await disCard2(i)),
                             );
                             p.append(pel);
                             const reviewEl = el("div");
@@ -1344,7 +1344,7 @@ async function showWordBook(book: book, s: section) {
                                     } else {
                                         hasClick = true;
                                     }
-                                }
+                                },
                             );
                             reviewEl.append(buttons.buttons);
                         }
@@ -1352,7 +1352,7 @@ async function showWordBook(book: book, s: section) {
                 show();
             };
             return p;
-        }
+        },
     );
 
     bookContentContainerEl.lang = book.language;
@@ -1364,7 +1364,7 @@ type WordSortType = "raw" | "az" | "za" | "10" | "01" | "random";
 
 function sortWordList(
     list: { text: string; id: string; c: record; type?: "ignore" | "learn"; means?: number }[],
-    type: WordSortType
+    type: WordSortType,
 ) {
     if (type === "raw") return list;
     if (type === "az")
@@ -1422,7 +1422,7 @@ async function showWordBookMore(wordList: { text: string; c: record; type?: "ign
         el(
             "div",
             { style: { display: "flex", "flex-direction": "row-reverse" } },
-            el("button", iconEl(close_svg), { onclick: () => d.close() })
+            el("button", iconEl(close_svg), { onclick: () => d.close() }),
         ),
         el(
             "div",
@@ -1436,8 +1436,8 @@ async function showWordBookMore(wordList: { text: string; c: record; type?: "ign
                 onclick: () => {
                     navigator.clipboard.writeText(unlearnL.map((i) => i.text).join("\n"));
                 },
-            })
-        )
+            }),
+        ),
     );
     let bookIds: { [id: string]: number } = {};
 
@@ -1464,7 +1464,7 @@ async function showWordBookMore(wordList: { text: string; c: record; type?: "ign
         pEl.append(
             el("span", (await getBooksById(i[0])).name),
             el("span", i[1]),
-            el("div", { style: { width: (i[1] / max) * 100 + "%" } })
+            el("div", { style: { width: (i[1] / max) * 100 + "%" } }),
         );
     }
     pEl.append(el("span", "忽略"), el("span", ignore), el("div", { style: { width: (ignore / max) * 100 + "%" } }));
@@ -1480,7 +1480,7 @@ async function showWordBookMore(wordList: { text: string; c: record; type?: "ign
                     width: (familyList.filter((i) => i).length / familyList.length) * 100 + "%",
                     background: "#00f",
                 }),
-            ]).el
+            ]).el,
     );
     d.append(
         el("p", "添加忽略词到拼写"),
@@ -1490,10 +1490,10 @@ async function showWordBookMore(wordList: { text: string; c: record; type?: "ign
                     wordList
                         .filter((w) => w.type === "ignore")
                         .map((w) => w.text)
-                        .filter((w) => !w.includes(" "))
+                        .filter((w) => !w.includes(" ")),
                 );
             },
-        })
+        }),
     );
 }
 
@@ -1532,7 +1532,7 @@ async function showNormalBook(book: book, s: section) {
     const osL = Array.from(new Segmenter(book.language, { granularity: "sentence" }).segment(s.text));
     const sL: Intl.SegmentData[] = [];
     const sx = ["Mr.", "Mrs.", "Ms.", "Miss.", "Dr.", "Prof.", "Capt.", "Lt.", "Sgt.", "Rev.", "Sr.", "Jr.", "St."].map(
-        (i) => i + " "
+        (i) => i + " ",
     );
     let sxS = sx.map((i) => ` ${i}`);
     for (let i = 0; i < osL.length; i++) {
@@ -1583,7 +1583,7 @@ async function showNormalBook(book: book, s: section) {
             onclick: async () => {
                 if ((await getBooksById(nowBook.book)).canEdit) setSectionTitle(nowBook.sections);
             },
-        })
+        }),
     );
 
     wordFreq = {};
@@ -1698,7 +1698,7 @@ async function showNormalBook(book: book, s: section) {
                     onclick: () => {
                         showLisent(contentP.at(i));
                     },
-                })
+                }),
             );
         }
         contentP.push(pText);
@@ -1708,7 +1708,7 @@ async function showNormalBook(book: book, s: section) {
                 onclick: () => {
                     translateContext(pel);
                 },
-            })
+            }),
         );
 
         pel.append(moreEl);
@@ -1781,7 +1781,7 @@ async function showLisent(text: string) {
                     d.close();
                 },
             }),
-        ])
+        ]),
     );
     dialogX(d);
 }
@@ -1897,7 +1897,7 @@ document.body.appendChild(fontListEl);
             setBookStyle();
         },
         font_small_svg,
-        font_large_svg
+        font_large_svg,
     );
     let lineHeight = createRangeSetEl(
         bookStyle.lineHeight,
@@ -1907,7 +1907,7 @@ document.body.appendChild(fontListEl);
             setBookStyle();
         },
         line_height_small_svg,
-        line_height_large_svg
+        line_height_large_svg,
     );
     let contentWidth = createRangeSetEl(
         bookStyle.contentWidth,
@@ -1917,7 +1917,7 @@ document.body.appendChild(fontListEl);
             setBookStyle();
         },
         content_width_small_svg,
-        content_width_large_svg
+        content_width_large_svg,
     );
     let themeSelect = el("div", { class: "theme_select" }, [
         themeI("auto", "自动", "#fff", "#000"),
@@ -1941,7 +1941,7 @@ document.body.appendChild(fontListEl);
                     value: value,
                 }),
                 name,
-            ]
+            ],
         );
     }
     (themeSelect.querySelector("input[value='" + bookStyle.theme + "']") as HTMLInputElement).checked = true;
@@ -1972,7 +1972,7 @@ function setBookStyle() {
     bookContentContainerEl.style.setProperty("--line-height", `${bookStyleList.lineHeight[bookStyle.lineHeight]}em`);
     bookContentContainerEl.style.setProperty(
         "--content-width",
-        `${bookStyleList.contentWidth[bookStyle.contentWidth]}em`
+        `${bookStyleList.contentWidth[bookStyle.contentWidth]}em`,
     );
     bookContentContainerEl.style.background = bookStyle.paper ? "" : "none";
     setting.setItem("style.default", bookStyle);
@@ -2292,7 +2292,7 @@ async function sectionSelect(menuEl: HTMLElement, radio?: boolean) {
                         const i = e.target as HTMLInputElement;
                         book.querySelectorAll("input").forEach((x) => (x.checked = i.checked));
                     },
-                })
+                }),
             );
         }
         for (let s of i.sections) {
@@ -2301,7 +2301,7 @@ async function sectionSelect(menuEl: HTMLElement, radio?: boolean) {
                 el("label", [
                     el("input", { type: radio ? "radio" : "checkbox", value: s, name: "books" }),
                     section.title,
-                ])
+                ]),
             );
         }
         menuEl.append(book);
@@ -2520,7 +2520,7 @@ async function showMarkList() {
 
                         if (i.id === nowDicId && dicEl.classList.contains(DICSHOW)) hideDicEl.click();
                     },
-                })
+                }),
             );
             showMenu(e.clientX, e.clientY);
         };
@@ -2576,9 +2576,7 @@ dicMinEl.onclick = () => {
 };
 
 function setDicPosi(el: HTMLElement) {
-    dicEl.style.top = `${
-        el.getBoundingClientRect().bottom - (bookContentEl.getBoundingClientRect().top - bookContentEl.scrollTop) + 24
-    }px`;
+    dicEl.style.top = `${el.getBoundingClientRect().bottom - (bookContentEl.getBoundingClientRect().top - bookContentEl.scrollTop) + 24}px`;
 }
 
 let dicTransAi: AbortController;
@@ -2670,7 +2668,7 @@ async function showDic(id: string) {
                         content: `Please translate into ${navigator.language} (avoid explaining the original text):\n\n${Share.context}`,
                     },
                 ],
-                "翻译"
+                "翻译",
             );
             dicTransAi = output.stop;
             return output.text;
@@ -2981,7 +2979,7 @@ async function showDic(id: string) {
             for (let i = 0; i < editText.length - n + 1; i++) {
                 for (let ii of [-1, 1]) {
                     let el = bookContentEl.querySelector(
-                        `span[data-${left ? "s" : "e"}="${n + i * ii}"]`
+                        `span[data-${left ? "s" : "e"}="${n + i * ii}"]`,
                     ) as HTMLElement;
                     if (el) {
                         return el;
@@ -3108,7 +3106,7 @@ async function showDicEl(mainTextEl: HTMLTextAreaElement, word: string, x: numbe
                 onclick: () => {
                     showDic(i);
                 },
-            })
+            }),
         );
     }
     if (Object.keys(dics).length) {
@@ -3129,7 +3127,7 @@ async function showDicEl(mainTextEl: HTMLTextAreaElement, word: string, x: numbe
                 onclick: () => {
                     // 获取所有checked的值
                     let checkedValues = Array.from(list.querySelectorAll("input[type='checkbox']:checked")).map(
-                        (el: HTMLInputElement) => el.value
+                        (el: HTMLInputElement) => el.value,
                     );
                     mainTextEl.setRangeText(checkedValues.join("\n"));
                     div.close();
@@ -3176,7 +3174,7 @@ async function dicSentences(contexts: record["means"][0]["contexts"]) {
                     s.text.slice(s.index[1]),
                     t,
                 ]),
-            ])
+            ]),
         );
     }
     return sen;
@@ -3323,7 +3321,7 @@ async function tagsEl(b: bOp) {
                     onclick: () => {
                         if (si.value) t.new(si.value);
                     },
-                })
+                }),
             );
             d.append(l, search);
             dialogX(d);
@@ -3341,7 +3339,7 @@ function addP(
     sentence: string,
     index: record["means"][0]["contexts"][0]["index"],
     tags: bOp,
-    f: (text: string, sentence?: string, index?: [number, number], tags?: bOp) => void
+    f: (text: string, sentence?: string, index?: [number, number], tags?: bOp) => void,
 ) {
     let p = el("p");
     p.lang = studyLan;
@@ -3450,7 +3448,7 @@ function aiButtons(textEl: HTMLTextAreaElement, word: string, context: string) {
             },
         }),
         tmpAiB(textEl, `$这里有个单词${word}，它位于${context}`),
-        dicB(textEl, word)
+        dicB(textEl, word),
     );
     return buttons;
 }
@@ -3476,7 +3474,7 @@ function aiButtons1(textEl: HTMLTextAreaElement, word: string) {
             },
         }),
         tmpAiB(textEl, `$这里有个单词${word}`),
-        dicB(textEl, word)
+        dicB(textEl, word),
     );
     return buttons;
 }
@@ -3510,7 +3508,7 @@ function aiButtons2(textEl: HTMLTextAreaElement, sentence: string) {
                 setText((await sentenceAi.split(sentence)).shortSentences.join("\n"));
             },
         }),
-        tmpAiB(textEl, `$这里有个句子${sentence}`)
+        tmpAiB(textEl, `$这里有个句子${sentence}`),
     );
     return buttons;
 }
@@ -4022,9 +4020,9 @@ async function autoIgnore() {
     const words = Array.from(
         new Set(
             Array.from(bookContentEl.querySelectorAll(`:scope>*>*>span:not(.${MARKWORD})`)).map((el) =>
-                el.textContent.trim().toLocaleLowerCase()
-            )
-        )
+                el.textContent.trim().toLocaleLowerCase(),
+            ),
+        ),
     );
     const section = await getSection(ignoreWordSection);
     const markedWords = Object.values((await getSection(nowBook.sections)).words)
@@ -4065,17 +4063,17 @@ async function autoIgnore() {
         el("button", iconEl(ok_svg), {
             onclick: async () => {
                 let words = Array.from(f.querySelectorAll("input:checked.ignore_word")).map(
-                    (el: HTMLInputElement) => el.value
+                    (el: HTMLInputElement) => el.value,
                 );
                 section.text = oldWords.concat(words).join("\n");
                 await sectionsStore.setItem(ignoreWordSection, section);
                 const wordsX = Array.from(f.querySelectorAll("input:checked:not(.ignore_word)")).map(
-                    (el: HTMLInputElement) => el.value
+                    (el: HTMLInputElement) => el.value,
                 );
                 selectWord(wordsX);
                 dialog.close();
             },
-        })
+        }),
     );
     dialogX(dialog);
 }
@@ -4128,7 +4126,7 @@ const spellIgnore = el(
     "select",
     el("option", "全部", { value: "all" }),
     el("option", "排除忽略词", { value: "exIgnore" }),
-    el("option", "仅忽略词", { value: "ignore" })
+    el("option", "仅忽略词", { value: "ignore" }),
 );
 reviewReflashEl.parentElement.append(spellIgnore);
 const reviewViewEl = document.getElementById("review_view");
@@ -4143,7 +4141,7 @@ const reviewSortEl = el(
         el("option", "紧急", { value: "紧急" }),
         el("option", "随机", { value: "随机" }),
     ],
-    { onchange: () => (reviewSortType = reviewSortEl.value as typeof reviewSortType) }
+    { onchange: () => (reviewSortType = reviewSortEl.value as typeof reviewSortType) },
 );
 reviewReflashEl.parentElement.append(reviewSortEl);
 
@@ -4153,7 +4151,7 @@ reviewReflashEl.parentElement.append(
             plotEl.el.showPopover();
             renderCharts();
         },
-    })
+    }),
 );
 
 const KEYBOARDDISPLAYPATH = "spell.keyboard.display";
@@ -4352,14 +4350,14 @@ async function getReviewDue(type: review) {
         [wordList, spellList, sentenceList].forEach((x) => x.sort((a, b) => (a.card.state === State.New ? -1 : 1)));
     if (reviewSortType === "紧急") {
         wordList.sort(
-            (a, b) => fsrs.get_retrievability(a.card, now, false) - fsrs.get_retrievability(b.card, now, false)
+            (a, b) => fsrs.get_retrievability(a.card, now, false) - fsrs.get_retrievability(b.card, now, false),
         );
         spellList.sort(
             (a, b) =>
-                fsrsSpell.get_retrievability(a.card, now, false) - fsrsSpell.get_retrievability(b.card, now, false)
+                fsrsSpell.get_retrievability(a.card, now, false) - fsrsSpell.get_retrievability(b.card, now, false),
         );
         sentenceList.sort(
-            (a, b) => fsrsSen.get_retrievability(a.card, now, false) - fsrsSen.get_retrievability(b.card, now, false)
+            (a, b) => fsrsSen.get_retrievability(a.card, now, false) - fsrsSen.get_retrievability(b.card, now, false),
         );
     }
     if (reviewSortType === "随机") [wordList, spellList, sentenceList].forEach((x) => randomList(x));
@@ -4495,7 +4493,7 @@ async function getWordAiContext() {
                     tipEl.remove();
                     x.stop.abort();
                 },
-            })
+            }),
         );
 
         putToast(tipEl, 0);
@@ -4723,7 +4721,7 @@ async function showSpellReview(x: { id: string; card: Card }) {
                         diffEl.innerHTML = (await spellDiffWord(word, inputWord)).innerHTML;
                         spellErrorAnimate(diffEl);
                     },
-                })
+                }),
             );
             spellErrorAnimate(diffEl);
             wordEl.append(await hyphenate(word, { hyphenChar }));
@@ -4745,7 +4743,7 @@ async function showSpellReview(x: { id: string; card: Card }) {
                                     wordEl.innerHTML = "";
                                     inputContent("");
                                 },
-                            })
+                            }),
                         );
                 }
             }
@@ -4784,7 +4782,7 @@ async function showSpellReview(x: { id: string; card: Card }) {
                         }
                     });
                 },
-            })
+            }),
         );
         for (let i of r.means) {
             context.append(el("div", await disCard2(i)));
@@ -4863,18 +4861,21 @@ function spellErrorAnimate(pel: HTMLElement) {
         const w = el.getBoundingClientRect().width + "px";
         if (el.classList.contains("diff_add")) el.style.width = "0";
         if (el.classList.contains("diff_remove")) el.style.width = w;
-        setTimeout(() => {
-            el.style.transition = "0.2s";
-            if (el.classList.contains("diff_add")) {
-                el.style.width = w;
-            }
-            if (el.classList.contains("diff_remove")) {
-                el.style.width = "0";
-            }
-            if (el.classList.contains("diff_exchange")) {
-                el.classList.replace("diff_exchange", "diff_exchange1");
-            }
-        }, (i + 1) * 500);
+        setTimeout(
+            () => {
+                el.style.transition = "0.2s";
+                if (el.classList.contains("diff_add")) {
+                    el.style.width = w;
+                }
+                if (el.classList.contains("diff_remove")) {
+                    el.style.width = "0";
+                }
+                if (el.classList.contains("diff_exchange")) {
+                    el.classList.replace("diff_exchange", "diff_exchange1");
+                }
+            },
+            (i + 1) * 500,
+        );
     }
 }
 
@@ -4942,7 +4943,7 @@ async function ttsNormalize(text: string) {
 async function getTTS(text: string) {
     await tts.setMetadata(
         (await setting.getItem(ttsVoiceConfig)) || "en-GB-LibbyNeural",
-        OUTPUT_FORMAT.WEBM_24KHZ_16BIT_MONO_OPUS
+        OUTPUT_FORMAT.WEBM_24KHZ_16BIT_MONO_OPUS,
     );
     text = await ttsNormalize(text);
     let b = (await ttsCache.getItem(text)) as Blob;
@@ -5261,8 +5262,8 @@ settingEl.append(
     el(
         "div",
         el("h2", "阅读器"),
-        el("label", el("input", { type: "checkbox", "data-path": readerSettingPath.apostrophe }), "把’转为'")
-    )
+        el("label", el("input", { type: "checkbox", "data-path": readerSettingPath.apostrophe }), "把’转为'"),
+    ),
 );
 
 import Sortable from "sortablejs";
@@ -5282,7 +5283,7 @@ function onlineDicItem(name: string, url: string, lan: string) {
             onclick: () => {
                 li.remove();
             },
-        })
+        }),
     );
     return li;
 }
@@ -5346,7 +5347,7 @@ settingEl.append(
             el("button", iconEl(add_svg), {
                 onclick: () => {
                     onlineDicsEl.append(
-                        onlineDicItem(addOnlineDic1El.value, addOnlineDic2El.value, addOnlineDic3El.value)
+                        onlineDicItem(addOnlineDic1El.value, addOnlineDic2El.value, addOnlineDic3El.value),
                     );
                     addOnlineDic1El.value = "";
                     addOnlineDic2El.value = "";
@@ -5354,9 +5355,9 @@ settingEl.append(
                     saveSortOnlineDics();
                 },
             }),
-            moreOnlineDicEl
-        )
-    )
+            moreOnlineDicEl,
+        ),
+    ),
 );
 
 showOnlineDics();
@@ -5589,7 +5590,7 @@ async function setAllData(json: allData, textId?: string) {
             l.push(`${i}：${wrongL[i].o}->${wrongL[i].n}`);
         }
         const r = await confirm(
-            `⚠️以下数据内容发生重大变更，是否继续更新？\n若更新，可能造成数据丢失\n\n${l.join("\n")}`
+            `⚠️以下数据内容发生重大变更，是否继续更新？\n若更新，可能造成数据丢失\n\n${l.join("\n")}`,
         );
         if (!r) {
             tip.remove();
@@ -5688,7 +5689,7 @@ async function getGitHub(fileName: string) {
     return {
         url: `https://api.github.com/repos/${user}/${repo}/contents/${path}/${fileName}`.replace(
             "contents//",
-            "contents/"
+            "contents/",
         ),
         auth: {
             Authorization: `Bearer ${token}`,
@@ -5932,7 +5933,7 @@ settingEl.append(
         el("h3", "复习休息"),
         el("input", { type: "number", "data-path": "review.maxCount", value: String(maxReviewCount) }),
         el("span", "0为不限制，刷新生效"),
-    ])
+    ]),
 );
 
 const ttsEngineEl = el("select", { "data-path": ttsEngineConfig }, [
@@ -5954,10 +5955,7 @@ loadTTSVoicesEl.onclick = async () => {
     } else {
         let list = await tts.getVoices();
         for (let v of list) {
-            let text = `${v.Gender === "Male" ? "♂️" : "♀️"} ${v.FriendlyName.replace(
-                /Microsoft (\w+) Online \(Natural\)/,
-                "$1"
-            )}`;
+            let text = `${v.Gender === "Male" ? "♂️" : "♀️"} ${v.FriendlyName.replace(/Microsoft (\w+) Online \(Natural\)/, "$1")}`;
             let op = el("option", text, { value: v.ShortName });
             voicesListEl.append(op);
         }
@@ -5986,7 +5984,7 @@ settingEl.append(
                 transCache.clear();
             },
         }),
-    ])
+    ]),
 );
 
 settingEl.append(
@@ -6000,7 +5998,7 @@ settingEl.append(
                     src: "https://www.netlify.com/v3/img/components/netlify-light.svg",
                     alt: "Deploys by Netlify",
                     loading: "lazy",
-                })
+                }),
             ),
             el("div", [
                 el("button", "更新", {
@@ -6011,7 +6009,7 @@ settingEl.append(
                         await Promise.all(
                             cachesToDelete.map(async (key) => {
                                 await caches.delete(key);
-                            })
+                            }),
                         );
                     },
                 }),
@@ -6021,7 +6019,7 @@ settingEl.append(
                     "a",
                     { href: "https://github.com/xushengfeng/xlinkote/", target: "_blank" },
                     "项目开源地址",
-                    el("img", { src: githubIcon })
+                    el("img", { src: githubIcon }),
                 ),
             ]),
             el("div", el("a", { href: "https://github.com/xushengfeng/xlinkote/blob/master/LICENSE" }, "GPL-3.0")),
@@ -6030,7 +6028,7 @@ settingEl.append(
                 el("a", { href: "mailto:xushengfeng_zg@163.com" }, "xushengfeng_zg@163.com"),
             ]),
         ]),
-    ])
+    ]),
 );
 
 settingEl.querySelectorAll("[data-path]").forEach(async (el: HTMLElement) => {
