@@ -5700,13 +5700,13 @@ function download(text: string, name: string, type?: string) {
     a.click();
 }
 
-async function uploadGithub(data: string, fileName: string) {
+async function uploadGithub(data: string, fileName: string, m: string) {
     let base64 = encode(data);
     let config = await getGitHub(fileName);
     let sha = "";
     sha = (await (await fetch(config.url, { headers: { ...config.auth } })).json()).sha;
     const x = {
-        message: "更新数据",
+        message: m,
         content: base64,
         sha,
     };
@@ -5796,9 +5796,9 @@ let asyncEl = el("div", [
 
                     const oldId = await textCacheId();
                     if (oldId != v.hash) {
-                        await uploadGithub(JSON.stringify(v.text, null, 2), rmbwGithub2);
+                        await uploadGithub(JSON.stringify(v.text, null, 2), rmbwGithub2, "更新文本");
                     }
-                    await uploadGithub(formatAllData(v.data), rmbwGithub1);
+                    await uploadGithub(formatAllData(v.data), rmbwGithub1, "更新数据");
                     updataTextId(v.hash);
                     putToast(el("span", "上传成功"));
                 } catch (error) {
