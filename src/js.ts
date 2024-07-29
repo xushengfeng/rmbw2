@@ -2,7 +2,7 @@
 
 import { el, setStyle } from "redom";
 
-import { ele, view, pack, frame, a } from "dkh-ui";
+import { ele, view, pack, frame, a, txt } from "dkh-ui";
 
 import localforage from "localforage";
 import { extendPrototype } from "localforage-setitems";
@@ -283,6 +283,7 @@ const NOTEDIALOG = "note_dialog";
 const AIDIALOG = "ai_dialog";
 const DICDIALOG = "dic_dialog";
 const SELECTEDITEM = "selected_item";
+const LITLEPROGRESS = `litle_progress`;
 
 const booksEl = document.getElementById("books") as HTMLDialogElement;
 const localBookEl = el("div");
@@ -1186,12 +1187,12 @@ async function showWordBook(book: book, s: section) {
             `${String(l.length)} ${matchWords} ${means1.toFixed(1)}`,
             el(
                 "div",
-                { class: "litle_progress" },
+                { class: LITLEPROGRESS },
                 el("div", { style: { width: (matchWords / l.length) * 100 + "%", background: "#00f" } }),
                 el("div", { style: { width: (means1 / l.length) * 100 + "%", background: "#0f0" } })
             )
         ),
-        el("div", `拼写 加载中`, el("div", { class: "litle_progress" })),
+        el("div", `拼写 加载中`, el("div", { class: LITLEPROGRESS })),
         {
             onclick: () => {
                 showWordBookMore(wordList);
@@ -1217,7 +1218,7 @@ async function showWordBook(book: book, s: section) {
                 `拼写 ${spell.toFixed(1)}`,
                 el(
                     "div",
-                    { class: "litle_progress" },
+                    { class: LITLEPROGRESS },
                     el("div", { style: { width: (spell / l.length) * 100 + "%", background: "#00f" } })
                 )
             )
@@ -1437,6 +1438,9 @@ async function showWordBookMore(wordList: { text: string; c: record; type?: "ign
         )
     );
     let bookIds: { [id: string]: number } = {};
+
+    const wordFamilyMap: Map<string, boolean> = new Map();
+
     wordList.forEach((w) => {
         if (w.type === "learn") {
             w.c.means.forEach((m) => {
@@ -1447,6 +1451,8 @@ async function showWordBookMore(wordList: { text: string; c: record; type?: "ign
                 });
             });
         }
+        const rootWord = lemmatizer(w.text);
+        if (wordFamilyMap.get(rootWord) != true) wordFamilyMap.set(rootWord, Boolean(w.type));
     });
     const l = Object.entries(bookIds).sort((a, b) => b[1] - a[1]);
     const ignore = wordList.filter((w) => w.type === "ignore").length;
@@ -1461,6 +1467,19 @@ async function showWordBookMore(wordList: { text: string; c: record; type?: "ign
     }
     pEl.append(el("span", "忽略"), el("span", ignore), el("div", { style: { width: (ignore / max) * 100 + "%" } }));
     d.append(el("p", "单词来源"), pEl);
+    const familyList = Array.from(wordFamilyMap.values());
+    d.append(
+        el("p", "部分词族"), // todo 需要真正的word family
+        txt(`${familyList.length} ${familyList.filter((i) => i).length}`).el,
+        view()
+            .class(LITLEPROGRESS)
+            .add([
+                view().style({
+                    width: (familyList.filter((i) => i).length / familyList.length) * 100 + "%",
+                    background: "#00f",
+                }),
+            ]).el
+    );
     d.append(
         el("p", "添加忽略词到拼写"),
         el("button", iconEl(add_svg), {

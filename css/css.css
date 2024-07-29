@@ -444,22 +444,6 @@ body {
                 float: right;
                 font-size: 12px;
             }
-            & .litle_progress {
-                width: 180px;
-                height: 8px;
-                background-color: #0002;
-                position: relative;
-                border-radius: 4px;
-                overflow: hidden;
-                & > div {
-                    height: 100%;
-                    position: absolute;
-                    border-radius: 4px;
-                    top: 0;
-                    right: 0;
-                    background-color: #0f05;
-                }
-            }
             & .sort_words {
                 display: flex;
                 gap: 4px;
@@ -487,6 +471,23 @@ body {
 }
 .flash_word {
     text-decoration: underline wavy #2735bb;
+}
+
+.litle_progress {
+    width: 180px;
+    height: 8px;
+    background-color: #0002;
+    position: relative;
+    border-radius: 4px;
+    overflow: hidden;
+    & > div {
+        height: 100%;
+        position: absolute;
+        border-radius: 4px;
+        top: 0;
+        right: 0;
+        background-color: #0f05;
+    }
 }
 
 .context_start,
