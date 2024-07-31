@@ -1987,8 +1987,8 @@ function createRangeSetEl(value: number, maxV: number, f: (i: number) => void, m
     const max = el("button");
     if (maxIcon) max.append(iconEl(maxIcon));
     const p = el("span");
-    setV();
     let v = value;
+    setV();
     min.onclick = () => {
         v--;
         v = Math.max(v, 0);
