@@ -26,8 +26,6 @@ if (!Segmenter) {
 
 import "@oddbird/popover-polyfill";
 
-import Keyboard from "simple-keyboard";
-
 import { MsEdgeTTS, OUTPUT_FORMAT } from "msedge-tts-browserify";
 
 import { type Card, createEmptyCard, generatorParameters, FSRS, Rating, State } from "ts-fsrs";
@@ -4170,10 +4168,7 @@ reviewReflashEl.parentElement.append(
 );
 
 const KEYBOARDDISPLAYPATH = "spell.keyboard.display";
-const keyboardEl = el("div", {
-    class: "simple-keyboard",
-    style: { display: await setting.getItem(KEYBOARDDISPLAYPATH) },
-});
+const keyboardEl = view("y").class("simple-keyboard");
 const handwriterCanvas = el("canvas");
 const handwriterCheck = el("button", iconEl(ok_svg), {
     style: { display: "none" },
@@ -4185,40 +4180,86 @@ const handwriterEl = el("div", { class: "spell_write" }, [
     handwriterCanvas,
     el("button", {
         onclick: () => {
-            if (keyboardEl.style.display === "none") {
-                keyboardEl.style.display = "";
+            if (keyboard.getLayout() === "default") {
+                keyboard.setLayout("handwrite");
             } else {
-                keyboardEl.style.display = "none";
+                keyboard.setLayout("default");
             }
-            setting.setItem(KEYBOARDDISPLAYPATH, keyboardEl.style.display);
+            setting.setItem(KEYBOARDDISPLAYPATH, keyboard.getLayout());
         },
     }),
     handwriterCheck,
 ]);
-const spellInputEl = el("div", { style: { display: "none" } }, [keyboardEl, handwriterEl]);
+const spellInputEl = el("div", { style: { display: "none" } }, [keyboardEl.el, handwriterEl]);
 reviewEl.append(spellInputEl);
 
-const keyboard = new Keyboard(keyboardEl, {
-    onChange: (text) => spellCheckF(text),
-    onKeyPress: (button) => {
-        if (button === "{shift}") {
-            const currentLayout = keyboard.options.layoutName;
-            const shiftToggle = currentLayout === "default" ? "shift" : "default";
+function keyB<t extends string>(c: { [k in t]: string[] }, display: Record<string, string>) {
+    let text = "";
+    const el = keyboardEl;
+    el.style({ padding: "4px", gap: "4px" });
 
-            keyboard.setOptions({
-                layoutName: shiftToggle,
-            });
+    function render(c: string[]) {
+        el.clear();
+        for (const r of c) {
+            const rEl = view("x").style({ gap: "4px", "flex-grow": "1" });
+            for (const k of r.split(" ")) {
+                const kEl = view()
+                    .style({ "flex-grow": 1, display: "flex", "align-items": "center", "justify-content": "center" })
+                    .add(txt(display[k] ?? k))
+                    .data({ key: k })
+                    .on("pointerdown", () => {
+                        if (k.startsWith("{")) {
+                            spellF(k);
+                            if (k === "{bksp}") {
+                                text = text.slice(0, -1);
+                            }
+                            spellCheckF(text);
+                        } else {
+                            text += k;
+                            spellCheckF(text);
+                        }
+                        console.log(text);
+                    });
+                rEl.add(kEl);
+            }
+            el.add(rEl);
         }
+    }
+    let layout = Object.keys(c)[0];
+    render(c[layout] as string[]);
+    return {
+        getInput: () => text,
+        setInput: (t: string) => {
+            text = t;
+            spellCheckF(text);
+        },
+        clearInput: () => {
+            text = "";
+        },
+        setLayout: (l: t) => {
+            layout = c[l] ? l : Object.keys(c)[0];
+            el.data({ layout });
+            render(c[layout]);
+        },
+        getLayout: () => layout as t,
+    };
+}
 
-        spellF(button);
-    },
-    layout: {
+const keyboard = keyB(
+    {
         default: ["q w e r t y u i o p", "a s d f g h j k l", "{shift} z x c v b n m {bksp}", "{tip} {space} {audio}"],
-        shift: ["Q W E R T Y U I O P", "A S D F G H J K L", "{shift} Z X C V B N M {bksp}", "{tip} {space} {audio}"],
         handwrite: ["{tip} {space} {audio}"],
     },
-    display: { "{space}": "␣", "{shift}": "⇧", "{bksp}": "⌫", "{tip}": "🫣", "{audio}": "📣" },
-});
+    {
+        "{space}": "␣",
+        "{shift}": "⇧",
+        "{bksp}": "⌫",
+        "{tip}": "🫣",
+        "{audio}": "📣",
+    },
+);
+
+keyboard.setLayout(await setting.getItem(KEYBOARDDISPLAYPATH));
 
 window.addEventListener("keydown", (e) => {
     if (!(reviewType === "spell" && reviewEl.classList.contains("review_show"))) return;
@@ -4237,7 +4278,6 @@ window.addEventListener("keydown", (e) => {
     } else {
         keyboard.setInput(oldInput.slice(0, -1));
     }
-    keyboard.options.onChange(keyboard.getInput());
 });
 
 let spellWriteE: PointerEvent;

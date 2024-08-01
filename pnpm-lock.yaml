@@ -56,9 +56,6 @@ importers:
       redom:
         specifier: ^4.0.0
         version: 4.0.0
-      simple-keyboard:
-        specifier: ^3.7.45
-        version: 3.7.45
       sortablejs:
         specifier: ^1.15.2
         version: 1.15.2
@@ -881,9 +878,6 @@ packages:
 
   setimmediate@1.0.5:
     resolution: {integrity: sha512-MATJdZp8sLqDl/68LfQmbP8zKPLQNV6BIZoIgrscFDQ+RsvK/BxeDQOgyxKKoh0y/8h3BqVFnCqQ/gd+reiIXA==}
-
-  simple-keyboard@3.7.45:
-    resolution: {integrity: sha512-53BSay9h99V8GuHvBmiUiNesG4oFwTJpMcE/nf3VXWYX95njPJeLdhDzgFljIITjZ6nKXe8E2Lp7OMArI+R/Cw==}
 
   sort-keys-length@1.0.1:
     resolution: {integrity: sha512-GRbEOUqCxemTAk/b32F2xa8wDTs+Z1QHOkbhJDQTvv/6G3ZkbJ+frYWsTcc7cBB3Fu4wy4XlLCuNtJuMn7Gsvw==}
@@ -1739,8 +1733,6 @@ snapshots:
   semver@5.7.2: {}
 
   setimmediate@1.0.5: {}
-
-  simple-keyboard@3.7.45: {}
 
   sort-keys-length@1.0.1:
     dependencies:
