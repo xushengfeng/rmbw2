@@ -4243,6 +4243,9 @@ function keyB<t extends string>(c: { [k in t]: string[] }, display: Record<strin
                             if (k === "{bksp}") {
                                 text = text.slice(0, -1);
                             }
+                            if (k === "{space}") {
+                                text += " ";
+                            }
                             spellCheckF(text);
                         } else {
                             text += k;
