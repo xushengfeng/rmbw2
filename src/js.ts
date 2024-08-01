@@ -2,7 +2,7 @@
 
 import { el, setStyle } from "redom";
 
-import { ele, view, pack, frame, a, txt } from "dkh-ui";
+import { ele, view, pack, frame, a, txt, trackPoint } from "dkh-ui";
 
 import localforage from "localforage";
 import { extendPrototype } from "localforage-setitems";
@@ -4168,7 +4168,18 @@ reviewReflashEl.parentElement.append(
 );
 
 const KEYBOARDDISPLAYPATH = "spell.keyboard.display";
-const keyboardEl = view("y").class("simple-keyboard");
+const KEYBOARDHEIGHTPATH = "spell.keyboard.height";
+
+const keyboardHandle = view().style({
+    width: "16px",
+    height: "8px",
+    position: "absolute",
+    background: "color-mix(in srgb, var(--bg) 94%, var(--color))",
+    "touch-action": "none",
+});
+const keyboardEl = view("y")
+    .class("simple-keyboard")
+    .style({ height: `${await setting.getItem(KEYBOARDHEIGHTPATH)}px` });
 const handwriterCanvas = el("canvas");
 const handwriterCheck = el("button", iconEl(ok_svg), {
     style: { display: "none" },
@@ -4193,6 +4204,20 @@ const handwriterEl = el("div", { class: "spell_write" }, [
 const spellInputEl = el("div", { style: { display: "none" } }, [keyboardEl.el, handwriterEl]);
 reviewEl.append(spellInputEl);
 
+trackPoint(keyboardHandle, {
+    start() {
+        const h = keyboardEl.el.offsetHeight;
+        return { x: 0, y: window.innerHeight - h };
+    },
+    ing: (p) => {
+        const h = window.innerHeight - p.y;
+        keyboardEl.style({ height: `${h}px` });
+    },
+    end: () => {
+        setting.setItem(KEYBOARDHEIGHTPATH, keyboardEl.el.offsetHeight);
+    },
+});
+
 function keyB<t extends string>(c: { [k in t]: string[] }, display: Record<string, string>) {
     let text = "";
     const el = keyboardEl;
@@ -4200,6 +4225,7 @@ function keyB<t extends string>(c: { [k in t]: string[] }, display: Record<strin
 
     function render(c: string[]) {
         el.clear();
+        el.add(keyboardHandle);
         for (const r of c) {
             const rEl = view("x").style({ gap: "4px", "flex-grow": "1" });
             for (const k of r.split(" ")) {

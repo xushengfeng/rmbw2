@@ -24,8 +24,8 @@ importers:
         specifier: ^1.0.5
         version: 1.0.5
       dkh-ui:
-        specifier: ^0.3.7
-        version: 0.3.7
+        specifier: ^0.4.1
+        version: 0.4.1
       fuse.js:
         specifier: ^7.0.0
         version: 7.0.0
@@ -482,8 +482,8 @@ packages:
   dingbat-to-unicode@1.0.1:
     resolution: {integrity: sha512-98l0sW87ZT58pU4i61wa2OHwxbiYSbuxsCBozaVnYX2iCnr3bLM3fIes1/ej7h1YdOKuKt/MLs706TVnALA65w==}
 
-  dkh-ui@0.3.7:
-    resolution: {integrity: sha512-DwOy/fOgGFoOlTemNLZSGXJBXjWsQ3jL6W0mKOBYnSbmYNKimkQaZwPW273WPNOCLcWM1DiW5sGxxYmwOABgiQ==}
+  dkh-ui@0.4.1:
+    resolution: {integrity: sha512-Lccp+wNAMOfumk4Qex9hQjZGX2GGyEgkAx399hk1qP+Gp/5z14PjayQP+i67eocW5x1ooCNBLzNagyr5chvUaw==}
 
   download@8.0.0:
     resolution: {integrity: sha512-ASRY5QhDk7FK+XrQtQyvhpDKanLluEEQtWl/J7Lxuf/b+i8RYh997QeXvL85xitrmRKVlx9c7eTrcRdq2GS4eA==}
@@ -1307,7 +1307,7 @@ snapshots:
 
   dingbat-to-unicode@1.0.1: {}
 
-  dkh-ui@0.3.7:
+  dkh-ui@0.4.1:
     dependencies:
       csstype: 3.1.3
 
