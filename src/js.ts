@@ -215,7 +215,7 @@ function vlist<ItemType>(
     setBlankHeight(list.length);
     pel.append(blankEl);
     const dataI = "data-v-i";
-    async function show(newList?: ItemType[]) 
+    async function show(newList?: ItemType[]) {
         if (newList) {
             setBlankHeight(newList.length);
             // biome-ignore lint: 可通过show更新列表
