@@ -97,7 +97,7 @@ const setting = localforage.createInstance({
 });
 
 function getSetting(p: string) {
-    return localStorage.getItem(`setting/${p}`) as string;
+    return JSON.parse(localStorage.getItem(`setting/${p}`)) as string;
 }
 
 /************************************UI */
