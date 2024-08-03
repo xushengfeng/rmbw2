@@ -221,6 +221,7 @@ function vlist<ItemType>(
             // biome-ignore lint: 可通过show更新列表
             list = newList;
         } else {
+            // biome-ignore lint: 可通过show更新列表
             newList = list;
         }
         let startI = Math.ceil((pel.scrollTop - paddingTop) / (iHeight + gap));
@@ -5987,7 +5988,7 @@ settingEl.append(
             },
         }),
         el("br"),
-        a("https://huggingface.co/spaces/open-spaced-repetition/fsrs4anki_app", "true").add("参数优化器").el,
+        a("https://huggingface.co/spaces/open-spaced-repetition/fsrs4anki_app").add("参数优化器").el,
         el("br"),
         el("label", ["单词参数：", el("input", { "data-path": "fsrs.word.w" })]),
         el("label", ["拼写参数：", el("input", { "data-path": "fsrs.spell.w" })]),
