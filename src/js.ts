@@ -5615,6 +5615,7 @@ function splitAllData(dl: allData) {
     const text: { [id: string]: string } = {};
     for (const i in l.sections) {
         if (i === ignoreWordSection) continue;
+        if (!l.sections[i]) continue;
         const t = l.sections[i].text;
         l.sections[i].text = undefined;
         text[i] = t;
