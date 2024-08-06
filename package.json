@@ -42,6 +42,7 @@
         "@types/sortablejs": "^1.15.8",
         "download": "^8.0.0",
         "js-mdict": "^5.0.2",
+        "rollup-plugin-visualizer": "^5.12.0",
         "typescript": "^5.4.5",
         "vite": "^5.1.3"
     }

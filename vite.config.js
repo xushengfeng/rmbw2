@@ -1,4 +1,5 @@
 import { defineConfig } from "vite";
+import { visualizer } from "rollup-plugin-visualizer";
 
 export default defineConfig({
     base: "./",
@@ -6,4 +7,5 @@ export default defineConfig({
     esbuild: {
         pure: ["console.log"],
     },
+    plugins: [visualizer()],
 });
