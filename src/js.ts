@@ -1801,7 +1801,7 @@ async function translateContext(p: HTMLElement) {
         ff.stop.abort();
         pel.remove();
     };
-    const pel = el("div", [el("p", "AI正在翻译全文"), stopEl]);
+    const pel = el("div", [el("p", "AI正在翻译段落"), stopEl]);
     putToast(pel, 0);
     ff.result.then((r) => {
         pel.remove();
