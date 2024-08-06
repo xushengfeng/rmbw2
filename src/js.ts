@@ -6078,6 +6078,8 @@ settingEl.append(
     ]),
 );
 
+settingEl.append(view().add([ele("h2").add(txt("文档")), a("./docs/docs.html").add("点击查看文档")]).el);
+
 settingEl.append(
     el("div", { class: "about" }, [
         el("h2", "关于"),
