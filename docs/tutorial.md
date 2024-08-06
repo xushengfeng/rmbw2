@@ -76,7 +76,7 @@ chatgpt api key，你可以用 [GPT API FREE](https://github.com/chatanywhere/GP
 
 ### 编辑区
 
-在编辑区，可以输入或上传文档。上传文档支持 txt、md 和 docx。
+在编辑区，可以输入或上传文档。上传文档支持 txt 和 md
 
 支持 md 标题，如`#`加空格是一级标题，`##`加空格是二级标题，以此类推，其他 md 格式暂时不支持。
 
