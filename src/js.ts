@@ -10,19 +10,10 @@ extendPrototype(localforage);
 
 import * as zip from "@zip.js/zip.js";
 
-import mammoth from "mammoth";
-
 import { hyphenate } from "hyphen/en";
 const hyphenChar = "·";
 
-let Segmenter = Intl.Segmenter;
-if (!Segmenter) {
-    console.warn("no support Intl.Segmenter");
-    import("intl-segmenter-polyfill/dist/bundled").then(async (v) => {
-        // @ts-ignore
-        Segmenter = await v.createIntlSegmenterPolyfill();
-    });
-}
+const Segmenter = Intl.Segmenter;
 
 import "@oddbird/popover-polyfill";
 
@@ -2203,9 +2194,6 @@ async function setEdit() {
                 let t = "";
                 if (fileType === "text") {
                     t = reader.result as string;
-                } else if (fileType === "docx") {
-                    const result = await mammoth.extractRawText({ arrayBuffer: reader.result as ArrayBuffer });
-                    t = result.value;
                 }
                 text.value = t;
                 editText = t;
