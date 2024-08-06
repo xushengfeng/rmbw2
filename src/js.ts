@@ -4771,6 +4771,14 @@ async function showSpellReview(x: { id: string; card: Card }) {
         }
         return l.join("");
     }
+    function matchSpecial(input: string, word: string) {
+        const l: string[] = [];
+        for (let i = 0; i < input.length; i++) {
+            if (word[i].match(/[-'’ ]/)) l.push(word[i]);
+            else l.push(input[i]);
+        }
+        return l.join("");
+    }
     function inputContent(inputWord: string) {
         input.innerHTML = "";
         if (x.card.state === State.New) {
@@ -4782,7 +4790,7 @@ async function showSpellReview(x: { id: string; card: Card }) {
         }
     }
     spellCheckF = async (rawInputWord: string) => {
-        const inputWord = matchCapital(rawInputWord, word);
+        const inputWord = matchSpecial(matchCapital(rawInputWord, word), word);
         inputContent(inputWord);
         wordEl.innerHTML = "";
         div.classList.remove(SHOWSENWORD);
