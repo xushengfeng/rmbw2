@@ -471,7 +471,7 @@ async function getTitleEl(bookId: string, sectionN: string, markId: string, x?: 
             await showBook(await getBooksById(bookId), sectionN);
             const index = (await getAllMarks()).find((i) => i.id === markId);
             const id = index.id;
-            jumpToMark(index.s.cIndex[0]);
+            jumpToMark(index.s.cIndex);
             showDic(id);
         });
     return v;
@@ -2493,7 +2493,7 @@ async function showMarkList() {
 
         const item = el("div", content, { class: i.s.visit ? "" : TODOMARK });
         item.onclick = () => {
-            jumpToMark(i.s.cIndex[0]);
+            jumpToMark(i.s.cIndex);
             showDic(i.id);
         };
         item.oncontextmenu = (e) => {
@@ -2546,7 +2546,7 @@ lastMarkEl.onclick = async () => {
     index--;
     index = index < 0 ? 0 : index;
     const id = list[index].id;
-    jumpToMark(list[index].s.cIndex[0]);
+    jumpToMark(list[index].s.cIndex);
     showDic(id);
 };
 nextMarkEl.onclick = async () => {
@@ -2556,14 +2556,23 @@ nextMarkEl.onclick = async () => {
     index++;
     index = index >= list.length ? list.length - 1 : index;
     const id = list[index].id;
-    jumpToMark(list[index].s.cIndex[0]);
+    jumpToMark(list[index].s.cIndex);
     showDic(id);
 };
-function jumpToMark(start: number) {
+function jumpToMark([start, end]) {
     bookContentContainerEl.style.scrollBehavior = "smooth";
     const span = bookContentEl.querySelector(`span[data-s="${start}"]`);
-    bookContentContainerEl.scrollTop =
-        span.getBoundingClientRect().top - bookContentEl.getBoundingClientRect().top + bookContentEl.offsetTop;
+    const spanE = bookContentEl.querySelector(`span[data-e="${end}"]`);
+    const e = getDicPosi();
+    // 60是粗略计算dic高度
+    const dicInView = e + 60 < window.innerHeight && e > 0;
+    if (e && dicInView) {
+        bookContentContainerEl.scrollTop += spanE.getBoundingClientRect().bottom - e;
+    } else {
+        bookContentContainerEl.scrollTop =
+            span.getBoundingClientRect().top - bookContentEl.getBoundingClientRect().top + bookContentEl.offsetTop;
+    }
+
     bookContentContainerEl.onscrollend = () => {
         bookContentContainerEl.style.scrollBehavior = "";
     };
@@ -2578,6 +2587,10 @@ dicMinEl.onclick = () => {
 
 function setDicPosi(el: HTMLElement) {
     dicEl.style.top = `${el.getBoundingClientRect().bottom - (bookContentEl.getBoundingClientRect().top - bookContentEl.scrollTop) + 24}px`;
+}
+function getDicPosi() {
+    const top = Number.parseFloat(dicEl.style.top);
+    return top + (bookContentEl.getBoundingClientRect().top - bookContentEl.scrollTop) - 24;
 }
 
 let dicTransAi: AbortController;
