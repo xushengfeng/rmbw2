@@ -462,13 +462,18 @@ async function getBookShortTitle(bookId: string) {
     return (await getBooksById(bookId)).shortName || (await getBooksById(bookId)).name;
 }
 
-async function getTitleEl(bookId: string, sectionN: string, x?: string) {
+async function getTitleEl(bookId: string, sectionN: string, markId: string, x?: string) {
     const section = await getSection(sectionN);
     const title = `${await getBookShortTitle(bookId)}${x || " - "}${section.title}`;
-    const v = el("span", { class: "source_title" }, title);
-    v.onclick = async () => {
-        showBook(await getBooksById(bookId), sectionN);
-    };
+    const v = txt(title)
+        .class("source_title")
+        .on("click", async () => {
+            await showBook(await getBooksById(bookId), sectionN);
+            const index = (await getAllMarks()).find((i) => i.id === markId);
+            const id = index.id;
+            jumpToMark(index.s.cIndex[0]);
+            showDic(id);
+        });
     return v;
 }
 
@@ -974,9 +979,10 @@ async function showBook(book: book, sid?: string) {
     }
     nowBook.book = book.id;
     nowBook.sections = sid || book.sections[book.lastPosi];
-    showBookSections(book);
-    showBookContent(book, sid || book.sections[book.lastPosi]);
-    setBookS();
+    // 这些await都是存储io，数量不大，可以不用promise.all
+    await showBookSections(book);
+    await showBookContent(book, sid || book.sections[book.lastPosi]);
+    await setBookS();
     isWordBook = book.type === "word";
 }
 async function showBookSections(book: book) {
@@ -3162,7 +3168,7 @@ async function dicSentences(contexts: record["means"][0]["contexts"]) {
     const sen = el("div", { class: "dic_sen" });
     for (const s of contexts) {
         const source = s.source;
-        const t = await getTitleEl(source.book, source.sections);
+        const t = await getTitleEl(source.book, source.sections, source.id);
         sen.append(
             el("div", [
                 el("p", [
@@ -4972,7 +4978,11 @@ function spellErrorAnimate(pel: HTMLElement) {
 async function showSentenceReview(x: { id: string; card: Card }) {
     const sentence = (await card2sentence.getItem(x.id)) as record2;
     const div = el("div");
-    const context = el("p", sentence.text, await getTitleEl(sentence.source.book, sentence.source.sections));
+    const context = el(
+        "p",
+        sentence.text,
+        await getTitleEl(sentence.source.book, sentence.source.sections, sentence.source.id),
+    );
     let hasShowAnswer = false;
     async function showAnswer() {
         hasShowAnswer = true;
