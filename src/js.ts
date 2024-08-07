@@ -2562,7 +2562,8 @@ nextMarkEl.onclick = async () => {
 function jumpToMark(start: number) {
     bookContentContainerEl.style.scrollBehavior = "smooth";
     const span = bookContentEl.querySelector(`span[data-s="${start}"]`);
-    bookContentContainerEl.scrollTop = span.getBoundingClientRect().top - bookContentEl.getBoundingClientRect().top;
+    bookContentContainerEl.scrollTop =
+        span.getBoundingClientRect().top - bookContentEl.getBoundingClientRect().top + bookContentEl.offsetTop;
     bookContentContainerEl.onscrollend = () => {
         bookContentContainerEl.style.scrollBehavior = "";
     };
