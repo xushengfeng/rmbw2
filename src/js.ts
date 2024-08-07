@@ -979,11 +979,11 @@ async function showBook(book: book, sid?: string) {
     }
     nowBook.book = book.id;
     nowBook.sections = sid || book.sections[book.lastPosi];
+    isWordBook = book.type === "word";
     // 这些await都是存储io，数量不大，可以不用promise.all
     await showBookSections(book);
     await showBookContent(book, sid || book.sections[book.lastPosi]);
     await setBookS();
-    isWordBook = book.type === "word";
 }
 async function showBookSections(book: book) {
     addSectionEL.style.display = book.canEdit ? "" : "none";
