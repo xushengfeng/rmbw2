@@ -188,7 +188,7 @@ function vlist<ItemType>(
         paddingRight?: number;
         width?: string;
     },
-    f: (index: number, item: ItemType, remove: () => void) => HTMLElement | Promise<HTMLElement>,
+    f: (index: number, item: ItemType, remove: () => void) => HTMLElement,
 ) {
     const iHeight = style.iHeight;
     const gap = style.gap ?? 0;
@@ -1003,9 +1003,13 @@ async function showBookSections(book: book) {
     const sections = structuredClone(book.sections);
     bookSectionsEl.innerHTML = "";
     bookSectionsEl.lang = studyLan;
-    vlist(bookSectionsEl, sections, { iHeight: 24, paddingTop: 16, paddingLeft: 16 }, async (i) => {
+    const sectionsX: section[] = [];
+    for (const i of sections) {
+        sectionsX.push(await getSection(i));
+    }
+    vlist(bookSectionsEl, sections, { iHeight: 24, paddingTop: 16, paddingLeft: 16 }, (i) => {
         const sEl = el("div");
-        const s = await getSection(sections[i]);
+        const s = sectionsX[i];
         sEl.innerText = sEl.title = getSectionTitle(book, sections[i], s.title) || `章节${Number(i) + 1}`;
         if (nowBook.sections === sections[i]) sEl.classList.add(SELECTEDITEM);
         if (Object.values(s.words).some((i) => !i.visit)) sEl.classList.add(TODOMARK);
