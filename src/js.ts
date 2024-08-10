@@ -419,6 +419,8 @@ type book = {
     wordSplit?: "grapheme" | "word";
     cover?: string;
     author?: string;
+    titleParse?: string;
+    titleIndex?: number[];
     sections: string[];
     canEdit: boolean;
     lastPosi: number;
@@ -462,9 +464,19 @@ async function getBookShortTitle(bookId: string) {
     return (await getBooksById(bookId)).shortName || (await getBooksById(bookId)).name;
 }
 
+function getSectionTitle(book: book, sectionId: string, sectionTitle: string) {
+    let st = sectionTitle;
+    if (book.titleParse) {
+        const i = book.sections.indexOf(sectionId);
+        st = book.titleParse.replaceAll("{i}", String(book.titleIndex?.[i] || i + 1)).replaceAll("{t}", sectionTitle);
+    }
+    return st;
+}
+
 async function getTitleEl(bookId: string, sectionN: string, markId: string, x?: string) {
+    const book = await getBooksById(bookId);
     const section = await getSection(sectionN);
-    const title = `${await getBookShortTitle(bookId)}${x || " - "}${section.title}`;
+    const title = `${await getBookShortTitle(bookId)}${x || " - "}${getSectionTitle(book, sectionN, section.title)}`;
     const v = txt(title)
         .class("source_title")
         .on("click", async () => {
@@ -994,7 +1006,7 @@ async function showBookSections(book: book) {
     vlist(bookSectionsEl, sections, { iHeight: 24, paddingTop: 16, paddingLeft: 16 }, async (i) => {
         const sEl = el("div");
         const s = await getSection(sections[i]);
-        sEl.innerText = sEl.title = s.title || `章节${Number(i) + 1}`;
+        sEl.innerText = sEl.title = getSectionTitle(book, sections[i], s.title) || `章节${Number(i) + 1}`;
         if (nowBook.sections === sections[i]) sEl.classList.add(SELECTEDITEM);
         if (Object.values(s.words).some((i) => !i.visit)) sEl.classList.add(TODOMARK);
         if (book.type === "text" && Object.values(s.words).length === 0) sEl.classList.add(UNREAD);
