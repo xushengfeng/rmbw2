@@ -870,12 +870,12 @@ async function setBookS() {
     }
 }
 
-function bookEl(name: string, coverUrl?: string) {
+function bookEl(name: string, coverUrl?: string, shortName?: string) {
     const bookIEl = el("div");
     const cover = el("div");
     const titleEl = el("span");
     const bookCover = el("div");
-    bookCover.innerText = name;
+    bookCover.innerText = shortName || name;
     cover.append(bookCover);
     if (coverUrl) {
         const bookCover = el("img");
@@ -927,9 +927,9 @@ async function showLocalBooksL(bookList: book[]) {
                     coverCache.setItem(book.id, b);
                 } catch (error) {}
             }
-            bookIEl = bookEl(book.name, url);
+            bookIEl = bookEl(book.name, url, book.shortName);
         } else {
-            bookIEl = bookEl(book.name);
+            bookIEl = bookEl(book.name, null, book.shortName);
         }
         grid.append(bookIEl);
         const id = book.id;
