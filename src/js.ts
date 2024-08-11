@@ -1732,7 +1732,7 @@ async function showNormalBook(book: book, s: section) {
             view()
                 .add("hi")
                 .on("click", () => {
-                    exTrans(pel);
+                    exTrans(pel, 0, book);
                 }).el,
         );
 
@@ -1846,7 +1846,7 @@ async function translateContext(p: HTMLElement) {
     });
 }
 
-async function exTrans(p: HTMLElement, i = 0) {
+async function exTrans(p: HTMLElement, i: number, book: book) {
     const span = p.children[i] as HTMLSpanElement;
 
     const f = frame("exTrans", {
@@ -1871,12 +1871,13 @@ async function exTrans(p: HTMLElement, i = 0) {
         }),
 
         buttons: {
-            _: view().style({ position: "absolute", top: "-32px" }),
+            _: view("x").style({ position: "absolute", top: "-32px" }),
             last: button().add("<-"),
             next: button().add("->"),
             show: button().add("show"),
             diff: button().add("diff"),
             close: button().add("x"),
+            tips: view("x").style({ gap: "4px" }),
         },
     });
 
@@ -1905,14 +1906,14 @@ async function exTrans(p: HTMLElement, i = 0) {
         if (i === 0) {
         } else {
             rm();
-            exTrans(p, i - 1);
+            exTrans(p, i - 1, book);
         }
     });
     f.els.next.on("click", () => {
         if (i === p.querySelectorAll(":scope>span").length - 1) {
         } else {
             rm();
-            exTrans(p, i + 1);
+            exTrans(p, i + 1, book);
         }
     });
     let diffShow = false;
@@ -1926,6 +1927,34 @@ async function exTrans(p: HTMLElement, i = 0) {
             f.els.diffEl.style({ display: "none" });
         }
     });
+
+    const text = span.innerText;
+    const segmenter = Array.from(new Segmenter(book.language, { granularity: book.wordSplit || "word" }).segment(text));
+    const spellWord = await getIgnoreWords();
+    const now = time();
+    await spellStore.iterate((v: Card, k: string) => {
+        if (v.due.getTime() > now) {
+            spellWord.push(k);
+        }
+    });
+    const tipWord: string[] = [];
+    for (const i of segmenter) {
+        if (!i.isWordLike) continue;
+        if (i.segment[0].match(/[A-Z]/)) {
+            tipWord.push(i.segment);
+        } else if (!spellWord.includes(lemmatizer(i.segment))) {
+            tipWord.push(i.segment);
+        }
+    }
+    const tipEl = tipWord.map((i) =>
+        txt(i).on("click", () => {
+            const t = f.els.text.el;
+            t.setRangeText(i);
+            t.selectionStart = t.selectionEnd = f.els.text.el.value.length;
+            t.focus();
+        }),
+    );
+    f.els.tips.add(tipEl);
 }
 
 const bookStyleList = {
