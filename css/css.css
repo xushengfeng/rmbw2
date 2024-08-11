@@ -157,6 +157,8 @@ textarea {
     outline: none;
     background-color: #0000;
     color: var(--color);
+    border: none;
+    padding: 0;
 }
 
 [popover],
@@ -654,6 +656,14 @@ body {
             min-width: var(--size0);
         }
     }
+}
+
+.exTransHide > span {
+    color: transparent;
+}
+
+.exTransHide2 > span {
+    color: #0008;
 }
 
 #dic {

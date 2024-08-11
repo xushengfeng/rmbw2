@@ -2,7 +2,7 @@
 
 import { el, setStyle } from "redom";
 
-import { ele, view, pack, frame, a, txt, trackPoint } from "dkh-ui";
+import { ele, view, pack, frame, a, txt, trackPoint, textarea, button } from "dkh-ui";
 
 import localforage from "localforage";
 import { extendPrototype } from "localforage-setitems";
@@ -1728,6 +1728,14 @@ async function showNormalBook(book: book, s: section) {
             }),
         );
 
+        moreEl.append(
+            view()
+                .add("hi")
+                .on("click", () => {
+                    exTrans(pel);
+                }).el,
+        );
+
         pel.append(moreEl);
 
         bookContentEl.append(pel);
@@ -1834,6 +1842,88 @@ async function translateContext(p: HTMLElement) {
             l[i].setAttribute("data-trans", r.list[i]);
             // @ts-ignore
             transCache.setItem(text[i].trim(), r.list[i]);
+        }
+    });
+}
+
+async function exTrans(p: HTMLElement, i = 0) {
+    const span = p.children[i] as HTMLSpanElement;
+
+    const f = frame("exTrans", {
+        _: view().style({
+            position: "absolute",
+            top: `${span.offsetTop - (p.children[0].getBoundingClientRect().y - p.getBoundingClientRect().y)}px`,
+            width: "100%",
+        }),
+        text: textarea("i").style({
+            width: "100%",
+            "font-size": "inherit",
+            "line-height": "inherit",
+            "font-family": "inherit",
+        }),
+
+        diffEl: view().style({
+            width: "100%",
+            "font-size": "inherit",
+            "line-height": "inherit",
+            "font-family": "inherit",
+            display: "none",
+        }),
+
+        buttons: {
+            _: view().style({ position: "absolute", top: "-32px" }),
+            last: button().add("<-"),
+            next: button().add("->"),
+            show: button().add("show"),
+            diff: button().add("diff"),
+            close: button().add("x"),
+        },
+    });
+
+    p.append(f.el.el);
+
+    const class1 = "exTransHide";
+    const class2 = "exTransHide2";
+
+    span.classList.add(class1);
+
+    f.els.show.on("click", () => {
+        if (span.className === class1) span.className = class2;
+        else span.className = class1;
+    });
+
+    function rm() {
+        f.el.el.remove();
+        span.className = "";
+    }
+
+    f.els.close.on("click", () => {
+        rm();
+    });
+
+    f.els.last.on("click", () => {
+        if (i === 0) {
+        } else {
+            rm();
+            exTrans(p, i - 1);
+        }
+    });
+    f.els.next.on("click", () => {
+        if (i === p.querySelectorAll(":scope>span").length - 1) {
+        } else {
+            rm();
+            exTrans(p, i + 1);
+        }
+    });
+    let diffShow = false;
+    f.els.diff.on("click", () => {
+        diffShow = !diffShow;
+        if (diffShow) {
+            f.els.text.style({ display: "none" });
+            f.els.diffEl.style({ display: "" });
+        } else {
+            f.els.text.style({ display: "" });
+            f.els.diffEl.style({ display: "none" });
         }
     });
 }
