@@ -4381,6 +4381,7 @@ const spellInputEl = el("div", { style: { display: "none" } }, [keyboardEl.el, h
 reviewEl.append(spellInputEl);
 
 function trackKeyboard(el: ElType<HTMLElement>) {
+    el.style({ "touch-action": "none" });
     trackPoint(el, {
         start() {
             if (keyboard.getLayout() !== "default") return;
