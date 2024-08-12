@@ -1855,12 +1855,15 @@ async function exTrans(p: HTMLElement, i: number, book: book) {
             top: `${span.offsetTop - (p.children[0].getBoundingClientRect().y - p.getBoundingClientRect().y)}px`,
             width: "100%",
         }),
-        text: textarea("i").style({
-            width: "100%",
-            "font-size": "inherit",
-            "line-height": "inherit",
-            "font-family": "inherit",
-        }),
+        text: textarea("i")
+            .style({
+                width: "100%",
+                resize: "vertical",
+                "font-size": "inherit",
+                "line-height": "inherit",
+                "font-family": "inherit",
+            })
+            .attr({ autocomplete: "off" }),
 
         diffEl: view().style({
             width: "100%",
