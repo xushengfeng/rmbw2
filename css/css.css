@@ -666,6 +666,14 @@ body {
     color: #0008;
 }
 
+.diff_add {
+    color: color-mix(in srgb, #0f0 60%, var(--color));
+}
+
+.diff_remove {
+    color: color-mix(in srgb, #f00 60%, var(--color));
+}
+
 #dic {
     position: absolute;
     top: 0;

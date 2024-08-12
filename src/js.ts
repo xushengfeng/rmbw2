@@ -1924,7 +1924,20 @@ async function exTrans(p: HTMLElement, i: number, book: book) {
         diffShow = !diffShow;
         if (diffShow) {
             f.els.text.style({ display: "none" });
-            f.els.diffEl.style({ display: "" });
+            const diffEl = f.els.diffEl;
+            diffEl.style({ display: "" });
+            diffEl.clear();
+
+            const diff = dmp.diff_main(f.els.text.el.value, text);
+            for (const i of diff) {
+                if (i[0] === 0) {
+                    diffEl.add(txt(i[1]));
+                } else if (i[0] === 1) {
+                    diffEl.add(txt(i[1]).class("diff_add"));
+                } else {
+                    diffEl.add(txt(i[1]).class("diff_remove"));
+                }
+            }
         } else {
             f.els.text.style({ display: "" });
             f.els.diffEl.style({ display: "none" });
