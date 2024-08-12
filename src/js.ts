@@ -5606,6 +5606,7 @@ const addOnlineDic2El = el("input");
 const addOnlineDic3El = el("input");
 
 const defaultOnlineDic: onlineDicsType = [
+    { name: "必应", url: "https://cn.bing.com/search?q=%s", lan: "" },
     { name: "汉典", url: "https://www.zdic.net/hans/%s", lan: "cn" },
     {
         name: "剑桥",
