@@ -5613,6 +5613,7 @@ const defaultOnlineDic: onlineDicsType = [
         url: "https://dictionary.cambridge.org/zhs/%E8%AF%8D%E5%85%B8/%E8%8B%B1%E8%AF%AD-%E6%B1%89%E8%AF%AD-%E7%AE%80%E4%BD%93/%s",
         lan: "en",
     },
+    { name: "牛津", url: "https://www.oed.com/search/dictionary/?scope=Entries&q=%s", lan: "en" },
     { name: "柯林斯", url: "https://www.collinsdictionary.com/zh/dictionary/english-chinese/%s", lan: "en" },
     { name: "韦氏", url: "https://www.merriam-webster.com/dictionary/%s", lan: "en" },
     { name: "词源在线", url: "https://www.etymonline.com/cn/word/%s", lan: "en" },
