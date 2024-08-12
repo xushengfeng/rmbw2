@@ -662,10 +662,6 @@ body {
     color: transparent;
 }
 
-.exTransHide2 > span {
-    color: #0008;
-}
-
 .diff_add {
     color: color-mix(in srgb, #0f0 60%, var(--color));
 }

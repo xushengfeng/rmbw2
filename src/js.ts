@@ -1883,7 +1883,6 @@ async function exTrans(p: HTMLElement, i: number, book: book) {
             }),
             last: button().add(iconEl(left_svg)),
             next: button().add(iconEl(right_svg)),
-            show: button().add("show"),
             diff: button().add("diff"),
             close: button().add(iconEl(close_svg)),
             sum: txt("").bindSet((v: number, el) => {
@@ -1895,15 +1894,7 @@ async function exTrans(p: HTMLElement, i: number, book: book) {
 
     p.append(f.el.el);
 
-    const class1 = "exTransHide";
-    const class2 = "exTransHide2";
-
-    span.classList.add(class1);
-
-    f.els.show.on("click", () => {
-        if (span.className === class1) span.className = class2;
-        else span.className = class1;
-    });
+    span.classList.add("exTransHide");
 
     f.els.text.on("input", () => {
         let n = 0;
