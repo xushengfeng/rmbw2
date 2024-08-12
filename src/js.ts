@@ -5711,7 +5711,7 @@ async function getIPA(word: string) {
         ipa = (await i) as Map<string, string | string[]>;
     }
 
-    const r = ipa.get(word);
+    const r = ipa.get(word.toLowerCase());
     if (!r) return "";
     if (Array.isArray(r)) {
         let l: string[] = [];
