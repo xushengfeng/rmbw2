@@ -1880,6 +1880,9 @@ async function exTrans(p: HTMLElement, i: number, book: book) {
             show: button().add("show"),
             diff: button().add("diff"),
             close: button().add(iconEl(close_svg)),
+            sum: txt("").bindSet((v: number, el) => {
+                el.innerText = `${(v * 100).toFixed(1)}%`;
+            }),
             tips: view("x").style({ gap: "4px" }),
         },
     });
@@ -1894,6 +1897,17 @@ async function exTrans(p: HTMLElement, i: number, book: book) {
     f.els.show.on("click", () => {
         if (span.className === class1) span.className = class2;
         else span.className = class1;
+    });
+
+    f.els.text.on("input", () => {
+        let n = 0;
+        const diff = dmp.diff_main(f.els.text.el.value, text);
+        for (const i of diff) {
+            if (i[0] === 0) {
+                n += i[1].length;
+            }
+        }
+        f.els.sum.sv(n / text.length);
     });
 
     function rm() {
