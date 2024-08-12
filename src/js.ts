@@ -1874,7 +1874,13 @@ async function exTrans(p: HTMLElement, i: number, book: book) {
         }),
 
         buttons: {
-            _: view("x").style({ position: "absolute", top: "-32px" }),
+            _: view("x").style({
+                position: "absolute",
+                top: "-32px",
+                "font-size": "1rem",
+                "line-height": "1",
+                "align-items": "center",
+            }),
             last: button().add(iconEl(left_svg)),
             next: button().add(iconEl(right_svg)),
             show: button().add("show"),
