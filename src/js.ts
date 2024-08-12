@@ -38,6 +38,8 @@ import more_svg from "../assets/icons/more.svg";
 import reload_svg from "../assets/icons/reload.svg";
 import recume_svg from "../assets/icons/recume.svg";
 import add_svg from "../assets/icons/add.svg";
+import exTrans_svg from "../assets/icons/exTrans.svg";
+import eye_svg from "../assets/icons/eye.svg";
 import style_svg from "../assets/icons/style.svg";
 import font_small_svg from "../assets/icons/font_small.svg";
 import font_large_svg from "../assets/icons/font_large.svg";
@@ -1731,7 +1733,7 @@ async function showNormalBook(book: book, s: section) {
 
         moreEl.append(
             view()
-                .add("hi")
+                .add(iconEl(exTrans_svg))
                 .on("click", () => {
                     exTrans(pel, 0, book);
                 }).el,
@@ -1884,7 +1886,7 @@ async function exTrans(pEl: HTMLElement, i: number, book: book) {
             }),
             last: button().add(iconEl(left_svg)),
             next: button().add(iconEl(right_svg)),
-            diff: button().add("diff"),
+            diff: button().add(iconEl(eye_svg)),
             ai: button().add(iconEl(ai_svg)),
             close: button().add(iconEl(close_svg)),
             sum: txt("").bindSet((v: number, el) => {
