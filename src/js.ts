@@ -1875,11 +1875,11 @@ async function exTrans(p: HTMLElement, i: number, book: book) {
 
         buttons: {
             _: view("x").style({ position: "absolute", top: "-32px" }),
-            last: button().add("<-"),
-            next: button().add("->"),
+            last: button().add(iconEl(left_svg)),
+            next: button().add(iconEl(right_svg)),
             show: button().add("show"),
             diff: button().add("diff"),
-            close: button().add("x"),
+            close: button().add(iconEl(close_svg)),
             tips: view("x").style({ gap: "4px" }),
         },
     });
