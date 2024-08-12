@@ -2,7 +2,7 @@
 
 import { el, setStyle } from "redom";
 
-import { ele, view, pack, frame, a, txt, trackPoint, textarea, button } from "dkh-ui";
+import { ele, view, pack, frame, a, txt, p, trackPoint, textarea, button } from "dkh-ui";
 
 import localforage from "localforage";
 import { extendPrototype } from "localforage-setitems";
@@ -23,6 +23,7 @@ import { type Card, createEmptyCard, generatorParameters, FSRS, Rating, State } 
 
 import spark from "spark-md5";
 
+import ai_svg from "../assets/icons/ai.svg";
 import pen_svg from "../assets/icons/pen.svg";
 import ok_svg from "../assets/icons/ok.svg";
 import very_ok_svg from "../assets/icons/very_ok.svg";
@@ -1846,13 +1847,13 @@ async function translateContext(p: HTMLElement) {
     });
 }
 
-async function exTrans(p: HTMLElement, i: number, book: book) {
-    const span = p.children[i] as HTMLSpanElement;
+async function exTrans(pEl: HTMLElement, i: number, book: book) {
+    const span = pEl.children[i] as HTMLSpanElement;
 
     const f = frame("exTrans", {
         _: view().style({
             position: "absolute",
-            top: `${span.offsetTop - (p.children[0].getBoundingClientRect().y - p.getBoundingClientRect().y)}px`,
+            top: `${span.offsetTop - (pEl.children[0].getBoundingClientRect().y - pEl.getBoundingClientRect().y)}px`,
             width: "100%",
         }),
         text: textarea("i")
@@ -1884,6 +1885,7 @@ async function exTrans(p: HTMLElement, i: number, book: book) {
             last: button().add(iconEl(left_svg)),
             next: button().add(iconEl(right_svg)),
             diff: button().add("diff"),
+            ai: button().add(iconEl(ai_svg)),
             close: button().add(iconEl(close_svg)),
             sum: txt("").bindSet((v: number, el) => {
                 el.innerText = `${(v * 100).toFixed(1)}%`;
@@ -1892,7 +1894,7 @@ async function exTrans(p: HTMLElement, i: number, book: book) {
         },
     });
 
-    p.append(f.el.el);
+    pEl.append(f.el.el);
 
     span.classList.add("exTransHide");
 
@@ -1920,14 +1922,14 @@ async function exTrans(p: HTMLElement, i: number, book: book) {
         if (i === 0) {
         } else {
             rm();
-            exTrans(p, i - 1, book);
+            exTrans(pEl, i - 1, book);
         }
     });
     f.els.next.on("click", () => {
-        if (i === p.querySelectorAll(":scope>span").length - 1) {
+        if (i === pEl.querySelectorAll(":scope>span").length - 1) {
         } else {
             rm();
-            exTrans(p, i + 1, book);
+            exTrans(pEl, i + 1, book);
         }
     });
     let diffShow = false;
@@ -1953,6 +1955,18 @@ async function exTrans(p: HTMLElement, i: number, book: book) {
             f.els.text.style({ display: "" });
             f.els.diffEl.style({ display: "none" });
         }
+    });
+
+    f.els.ai.on("click", async () => {
+        const x = `这是我默写的一个句子：\n${f.els.text.el.value}\n这是句子的原文\n${text}\n告诉我的默写存在哪些语法错误，指出其类型，不需要指出其具体单词，不需要解释，没有则忽略。暗示我：我的默写表达的意思相对于原文是否完整，是否有歧义，哪些意思的表达和哪些词语、词组、结构需要增删改才变成原文（不需要指出原文，不需要给出修改），我将根据你的暗示，猜测需要具体的修改`;
+        const t = await ai([{ role: "user", content: x }]).text;
+        const el = view().add([
+            p(t),
+            button()
+                .add(iconEl(close_svg))
+                .on("click", () => el.remove()),
+        ]).el;
+        putToast(el, 0);
     });
 
     const text = span.innerText;
