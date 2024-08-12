@@ -2,7 +2,7 @@
 
 import { el, setStyle } from "redom";
 
-import { ele, view, pack, frame, a, txt, p, trackPoint, textarea, button } from "dkh-ui";
+import { ele, view, pack, frame, a, txt, p, trackPoint, textarea, button, type ElType } from "dkh-ui";
 
 import localforage from "localforage";
 import { extendPrototype } from "localforage-setitems";
@@ -4366,13 +4366,6 @@ reviewReflashEl.parentElement.append(
 const KEYBOARDDISPLAYPATH = "spell.keyboard.display";
 const KEYBOARDHEIGHTPATH = "spell.keyboard.height";
 
-const keyboardHandle = view().style({
-    width: "16px",
-    height: "8px",
-    position: "absolute",
-    background: "color-mix(in srgb, var(--bg) 94%, var(--color))",
-    "touch-action": "none",
-});
 const keyboardEl = view("y")
     .class("simple-keyboard")
     .style({ height: `${await setting.getItem(KEYBOARDHEIGHTPATH)}px` });
@@ -4383,36 +4376,26 @@ const handwriterCheck = el("button", iconEl(ok_svg), {
         ocrSpell();
     },
 });
-const handwriterEl = el("div", { class: "spell_write" }, [
-    handwriterCanvas,
-    el("button", {
-        onclick: () => {
-            if (keyboard.getLayout() === "default") {
-                keyboard.setLayout("handwrite");
-            } else {
-                keyboard.setLayout("default");
-            }
-            setting.setItem(KEYBOARDDISPLAYPATH, keyboard.getLayout());
-        },
-    }),
-    handwriterCheck,
-]);
+const handwriterEl = el("div", { class: "spell_write" }, [handwriterCanvas, handwriterCheck]);
 const spellInputEl = el("div", { style: { display: "none" } }, [keyboardEl.el, handwriterEl]);
 reviewEl.append(spellInputEl);
 
-trackPoint(keyboardHandle, {
-    start() {
-        const h = keyboardEl.el.offsetHeight;
-        return { x: 0, y: window.innerHeight - h };
-    },
-    ing: (p) => {
-        const h = window.innerHeight - p.y;
-        keyboardEl.style({ height: `${h}px` });
-    },
-    end: () => {
-        setting.setItem(KEYBOARDHEIGHTPATH, keyboardEl.el.offsetHeight);
-    },
-});
+function trackKeyboard(el: ElType<HTMLElement>) {
+    trackPoint(el, {
+        start() {
+            if (keyboard.getLayout() !== "default") return;
+            const h = keyboardEl.el.offsetHeight;
+            return { x: 0, y: window.innerHeight - h };
+        },
+        ing: (p) => {
+            const h = window.innerHeight - p.y;
+            keyboardEl.style({ height: `${h}px` });
+        },
+        end: () => {
+            setting.setItem(KEYBOARDHEIGHTPATH, keyboardEl.el.offsetHeight);
+        },
+    });
+}
 
 function keyB<t extends string>(c: { [k in t]: string[] }, display: Record<string, string>) {
     let text = "";
@@ -4421,7 +4404,6 @@ function keyB<t extends string>(c: { [k in t]: string[] }, display: Record<strin
 
     function render(c: string[]) {
         el.clear();
-        el.add(keyboardHandle);
         for (const r of c) {
             const rEl = view("x").style({ gap: "4px", "flex-grow": "1" });
             for (const k of r.split(" ")) {
@@ -4446,6 +4428,21 @@ function keyB<t extends string>(c: { [k in t]: string[] }, display: Record<strin
                         }
                         console.log(text);
                     });
+                if (k === "{h}") {
+                    trackKeyboard(kEl);
+                }
+                if (k === "{switch}") {
+                    kEl.on("click", async () => {
+                        if (keyboard.getLayout() === "default") {
+                            keyboard.setLayout("handwrite");
+                            keyboardEl.style({ height: "48px" });
+                        } else {
+                            keyboard.setLayout("default");
+                            keyboardEl.style({ height: `${await setting.getItem(KEYBOARDHEIGHTPATH)}px` });
+                        }
+                        setting.setItem(KEYBOARDDISPLAYPATH, keyboard.getLayout());
+                    });
+                }
                 rEl.add(kEl);
             }
             el.add(rEl);
@@ -4473,8 +4470,13 @@ function keyB<t extends string>(c: { [k in t]: string[] }, display: Record<strin
 
 const keyboard = keyB(
     {
-        default: ["q w e r t y u i o p", "a s d f g h j k l", "{shift} z x c v b n m {bksp}", "{tip} {space} {audio}"],
-        handwrite: ["{tip} {space} {audio}"],
+        default: [
+            "q w e r t y u i o p",
+            "a s d f g h j k l",
+            "{shift} z x c v b n m {bksp}",
+            "{h} {tip} {space} {audio} {switch}",
+        ],
+        handwrite: ["{h} {tip} {space} {audio} {switch}"],
     },
     {
         "{space}": "␣",
@@ -4482,6 +4484,8 @@ const keyboard = keyB(
         "{bksp}": "⌫",
         "{tip}": "🫣",
         "{audio}": "📣",
+        "{switch}": "^",
+        "{h}": "=",
     },
 );
 
