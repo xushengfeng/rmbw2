@@ -3344,7 +3344,7 @@ async function onlineDicL(word: string) {
     const lan = studyLan;
     const onlineList = el("div", { class: "online_dic" });
     let l: onlineDicsType = await setting.getItem(onlineDicsPath);
-    l = l.filter((i) => i.lan === lan);
+    l = l.filter((i) => !i.lan || i.lan === lan);
     for (const i of l) {
         onlineList.append(el("a", i.name, { href: i.url.replace("%s", word), target: "_blank" }));
     }
