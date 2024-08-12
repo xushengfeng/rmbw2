@@ -1883,16 +1883,21 @@ async function exTrans(pEl: HTMLElement, i: number, book: book) {
                 "font-size": "1rem",
                 "line-height": "1",
                 "align-items": "center",
+                background: "var(--bg1)",
+                "backdrop-filter": "var(--blur)",
+                "border-radius": "var(--border-radius)",
             }),
             last: button().add(iconEl(left_svg)),
             next: button().add(iconEl(right_svg)),
             diff: button().add(iconEl(eye_svg)),
             ai: button().add(iconEl(ai_svg)),
             close: button().add(iconEl(close_svg)),
-            sum: txt("").bindSet((v: number, el) => {
-                el.innerText = `${(v * 100).toFixed(1)}%`;
-            }),
-            tips: view("x").style({ gap: "4px" }),
+            sum: txt("")
+                .bindSet((v: number, el) => {
+                    el.innerText = `${(v * 100).toFixed(1)}%`;
+                })
+                .style({ padding: "4px" }),
+            tips: view("x").style({ gap: "4px", "padding-right": "4px" }),
         },
     });
 
