@@ -1929,6 +1929,11 @@ async function exTrans(pEl: HTMLElement, i: number, book: book) {
 
     f.els.last.on("click", () => {
         if (i === 0) {
+            const lastP = pEl.previousElementSibling as HTMLElement;
+            if (lastP.tagName === "P") {
+                rm();
+                exTrans(lastP, lastP.querySelectorAll(":scope>span").length - 1, book);
+            }
         } else {
             rm();
             exTrans(pEl, i - 1, book);
@@ -1936,6 +1941,11 @@ async function exTrans(pEl: HTMLElement, i: number, book: book) {
     });
     f.els.next.on("click", () => {
         if (i === pEl.querySelectorAll(":scope>span").length - 1) {
+            const nextP = pEl.nextElementSibling as HTMLElement;
+            if (nextP.tagName === "P") {
+                rm();
+                exTrans(nextP, 0, book);
+            }
         } else {
             rm();
             exTrans(pEl, i + 1, book);
