@@ -1705,16 +1705,8 @@ async function showNormalBook(book: book, s: section) {
         const pText = editText.slice(paragraph[0]?.[0]?.start ?? null, paragraph.at(-1)?.at(-1)?.end ?? null);
         if (pText) {
             const i = contentP.length;
-            const playEl = el("div", iconEl(recume_svg), {
-                "data-play": "",
-                onclick: () => {
-                    pTTS(i);
-                },
-            });
-            moreEl.append(playEl);
             moreEl.append(
-                el("div", iconEl(more_svg), {
-                    "data-play-l": "",
+                el("div", iconEl(recume_svg), {
                     onclick: () => {
                         showLisent(contentP.at(i));
                     },
@@ -1824,6 +1816,11 @@ async function showLisent(text: string) {
                     playEl(sL);
                 },
             }),
+            button()
+                .add(iconEl(recume_svg))
+                .on("click", () => {
+                    runTTS(text);
+                }),
             el("button", iconEl(close_svg), {
                 onclick: () => {
                     d.close();
