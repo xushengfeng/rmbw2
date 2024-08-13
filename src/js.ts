@@ -1795,32 +1795,22 @@ async function showLisent(text: string) {
 
     const d = el("dialog", { class: "play_list" }) as HTMLDialogElement;
     const playsEl = view("y");
-    const textEl = view("y");
     playEl(sL);
-    d.append(view("x").add([playsEl, textEl]).el);
+    d.append(playsEl.el);
     function playEl(l: string[]) {
         playsEl.clear();
         playsEl.add(
-            l.map((s) => {
-                return button()
-                    .add(iconEl(recume_svg))
-                    .on("click", () => {
-                        runTTS(s);
-                    });
-            }),
+            l.map((s) =>
+                view().add([
+                    button()
+                        .add(iconEl(recume_svg))
+                        .on("click", () => {
+                            runTTS(s);
+                        }),
+                    p(s),
+                ]),
+            ),
         );
-        textEl.clear();
-        textEl.add(
-            l.map((s) => {
-                return p(s);
-            }),
-        );
-    }
-    function sp(regxp: RegExp) {
-        return text
-            .split(regxp)
-            .filter((i) => i)
-            .map((i) => i.trim());
     }
     d.append(
         el("div", [

@@ -635,17 +635,15 @@ body {
 }
 
 .play_list {
+    display: flex;
+    flex-direction: column;
     & > :first-child {
         display: flex;
         width: 80dvw;
-        & > :nth-child(2) {
-            overflow-x: auto;
-        }
-        & > :nth-child(2) > p {
-            height: var(--size0);
+        overflow-y: auto;
+        gap: 16px;
+        & > * > p {
             margin: 0;
-            line-height: var(--size0);
-            white-space: nowrap;
             filter: blur(calc(var(--size0) / 3));
             transition: var(--transition);
             &:hover {
