@@ -2,7 +2,7 @@
 
 import { el, setStyle } from "redom";
 
-import { ele, view, pack, frame, a, txt, p, trackPoint, textarea, button, type ElType } from "dkh-ui";
+import { ele, view, pack, frame, a, txt, p, trackPoint, textarea, button, type ElType, input } from "dkh-ui";
 
 import localforage from "localforage";
 import { extendPrototype } from "localforage-setitems";
@@ -22,6 +22,10 @@ import { MsEdgeTTS, OUTPUT_FORMAT } from "msedge-tts-browserify";
 import { type Card, createEmptyCard, generatorParameters, FSRS, Rating, State } from "ts-fsrs";
 
 import spark from "spark-md5";
+
+import WaveSurfer from "wavesurfer.js";
+import Spectrogram from "wavesurfer.js/dist/plugins/spectrogram";
+import RegionsPlugin from "wavesurfer.js/dist/plugins/regions";
 
 import ai_svg from "../assets/icons/ai.svg";
 import pen_svg from "../assets/icons/pen.svg";
@@ -1799,6 +1803,11 @@ async function showLisent(text: string) {
                         .on("click", () => {
                             runTTS(s);
                         }),
+                    button()
+                        .add(iconEl(recume_svg))
+                        .on("click", () => {
+                            showRecord(s);
+                        }),
                     p(s),
                 ]),
             ),
@@ -1836,6 +1845,62 @@ async function showLisent(text: string) {
         ]),
     );
     dialogX(d);
+}
+
+async function showRecord(text: string) {
+    const d = el("dialog") as HTMLDialogElement;
+    dialogX(d);
+
+    const textEl = input("i").sv(text);
+
+    const x = view().style({ width: "80dvw" });
+
+    d.append(textEl.el);
+    d.append(x.el);
+
+    const url = await getTTS(text);
+
+    const regions = RegionsPlugin.create();
+    const ws = WaveSurfer.create({
+        container: x.el,
+        waveColor: "#999",
+        progressColor: "#222",
+        url: url,
+        sampleRate: 22050,
+        plugins: [regions],
+        backend: "WebAudio",
+    });
+
+    ws.registerPlugin(
+        Spectrogram.create({
+            colorMap: "gray",
+            height: 200,
+            splitChannels: true,
+        }),
+    );
+
+    regions.enableDragSelection({
+        color: "rgba(255, 0, 0, 0.1)",
+    });
+
+    let activeRegion = false;
+    regions.on("region-out", (region) => {
+        if (activeRegion) {
+            ws.pause();
+            activeRegion = false;
+        }
+    });
+    regions.on("region-clicked", (region, e) => {
+        e.stopPropagation();
+        activeRegion = true;
+        region.play();
+    });
+    regions.on("region-double-clicked", (r) => {
+        r.remove();
+    });
+    ws.on("interaction", (e) => {
+        ws.play();
+    });
 }
 
 async function translateContext(p: HTMLElement) {

@@ -62,6 +62,9 @@ importers:
       ts-fsrs:
         specifier: ^3.5.7
         version: 3.5.7
+      wavesurfer.js:
+        specifier: ^7.8.3
+        version: 7.8.3
       webm-duration-fix:
         specifier: ^1.0.4
         version: 1.0.4
@@ -1031,6 +1034,9 @@ packages:
       terser:
         optional: true
 
+  wavesurfer.js@7.8.3:
+    resolution: {integrity: sha512-aYOmoBqEwjlqiqcKBYCzmWQxssOnEUd2VlVxfQkWfQD1pH3VJ5Prqn4kfIGxYyokgYiEj/G5Qwrh48ot/pRCuA==}
+
   webm-duration-fix@1.0.4:
     resolution: {integrity: sha512-kvhmSmEnuohtK+j+mJswqCCM2ViKb9W8Ch0oAxcaeUvpok5CsMORQLnea+CYKDXPG6JH12H0CbRK85qhfeZLew==}
 
@@ -1877,6 +1883,8 @@ snapshots:
     optionalDependencies:
       '@types/node': 20.11.16
       fsevents: 2.3.3
+
+  wavesurfer.js@7.8.3: {}
 
   webm-duration-fix@1.0.4:
     dependencies:
