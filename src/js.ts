@@ -1865,6 +1865,8 @@ async function exTrans(pEl: HTMLElement, i: number, book: book) {
                 "font-size": "inherit",
                 "line-height": "inherit",
                 "font-family": "inherit",
+                // @ts-ignore
+                "field-sizing": "content",
             })
             .attr({ autocomplete: "off" }),
 
