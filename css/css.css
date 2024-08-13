@@ -23,6 +23,8 @@
     --font-size: 16px;
     --font-family: serif;
     --size0: 32px;
+    --right-c: color-mix(in srgb, #0f0 60%, var(--color));
+    --error-c: color-mix(in srgb, #f00 40%, var(--bg));
 }
 
 :root[data-theme="dark"] {
@@ -669,11 +671,11 @@ body {
 }
 
 .diff_add {
-    color: color-mix(in srgb, #0f0 60%, var(--color));
+    color: var(--right-c);
 }
 
 .diff_remove {
-    color: color-mix(in srgb, #f00 60%, var(--color));
+    color: var(--error-c);
 }
 
 #dic {
@@ -1111,8 +1113,6 @@ div:has(> .translate) > :not(.translate) {
             overflow: hidden;
             flex-shrink: 0;
         }
-        --right-c: color-mix(in srgb, #0f0 60%, var(--color));
-        --error-c: color-mix(in srgb, #f00 40%, var(--bg));
         & > .diff_exchange1 {
             display: inline-flex;
             flex-direction: row-reverse;
