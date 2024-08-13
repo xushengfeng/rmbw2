@@ -646,6 +646,11 @@ body {
             margin: 0;
             line-height: var(--size0);
             white-space: nowrap;
+            filter: blur(calc(var(--size0) / 3));
+            transition: var(--transition);
+            &:hover {
+                filter: none;
+            }
         }
     }
     & > :nth-child(2) {
