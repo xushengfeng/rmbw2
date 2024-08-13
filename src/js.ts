@@ -1761,26 +1761,52 @@ function getScrollPosi(el: HTMLElement) {
 }
 
 async function showLisent(text: string) {
-    const al = /[.?!。？！]/g;
-    const ali = /[.?!。？！,，]/g;
-    let l = sp(ali);
-    console.log(l);
-    const d = el("dialog", { class: "play_list" }) as HTMLDialogElement;
-    const playsEl = el("div");
-    const textEl = el("textarea", { value: l.join("\n") });
-    playEl();
-    d.append(el("div", [playsEl, textEl]));
-    textEl.oninput = playEl;
-    function playEl() {
-        const l = textEl.value.split("\n");
-        playsEl.innerHTML = "";
-        for (const s of l) {
-            const pEl = el("button", iconEl(recume_svg));
-            pEl.onclick = () => {
-                runTTS(s);
-            };
-            playsEl.append(pEl);
+    const osL = Array.from(new Segmenter("en", { granularity: "sentence" }).segment(text));
+    console.log(
+        osL,
+        osL.map((i) => i.segment),
+    );
+    const mainL = osL.map((i) => i.segment.trim());
+    let sL: string[] = [];
+    for (const i of mainL) {
+        const nl = i
+            .replaceAll(/(\D)[,，](\D)/g, "$1\n$2")
+            .split("\n")
+            .filter(Boolean);
+        for (let i = 0; i < nl.length; i++) {
+            const element = nl[i];
+            if (!element.includes(" ") && nl[i + 1]) {
+                // 单词，如thus，although等，向后合并
+                sL.push(`${element}, ${nl[i + 1]}`);
+            } else {
+                sL.push(element);
+            }
         }
+    }
+    sL = sL.map((i) => i.replaceAll(/^["'“”‘’]/g, ""));
+
+    const d = el("dialog", { class: "play_list" }) as HTMLDialogElement;
+    const playsEl = view("y");
+    const textEl = view("y");
+    playEl(sL);
+    d.append(view("x").add([playsEl, textEl]).el);
+    function playEl(l: string[]) {
+        playsEl.clear();
+        playsEl.add(
+            l.map((s) => {
+                return button()
+                    .add(iconEl(recume_svg))
+                    .on("click", () => {
+                        runTTS(s);
+                    });
+            }),
+        );
+        textEl.clear();
+        textEl.add(
+            l.map((s) => {
+                return p(s);
+            }),
+        );
     }
     function sp(regxp: RegExp) {
         return text
@@ -1792,16 +1818,12 @@ async function showLisent(text: string) {
         el("div", [
             el("button", "按句", {
                 onclick: () => {
-                    l = sp(al);
-                    textEl.value = l.join("\n");
-                    playEl();
+                    playEl(mainL);
                 },
             }),
             el("button", "按小句", {
                 onclick: () => {
-                    l = sp(ali);
-                    textEl.value = l.join("\n");
-                    playEl();
+                    playEl(sL);
                 },
             }),
             el("button", iconEl(close_svg), {
