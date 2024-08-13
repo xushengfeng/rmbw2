@@ -1977,7 +1977,7 @@ async function exTrans(pEl: HTMLElement, i: number, book: book) {
     });
 
     f.els.ai.on("click", async () => {
-        const x = `这是我默写的一个句子：\n${f.els.text.el.value}\n这是句子的原文\n${text}\n告诉我的默写存在哪些语法错误，指出其类型，不需要指出其具体单词，不需要解释，没有则忽略。暗示我：我的默写表达的意思相对于原文是否完整，是否有歧义，哪些意思的表达和哪些词语、词组、结构需要增删改才变成原文（不需要指出原文，不需要给出修改），我将根据你的暗示，猜测需要具体的修改`;
+        const x = `这是我默写的一个句子：\n${f.els.text.el.value}\n这是句子的原文\n${text}\n翻译我的默写\n暗示我：对于词语词组表达的不同，指出原文表达，指出他们与默写的差别；对于语法结构的不同，提示我需要改成什么语法结构，不需要指出原文，不需要给出修改。上述不同，若没有则不用提示。我将根据你的暗示，猜测需要的具体修改`;
         const t = await ai([{ role: "user", content: x }]).text;
         const el = view().add([
             p(t),
