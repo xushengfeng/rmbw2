@@ -1961,8 +1961,26 @@ async function exTrans(pEl: HTMLElement, i: number, book: book) {
             diffEl.clear();
 
             // @ts-ignore
-            const diff = dmp.diff_wordMode(f.els.text.el.value, text);
-            for (const i of diff) {
+            const diff = dmp.diff_wordMode(f.els.text.el.value, text) as Diff[];
+            for (let n = 0; n < diff.length; n++) {
+                const i = diff[n];
+                const ni = diff[n + 1];
+                if (ni) {
+                    if (i[0] === -1 && ni[0] === 1) {
+                        // 对于更改的词，若词内部更改少，则详细展示，否则按词语展示
+                        const ndiff = dmp.diff_main(i[1], ni[1]);
+                        if (ndiff.length <= 4) {
+                            for (const i of ndiff) {
+                                render(i);
+                            }
+                            n++;
+                            continue;
+                        }
+                    }
+                }
+                render(i);
+            }
+            function render(i: Diff) {
                 if (i[0] === 0) {
                     diffEl.add(txt(i[1]));
                 } else if (i[0] === 1) {
