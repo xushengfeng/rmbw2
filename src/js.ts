@@ -1804,6 +1804,7 @@ async function showLisent(text: string) {
             ),
         );
     }
+    let pausePlayP: () => void;
     d.append(
         el("div", [
             el("button", "按句", {
@@ -1818,12 +1819,18 @@ async function showLisent(text: string) {
             }),
             button()
                 .add(iconEl(recume_svg))
-                .on("click", () => {
-                    runTTS(text);
+                .on("click", async () => {
+                    if (pausePlayP) {
+                        pausePlayP();
+                        pausePlayP = null;
+                    } else {
+                        pausePlayP = (await runTTS(text)).cancel;
+                    }
                 }),
             el("button", iconEl(close_svg), {
                 onclick: () => {
                     d.close();
+                    pausePlayP();
                 },
             }),
         ]),
@@ -5331,13 +5338,18 @@ async function getTTS(text: string) {
     });
 }
 
-async function runTTS(text: string) {
+async function runTTS(text: string): Promise<{ cancel: () => void }> {
     if ((await getTtsEngine()) === "browser") {
-        localTTS(text);
-    } else {
-        audioEl.src = await getTTS(text);
-        audioEl.play();
+        const x = await localTTS(text);
+        return { cancel: () => x.synth.cancel() };
     }
+    audioEl.src = await getTTS(text);
+    audioEl.play();
+    return {
+        cancel: () => {
+            audioEl.src = "";
+        },
+    };
 }
 
 async function localTTS(text: string) {
@@ -5352,7 +5364,7 @@ async function localTTS(text: string) {
         }
     }
     synth.speak(utterThis);
-    return utterThis;
+    return { utterThis, synth };
 }
 
 const pttsEl = document.getElementById("pTTSp");
@@ -5385,7 +5397,7 @@ async function pTTS(index: number) {
     pttsEl.classList.add(SHOWPTTS);
 
     if ((await getTtsEngine()) === "browser") {
-        const utterThis = await localTTS(text);
+        const utterThis = (await localTTS(text)).utterThis;
         utterThis.onend = nextplay;
     } else {
         const url = await getTTS(text);
