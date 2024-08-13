@@ -1960,7 +1960,8 @@ async function exTrans(pEl: HTMLElement, i: number, book: book) {
             diffEl.style({ display: "" });
             diffEl.clear();
 
-            const diff = dmp.diff_main(f.els.text.el.value, text);
+            // @ts-ignore
+            const diff = dmp.diff_wordMode(f.els.text.el.value, text);
             for (const i of diff) {
                 if (i[0] === 0) {
                     diffEl.add(txt(i[1]));
@@ -2311,6 +2312,7 @@ function patchPosi(source: number[], map: number[], index: [number, number]) {
 }
 
 import diff_match_patch, { type Diff } from "diff-match-patch";
+import "diff-match-patch-line-and-word";
 const dmp = new diff_match_patch();
 
 changeEdit(false);
