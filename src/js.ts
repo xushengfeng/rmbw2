@@ -1775,9 +1775,17 @@ async function showLisent(text: string) {
             .filter(Boolean);
         for (let i = 0; i < nl.length; i++) {
             const element = nl[i];
-            if (!element.includes(" ") && nl[i + 1]) {
-                // 单词，如thus，although等，向后合并
-                sL.push(`${element}, ${nl[i + 1]}`);
+            if ((element.match(/\W/g) || []).length <= 3) {
+                // 简单词，如thus，for instance，in my opinion等，
+                // 一般向前合并，如too，such as a,b,c，如果前面没有向后合并
+                if (nl[i - 1]) {
+                    sL[sL.length - 1] += `, ${element}`;
+                } else if (nl[i + 1]) {
+                    sL.push(`${element}, ${nl[i + 1]}`);
+                    i++;
+                } else {
+                    sL.push(element);
+                }
             } else {
                 sL.push(element);
             }
