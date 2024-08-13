@@ -658,6 +658,9 @@ body {
     }
 }
 
+.exTransHide {
+    pointer-events: none;
+}
 .exTransHide > span {
     color: transparent;
 }
