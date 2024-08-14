@@ -641,9 +641,9 @@ body {
         display: flex;
         width: 80dvw;
         overflow-y: auto;
-        gap: 16px;
         & > * > p {
             margin: 0;
+            margin-bottom: 16px;
             filter: blur(calc(var(--size0) / 3));
             transition: var(--transition);
             &:hover {
