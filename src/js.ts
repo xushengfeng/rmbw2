@@ -1878,11 +1878,6 @@ async function showRecord(text: string) {
         });
 
         ws.on("decode", () => {
-            const peaks = ws.exportPeaks()[0];
-            const i = peaks.findIndex((i) => i > 0);
-            console.log(i, peaks);
-            const startOffset = ws.getDuration() * (i / peaks.length);
-
             const main: { start: number; end: number; t: string }[] = [];
             const dT = 1000 * 1000 * 10;
             if (!r) return;
@@ -1909,11 +1904,9 @@ async function showRecord(text: string) {
             }
             console.log(main);
 
-            for (const d of main) {
+            for (const i of main) {
                 regions.addRegion({
-                    start: d.start + startOffset,
-                    end: d.end + startOffset,
-                    content: d.t,
+                    start: i.start,
                 });
             }
 
@@ -1948,25 +1941,56 @@ async function showRecord(text: string) {
             // @ts-ignore
             ws.renderer.getWrapper().appendChild(canvas);
             // Remove the canvas when a new audio is loaded
-            ws.once("load", () => canvas.remove());
+            ws.once("load", () => {
+                canvas.remove();
+            });
+
+            ws.once("ready", () => {
+                setText();
+            });
         });
 
         regions.enableDragSelection({
             color: "rgba(0, 0, 0, 0.1)",
         });
 
-        let activeRegion = false;
-        regions.on("region-out", (region) => {
-            if (activeRegion) {
+        let activeRegion = null;
+        regions.on("region-in", (region) => {
+            if (activeRegion && region !== activeRegion) {
                 ws.pause();
-                activeRegion = false;
+                activeRegion = null;
             }
         });
         regions.on("region-clicked", (region, e) => {
             e.stopPropagation();
-            activeRegion = true;
+            activeRegion = region;
             region.play();
         });
+        regions.on("region-updated", () => {
+            setText();
+            const rs = regions.getRegions();
+            for (const r of rs) {
+                if (r.start < 0.05 || r.start > ws.getDuration() - 0.05) r.remove();
+            }
+        });
+
+        function setText() {
+            const x: (typeof tts.metadata)[] = [];
+            const rs = regions.getRegions().toSorted((a, b) => a.start - b.start);
+            const data = r.filter((i) => i.Type === "WordBoundary").toReversed();
+            for (const i of data) {
+                const index =
+                    rs.findLastIndex((x) => x.start < (i.Data.Offset + i.Data.Duration) / (1000 * 1000 * 10)) || 0;
+                if (!x[index]) x[index] = [];
+                x[index].unshift(i);
+            }
+            console.log(x);
+            for (const i of x) {
+                if (!i) continue;
+                const t = i.map((x) => x.Data.text.Text).join(" ");
+                rs[x.indexOf(i)].setContent(t);
+            }
+        }
         regions.on("region-double-clicked", (r) => {
             r.remove();
         });
