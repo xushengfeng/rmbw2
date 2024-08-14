@@ -1851,24 +1851,64 @@ async function showRecord(text: string) {
     const d = el("dialog") as HTMLDialogElement;
     dialogX(d);
 
-    const textEl = input("i").sv(text);
+    const textEl = txt(text);
 
     const x = view().style({ width: "80dvw" });
 
     d.append(textEl.el);
     d.append(x.el);
 
-    const url = await getTTS(text);
+    const tts = await getTTS(text);
 
     const regions = RegionsPlugin.create();
     const ws = WaveSurfer.create({
         container: x.el,
         waveColor: "#999",
         progressColor: "#222",
-        url: url,
+        url: tts.url,
         sampleRate: 22050,
         plugins: [regions],
         backend: "WebAudio",
+    });
+
+    ws.on("decode", () => {
+        const peaks = ws.exportPeaks()[0];
+        const i = peaks.findIndex((i) => i > 0);
+        console.log(i, peaks);
+        const startOffset = ws.getDuration() * (i / peaks.length);
+
+        const main: { start: number; end: number; t: string }[] = [];
+        const dT = 1000 * 1000 * 10;
+        const data = tts.metadata.filter((i) => i.Type === "WordBoundary");
+        let t: typeof tts.metadata = [];
+        for (const d of data) {
+            if (d.Data.Duration / dT < 0.2 && data.indexOf(d) < data.length - 1) {
+                t.push(d);
+            } else {
+                if (t.length > 0) {
+                    main.push({
+                        start: t[0].Data.Offset / dT,
+                        end: (t.at(-1).Data.Offset + t.at(-1).Data.Duration) / dT,
+                        t: t.map((i) => i.Data.text.Text).join(" "),
+                    });
+                    t = [];
+                }
+                main.push({
+                    start: d.Data.Offset / dT,
+                    end: (d.Data.Offset + d.Data.Duration) / dT,
+                    t: d.Data.text.Text,
+                });
+            }
+        }
+        console.log(main);
+
+        for (const d of main) {
+            regions.addRegion({
+                start: d.start + startOffset,
+                end: d.end + startOffset,
+                content: d.t,
+            });
+        }
     });
 
     ws.registerPlugin(
@@ -5369,14 +5409,14 @@ async function getTTS(text: string) {
         OUTPUT_FORMAT.WEBM_24KHZ_16BIT_MONO_OPUS,
     );
     const nText = await ttsNormalize(text);
-    const b = (await ttsCache.getItem(nText)) as Blob;
+    const b = (await ttsCache.getItem(nText)) as { blob: Blob; data: D };
     if (b) {
-        return URL.createObjectURL(b);
+        return { url: URL.createObjectURL(b.blob), metadata: b.data };
     }
 
     const readable = tts.toStream(nText);
     let base = new Uint8Array();
-    readable.on("data", (data: Uint8Array) => {
+    readable.onData((data) => {
         console.log("DATA RECEIVED");
         // raw audio file data
         base = concat(base, data);
@@ -5388,17 +5428,14 @@ async function getTTS(text: string) {
         return mergedArray;
     }
 
-    readable.on("closed", () => {
-        console.log("STREAM CLOSED");
-    });
-
-    return new Promise((re: (url: string) => void, rj) => {
-        readable.on("end", async () => {
+    type D = Parameters<Parameters<(typeof readable)["onEnd"]>[0]>["0"];
+    return new Promise((re: (x: { metadata: D; url: string }) => void, rj) => {
+        readable.onEnd(async (data) => {
             console.log("STREAM end");
             let blob = new Blob([base], { type: "audio/webm" });
             blob = await fixWebmDuration(blob);
-            if (blob.size > 0) ttsCache.setItem(text, blob);
-            re(URL.createObjectURL(blob));
+            if (blob.size > 0) ttsCache.setItem(text, { blob, data });
+            re({ url: URL.createObjectURL(blob), metadata: data });
         });
     });
 }
@@ -5408,7 +5445,7 @@ async function runTTS(text: string): Promise<{ cancel: () => void }> {
         const x = await localTTS(text);
         return { cancel: () => x.synth.cancel() };
     }
-    audioEl.src = await getTTS(text);
+    audioEl.src = (await getTTS(text)).url;
     audioEl.play();
     return {
         cancel: () => {
@@ -5466,7 +5503,7 @@ async function pTTS(index: number) {
         utterThis.onend = nextplay;
     } else {
         const url = await getTTS(text);
-        pTTSEl.src = url;
+        pTTSEl.src = url.url;
         pTTSEl.play();
         pTTSEl.onended = nextplay;
     }
