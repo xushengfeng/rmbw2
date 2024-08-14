@@ -2743,10 +2743,10 @@ bookdicEl.onclick = async () => {
     }
 };
 
-async function sectionSelectEl(radio?: boolean) {
+async function sectionSelectEl() {
     const bookSectionsSelectEl = el("div", { popover: "auto" });
     document.body.append(bookSectionsSelectEl);
-    sectionSelect(bookSectionsSelectEl, radio);
+    sectionSelect(bookSectionsSelectEl);
     return {
         el: el("button", "选择词书", {
             onclick: () => {
@@ -2757,45 +2757,64 @@ async function sectionSelectEl(radio?: boolean) {
     };
 }
 
-async function sectionSelect(menuEl: HTMLElement, radio?: boolean) {
-    let bookList: book[] = [];
+async function sectionSelect(menuEl: HTMLElement) {
+    const bookList: book[] = [];
     await bookshelfStore.iterate((book: book) => {
         bookList.push(book);
     });
-    bookList = bookList.filter((b) => b.type === "word");
+    const wordBooks = bookList.filter((b) => b.type === "word");
     menuEl.innerHTML = "";
-    for (const i of bookList) {
-        const book = el("div", i.name);
-        if (!radio) {
-            book.append(
-                el("input", {
-                    type: "checkbox",
-                    value: "",
-                    onclick: (e) => {
-                        const i = e.target as HTMLInputElement;
-                        for (const x of book.querySelectorAll("input").values()) x.checked = i.checked;
-                    },
+    for (const i of wordBooks) {
+        const book = view().add(i.name);
+        book.add(
+            ele("input")
+                .attr({ type: "checkbox", value: "" })
+                .on("click", (_, cel) => {
+                    for (const x of book.el.querySelectorAll("input").values()) x.checked = cel.el.checked;
                 }),
-            );
-        }
+        );
+
         for (const s of i.sections) {
             const section = await getSection(s);
-            book.append(
+            book.add(
                 el("label", [
-                    el("input", { type: radio ? "radio" : "checkbox", value: s, name: "books" }),
+                    el("input", {
+                        type: "checkbox",
+                        value: s,
+                        "data-type": i.type,
+                    }),
                     section.title,
                 ]),
             );
         }
-        menuEl.append(book);
+        menuEl.append(book.el);
+    }
+    menuEl.append(ele("hr").el);
+    for (const i of bookList.filter((b) => b.type === "text")) {
+        const book = view().add(i.name);
+        book.add(
+            el("label", [
+                el("input", {
+                    type: "checkbox",
+                    value: i.id,
+                    "data-type": i.type,
+                }),
+            ]),
+        );
+        menuEl.append(book.el);
     }
     return menuEl;
 }
 
 function getSelectBooks(el: HTMLElement) {
-    return Array.from(el.querySelectorAll("input:checked"))
-        .map((i: HTMLInputElement) => i.value)
-        .filter((v) => v);
+    return {
+        word: Array.from(el.querySelectorAll("input[data-type='word']:checked"))
+            .map((i: HTMLInputElement) => i.value)
+            .filter((v) => v),
+        book: Array.from(el.querySelectorAll("input[data-type='text']:checked"))
+            .map((i: HTMLInputElement) => i.value)
+            .filter((v) => v),
+    };
 }
 
 async function wordBooksByWord(word: string) {
@@ -4853,13 +4872,14 @@ function ocrSpell() {
 async function getWordsScope() {
     const books = reviewScope.values();
     const ignore = await getIgnoreWords();
-    if (books.length === 0) return { words: null, ignore };
+    const b = books.book;
+    if (books.word.length === 0) return { words: null, ignore, books: b };
     const words: string[] = [];
-    for (const book of books) {
+    for (const book of books.word) {
         const w = (await getSection(book)).text.trim().split("\n");
         words.push(...w);
     }
-    return { words, ignore: words.filter((i) => ignore.includes(i)) };
+    return { words, ignore: words.filter((i) => ignore.includes(i)), books: b };
 }
 
 function filterWithScope(word: string, scope: string[], exScope?: string[]) {
@@ -4888,7 +4908,8 @@ async function getFutureReviewDue(days: number, ...types: review[]) {
         await wordsStore.iterate((v: record, k) => {
             if (filterWithScope(k, wordsScope)) {
                 for (const m of v.means) {
-                    if (dueL.has(m.card_id)) wordList.push({ id: m.card_id, card: dueL.get(m.card_id) });
+                    if (dueL.has(m.card_id) && m.contexts.find((b) => ws.books.includes(b.source.book)))
+                        wordList.push({ id: m.card_id, card: dueL.get(m.card_id) });
                 }
             }
         });
@@ -5693,18 +5714,19 @@ plotEl.add([
 document.body.append(plotEl.el);
 
 async function renderCardDueAll() {
-    const wordsScope = (await getWordsScope()).words;
+    const wordsScope = await getWordsScope();
     const wordDue: string[] = [];
     const spellDue: number[] = [];
     const sentenceDue: string[] = [];
     await wordsStore.iterate((v: record, k: string) => {
-        if (!filterWithScope(k, wordsScope)) return;
+        if (!filterWithScope(k, wordsScope.words)) return;
+        if (!v.means.find((i) => i.contexts.find((x) => wordsScope.books.includes(x.source.book)))) return;
         for (const m of v.means) {
             wordDue.push(m.card_id);
         }
     });
     await spellStore.iterate((v: Card, k: string) => {
-        if (!filterWithScope(k, wordsScope)) return;
+        if (!filterWithScope(k, wordsScope.words)) return;
         spellDue.push(v.due.getTime());
     });
     await card2sentence.iterate((v: record2, k: string) => {
