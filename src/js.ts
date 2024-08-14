@@ -1951,7 +1951,7 @@ async function showRecord(text: string) {
         });
 
         regions.enableDragSelection({
-            color: "rgba(0, 0, 0, 0.1)",
+            resize: false,
         });
 
         let activeRegion = null;
@@ -1965,6 +1965,14 @@ async function showRecord(text: string) {
             e.stopPropagation();
             activeRegion = region;
             region.play();
+        });
+        regions.on("region-created", (r) => {
+            if (r.end) {
+                r.setOptions({ start: r.start, end: r.start, drag: true });
+                r.element.style.borderLeft = `2px ${r.color} solid`;
+                r.element.style.backgroundColor = "";
+                setText();
+            }
         });
         regions.on("region-updated", () => {
             setText();
