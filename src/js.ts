@@ -1773,7 +1773,7 @@ async function showLisent(text: string) {
             .filter(Boolean);
         for (let i = 0; i < nl.length; i++) {
             const element = nl[i];
-            if ((element.match(/\W/g) || []).length <= 3) {
+            if ((element.trim().match(/\s/g) || []).length <= 3) {
                 // 简单词，如thus，for instance，in my opinion等，
                 // 一般向前合并，如too，such as a,b,c，如果前面没有向后合并
                 if (nl[i - 1]) {
