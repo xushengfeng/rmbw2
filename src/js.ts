@@ -46,6 +46,8 @@ import recume_svg from "../assets/icons/recume.svg";
 import add_svg from "../assets/icons/add.svg";
 import exTrans_svg from "../assets/icons/exTrans.svg";
 import eye_svg from "../assets/icons/eye.svg";
+import mic_svg from "../assets/icons/mic.svg";
+import pause_svg from "../assets/icons/pause.svg";
 import style_svg from "../assets/icons/style.svg";
 import font_small_svg from "../assets/icons/font_small.svg";
 import font_large_svg from "../assets/icons/font_large.svg";
@@ -1806,7 +1808,7 @@ async function showLisent(text: string) {
                             runTTS(s);
                         }),
                     button()
-                        .add(iconEl(recume_svg))
+                        .add(iconEl(more_svg))
                         .on("click", () => {
                             showRecord(s);
                         }),
@@ -2013,18 +2015,18 @@ async function showRecord(text: string) {
 
     const recordWs = wss(recordX.el, "");
 
-    const recordB = button().add("+");
+    const recordB = button().add(iconEl(mic_svg));
     let startR = false;
 
     const record = RecordPlugin.create({ renderRecordedAudio: false });
     recordB.on("click", async () => {
         if (startR) {
             stopR();
-            recordB.clear().add("+");
+            recordB.clear().add(iconEl(mic_svg));
         } else {
             startR = true;
             await record.startRecording();
-            recordB.clear().add("0");
+            recordB.clear().add(iconEl(pause_svg));
         }
     });
     function stopR() {
