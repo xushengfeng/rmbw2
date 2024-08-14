@@ -1855,7 +1855,7 @@ async function showRecord(text: string) {
     const d = el("dialog") as HTMLDialogElement;
     dialogX(d);
 
-    const textEl = txt(text);
+    const textEl = p(text);
 
     const x = view().style({ width: "80dvw" });
     const recordX = view().style({ width: "80dvw" });
