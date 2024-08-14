@@ -2002,6 +2002,9 @@ async function showRecord(text: string) {
         ws.on("interaction", (e) => {
             ws.play();
         });
+        ws.on("finish", () => {
+            ws.setTime(0);
+        });
 
         return { ws, regions };
     }
