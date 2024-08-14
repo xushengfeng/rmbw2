@@ -1988,10 +1988,11 @@ async function showRecord(text: string) {
     recordB.on("click", async () => {
         if (startR) {
             stopR();
+            recordB.clear().add("+");
         } else {
             startR = true;
             await record.startRecording();
-            recordB.add("0");
+            recordB.clear().add("0");
         }
     });
     function stopR() {
