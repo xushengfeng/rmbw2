@@ -1999,7 +1999,8 @@ async function showRecord(text: string) {
     }
     record.on("record-end", (blob) => {
         const recordedUrl = URL.createObjectURL(blob);
-        recordWs.setOptions({ url: recordedUrl });
+        recordWs.empty();
+        recordWs.load(recordedUrl);
     });
 
     d.append(
