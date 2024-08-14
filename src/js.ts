@@ -2,7 +2,7 @@
 
 import { el, setStyle } from "redom";
 
-import { ele, view, pack, frame, a, txt, p, trackPoint, textarea, button, type ElType, input } from "dkh-ui";
+import { ele, view, pack, frame, a, txt, p, trackPoint, textarea, button, type ElType, input, spacer } from "dkh-ui";
 
 import localforage from "localforage";
 import { extendPrototype } from "localforage-setitems";
@@ -26,6 +26,7 @@ import spark from "spark-md5";
 import WaveSurfer from "wavesurfer.js";
 import Spectrogram from "wavesurfer.js/dist/plugins/spectrogram";
 import RegionsPlugin from "wavesurfer.js/dist/plugins/regions";
+import RecordPlugin from "wavesurfer.js/dist/plugins/record";
 
 import ai_svg from "../assets/icons/ai.svg";
 import pen_svg from "../assets/icons/pen.svg";
@@ -1854,93 +1855,138 @@ async function showRecord(text: string) {
     const textEl = txt(text);
 
     const x = view().style({ width: "80dvw" });
+    const recordX = view().style({ width: "80dvw" });
 
     d.append(textEl.el);
     d.append(x.el);
+    d.append(recordX.el);
 
     const tts = await getTTS(text);
 
-    const regions = RegionsPlugin.create();
-    const ws = WaveSurfer.create({
-        container: x.el,
-        waveColor: "#999",
-        progressColor: "#222",
-        url: tts.url,
-        sampleRate: 22050,
-        plugins: [regions],
-        backend: "WebAudio",
-    });
+    function wss(el: HTMLElement, url: string, r?: typeof tts.metadata) {
+        const regions = RegionsPlugin.create();
+        const ws = WaveSurfer.create({
+            container: el,
+            waveColor: "#999",
+            progressColor: "#222",
+            url: url,
+            sampleRate: 22050,
+            plugins: [regions],
+            backend: "WebAudio",
+            minPxPerSec: 200,
+        });
 
-    ws.on("decode", () => {
-        const peaks = ws.exportPeaks()[0];
-        const i = peaks.findIndex((i) => i > 0);
-        console.log(i, peaks);
-        const startOffset = ws.getDuration() * (i / peaks.length);
+        ws.on("decode", () => {
+            const peaks = ws.exportPeaks()[0];
+            const i = peaks.findIndex((i) => i > 0);
+            console.log(i, peaks);
+            const startOffset = ws.getDuration() * (i / peaks.length);
 
-        const main: { start: number; end: number; t: string }[] = [];
-        const dT = 1000 * 1000 * 10;
-        const data = tts.metadata.filter((i) => i.Type === "WordBoundary");
-        let t: typeof tts.metadata = [];
-        for (const d of data) {
-            if (d.Data.Duration / dT < 0.2 && data.indexOf(d) < data.length - 1) {
-                t.push(d);
-            } else {
-                if (t.length > 0) {
+            const main: { start: number; end: number; t: string }[] = [];
+            const dT = 1000 * 1000 * 10;
+            if (!r) return;
+            const data = r.filter((i) => i.Type === "WordBoundary");
+            let t: typeof tts.metadata = [];
+            for (const d of data) {
+                if (d.Data.Duration / dT < 0.2 && data.indexOf(d) < data.length - 1) {
+                    t.push(d);
+                } else {
+                    if (t.length > 0) {
+                        main.push({
+                            start: t[0].Data.Offset / dT,
+                            end: (t.at(-1).Data.Offset + t.at(-1).Data.Duration) / dT,
+                            t: t.map((i) => i.Data.text.Text).join(" "),
+                        });
+                        t = [];
+                    }
                     main.push({
-                        start: t[0].Data.Offset / dT,
-                        end: (t.at(-1).Data.Offset + t.at(-1).Data.Duration) / dT,
-                        t: t.map((i) => i.Data.text.Text).join(" "),
+                        start: d.Data.Offset / dT,
+                        end: (d.Data.Offset + d.Data.Duration) / dT,
+                        t: d.Data.text.Text,
                     });
-                    t = [];
                 }
-                main.push({
-                    start: d.Data.Offset / dT,
-                    end: (d.Data.Offset + d.Data.Duration) / dT,
-                    t: d.Data.text.Text,
+            }
+            console.log(main);
+
+            for (const d of main) {
+                regions.addRegion({
+                    start: d.start + startOffset,
+                    end: d.end + startOffset,
+                    content: d.t,
                 });
             }
-        }
-        console.log(main);
+        });
 
-        for (const d of main) {
-            regions.addRegion({
-                start: d.start + startOffset,
-                end: d.end + startOffset,
-                content: d.t,
-            });
+        ws.registerPlugin(
+            Spectrogram.create({
+                colorMap: "gray",
+                height: 200,
+                splitChannels: true,
+            }),
+        );
+
+        regions.enableDragSelection({
+            color: "rgba(0, 0, 0, 0.1)",
+        });
+
+        let activeRegion = false;
+        regions.on("region-out", (region) => {
+            if (activeRegion) {
+                ws.pause();
+                activeRegion = false;
+            }
+        });
+        regions.on("region-clicked", (region, e) => {
+            e.stopPropagation();
+            activeRegion = true;
+            region.play();
+        });
+        regions.on("region-double-clicked", (r) => {
+            r.remove();
+        });
+        ws.on("interaction", (e) => {
+            ws.play();
+        });
+
+        return ws;
+    }
+
+    wss(x.el, tts.url, tts.metadata);
+
+    const recordWs = wss(recordX.el, "");
+
+    const recordB = button().add("+");
+    let startR = false;
+
+    const record = RecordPlugin.create({ renderRecordedAudio: false });
+    recordB.on("click", async () => {
+        if (startR) {
+            stopR();
+        } else {
+            startR = true;
+            await record.startRecording();
+            recordB.add("0");
         }
     });
+    function stopR() {
+        record.stopRecording();
+    }
+    record.on("record-end", (blob) => {
+        const recordedUrl = URL.createObjectURL(blob);
+        recordWs.setOptions({ url: recordedUrl });
+    });
 
-    ws.registerPlugin(
-        Spectrogram.create({
-            colorMap: "gray",
-            height: 200,
-            splitChannels: true,
-        }),
+    d.append(
+        view("x").add([
+            recordB,
+            spacer(),
+            button()
+                .add(iconEl(close_svg))
+                .on("click", () => {
+                    d.close();
+                }),
+        ]).el,
     );
-
-    regions.enableDragSelection({
-        color: "rgba(255, 0, 0, 0.1)",
-    });
-
-    let activeRegion = false;
-    regions.on("region-out", (region) => {
-        if (activeRegion) {
-            ws.pause();
-            activeRegion = false;
-        }
-    });
-    regions.on("region-clicked", (region, e) => {
-        e.stopPropagation();
-        activeRegion = true;
-        region.play();
-    });
-    regions.on("region-double-clicked", (r) => {
-        r.remove();
-    });
-    ws.on("interaction", (e) => {
-        ws.play();
-    });
 }
 
 async function translateContext(p: HTMLElement) {
