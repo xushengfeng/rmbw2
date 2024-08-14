@@ -29,6 +29,7 @@
         "localforage-setitems": "^1.4.0",
         "markdown-it": "^14.0.0",
         "msedge-tts-browserify": "^1.4.0",
+        "pitchfinder": "^2.3.2",
         "redom": "^4.0.0",
         "sortablejs": "^1.15.2",
         "spark-md5": "^3.0.2",

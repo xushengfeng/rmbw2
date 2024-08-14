@@ -24,9 +24,10 @@ import { type Card, createEmptyCard, generatorParameters, FSRS, Rating, State } 
 import spark from "spark-md5";
 
 import WaveSurfer from "wavesurfer.js";
-import Spectrogram from "wavesurfer.js/dist/plugins/spectrogram";
 import RegionsPlugin from "wavesurfer.js/dist/plugins/regions";
 import RecordPlugin from "wavesurfer.js/dist/plugins/record";
+
+import Pitchfinder from "pitchfinder";
 
 import ai_svg from "../assets/icons/ai.svg";
 import pen_svg from "../assets/icons/pen.svg";
@@ -1867,10 +1868,10 @@ async function showRecord(text: string) {
         const regions = RegionsPlugin.create();
         const ws = WaveSurfer.create({
             container: el,
-            waveColor: "#999",
-            progressColor: "#222",
+            waveColor: "#ccc",
+            progressColor: "#999",
             url: url,
-            sampleRate: 22050,
+            sampleRate: 11025,
             plugins: [regions],
             backend: "WebAudio",
             minPxPerSec: 200,
@@ -1915,15 +1916,40 @@ async function showRecord(text: string) {
                     content: d.t,
                 });
             }
-        });
 
-        ws.registerPlugin(
-            Spectrogram.create({
-                colorMap: "gray",
-                height: 200,
-                splitChannels: true,
-            }),
-        );
+            const peakss = ws.getDecodedData().getChannelData(0);
+            const { frequencies, baseFrequency } = findPitch(peakss, ws.options.sampleRate);
+
+            // Render the frequencies on a canvas
+            const pitchUpColor = "#385587";
+            const pitchDownColor = "#C26351";
+            const height = 100;
+
+            const canvas = document.createElement("canvas");
+            const ctx = canvas.getContext("2d");
+            canvas.width = frequencies.length;
+            canvas.height = height;
+            canvas.style.width = "100%";
+            canvas.style.height = "100%";
+            canvas.style.zIndex = "2";
+
+            // Each frequency is a point whose Y position is the frequency and X position is the time
+            const pointSize = devicePixelRatio;
+            let prevY = 0;
+            frequencies.forEach((frequency, index) => {
+                if (!frequency) return;
+                const y = Math.round(height - (frequency / (baseFrequency * 2)) * height);
+                ctx.fillStyle = y > prevY ? pitchDownColor : pitchUpColor;
+                ctx.fillRect(index, y, pointSize, pointSize);
+                prevY = y;
+            });
+
+            // Add the canvas to the waveform container
+            // @ts-ignore
+            ws.renderer.getWrapper().appendChild(canvas);
+            // Remove the canvas when a new audio is loaded
+            ws.once("load", () => canvas.remove());
+        });
 
         regions.enableDragSelection({
             color: "rgba(0, 0, 0, 0.1)",
@@ -1987,6 +2013,39 @@ async function showRecord(text: string) {
                 }),
         ]).el,
     );
+}
+
+function findPitch(peaks: Float32Array, sampleRate: number) {
+    const algo = "AMDF";
+    const detectPitch = Pitchfinder[algo]({ sampleRate });
+    const duration = peaks.length / sampleRate;
+    const bpm = peaks.length / duration / 60;
+
+    const frequencies = Pitchfinder.frequencies(detectPitch, peaks, {
+        tempo: bpm,
+        quantization: bpm,
+    });
+
+    // Find the baseline frequency (the value that appears most often)
+    const frequencyMap = {};
+    let maxAmount = 0;
+    let baseFrequency = 0;
+    for (let frequency of frequencies) {
+        if (!frequency) continue;
+        const tolerance = 10;
+        frequency = Math.round(frequency * tolerance) / tolerance;
+        if (!frequencyMap[frequency]) frequencyMap[frequency] = 0;
+        frequencyMap[frequency] += 1;
+        if (frequencyMap[frequency] > maxAmount) {
+            maxAmount = frequencyMap[frequency];
+            baseFrequency = frequency;
+        }
+    }
+
+    return {
+        frequencies,
+        baseFrequency,
+    };
 }
 
 async function translateContext(p: HTMLElement) {

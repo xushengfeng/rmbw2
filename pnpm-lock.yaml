@@ -50,6 +50,9 @@ importers:
       msedge-tts-browserify:
         specifier: ^1.4.0
         version: 1.4.0
+      pitchfinder:
+        specifier: ^2.3.2
+        version: 2.3.2
       redom:
         specifier: ^4.0.0
         version: 4.0.0
@@ -836,6 +839,9 @@ packages:
   pinkie@2.0.4:
     resolution: {integrity: sha512-MnUuEycAemtSaeFSjXKW/aroV7akBbY+Sv+RkyqFjgAe73F+MR0TBWKBRDkmfWq/HiFmdavfZ1G7h4SPZXaCSg==}
     engines: {node: '>=0.10.0'}
+
+  pitchfinder@2.3.2:
+    resolution: {integrity: sha512-Mn3jcp/y1xmAUKI1lMIU8bIqE9AcSuKMFuvJI9C/36oNwVklUF167o0TH/H5fwxuSIaz+XfBD6vd2G5lnddpzw==}
 
   postcss@8.4.35:
     resolution: {integrity: sha512-u5U8qYpBCpN13BsiEB0CbR1Hhh4Gc0zLFuedrHJKMctHCHAGrMdG0PRM/KErzAL3CU6/eckEtmHNB3x6e3c0vA==}
@@ -1702,6 +1708,8 @@ snapshots:
       pinkie: 2.0.4
 
   pinkie@2.0.4: {}
+
+  pitchfinder@2.3.2: {}
 
   postcss@8.4.35:
     dependencies:
