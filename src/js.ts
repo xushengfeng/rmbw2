@@ -1862,6 +1862,13 @@ async function showRecord(text: string) {
 
     d.append(textEl.el);
     d.append(x.el);
+    d.append(
+        button()
+            .add("+")
+            .on("click", () => {
+                playWs.regions.addRegion({ start: playWs.ws.getDuration() / 2 });
+            }).el,
+    );
     d.append(recordX.el);
 
     const tts = await getTTS(text);
@@ -1954,10 +1961,6 @@ async function showRecord(text: string) {
             });
         });
 
-        regions.enableDragSelection({
-            resize: false,
-        });
-
         let activeRegion = null;
         regions.on("region-in", (region) => {
             if (activeRegion && region !== activeRegion) {
@@ -1969,14 +1972,6 @@ async function showRecord(text: string) {
             e.stopPropagation();
             activeRegion = region;
             region.play();
-        });
-        regions.on("region-created", (r) => {
-            if (r.end) {
-                r.setOptions({ start: r.start, end: r.start, drag: true });
-                r.element.style.borderLeft = `2px ${r.color} solid`;
-                r.element.style.backgroundColor = "";
-                setText();
-            }
         });
         regions.on("region-updated", () => {
             setText();
@@ -2004,17 +1999,14 @@ async function showRecord(text: string) {
                 rs[x.indexOf(i)].setContent(t);
             }
         }
-        regions.on("region-double-clicked", (r) => {
-            r.remove();
-        });
         ws.on("interaction", (e) => {
             ws.play();
         });
 
-        return ws;
+        return { ws, regions };
     }
 
-    wss(x.el, tts.url, tts.metadata);
+    const playWs = wss(x.el, tts.url, tts.metadata);
 
     const recordWs = wss(recordX.el, "");
 
@@ -2037,8 +2029,8 @@ async function showRecord(text: string) {
     }
     record.on("record-end", (blob) => {
         const recordedUrl = URL.createObjectURL(blob);
-        recordWs.empty();
-        recordWs.load(recordedUrl);
+        recordWs.ws.empty();
+        recordWs.ws.load(recordedUrl);
     });
 
     d.append(
