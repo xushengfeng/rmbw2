@@ -1911,9 +1911,11 @@ async function showRecord(text: string) {
                     start: i.start,
                 });
             }
+        });
 
-            const peakss = ws.getDecodedData().getChannelData(0);
-            const { frequencies, baseFrequency } = findPitch(peakss, ws.options.sampleRate);
+        ws.on("decode", () => {
+            const peaks = ws.getDecodedData().getChannelData(0);
+            const { frequencies, baseFrequency } = findPitch(peaks, ws.options.sampleRate);
 
             // Render the frequencies on a canvas
             const pitchUpColor = "#385587";
@@ -1985,6 +1987,7 @@ async function showRecord(text: string) {
         });
 
         function setText() {
+            if (!r) return;
             const x: (typeof tts.metadata)[] = [];
             const rs = regions.getRegions().toSorted((a, b) => a.start - b.start);
             const data = r.filter((i) => i.Type === "WordBoundary").toReversed();
