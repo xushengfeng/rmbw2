@@ -2162,6 +2162,19 @@ async function exTrans(pEl: HTMLElement, i: number, book: book) {
             diff: button().add(iconEl(eye_svg)),
             ai: button().add(iconEl(ai_svg)),
             close: button().add(iconEl(close_svg)),
+            spellTip: {
+                _: button().add(iconEl(more_svg)),
+                spellTipList: view("y").style({
+                    position: "absolute",
+                    top: "0",
+                    left: "100%",
+                    display: "none",
+                    background: "var(--bg)",
+                    "border-radius": "2px",
+                    padding: "2px",
+                    gap: "2px",
+                }),
+            },
             sum: txt("")
                 .bindSet((v: number, el) => {
                     el.innerText = `${(v * 100).toFixed(1)}%`;
@@ -2273,6 +2286,48 @@ async function exTrans(pEl: HTMLElement, i: number, book: book) {
                 .on("click", () => el.remove()),
         ]).el;
         putToast(el, 0);
+    });
+
+    f.els.spellTip.on("click", (e, tel) => {
+        if (e.target !== tel.el) return;
+        const list = f.els.spellTipList;
+        if (list.el.style.display === "flex") {
+            list.style({ display: "none" });
+        } else {
+            list.style({ display: "flex" });
+            list.clear();
+            const textEl = f.els.text.el;
+            const nowI = textEl.selectionStart;
+            const x = Array.from(
+                new Segmenter(book.language, { granularity: book.wordSplit || "word" }).segment(textEl.value),
+            ).find((i) => i.index <= nowI && nowI <= i.index + i.segment.length);
+            console.log(x);
+            if (!x || !x.isWordLike) return;
+            const fuse = new Fuse(
+                segmenter.map((i) => i.segment),
+                {
+                    includeMatches: true,
+                    findAllMatches: true,
+                    useExtendedSearch: true,
+                    includeScore: true,
+                },
+            );
+            const fr = fuse.search(x.segment);
+            console.table(fr);
+            list.add(
+                fr.map((i) =>
+                    view()
+                        .add(i.item)
+                        .on("click", () => {
+                            textEl.setSelectionRange(x.index, x.index + x.segment.length);
+                            textEl.setRangeText(i.item);
+                            list.style({ display: "none" });
+                            // todo 拼写diff动画
+                            // todo 拼写卡片
+                        }),
+                ),
+            );
+        }
     });
 
     const text = span.innerText;
