@@ -4656,12 +4656,13 @@ reviewReflashEl.parentElement.append(spellIgnore);
 const reviewViewEl = document.getElementById("review_view");
 reviewViewEl.lang = studyLan;
 
-let reviewSortType: "正常" | "学习" | "紧急" | "随机" = "正常";
+let reviewSortType: "正常" | "学习" | "学习1" | "紧急" | "随机" = "正常";
 const reviewSortEl = el(
     "select",
     [
         el("option", "正常", { value: "正常" }),
-        el("option", "学习", { value: "学习" }),
+        el("option", "学习 从旧开始", { value: "学习" }),
+        el("option", "学习 趁热打铁", { value: "学习1" }),
         el("option", "紧急", { value: "紧急" }),
         el("option", "随机", { value: "随机" }),
     ],
@@ -4956,6 +4957,8 @@ async function getReviewDue(type: review) {
     }
     for (const x of [wordList, spellList, sentenceList]) x.sort((a, b) => a.card.due.getTime() - b.card.due.getTime());
     if (reviewSortType === "学习")
+        for (const x of [wordList, spellList, sentenceList]) x.sort((a, b) => (a.card.state === State.New ? 1 : -1));
+    if (reviewSortType === "学习1")
         for (const x of [wordList, spellList, sentenceList]) x.sort((a, b) => (a.card.state === State.New ? -1 : 1));
     if (reviewSortType === "紧急") {
         wordList.sort(
