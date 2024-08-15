@@ -4909,7 +4909,10 @@ async function getFutureReviewDue(days: number, ...types: review[]) {
         await wordsStore.iterate((v: record, k) => {
             if (filterWithScope(k, wordsScope)) {
                 for (const m of v.means) {
-                    if (dueL.has(m.card_id) && m.contexts.find((b) => ws.books.includes(b.source.book)))
+                    if (
+                        dueL.has(m.card_id) &&
+                        (ws.books.length === 0 || m.contexts.find((b) => ws.books.includes(b.source.book)))
+                    )
                         wordList.push({ id: m.card_id, card: dueL.get(m.card_id) });
                 }
             }
@@ -5723,7 +5726,11 @@ async function renderCardDueAll() {
     const sentenceDue: string[] = [];
     await wordsStore.iterate((v: record, k: string) => {
         if (!filterWithScope(k, wordsScope.words)) return;
-        if (!v.means.find((i) => i.contexts.find((x) => wordsScope.books.includes(x.source.book)))) return;
+        if (
+            wordsScope.books.length !== 0 &&
+            !v.means.find((i) => i.contexts.find((x) => wordsScope.books.includes(x.source.book)))
+        )
+            return;
         for (const m of v.means) {
             wordDue.push(m.card_id);
         }
