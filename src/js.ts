@@ -99,7 +99,7 @@ const setting = localforage.createInstance({
 });
 
 function getSetting(p: string) {
-    return JSON.parse(localStorage.getItem(`setting/${p}`)) as string;
+    return JSON.parse(localStorage.getItem(`setting/${p}`));
 }
 
 /************************************UI */
@@ -3723,10 +3723,10 @@ async function showDicEl(mainTextEl: HTMLTextAreaElement, word: string, x: numbe
     dialogX(div);
 }
 
-async function onlineDicL(word: string) {
+function onlineDicL(word: string) {
     const lan = studyLan;
     const onlineList = el("div", { class: "online_dic" });
-    let l: onlineDicsType = await setting.getItem(onlineDicsPath);
+    let l: onlineDicsType = getSetting(onlineDicsPath);
     l = l.filter((i) => !i.lan || i.lan === lan);
     for (const i of l) {
         onlineList.append(el("a", i.name, { href: i.url.replace("%s", word), target: "_blank" }));
@@ -5248,18 +5248,19 @@ async function showWordReview(x: { id: string; card: Card }, isAi: boolean) {
         const d = (await wordsStore.getItem(word)) as record;
         for (const i of d.means) {
             if (i.card_id === x.id) {
-                const div = el("div");
-                div.innerText = i.text;
-                dic.innerHTML = "";
-                dic.append(div);
+                const div = view().add(i.text);
+                dic.clear();
+                dic.add(onlineDicL(word));
+                dic.add(div);
+                break;
             }
         }
     }
-    const dic = el("div");
-    dic.onclick = reviewHotkey.show.f = () => {
+    reviewHotkey.show.f = () => {
         showAnswer();
         buttons.finish();
     };
+    const dic = view().on("click", reviewHotkey.show.f);
     const buttons = getReviewCardButtons(x.id, x.card, context.innerText, async (rating) => {
         if (hasShowAnswer) {
             const next = await nextDue(reviewType);
@@ -5271,7 +5272,7 @@ async function showWordReview(x: { id: string; card: Card }, isAi: boolean) {
 
     const wordEl = el("div", wordid, { class: "main_word" });
 
-    div.append(wordEl, context, dic, buttons.buttons);
+    div.append(wordEl, context, dic.el, buttons.buttons);
     div.classList.add("review_word");
     reviewViewEl.innerHTML = "";
     reviewViewEl.append(div);
