@@ -5282,7 +5282,7 @@ async function showWordReview(x: { id: string; card: Card }, isAi: boolean) {
         const d = (await wordsStore.getItem(word)) as record;
         for (const i of d.means) {
             if (i.card_id === x.id) {
-                const div = view().add(i.text);
+                const div = view().attr({ innerText: i.text });
                 dic.clear();
                 dic.add(onlineDicL(word));
                 dic.add(div);
