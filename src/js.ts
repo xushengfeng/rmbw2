@@ -4960,7 +4960,8 @@ async function getReviewDue(type: review) {
     }
     for (const x of [wordList, spellList, sentenceList]) x.sort((a, b) => a.card.due.getTime() - b.card.due.getTime());
     if (reviewSortType === "学习")
-        for (const x of [wordList, spellList, sentenceList]) x.sort((a, b) => (a.card.state === State.New ? 1 : -1));
+        for (const x of [wordList, spellList, sentenceList])
+            x.reverse().sort((a, b) => (a.card.state === State.New ? -1 : 1));
     if (reviewSortType === "学习1")
         for (const x of [wordList, spellList, sentenceList]) x.sort((a, b) => (a.card.state === State.New ? -1 : 1));
     if (reviewSortType === "紧急") {
@@ -5140,6 +5141,7 @@ async function showReview(x: { id: string; card: Card }, type: review) {
         return;
     }
     const isAi = reviewAi.checked;
+    console.log(x);
     if (type === "word") {
         showWordReview(x, isAi);
     }
