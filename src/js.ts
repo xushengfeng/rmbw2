@@ -2327,12 +2327,46 @@ async function exTrans(pEl: HTMLElement, i: number, book: book) {
                 fr.map((i) =>
                     view()
                         .add(i.item)
-                        .on("click", () => {
+                        .on("click", async () => {
                             textEl.setSelectionRange(x.index, x.index + x.segment.length);
                             textEl.setRangeText(i.item);
                             list.style({ display: "none" });
-                            // todo 拼写diff动画
-                            // todo 拼写卡片
+                            const xx = frame("ex_diff", {
+                                _: view(),
+                                diff: {
+                                    _: view("x"),
+                                    diffE: spellDiffWord(i.item, x.segment),
+                                    reDiff: button().on("click", () => {
+                                        xx.els.diffE.el.innerHTML = spellDiffWord(i.item, x.segment).el.innerHTML;
+                                        spellErrorAnimate(xx.els.diffE);
+                                    }),
+                                },
+                                add: view(),
+                            });
+                            let cardId = i.item.toLowerCase();
+                            let card = (await spellStore.getItem(cardId)) as Card;
+                            if (!card) {
+                                cardId = lemmatizer(cardId);
+                                card = (await spellStore.getItem(cardId)) as Card;
+                            }
+                            interModal(xx.el, [
+                                card
+                                    ? [
+                                          button()
+                                              .add(`标记 ${cardId} 为错误`)
+                                              .on("click", () => {
+                                                  setSpellCard(cardId, card, Rating.Again, 1000);
+                                              }),
+                                          "ok",
+                                      ]
+                                    : null,
+                                [
+                                    button().add(iconEl(close_svg)).style({ width: "var(--size0)", "flex-shrink": 0 }),
+                                    "cancel",
+                                ],
+                            ]);
+
+                            spellErrorAnimate(xx.els.diffE);
                         }),
                 ),
             );
@@ -5405,12 +5439,12 @@ async function showSpellReview(x: { id: string; card: Card }) {
         //错误归位
         if (inputWord.length === maxWidth && !wordSpells.includes(inputWord)) {
             input.innerHTML = "";
-            const diffEl = await spellDiffWord(word, inputWord);
-            input.append(diffEl);
+            const diffEl = spellDiffWord(word, inputWord);
+            input.append(diffEl.el);
             input.append(
                 el("button", {
-                    onclick: async () => {
-                        diffEl.innerHTML = (await spellDiffWord(word, inputWord)).innerHTML;
+                    onclick: () => {
+                        diffEl.el.innerHTML = spellDiffWord(word, inputWord).el.innerHTML;
                         spellErrorAnimate(diffEl);
                     },
                 }),
@@ -5494,10 +5528,10 @@ async function showSpellReview(x: { id: string; card: Card }) {
     inputContent("");
 }
 
-async function spellDiffWord(rightWord: string, wrongWord: string) {
-    const div = el("div");
+function spellDiffWord(rightWord: string, wrongWord: string) {
+    const div = view().class("diff");
     const diff = dmp.diff_main(wrongWord, rightWord);
-    div.append(getDiffWord(diff));
+    div.el.append(getDiffWord(diff));
     return div;
 }
 
@@ -5546,10 +5580,11 @@ async function spellAnimate(el: HTMLElement) {
     }
 }
 
-function spellErrorAnimate(pel: HTMLElement) {
-    for (let i = 0; i < pel.childNodes.length; i++) {
-        if (pel.childNodes[i].nodeName !== "SPAN") continue;
-        const el = pel.childNodes[i] as HTMLSpanElement;
+function spellErrorAnimate(pel: ElType<HTMLElement>) {
+    const childNodes = pel.el.childNodes;
+    for (let i = 0; i < childNodes.length; i++) {
+        if (childNodes[i].nodeName !== "SPAN") continue;
+        const el = childNodes[i] as HTMLSpanElement;
         const w = `${el.getBoundingClientRect().width}px`;
         if (el.classList.contains("diff_add")) el.style.width = "0";
         if (el.classList.contains("diff_remove")) el.style.width = w;

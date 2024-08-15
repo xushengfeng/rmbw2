@@ -1104,44 +1104,45 @@ div:has(> .translate) > :not(.translate) {
     gap: 4px;
 }
 
+.diff {
+    display: flex;
+    & > span {
+        display: inline-block;
+        overflow: hidden;
+        flex-shrink: 0;
+    }
+    & > .diff_exchange1 {
+        display: inline-flex;
+        flex-direction: row-reverse;
+        & > span {
+            color: var(--right-c);
+            border: none;
+        }
+    }
+    & .diff_add {
+        color: var(--right-c);
+    }
+    & .diff_remove {
+        color: var(--error-c);
+    }
+    & .diff_exchange {
+        color: var(--error-c);
+        & > span {
+            display: inline-block;
+        }
+        & > :nth-child(1) {
+            border-right: 1px solid var(--color);
+            border-top: 1px solid var(--color);
+        }
+        & > :nth-child(2) {
+            border-bottom: 1px solid var(--color);
+        }
+    }
+}
+
 .review_spell {
     flex-grow: 1;
     touch-action: none;
-    & div:has(> :is(.diff_add, .diff_remove, .diff_exchange, .diff_exchange1)) {
-        display: flex;
-        & > span {
-            display: inline-block;
-            overflow: hidden;
-            flex-shrink: 0;
-        }
-        & > .diff_exchange1 {
-            display: inline-flex;
-            flex-direction: row-reverse;
-            & > span {
-                color: var(--right-c);
-                border: none;
-            }
-        }
-        & .diff_add {
-            color: var(--right-c);
-        }
-        & .diff_remove {
-            color: var(--error-c);
-        }
-        & .diff_exchange {
-            color: var(--error-c);
-            & > span {
-                display: inline-block;
-            }
-            & > :nth-child(1) {
-                border-right: 1px solid var(--color);
-                border-top: 1px solid var(--color);
-            }
-            & > :nth-child(2) {
-                border-bottom: 1px solid var(--color);
-            }
-        }
-    }
     &:not([data-state="0"]) .mark_word {
         color: transparent;
     }
