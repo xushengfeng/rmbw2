@@ -480,7 +480,7 @@ body {
 .litle_progress {
     width: 180px;
     height: 8px;
-    background-color: #0002;
+    background-color: color-mix(in srgb, var(--color) 10%, transparent);
     position: relative;
     border-radius: 4px;
     overflow: hidden;
