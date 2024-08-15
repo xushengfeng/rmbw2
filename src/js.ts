@@ -124,59 +124,68 @@ document.body.addEventListener("pointerup", (e) => {
     }
 });
 
-function interModal(message?: string, iel?: HTMLElement, cancel?: boolean) {
-    const dialog = document.createElement("dialog");
-    dialog.className = "interModal";
-    const me = document.createElement("span");
-    const cancelEl = document.createElement("button");
-    cancelEl.innerText = "取消";
-    cancelEl.classList.add("cancel_b");
-    const okEl = document.createElement("button");
-    okEl.innerText = "确定";
-    okEl.classList.add("ok_b");
-    me.innerText = message ?? "";
-    dialog.append(me);
-    if (iel) {
-        dialog.append(iel);
-        iel.style.gridArea = "2 / 1 / 3 / 3";
+function interModal<el extends ElType<HTMLElement>, v>(
+    el: el,
+    buttons?: (ElType<HTMLButtonElement> | [ElType<HTMLButtonElement>, "cancel" | "ok"])[],
+    getV?: (el: el) => v,
+) {
+    const dialog = ele("dialog")
+        .class("interModal")
+        .on("close", () => dialog.el.remove());
+    dialog.add(el);
+    const buttonsEl = view("x");
+    let cancelEl: ElType<HTMLButtonElement>;
+    let okEl: ElType<HTMLButtonElement>;
+    for (const x of buttons || [
+        [button().add("取消"), "cancel"],
+        [button().add("确定"), "ok"],
+    ]) {
+        if (Array.isArray(x)) {
+            if (x[1] === "cancel") cancelEl = x[0];
+            if (x[1] === "ok") okEl = x[0];
+            buttonsEl.add(x[0]);
+        } else buttonsEl.add(x);
     }
-    if (cancel) dialog.append(cancelEl);
-    dialog.append(okEl);
-    document.body.append(dialog);
-    dialog.showModal();
-    return new Promise((re: (name: string | boolean) => void, rj) => {
-        okEl.onclick = () => {
-            re(
-                (iel as HTMLInputElement)?.value ||
-                    iel?.querySelector("input")?.value ||
-                    iel?.querySelector("textarea")?.value ||
-                    true,
-            );
-            dialog.close();
-        };
-        cancelEl.onclick = () => {
-            re(null);
-            dialog.close();
-        };
-        dialog.onclose = () => {
-            dialog.remove();
-        };
-        dialog.oncancel = () => {
-            re(null);
-        };
+    dialog.add(buttonsEl);
+    document.body.append(dialog.el);
+    dialog.el.showModal();
+    return new Promise((re: (name: { v: v; ok: boolean }) => void, rj) => {
+        if (okEl) {
+            okEl.on("click", () => {
+                re({ v: getV ? getV(el) : null, ok: true });
+                dialog.el.close();
+            });
+        }
+        if (cancelEl) {
+            cancelEl.on("click", () => {
+                re({ v: null, ok: false });
+                dialog.el.close();
+            });
+        }
+        dialog.on("cancel", () => {
+            re({ v: null, ok: false });
+        });
     });
 }
 
 async function alert(message: string) {
-    return await interModal(message, null);
+    return (await interModal(txt(message), [[button().add("确定"), "ok"]])).ok;
 }
 
 async function confirm(message: string) {
-    return Boolean(await interModal(message, null, true));
+    return (await interModal(txt(message))).ok;
 }
 
 async function prompt(message?: string, defaultValue?: string) {
-    return (await interModal(message, el("input", { value: defaultValue || "" }), true)) as string;
+    return (
+        await interModal(
+            view("y").add([txt(message), ele("input").attr({ value: defaultValue || "" })]),
+            null,
+            (el) => {
+                return el.el.querySelector("input").value;
+            },
+        )
+    ).v;
 }
 
 function dialogX(el: HTMLDialogElement) {
@@ -860,7 +869,7 @@ async function setSectionTitle(sid: string) {
         }),
     );
     titleEl.focus();
-    const nTitle = (await interModal("重命名章节标题", iel, true)) as string;
+    const nTitle = (await interModal(view().add(["重命名章节标题", iel]), null, () => titleEl.value)).v;
     if (!nTitle) return;
     const sectionId = sid;
     const section = await getSection(sectionId);
@@ -1533,7 +1542,7 @@ async function ignoredWordSpell(list: string[]) {
         return;
     }
     const iel = el("textarea", { value: flist.sort().join("\n"), style: { height: "200px" } });
-    const p = (await interModal("确定添加以下单词到拼写吗？", iel, true)) as string;
+    const p = (await interModal(view().add(["确定添加以下单词到拼写吗？", iel]), null, () => iel.value)).v;
     if (!p) return;
     const rlist = randomList(p.split("\n"));
     const now = time() - timeD.d(5);
