@@ -1891,7 +1891,6 @@ async function showRecord(text: string) {
             url: url,
             sampleRate: 11025,
             plugins: [regions],
-            backend: "WebAudio",
             minPxPerSec: 200,
         });
 
@@ -1971,15 +1970,25 @@ async function showRecord(text: string) {
         });
 
         let activeRegion = null;
+        let lastWord = "";
         regions.on("region-in", (region) => {
             if (activeRegion && region !== activeRegion) {
                 ws.pause();
                 activeRegion = null;
+                ws.setPlaybackRate(1);
             }
         });
         regions.on("region-clicked", (region, e) => {
             e.stopPropagation();
             activeRegion = region;
+            const thisWord = region.content.innerText;
+            if (thisWord === lastWord) {
+                ws.setPlaybackRate(0.5, true);
+                lastWord = "";
+            } else {
+                ws.setPlaybackRate(1);
+                lastWord = thisWord;
+            }
             region.play();
         });
         regions.on("region-updated", () => {
