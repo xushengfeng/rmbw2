@@ -974,6 +974,8 @@ div:has(> .translate) > :not(.translate) {
             overflow: hidden;
             text-overflow: ellipsis;
             max-width: 100%;
+            min-height: 1rem;
+            min-width: 2ch;
         }
     }
 }
