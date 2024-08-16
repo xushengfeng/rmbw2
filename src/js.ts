@@ -590,6 +590,9 @@ async function getOnlineBooks() {
         .then((j) => {
             showOnlineBooks(j.books);
             console.log(j);
+        })
+        .catch((error) => {
+            showOnlineBooks(null);
         });
 }
 
@@ -610,6 +613,10 @@ async function showOnlineBooks(
 ) {
     onlineBookEl.innerHTML = "";
     let grid: HTMLElement;
+
+    if (!books) {
+        onlineBookEl.append(p("无法访问在线书库\n请检查您的网络，以及软件在线书库的设置").el);
+    }
 
     const l = selectBook(books, async (list) => {
         grid?.remove();
