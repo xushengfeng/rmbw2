@@ -386,7 +386,7 @@ body {
         border: none;
         width: 100%;
 
-        & > p {
+        & > * {
             line-height: var(--line-height);
             transition: var(--transition);
         }

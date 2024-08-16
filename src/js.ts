@@ -1652,6 +1652,11 @@ async function showNormalBook(book: book, s: section) {
             bookContentEl.append(pel);
             continue;
         }
+        if (paragraph[0][0].text === ">") {
+            pel = el("blockquote");
+            bookContentEl.append(pel);
+            t = 1;
+        }
 
         for (const si in paragraph) {
             const sen = paragraph[si];
