@@ -317,7 +317,7 @@ booksEl.append(
                 booksEl.classList.add("show_online_book");
             },
         }),
-        el("div", "词典", {
+        el("div", "我的词典", {
             onclick: () => {
                 showBook(coreWordBook);
                 booksEl.close();
