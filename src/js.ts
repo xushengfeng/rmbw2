@@ -5847,6 +5847,11 @@ async function renderCardDueAll() {
     const wordDue: string[] = [];
     const spellDue: number[] = [];
     const sentenceDue: string[] = [];
+
+    const wordP: cardPercent = { "0": 0, "1": 0, "2": 0, "3": 0 };
+    const sentenceP: cardPercent = { "0": 0, "1": 0, "2": 0, "3": 0 };
+    const spellP: cardPercent = { "0": 0, "1": 0, "2": 0, "3": 0 };
+
     await wordsStore.iterate((v: record, k: string) => {
         if (!filterWithScope(k, wordsScope.words)) return;
         if (
@@ -5861,6 +5866,7 @@ async function renderCardDueAll() {
     await spellStore.iterate((v: Card, k: string) => {
         if (!filterWithScope(k, wordsScope.words)) return;
         spellDue.push(v.due.getTime());
+        spellP[v.state]++;
     });
     await card2sentence.iterate((v: record2, k: string) => {
         sentenceDue.push(k);
@@ -5870,17 +5876,22 @@ async function renderCardDueAll() {
     await cardsStore.iterate((v: Card, k) => {
         if (wordDue.includes(k)) {
             wordDue1.push(v.due.getTime());
+            wordP[v.state]++;
             return;
         }
         if (sentenceDue.includes(k)) {
             sentenceDue1.push(v.due.getTime());
+            sentenceP[v.state]++;
         }
     });
 
-    cardDue.el.innerHTML = "";
-    cardDue.add({ el: renderCardDue("单词", wordDue1) });
-    cardDue.add({ el: renderCardDue("拼写", spellDue) });
-    cardDue.add({ el: renderCardDue("句子", sentenceDue1) });
+    cardDue.clear();
+    cardDue.add(renderCardDue("单词", wordDue1));
+    cardDue.add(renderCardPercent(wordP));
+    cardDue.add(renderCardDue("拼写", spellDue));
+    cardDue.add(renderCardPercent(spellP));
+    cardDue.add(renderCardDue("句子", sentenceDue1));
+    cardDue.add(renderCardPercent(sentenceP));
 }
 
 async function renderCharts() {
@@ -5940,6 +5951,17 @@ function renderCardDue(text: string, data: number[]) {
     const f = el("div");
     f.append(text, String(count), pc.el);
     return f;
+}
+
+type cardPercent = Record<State, number>;
+
+function renderCardPercent(p: cardPercent) {
+    const sum = Object.values(p).reduce((a, b) => a + b, 0);
+    const el = view("x").class("cardPercent");
+    for (const i of Object.keys(p)) {
+        el.add(view().style({ width: `${(p[i] / sum) * 100}%` }));
+    }
+    return el;
 }
 
 function newCal() {

@@ -1247,6 +1247,25 @@ div:has(> .translate) > :not(.translate) {
     overflow-x: auto;
 }
 
+.cardPercent {
+    & > div {
+        overflow: hidden;
+        height: 1rem;
+    }
+    & > :nth-child(1) {
+        background-color: #0000;
+    }
+    & > :nth-child(2) {
+        background-color: color-mix(in srgb, var(--color) 10%, var(--bg));
+    }
+    & > :nth-child(3) {
+        background-color: color-mix(in srgb, #0f0 10%, var(--bg));
+    }
+    & > :nth-child(4) {
+        background-color: color-mix(in srgb, #f00 10%, var(--bg));
+    }
+}
+
 .cal_plot {
     display: grid;
     grid-template-rows: repeat(7, 16px);
