@@ -917,6 +917,8 @@ div:has(> .translate) > :not(.translate) {
             grid-area: 2 / 2;
             display: flex;
             gap: 8px;
+            align-items: center;
+            flex-grow: 1;
         }
     }
 }
@@ -1075,10 +1077,21 @@ div:has(> .translate) > :not(.translate) {
     overflow: scroll;
 }
 :is(.review_word, .review_sentence) > :last-child {
-    display: flex;
-    gap: 16px;
-    justify-content: center;
     margin: 16px;
+}
+
+.review_b {
+    display: flex;
+    & > button {
+        flex-grow: 1;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: calc(2 * var(--size0));
+        & > .icon {
+            position: initial;
+        }
+    }
 }
 
 .review_sentence {

@@ -5400,7 +5400,7 @@ function getReviewCardButtons(id: string, card: Card, readText: string, f?: (rat
     const againB = b(Rating.Again, iconEl(close_svg));
     const hardB = b(Rating.Hard, iconEl(help_svg));
     const goodB = b(Rating.Good, iconEl(ok_svg));
-    const buttons = view().add([againB, hardB, goodB]);
+    const buttons = view().add([againB, hardB, goodB]).class("review_b");
     return {
         buttons,
         finish: () => firstClick(),
