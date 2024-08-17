@@ -2,7 +2,24 @@
 
 import { el, setStyle } from "redom";
 
-import { ele, view, pack, frame, a, txt, p, trackPoint, textarea, button, type ElType, input, spacer } from "dkh-ui";
+import {
+    ele,
+    view,
+    pack,
+    frame,
+    a,
+    txt,
+    p,
+    trackPoint,
+    textarea,
+    button,
+    type ElType,
+    input,
+    spacer,
+    initDev,
+} from "dkh-ui";
+
+if (import.meta.env) initDev();
 
 import localforage from "localforage";
 import { extendPrototype } from "localforage-setitems";
