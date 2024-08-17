@@ -2765,6 +2765,10 @@ async function setEdit() {
             const range = aiRange.find((r) => r.s <= text.selectionStart && text.selectionEnd <= r.e);
             if (!range) return;
             const aiM = textAi(text.value.slice(range.s, range.e));
+            if (aiM.at(-1)?.role !== "user") {
+                text.setRangeText("\n>");
+                return;
+            }
             aiM.unshift({ role: "system", content: `This is a passage: ${text.value.slice(0, aiRange[0].s)}` });
             console.log(aiM);
             const start = text.selectionStart;
@@ -2837,8 +2841,6 @@ function textAi(text: string) {
         }
         index += i.length + 1;
     }
-    if (aiM.length === 0) return [];
-    if (aiM.at(-1).role !== "user") return [];
     return aiM;
 }
 
@@ -4369,7 +4371,10 @@ function aiText(textEl: HTMLTextAreaElement, info: string) {
         if (e.key === "Enter" && !e.shiftKey) {
             const text = textEl.value.trim();
             const aiM = textAi(text);
-            if (aiM.at(-1).role !== "user") return;
+            if (aiM.at(-1).role !== "user") {
+                textEl.setRangeText("\n>");
+                return;
+            }
             if (info) aiM.unshift({ role: "system", content: info });
             console.log(aiM);
             const start = textEl.selectionStart;
