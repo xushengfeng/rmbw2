@@ -4825,14 +4825,15 @@ function trackKeyboard(el: ElType<HTMLElement>) {
         start() {
             if (keyboard.getLayout() !== "default") return;
             const h = keyboardEl.el.offsetHeight;
-            return { x: 0, y: window.innerHeight - h };
+            return { x: 0, y: 0, data: { h } };
         },
-        ing: (p) => {
-            const h = window.innerHeight - p.y;
+        ing: (p, _, __, data) => {
+            const h = Math.round(data.h - p.y);
             keyboardEl.style({ height: `${h}px` });
+            return h;
         },
-        end: () => {
-            setting.setItem(KEYBOARDHEIGHTPATH, keyboardEl.el.offsetHeight);
+        end: (_, __, data) => {
+            setting.setItem(KEYBOARDHEIGHTPATH, data);
         },
     });
 }
