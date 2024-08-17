@@ -1381,8 +1381,8 @@ async function showWordBook(book: book, s: section) {
                                 el("div", await disCard2(i)),
                             );
                             p.append(pel);
-                            const reviewEl = el("div");
-                            pel.append(reviewEl);
+                            const reviewEl = view();
+                            pel.append(reviewEl.el);
                             const card = (await cardsStore.getItem(i.card_id)) as Card;
                             const map: { [k in State]: string } = {
                                 "0": "新",
@@ -1390,9 +1390,9 @@ async function showWordBook(book: book, s: section) {
                                 "2": "复习",
                                 "3": "重新学习",
                             };
-                            const stateEl = el("span", map[card.state]);
-                            reviewEl.append(stateEl);
-                            if (card.due.getTime() < time()) stateEl.classList.add(TODOMARK);
+                            const stateEl = txt(map[card.state]);
+                            reviewEl.add(stateEl);
+                            if (card.due.getTime() < time()) stateEl.class(TODOMARK);
                             let hasClick = false;
                             const buttons = getReviewCardButtons(
                                 i.card_id,
@@ -1400,14 +1400,14 @@ async function showWordBook(book: book, s: section) {
                                 i.text + i.contexts.map((x) => x.text).join(""),
                                 () => {
                                     if (hasClick) {
-                                        buttons.buttons.remove();
-                                        stateEl.classList.remove(TODOMARK);
+                                        buttons.buttons.el.remove();
+                                        stateEl.el.classList.remove(TODOMARK);
                                     } else {
                                         hasClick = true;
                                     }
                                 },
                             );
-                            reviewEl.append(buttons.buttons);
+                            reviewEl.add(buttons.buttons.el);
                         }
                 }
                 show();
@@ -5315,7 +5315,7 @@ async function showWordReview(x: { id: string; card: Card }, isAi: boolean) {
     const wordid = (await card2word.getItem(x.id)) as string;
     const wordRecord = (await wordsStore.getItem(wordid)) as record;
     play(wordRecord.word);
-    const div = document.createElement("div");
+    const div = view();
     let context: HTMLDivElement;
     if (isAi && aiContexts[x.id]?.text) context = await aiContext(x.id);
     else context = await crContext(wordRecord, x.id);
@@ -5348,12 +5348,11 @@ async function showWordReview(x: { id: string; card: Card }, isAi: boolean) {
         }
     });
 
-    const wordEl = el("div", wordid, { class: "main_word" });
+    const wordEl = view().add(wordid).class("main_word");
 
-    div.append(wordEl, context, dic.el, buttons.buttons);
-    div.classList.add("review_word");
+    div.add([wordEl, context, dic.el, buttons.buttons]).class("review_word");
     reviewViewEl.innerHTML = "";
-    reviewViewEl.append(div);
+    reviewViewEl.append(div.el);
 }
 
 const reviewHotkey: { [key: string]: { f: () => void; key: string } } = {
@@ -5378,9 +5377,7 @@ function getReviewCardButtons(id: string, card: Card, readText: string, f?: (rat
     let finishTime = showTime;
     let quickly = false;
     const b = (rating: Rating, icon: HTMLElement) => {
-        const button = el("button");
-        button.append(icon);
-        button.onclick = reviewHotkey[rating].f = async () => {
+        reviewHotkey[rating].f = async () => {
             if (hasClick) {
                 let r = rating;
                 if (rating === Rating.Good && quickly) r = Rating.Easy;
@@ -5391,19 +5388,19 @@ function getReviewCardButtons(id: string, card: Card, readText: string, f?: (rat
             await firstClick();
             if (f) f(rating);
         };
-        return button;
+        const b = button().add(icon).on("click", reviewHotkey[rating].f);
+        return b;
     };
     async function firstClick() {
         hasClick = true;
         finishTime = time();
         quickly = finishTime - showTime < (await getReadTime(readText)) + 400;
-        if (quickly) goodB.querySelector("img").src = very_ok_svg;
+        if (quickly) goodB.el.querySelector("img").src = very_ok_svg;
     }
     const againB = b(Rating.Again, iconEl(close_svg));
     const hardB = b(Rating.Hard, iconEl(help_svg));
     const goodB = b(Rating.Good, iconEl(ok_svg));
-    const buttons = document.createElement("div");
-    buttons.append(againB, hardB, goodB);
+    const buttons = view().add([againB, hardB, goodB]);
     return {
         buttons,
         finish: () => firstClick(),
@@ -5683,7 +5680,7 @@ async function showSentenceReview(x: { id: string; card: Card }) {
         }
     });
 
-    div.append(context, dic, buttons.buttons);
+    div.append(context, dic, buttons.buttons.el);
     div.classList.add("review_sentence");
     reviewViewEl.innerHTML = "";
     reviewViewEl.append(div);
