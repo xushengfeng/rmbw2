@@ -387,8 +387,11 @@ body {
         width: 100%;
 
         & > * {
-            line-height: var(--line-height);
             transition: var(--transition);
+        }
+
+        & > :not(.context_end, .context_start, #dic) {
+            line-height: var(--line-height);
         }
 
         &:not(textarea) {
