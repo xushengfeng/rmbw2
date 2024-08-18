@@ -4425,11 +4425,10 @@ function ai(m: aim, text?: string) {
         userConfig = JSON.stringify(config);
     }
     const abort = new AbortController();
-    const stopEl = el("button", iconEl(close_svg));
-    stopEl.onclick = () => {
+    const stopEl = button(iconEl(close_svg)).on("click", () => {
         abort.abort();
         pel.remove();
-    };
+    });
     const pel = view().add([txt(`AI正在思考${text || ""}`), stopEl]);
     putToast(pel, 0);
     const url = getSetting("ai.url");
@@ -4645,8 +4644,8 @@ async function getIgnoreWords() {
 }
 
 async function autoIgnore() {
-    const dialog = el("dialog", { class: "words_select", lang: studyLan }) as HTMLDialogElement;
-    const f = el("div");
+    const dialog = ele("dialog").class("words_select").attr({ lang: studyLan });
+    const f = view();
     const words = Array.from(
         new Set(
             bookContentEl
@@ -4686,26 +4685,22 @@ async function autoIgnore() {
             w.show,
             el("input", { type: "checkbox", value: w.src }),
         ]);
-        f.append(item);
+        f.add(item);
     }
-    dialog.append(
+    dialog.add([
         f,
-        el("button", iconEl(ok_svg), {
-            onclick: async () => {
-                const words = Array.from(f.querySelectorAll("input:checked.ignore_word")).map(
-                    (el: HTMLInputElement) => el.value,
-                );
-                section.text = oldWords.concat(words).join("\n");
-                await sectionsStore.setItem(ignoreWordSection, section);
-                const wordsX = Array.from(f.querySelectorAll("input:checked:not(.ignore_word)")).map(
-                    (el: HTMLInputElement) => el.value,
-                );
-                selectWord(wordsX);
-                dialog.close();
-            },
+        button(iconEl(ok_svg)).on("click", async () => {
+            const words = f.queryAll("input:checked.ignore_word").map((el: ElType<HTMLInputElement>) => el.el.value);
+            section.text = oldWords.concat(words).join("\n");
+            await sectionsStore.setItem(ignoreWordSection, section);
+            const wordsX = f
+                .queryAll("input:checked:not(.ignore_word)")
+                .map((el: ElType<HTMLInputElement>) => el.el.value);
+            selectWord(wordsX);
+            dialog.el.close();
         }),
-    );
-    dialogX(dialog);
+    ]);
+    dialogX(dialog.el);
 }
 
 async function addIgnore(word: string) {
