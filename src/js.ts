@@ -2289,7 +2289,7 @@ async function exTrans(pEl: HTMLElement, i: number, book: book) {
                     if (i[0] === -1 && ni[0] === 1) {
                         // 对于更改的词，若词内部更改少，则详细展示，否则按词语展示
                         const ndiff = dmp.diff_main(i[1], ni[1]);
-                        if (ndiff.length <= 4) {
+                        if (ndiff.length <= 3) {
                             for (const i of ndiff) {
                                 render(i);
                             }
