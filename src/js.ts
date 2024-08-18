@@ -17,6 +17,8 @@ import {
     input,
     spacer,
     initDev,
+    image,
+    elFromId,
 } from "dkh-ui";
 
 if (import.meta.env) initDev();
@@ -169,8 +171,8 @@ function interModal<el extends ElType<HTMLElement>, v>(
     let cancelEl: ElType<HTMLButtonElement>;
     let okEl: ElType<HTMLButtonElement>;
     for (const x of buttons || [
-        [button().add("取消"), "cancel"],
-        [button().add("确定"), "ok"],
+        [button("取消"), "cancel"],
+        [button("确定"), "ok"],
     ]) {
         if (Array.isArray(x)) {
             if (x[1] === "cancel") cancelEl = x[0];
@@ -201,7 +203,7 @@ function interModal<el extends ElType<HTMLElement>, v>(
 }
 
 async function alert(message: string) {
-    return (await interModal(txt(message), [[button().add("确定"), "ok"]])).ok;
+    return (await interModal(txt(message), [[button("确定"), "ok"]])).ok;
 }
 
 async function confirm(message: string) {
@@ -332,39 +334,39 @@ const DICDIALOG = "dic_dialog";
 const SELECTEDITEM = "selected_item";
 const LITLEPROGRESS = "litle_progress";
 
-const booksEl = document.getElementById("books") as HTMLDialogElement;
-const localBookEl = el("div");
-const onlineBookEl = el("div", { style: { display: "none" } });
-booksEl.append(
-    el("div", { style: { display: "flex" } }, [
-        el("div", "本地书籍", {
-            onclick: () => {
+const booksEl = elFromId("books") as ElType<HTMLDialogElement>;
+const localBookEl = view();
+const onlineBookEl = view().style({ display: "none" });
+booksEl.add([
+    view("x").add([
+        view()
+            .add("本地书籍")
+            .on("click", () => {
                 showLocalBooks();
-                booksEl.classList.remove("show_online_book");
-            },
-        }),
-        el("div", "在线书籍", {
-            onclick: () => {
+                booksEl.el.classList.remove("show_online_book");
+            }),
+        view()
+            .add("在线书籍")
+            .on("click", () => {
                 getOnlineBooks();
-                booksEl.classList.add("show_online_book");
-            },
-        }),
-        el("div", "我的词典", {
-            onclick: () => {
+                booksEl.el.classList.add("show_online_book");
+            }),
+        view()
+            .add("我的词典")
+            .on("click", () => {
                 showBook(coreWordBook);
-                booksEl.close();
-            },
-        }),
+                booksEl.el.close();
+            }),
         el("button", iconEl(close_svg), {
             style: { "margin-left": "auto" },
             onclick: () => {
-                booksEl.close();
+                booksEl.el.close();
             },
         }),
     ]),
     localBookEl,
     onlineBookEl,
-);
+]);
 const bookSectionsEl = el("div", {
     style: {
         overflow: "scroll",
@@ -378,11 +380,11 @@ const addSectionEL = el("div", iconEl(add_svg));
 const bookNameEl = el("div");
 const bookNavEl = document.getElementById("book_nav");
 bookNavEl.append(bookNameEl, addSectionEL, bookSectionsEl);
-let bookContentEl = document.getElementById("book_content");
-const bookContentContainerEl = bookContentEl.parentElement;
+let bookContentEl = elFromId("book_content");
+const bookContentContainerEl = bookContentEl.el.parentElement;
 const paghMore = document.getElementById("pagh_more");
 paghMore.onclick = () => {
-    bookContentEl.classList.toggle("show_p_more");
+    bookContentEl.el.classList.toggle("show_p_more");
 };
 const articleAi = document.getElementById("article_ai");
 articleAi.onclick = () => {
@@ -429,34 +431,34 @@ dicEl.append(
     dicDetailsEl,
 );
 
-function putToast(ele: HTMLElement, time = 2000) {
-    let toastEl = document.body.querySelector(".toast") as HTMLElement;
+function putToast(ele: ElType<HTMLElement>, time = 2000) {
+    let toastEl = pack(document.body.querySelector(".toast") as HTMLElement);
     if (!toastEl) {
-        toastEl = el("div", { class: "toast", popover: "auto" });
-        document.body.append(toastEl);
+        toastEl = view().class("toast").attr({ popover: "auto" });
+        document.body.append(toastEl.el);
     }
-    toastEl.showPopover();
-    toastEl.append(ele);
+    toastEl.el.showPopover();
+    toastEl.add(ele);
 
     if (time) {
         setTimeout(() => {
-            ele.remove();
+            ele.el.remove();
         }, time);
     }
 
     const observer = new MutationObserver((mutationsList) => {
         for (const mutation of mutationsList) {
-            if (mutation.type === "childList" && toastEl.childElementCount === 0) {
+            if (mutation.type === "childList" && toastEl.el.childElementCount === 0) {
                 toastEl.remove();
                 observer.disconnect();
             }
         }
     });
-    observer.observe(toastEl, { childList: true });
+    observer.observe(toastEl.el, { childList: true });
 }
 
-const tmpDicEl = el("div", { popover: "auto", class: "tmp_dic" });
-document.body.append(tmpDicEl);
+const tmpDicEl = view().attr({ popover: "auto" }).class("tmp_dic");
+document.body.append(tmpDicEl.el);
 
 const bookshelfStore = localForage.createInstance<book>({ name: "bookshelf" });
 const sectionsStore = localForage.createInstance<section>({ name: "sections" });
@@ -599,7 +601,7 @@ const coreWordBook: book = {
 };
 
 bookBEl.onclick = () => {
-    booksEl.showModal();
+    booksEl.el.showModal();
 };
 
 const coverCache = localForage.createInstance<Blob>({ name: "cache", storeName: "cover" });
@@ -643,20 +645,20 @@ async function showOnlineBooks(
         cover?: string;
     }[],
 ) {
-    onlineBookEl.innerHTML = "";
-    let grid: HTMLElement;
+    onlineBookEl.clear();
+    let grid: ElType<HTMLElement>;
 
     if (!books) {
-        onlineBookEl.append(p("无法访问在线书库\n请检查您的网络，以及软件在线书库的设置").el);
+        onlineBookEl.add(p("无法访问在线书库\n请检查您的网络，以及软件在线书库的设置").el);
     }
 
     const l = selectBook(books, async (list) => {
         grid?.remove();
         grid = await showOnlineBooksL(list);
-        l.after(grid);
+        l.el.after(grid.el);
     });
 
-    onlineBookEl.append(l);
+    onlineBookEl.add(l);
 }
 
 async function showOnlineBooksL(
@@ -674,20 +676,20 @@ async function showOnlineBooksL(
         cover?: string;
     }[],
 ) {
-    const grid = el("div", { class: "books" });
+    const grid = view().class("books");
     for (const book of books) {
         let url = "";
         if (book.cover) url = await getBookCover(book.cover);
         const div = bookEl(book.name, url);
-        const bookCover = div.querySelector("div");
+        const bookCover = div.query("div");
         bookshelfStore.iterate((v, k) => {
             if (book.id === k) {
                 if (v.updateTime < book.updateTime) {
-                    div.classList.add(TODOMARK1);
+                    div.el.classList.add(TODOMARK1);
                 }
             }
         });
-        div.onclick = async () => {
+        div.on("click", async () => {
             console.log(book);
             if (book.type === "package") {
                 saveLanguagePackage(book.language, book.sections);
@@ -697,7 +699,7 @@ async function showOnlineBooksL(
             if (xbook) {
                 if (xbook.updateTime < book.updateTime) {
                     saveBook();
-                    div.classList.remove(TODOMARK1);
+                    div.el.classList.remove(TODOMARK1);
                 }
             } else {
                 xbook = {
@@ -720,7 +722,7 @@ async function showOnlineBooksL(
                     const content = await response.text();
                     count++;
                     const p = (count / book.sections.length) * 100;
-                    bookCover.style.clipPath = `xywh(0 ${100 - p}% 100% 100%)`;
+                    bookCover.style({ "clip-path": `xywh(0 ${100 - p}% 100% 100%)` });
                     return { id, content, title };
                 });
                 Promise.all(fetchPromises)
@@ -760,8 +762,8 @@ async function showOnlineBooksL(
                         console.error(error);
                     });
             }
-        };
-        grid.append(div);
+        });
+        grid.add(div);
     }
     return grid;
 }
@@ -770,8 +772,8 @@ function selectBook<BOOK extends { type: "word" | "text" | "package"; language: 
     books: BOOK[],
     f: (list: BOOK[]) => void,
 ) {
-    const typeEl = el("div");
-    const lanEl = el("div");
+    const typeEl = view();
+    const lanEl = view();
 
     const tl = Object.keys(Object.groupBy(books, ({ type }) => type));
     const ll = Object.keys(Object.groupBy(books, ({ language }) => language));
@@ -779,15 +781,13 @@ function selectBook<BOOK extends { type: "word" | "text" | "package"; language: 
     const x: { type: number | string; lan: number | string } = { type: 0, lan: 0 };
 
     const map = { word: "词典", text: "文本", package: "包" };
-    function crl(l: string[], text: (text: string) => string, pel: HTMLElement, key: keyof typeof x) {
+    function crl(l: string[], text: (text: string) => string, pel: ElType<HTMLElement>, key: keyof typeof x) {
         if (l.length > 1)
             for (const i of [0, ...l]) {
-                pel.append(
-                    el("span", typeof i === "number" ? "全部" : text(i), {
-                        onclick: () => {
-                            x[key] = i;
-                            run();
-                        },
+                pel.add(
+                    txt(typeof i === "number" ? "全部" : text(i)).on("click", () => {
+                        x[key] = i;
+                        run();
                     }),
                 );
             }
@@ -802,7 +802,7 @@ function selectBook<BOOK extends { type: "word" | "text" | "package"; language: 
     }
     run();
 
-    return el("div", typeEl, lanEl);
+    return view().add([typeEl, lanEl]);
 }
 
 async function saveLanguagePackage(lan: string, section: { id: string; path: string }[]) {
@@ -843,7 +843,7 @@ addBookEl.onclick = async () => {
     const book = await getBooksById(nowBook.book);
     showBook(book);
     changeEdit(true);
-    booksEl.close();
+    booksEl.el.close();
 };
 
 addSectionEL.onclick = async () => {
@@ -878,43 +878,38 @@ setBookS();
 
 async function setSectionTitle(sid: string) {
     const title = (await getSection(sid)).title;
-    const titleEl = el("input", { style: { "font-size": "inherit" } });
-    titleEl.value = title;
-    titleEl.select();
-    const iel = el("div");
-    iel.append(
+    const titleEl = input("title").style({ "font-size": "inherit" }).sv(title);
+    titleEl.el.select();
+    const iel = view().add([
         titleEl,
-        el("button", "ai", {
-            onclick: async () => {
-                const f = new autoFun.def({
-                    input: { text: "string" },
-                    script: ["为输入的文章起个标题"],
-                    output: "title:string",
-                });
-                const ff = f.run(editText);
-                const stopEl = el("button", iconEl(close_svg));
-                stopEl.onclick = () => {
-                    ff.stop.abort();
-                    pel.remove();
-                };
-                const pel = el("div", [el("p", "AI正在思考标题"), stopEl]);
-                putToast(pel, 0);
-                ff.result.then((r) => {
-                    pel.remove();
-                    // @ts-ignore
-                    titleEl.value = r.title;
-                });
-            },
+        button("ai").on("click", async () => {
+            const f = new autoFun.def({
+                input: { text: "string" },
+                script: ["为输入的文章起个标题"],
+                output: "title:string",
+            });
+            const ff = f.run(editText);
+            const stopEl = button(iconEl(close_svg)).on("click", () => {
+                ff.stop.abort();
+                pel.remove();
+            });
+            const pel = view().add([txt("AI正在思考标题"), stopEl]);
+            putToast(pel, 0);
+            ff.result.then((r) => {
+                pel.remove();
+                // @ts-ignore
+                titleEl.value = r.title;
+            });
         }),
-    );
-    titleEl.focus();
-    const nTitle = (await interModal(view().add(["重命名章节标题", iel]), null, () => titleEl.value)).v;
+    ]);
+    titleEl.el.focus();
+    const nTitle = (await interModal(view().add(["重命名章节标题", iel]), null, () => titleEl.el.value)).v;
     if (!nTitle) return;
     const sectionId = sid;
     const section = await getSection(sectionId);
     section.title = nTitle;
     await sectionsStore.setItem(sectionId, section);
-    if (!isWordBook) bookContentEl.querySelector("h1").innerText = section.title;
+    if (!isWordBook) bookContentEl.query("h1").el.innerText = section.title;
     setBookS();
     return nTitle;
 }
@@ -925,28 +920,24 @@ async function setBookS() {
         bookNameEl.innerText = bookName;
         const sectionId = nowBook.sections;
         const section = await getSection(sectionId);
-        if (!isWordBook) bookContentEl.querySelector("h1").innerText = section.title;
+        if (!isWordBook) bookContentEl.query("h1").el.innerText = section.title;
     }
 }
 
 function bookEl(name: string, coverUrl?: string, shortName?: string) {
-    const bookIEl = el("div");
-    const cover = el("div");
-    const titleEl = el("span");
-    const bookCover = el("div");
-    bookCover.innerText = shortName || name;
-    cover.append(bookCover);
+    const bookIEl = view();
+    const cover = view();
+    const titleEl = txt(name);
+    const bookCover = view().add(shortName || name);
+    cover.add(bookCover);
     if (coverUrl) {
-        const bookCover = el("img");
-        bookCover.src = coverUrl;
-        cover.append(bookCover);
-        bookCover.onerror = () => {
-            bookCover.style.opacity = "0";
-        };
+        const bookCover = image(coverUrl, "cover").on("error", () => {
+            bookCover.style({ opacity: "0" });
+        });
+        cover.add(bookCover);
     } else {
     }
-    titleEl.innerText = name;
-    bookIEl.append(cover, titleEl);
+    bookIEl.add([cover, titleEl]);
     return bookIEl;
 }
 
@@ -957,23 +948,23 @@ async function showLocalBooks() {
     });
     bookList = bookList.toSorted((a, b) => b.visitTime - a.visitTime);
 
-    localBookEl.innerHTML = "";
-    let grid: HTMLElement;
+    localBookEl.clear();
+    let grid: ElType<HTMLElement>;
 
     const l = selectBook(bookList, async (list) => {
         grid?.remove();
         grid = await showLocalBooksL(list);
-        grid.insertAdjacentElement("afterbegin", addBookEl);
-        l.after(grid);
+        grid.el.prepend(addBookEl);
+        l.el.after(grid.el);
     });
 
-    localBookEl.append(l);
+    localBookEl.add(l);
 }
 
 async function showLocalBooksL(bookList: book[]) {
-    const grid = el("div", { class: "books" });
+    const grid = view().class("books");
     for (const book of bookList) {
-        let bookIEl: HTMLDivElement;
+        let bookIEl: ElType<HTMLDivElement>;
         if (book.cover) {
             const c = await coverCache.getItem(book.id);
             let url = "";
@@ -990,57 +981,58 @@ async function showLocalBooksL(bookList: book[]) {
         } else {
             bookIEl = bookEl(book.name, null, book.shortName);
         }
-        grid.append(bookIEl);
+        grid.add(bookIEl);
         const id = book.id;
-        bookIEl.onclick = async () => {
-            const book = await getBooksById(id);
-            showBook(book);
-            book.visitTime = new Date().getTime();
-            bookshelfStore.setItem(book.id, book);
-            booksEl.close();
-        };
-        bookIEl.oncontextmenu = async (e) => {
-            e.preventDefault();
-            const book = await getBooksById(id);
-            const formEl = el("form", [
-                el("input", { name: "name", value: book.name }),
-                el("input", { name: "language", value: book.language }),
-                el("label", [
-                    "词书",
-                    el("input", { type: "radio", name: "type", value: "word", checked: book.type === "word" }),
-                ]),
-                el("label", [
-                    "书",
-                    el("input", { type: "radio", name: "type", value: "text", checked: book.type === "text" }),
-                ]),
-            ]);
-            const submitEl = el("button", "确定");
-            const deleteEl = el("button", "删除");
-            const metaEl = el("dialog", [el("div", `id: ${book.id}`), formEl, submitEl, deleteEl]) as HTMLDialogElement;
-            submitEl.onclick = () => {
-                const data = new FormData(formEl);
-                data.forEach((v, k) => {
-                    book[k] = v;
-                });
+        bookIEl
+            .on("click", async () => {
+                const book = await getBooksById(id);
+                showBook(book);
+                book.visitTime = new Date().getTime();
                 bookshelfStore.setItem(book.id, book);
-                metaEl.close();
-                setBookS();
-            };
-            deleteEl.onclick = async () => {
-                if (await checkEmptyBook(book)) {
-                    await bookshelfStore.removeItem(book.id);
-                    for (const sid of book.sections) {
-                        await sectionsStore.removeItem(sid);
+                booksEl.el.close();
+            })
+            .on("contextmenu", async (e) => {
+                e.preventDefault();
+                const book = await getBooksById(id);
+                const formEl = el("form", [
+                    el("input", { name: "name", value: book.name }),
+                    el("input", { name: "language", value: book.language }),
+                    el("label", [
+                        "词书",
+                        el("input", { type: "radio", name: "type", value: "word", checked: book.type === "word" }),
+                    ]),
+                    el("label", [
+                        "书",
+                        el("input", { type: "radio", name: "type", value: "text", checked: book.type === "text" }),
+                    ]),
+                ]);
+                const submitEl = button("确定");
+                const deleteEl = button("删除");
+                const metaEl = ele("dialog").add([view().add(`id: ${book.id}`), formEl, submitEl, deleteEl]);
+                submitEl.on("click", () => {
+                    const data = new FormData(formEl);
+                    data.forEach((v, k) => {
+                        book[k] = v;
+                    });
+                    bookshelfStore.setItem(book.id, book);
+                    metaEl.el.close();
+                    setBookS();
+                });
+                deleteEl.on("click", async () => {
+                    if (await checkEmptyBook(book)) {
+                        await bookshelfStore.removeItem(book.id);
+                        for (const sid of book.sections) {
+                            await sectionsStore.removeItem(sid);
+                        }
+                        putToast(txt(`删除${book.name}成功`));
+                    } else {
+                        putToast(txt(`删除${book.name}失败，已经标记了单词`));
                     }
-                    putToast(el("span", `删除${book.name}成功`));
-                } else {
-                    putToast(el("span", `删除${book.name}失败，已经标记了单词`));
-                }
-                metaEl.close();
-                showLocalBooks();
-            };
-            dialogX(metaEl);
-        };
+                    metaEl.el.close();
+                    showLocalBooks();
+                });
+                dialogX(metaEl.el);
+            });
     }
     return grid;
 }
@@ -1067,17 +1059,18 @@ async function showBookSections(book: book) {
         sectionsX.push(await getSection(i));
     }
     vlist(bookSectionsEl, sections, { iHeight: 24, paddingTop: 16, paddingLeft: 16 }, (i) => {
-        const sEl = el("div");
+        const sEl = view();
         const s = sectionsX[i];
-        sEl.innerText = sEl.title = getSectionTitle(book, sections[i], s.title) || `章节${Number(i) + 1}`;
-        if (nowBook.sections === sections[i]) sEl.classList.add(SELECTEDITEM);
-        if (Object.values(s.words).some((i) => !i.visit)) sEl.classList.add(TODOMARK);
-        if (book.type === "text" && Object.values(s.words).length === 0) sEl.classList.add(UNREAD);
-        sEl.onclick = async () => {
-            sEl.classList.remove(TODOMARK);
+        const title = getSectionTitle(book, sections[i], s.title) || `章节${Number(i) + 1}`;
+        sEl.attr({ innerText: title, title });
+        if (nowBook.sections === sections[i]) sEl.class(SELECTEDITEM);
+        if (Object.values(s.words).some((i) => !i.visit)) sEl.class(TODOMARK);
+        if (book.type === "text" && Object.values(s.words).length === 0) sEl.class(UNREAD);
+        sEl.on("click", async () => {
+            sEl.el.classList.remove(TODOMARK);
 
             bookSectionsEl.querySelector(`.${SELECTEDITEM}`).classList.remove(SELECTEDITEM);
-            sEl.classList.add(SELECTEDITEM);
+            sEl.class(SELECTEDITEM);
 
             nowBook.sections = sections[i];
             showBookContent(book, sections[i]);
@@ -1085,31 +1078,30 @@ async function showBookSections(book: book) {
             if (nowBook.book === "0") return;
             book.lastPosi = Number(i);
             bookshelfStore.setItem(nowBook.book, book);
-        };
-        sEl.oncontextmenu = async (e) => {
+        }).on("contextmenu", async (e) => {
             e.preventDefault();
             e.stopPropagation();
             menuEl.innerHTML = "";
             if ((await getBooksById(nowBook.book)).canEdit) {
                 menuEl.append(
-                    el("div", "重命名", {
-                        onclick: async () => {
+                    view()
+                        .add("重命名")
+                        .on("click", async () => {
                             const t = await setSectionTitle(sections[i]);
-                            if (t) sEl.innerText = t;
-                        },
-                    }),
+                            if (t) sEl.attr({ innerText: t });
+                        }).el,
                 );
             }
             menuEl.append(
-                el("div", "复制id", {
-                    onclick: async () => {
+                view()
+                    .add("复制id")
+                    .on("click", async () => {
                         navigator.clipboard.writeText(sections[i]);
-                    },
-                }),
+                    }).el,
             );
             showMenu(e.clientX, e.clientY);
-        };
-        return sEl;
+        });
+        return sEl.el;
     });
 }
 
@@ -1128,17 +1120,18 @@ async function showBookContent(book: book, id: string) {
         s.text = text;
     }
     bookContentContainerEl.innerHTML = "";
-    bookContentEl = el("div");
-    bookContentContainerEl.append(bookContentEl);
+    bookContentEl = view();
+    bookContentContainerEl.append(bookContentEl.el);
 
     editText = s.text;
 
     contentScrollPosi = s.lastPosi;
 
     if (!isWordBook)
-        bookContentEl.append(
-            el("div", iconEl(recume_svg), {
-                onclick: async () => {
+        bookContentEl.add(
+            view()
+                .add(iconEl(recume_svg))
+                .on("click", async () => {
                     autoPlay = true;
                     autoPlayTTSEl.checked = true;
                     await pTTS(0);
@@ -1146,8 +1139,7 @@ async function showBookContent(book: book, id: string) {
                         for (let i = 1; i < contentP.length; i++) {
                             await getTTS(contentP[i]);
                         }
-                },
-            }),
+                }),
         );
 
     contentP = [];
@@ -1157,7 +1149,7 @@ async function showBookContent(book: book, id: string) {
 
     setScrollPosi(bookContentContainerEl, contentScrollPosi);
 
-    if (!isWordBook) bookContentEl.append(dicEl);
+    if (!isWordBook) bookContentEl.add(dicEl);
 }
 
 async function showWordBook(book: book, s: section) {
@@ -1248,25 +1240,22 @@ async function showWordBook(book: book, s: section) {
             }),
         ),
     );
-    const chartEl = el(
-        "div",
-        el(
-            "div",
-            `${String(l.length)} ${matchWords} ${means1.toFixed(1)}`,
-            el(
-                "div",
-                { class: LITLEPROGRESS },
-                el("div", { style: { width: `${(matchWords / l.length) * 100}%`, background: "#00f" } }),
-                el("div", { style: { width: `${(means1 / l.length) * 100}%`, background: "#0f0" } }),
-            ),
-        ),
-        el("div", "拼写 加载中", el("div", { class: LITLEPROGRESS })),
-        {
-            onclick: () => {
-                showWordBookMore(wordList);
-            },
-        },
-    );
+    const chartEl = view()
+        .add([
+            view().add([
+                `${String(l.length)} ${matchWords} ${means1.toFixed(1)}`,
+                view()
+                    .class(LITLEPROGRESS)
+                    .add([
+                        view().style({ width: `${(matchWords / l.length) * 100}%`, background: "#00f" }),
+                        view().style({ width: `${(means1 / l.length) * 100}%`, background: "#0f0" }),
+                    ]),
+            ]),
+            view().add(["拼写 加载中", view().class(LITLEPROGRESS)]),
+        ])
+        .on("click", () => {
+            showWordBookMore(wordList);
+        });
     bookContentContainerEl.append(
         view().class("words_book_top").add([chartEl, search, sortEl]).attr({ lang: navigator.language }).el,
     );
@@ -1281,17 +1270,14 @@ async function showWordBook(book: book, s: section) {
             }
         });
         for (const i of nl) if (i && ignoreWords.includes(i)) spell += 1;
-        chartEl.lastElementChild.remove();
-        chartEl.append(
-            el(
-                "div",
+        chartEl.el.lastElementChild.remove();
+        chartEl.add(
+            view().add([
                 `拼写 ${spell.toFixed(1)}`,
-                el(
-                    "div",
-                    { class: LITLEPROGRESS },
-                    el("div", { style: { width: `${(spell / l.length) * 100}%`, background: "#00f" } }),
-                ),
-            ),
+                view()
+                    .class(LITLEPROGRESS)
+                    .add(view().style({ width: `${(spell / l.length) * 100}%`, background: "#00f" })),
+            ]),
         );
     });
 
@@ -1300,96 +1286,89 @@ async function showWordBook(book: book, s: section) {
         wordList,
         { iHeight: 24, gap: 8, paddingTop: 120, paddingBotton: 8 },
         (i, item) => {
-            const p = el("p", item.text);
+            const iEl = p(item.text);
             if (item.type) {
-                p.classList.add(item.type);
+                iEl.class(item.type);
             }
-            p.oncontextmenu = (e) => {
+            iEl.on("contextmenu", (e) => {
                 e.preventDefault();
                 menuEl.innerHTML = "";
                 showMenu(e.clientX, e.clientY);
                 if (item.type === "ignore")
                     menuEl.append(
-                        el("div", "从忽略词表移除", {
-                            onclick: async () => {
+                        view()
+                            .add("从忽略词表移除")
+                            .on("click", async () => {
                                 await removeIgnore(item.id);
-                                p.classList.remove("ignore");
+                                iEl.el.classList.remove("ignore");
                                 const item1 = rawWordList.find((i) => i.text === item.text);
                                 const item2 = wordList.find((i) => i.text === item.text);
                                 item.type = undefined;
                                 item1.type = undefined;
                                 item2.type = undefined;
-                            },
-                        }),
+                            }).el,
                     );
                 else
                     menuEl.append(
-                        el("div", "添加到忽略词表", {
-                            onclick: async () => {
+                        view()
+                            .add("添加到忽略词表")
+                            .on("click", async () => {
                                 await addIgnore(item.text);
-                                p.classList.add("ignore");
+                                iEl.class("ignore");
                                 const item1 = rawWordList.find((i) => i.text === item.text);
                                 const item2 = wordList.find((i) => i.text === item.text);
                                 item.type = item1.type = item2.type = "ignore";
                                 item.means = item1.means = item2.means = 1;
-                            },
-                        }),
+                            }).el,
                     );
-            };
-            p.onclick = () => {
-                const p = tmpDicEl;
-                p.showPopover();
+            });
+            iEl.el.onclick = () => {
+                const pEl = tmpDicEl;
+                pEl.el.showPopover();
                 play(item.text);
                 async function show() {
-                    p.innerHTML = "";
-                    p.append(el("div", item.text));
+                    pEl.clear();
+                    pEl.add(view().add(item.text));
                     const books = await wordBooksByWord(item.text);
-                    const booksEl = el("div");
+                    const booksEl = view();
                     for (const i of books) {
                         const bookN = (await getBooksById(i.book)).name;
                         const s = (await getSection(i.section)).title;
-                        booksEl.append(el("span", s, { title: bookN }));
+                        booksEl.add(txt(s).attr({ title: bookN }));
                     }
-                    p.append(booksEl);
+                    pEl.add(booksEl);
                     if (item.c?.note) {
-                        const note = el("p");
-                        note.innerText = item.c.note;
-                        p.append(
-                            el(
-                                "div",
-                                el("button", iconEl(pen_svg), {
-                                    onclick: () => {
-                                        addP(item.c.note, item.id, null, null, null, (text) => {
-                                            item.c.note = text.trim();
-                                            wordsStore.setItem(item.id, item.c);
-                                            show();
-                                        });
-                                    },
+                        const note = p(item.c.note);
+                        pEl.add(
+                            view().add([
+                                button(iconEl(pen_svg)).on("click", () => {
+                                    addP(item.c.note, item.id, null, null, null, (text) => {
+                                        item.c.note = text.trim();
+                                        wordsStore.setItem(item.id, item.c);
+                                        show();
+                                    });
                                 }),
                                 note,
-                            ),
+                            ]),
                         );
                     }
-                    const onlineList = await onlineDicL(item.text);
-                    p.append(onlineList);
+                    const onlineList = onlineDicL(item.text);
+                    pEl.add(onlineList);
                     if (item.c)
                         for (const i of item.c.means) {
-                            const pel = el(
-                                "div",
-                                el("button", iconEl(pen_svg), {
-                                    onclick: () => {
-                                        addP(i.text, item.id, null, null, null, (text) => {
-                                            i.text = text.trim();
-                                            wordsStore.setItem(item.id, item.c);
-                                            show();
-                                        });
-                                    },
+                            const pel = view().add([
+                                button(iconEl(pen_svg)).on("click", () => {
+                                    addP(i.text, item.id, null, null, null, (text) => {
+                                        i.text = text.trim();
+                                        wordsStore.setItem(item.id, item.c);
+                                        show();
+                                    });
                                 }),
-                                el("div", await disCard2(i)),
-                            );
-                            p.append(pel);
+                                view().add(await disCard2(i)),
+                            ]);
+                            pEl.add(pel);
                             const reviewEl = view();
-                            pel.append(reviewEl.el);
+                            pel.add(reviewEl);
                             const card = await cardsStore.getItem(i.card_id);
                             const map: { [k in State]: string } = {
                                 "0": "新",
@@ -1414,12 +1393,12 @@ async function showWordBook(book: book, s: section) {
                                     }
                                 },
                             );
-                            reviewEl.add(buttons.buttons.el);
+                            reviewEl.add(buttons.buttons);
                         }
                 }
                 show();
             };
-            return p;
+            return iEl.el;
         },
     );
 
@@ -1483,30 +1462,23 @@ function randomList<i>(list: i[]) {
 }
 
 async function showWordBookMore(wordList: { text: string; c: record; type?: "ignore" | "learn"; means?: number }[]) {
-    const d = el("dialog") as HTMLDialogElement;
-    dialogX(d);
+    const d = ele("dialog");
+    dialogX(d.el);
     const unlearnL = wordList.filter((w) => w.means === undefined);
-    d.append(
-        el(
-            "div",
-            { style: { display: "flex", "flex-direction": "row-reverse" } },
-            el("button", iconEl(close_svg), { onclick: () => d.close() }),
-        ),
-        el(
-            "div",
-            el("p", "导出未学习的单词"),
-            el("button", "导出", {
-                onclick: () => {
-                    download(unlearnL.map((i) => i.text).join("\n"), "words.txt");
-                },
+    d.add([
+        view()
+            .style({ display: "flex", "flex-direction": "row-reverse" })
+            .add(button(iconEl(close_svg)).on("click", () => d.el.close())),
+        view().add([
+            p("导出未学习的单词"),
+            button("导出").on("click", () => {
+                download(unlearnL.map((i) => i.text).join("\n"), "words.txt");
             }),
-            el("button", "复制", {
-                onclick: () => {
-                    navigator.clipboard.writeText(unlearnL.map((i) => i.text).join("\n"));
-                },
+            button("复制").on("click", () => {
+                navigator.clipboard.writeText(unlearnL.map((i) => i.text).join("\n"));
             }),
-        ),
-    );
+        ]),
+    ]);
     const bookIds: { [id: string]: number } = {};
 
     const wordFamilyMap: Map<string, boolean> = new Map();
@@ -1527,20 +1499,20 @@ async function showWordBookMore(wordList: { text: string; c: record; type?: "ign
     const l = Object.entries(bookIds).sort((a, b) => b[1] - a[1]);
     const ignore = wordList.filter((w) => w.type === "ignore").length;
     const max = Math.max(l[0][1], ignore);
-    const pEl = el("div", { class: "words_from" });
+    const pEl = view().class("words_from");
     for (const i of l) {
-        pEl.append(
-            el("span", (await getBooksById(i[0])).name),
-            el("span", i[1]),
-            el("div", { style: { width: `${(i[1] / max) * 100}%` } }),
-        );
+        pEl.add([
+            txt((await getBooksById(i[0])).name),
+            txt(i[1].toString()),
+            view().style({ width: `${(i[1] / max) * 100}%` }),
+        ]);
     }
-    pEl.append(el("span", "忽略"), el("span", ignore), el("div", { style: { width: `${(ignore / max) * 100}%` } }));
-    d.append(el("p", "单词来源"), pEl);
+    pEl.add([txt("忽略"), txt(ignore.toString()), view().style({ width: `${(ignore / max) * 100}%` })]);
+    d.add([p("单词来源"), pEl]);
     const familyList = Array.from(wordFamilyMap.values());
-    d.append(
-        el("p", "部分词族"), // todo 需要真正的word family
-        txt(`${familyList.length} ${familyList.filter((i) => i).length}`).el,
+    d.add([
+        p("部分词族"), // todo 需要真正的word family
+        txt(`${familyList.length} ${familyList.filter((i) => i).length}`),
         view()
             .class(LITLEPROGRESS)
             .add([
@@ -1548,32 +1520,30 @@ async function showWordBookMore(wordList: { text: string; c: record; type?: "ign
                     width: `${(familyList.filter((i) => i).length / familyList.length) * 100}%`,
                     background: "#00f",
                 }),
-            ]).el,
-    );
-    d.append(
-        el("p", "添加忽略词到拼写"),
-        el("button", iconEl(add_svg), {
-            onclick: () => {
-                ignoredWordSpell(
-                    wordList
-                        .filter((w) => w.type === "ignore")
-                        .map((w) => w.text)
-                        .filter((w) => !w.includes(" ")),
-                );
-            },
+            ]),
+    ]);
+    d.add([
+        p("添加忽略词到拼写"),
+        button(iconEl(add_svg)).on("click", () => {
+            ignoredWordSpell(
+                wordList
+                    .filter((w) => w.type === "ignore")
+                    .map((w) => w.text)
+                    .filter((w) => !w.includes(" ")),
+            );
         }),
-    );
+    ]);
 }
 
 async function ignoredWordSpell(list: string[]) {
     const keys = await spellStore.keys();
     const flist = list.filter((w) => !keys.includes(w));
     if (flist.length === 0) {
-        putToast(el("span", "无新添加词"));
+        putToast(txt("无新添加词"));
         return;
     }
-    const iel = el("textarea", { value: flist.sort().join("\n"), style: { height: "200px" } });
-    const p = (await interModal(view().add(["确定添加以下单词到拼写吗？", iel]), null, () => iel.value)).v;
+    const iel = textarea("word list").sv(flist.sort().join("\n")).style({ height: "200px" });
+    const p = (await interModal(view().add(["确定添加以下单词到拼写吗？", iel]), null, () => iel.el.value)).v;
     if (!p) return;
     const rlist = randomList(p.split("\n"));
     const now = time() - timeD.d(5);
@@ -1582,7 +1552,7 @@ async function ignoredWordSpell(list: string[]) {
         const sCards = fsrsSpell.repeat(card, now)[Rating.Easy].card;
         await spellStore.setItem(word, sCards);
     }
-    putToast(el("span", "已添加"));
+    putToast(txt("已添加"));
 }
 
 async function textTransformer(text: string) {
@@ -1646,12 +1616,12 @@ async function showNormalBook(book: book, s: section) {
 
     console.log(plist);
 
-    bookContentEl.append(
-        el("h1", s.title, {
-            onclick: async () => {
+    bookContentEl.add(
+        ele("h1")
+            .add(s.title)
+            .on("click", async () => {
                 if ((await getBooksById(nowBook.book)).canEdit) setSectionTitle(nowBook.sections);
-            },
-        }),
+            }),
     );
 
     wordFreq = {};
@@ -1660,7 +1630,7 @@ async function showNormalBook(book: book, s: section) {
 
     for (const paragraph of plist) {
         if (paragraph.length === 0) continue;
-        let pel: HTMLElement = document.createElement("p");
+        let pel: ElType<HTMLElement> = p("");
         let t = 0;
         for (let i = 0; i <= 6; i++) {
             const x = paragraph[0]?.[i]?.text;
@@ -1676,38 +1646,34 @@ async function showNormalBook(book: book, s: section) {
                 break;
             }
         }
-        if (t) pel = document.createElement(`h${t}`);
+        if (t) pel = ele(`h${t}`);
 
         if (paragraph.length === 1 && paragraph[0].length >= 3 && paragraph[0].every((i) => i.text === "-")) {
-            pel = el("hr");
-            bookContentEl.append(pel);
+            pel = ele("hr");
+            bookContentEl.add(pel);
             continue;
         }
         if (paragraph[0][0].text === ">") {
-            pel = el("blockquote");
-            bookContentEl.append(pel);
+            pel = ele("blockquote");
+            bookContentEl.add(pel);
             t = 1;
         }
 
         for (const si in paragraph) {
             const sen = paragraph[si];
-            const senEl = el("span");
+            const senEl = txt("");
             for (const i in sen) {
                 const word = sen[i];
                 if (si === "0" && Number(i) < t) continue;
-                const span = document.createElement("span");
-                span.innerText = await textTransformer(word.text);
+                const span = txt(await textTransformer(word.text));
                 for (const i in s.words) {
                     const index = s.words[i].index;
                     if (index[0] <= word.start && word.end <= index[1] && s.words[i].type === "word") {
-                        span.classList.add(MARKWORD);
+                        span.el.classList.add(MARKWORD);
                     }
                 }
-                span.setAttribute("data-s", String(word.start));
-                span.setAttribute("data-e", String(word.end));
-                span.setAttribute("data-w", String(word.isWord));
-                span.setAttribute("data-t", word.text);
-                senEl.append(span);
+                span.data({ s: String(word.start), e: String(word.end), w: String(word.isWord), t: word.text });
+                senEl.add(span);
 
                 const src = lemmatizer(word.text.toLocaleLowerCase());
                 if (wordFreq[src]) wordFreq[src]++;
@@ -1715,78 +1681,76 @@ async function showNormalBook(book: book, s: section) {
 
                 if (!t && i !== "0" && word.text.match(/^[A-Z]/)) properN.push(word.text);
             }
-            senEl.onclick = async (ev) => {
-                const span = ev.target as HTMLSpanElement;
-                if (span.tagName !== "SPAN") return;
-                if (span.getAttribute("data-w") === "false") return;
+            senEl
+                .on("click", async (ev) => {
+                    const span = ev.target as HTMLSpanElement;
+                    if (span.tagName !== "SPAN") return;
+                    if (span.getAttribute("data-w") === "false") return;
 
-                const s = sen[0].start;
-                const e = sen.at(-1).end;
+                    const s = sen[0].start;
+                    const e = sen.at(-1).end;
 
-                const id = await saveCard({
-                    key: span.getAttribute("data-t"),
-                    index: { start: Number(span.getAttribute("data-s")), end: Number(span.getAttribute("data-e")) },
-                    cindex: { start: s, end: e },
+                    const id = await saveCard({
+                        key: span.getAttribute("data-t"),
+                        index: { start: Number(span.getAttribute("data-s")), end: Number(span.getAttribute("data-e")) },
+                        cindex: { start: s, end: e },
+                    });
+                    if (
+                        span.classList.contains(MARKWORD) ||
+                        highFreq.includes(lemmatizer(span.innerText.toLocaleLowerCase())) ||
+                        dicEl.classList.contains(DICSHOW)
+                    ) {
+                        showDic(id);
+                    }
+
+                    span.classList.add(MARKWORD);
+                })
+                .on("contextmenu", async (ev) => {
+                    ev.preventDefault();
+                    const span = ev.target as HTMLSpanElement;
+                    if (span.tagName !== "SPAN") return;
+                    const start = Number(span.getAttribute("data-s"));
+                    const end = Number(span.getAttribute("data-e"));
+                    const text = await changeEdit(true);
+                    text.selectionStart = start;
+                    text.selectionEnd = end;
+                    text.focus();
                 });
-                if (
-                    span.classList.contains(MARKWORD) ||
-                    highFreq.includes(lemmatizer(span.innerText.toLocaleLowerCase())) ||
-                    dicEl.classList.contains(DICSHOW)
-                ) {
-                    showDic(id);
-                }
 
-                span.classList.add(MARKWORD);
-            };
-
-            senEl.oncontextmenu = async (ev) => {
-                ev.preventDefault();
-                const span = ev.target as HTMLSpanElement;
-                if (span.tagName !== "SPAN") return;
-                const start = Number(span.getAttribute("data-s"));
-                const end = Number(span.getAttribute("data-e"));
-                const text = await changeEdit(true);
-                text.selectionStart = start;
-                text.selectionEnd = end;
-                text.focus();
-            };
-            pel.append(senEl);
+            pel.add(senEl);
         }
 
-        const moreEl = el("div", { class: "p_more" });
+        const moreEl = view().class("p_more");
 
         const pText = editText.slice(paragraph[0]?.[0]?.start ?? null, paragraph.at(-1)?.at(-1)?.end ?? null);
         if (pText) {
             const i = contentP.length;
-            moreEl.append(
-                el("div", iconEl(recume_svg), {
-                    onclick: () => {
+            moreEl.add(
+                view()
+                    .add(iconEl(recume_svg))
+                    .on("click", () => {
                         showLisent(contentP.at(i));
-                    },
-                }),
+                    }),
             );
         }
         contentP.push(pText);
 
-        moreEl.append(
-            el("div", iconEl(translate_svg), {
-                onclick: () => {
-                    translateContext(pel);
-                },
-            }),
-        );
-
-        moreEl.append(
+        moreEl.add([
+            view()
+                .add(iconEl(translate_svg))
+                .on("click", () => {
+                    translateContext(pel.el);
+                }),
             view()
                 .add(iconEl(exTrans_svg))
                 .on("click", () => {
-                    exTrans(pel, 0, book);
-                }).el,
-        );
+                    exTrans(pel.el, 0, book);
+                }),
+        ]);
 
-        pel.append(moreEl);
+        pel.add(moreEl);
 
-        bookContentEl.append(pel);
+        bookContentEl.add(pel);
     }
 
     for (const i in wordFreq) {
@@ -1838,10 +1802,10 @@ async function showLisent(text: string) {
     }
     sL = sL.map((i) => i.replaceAll(/^["'“”‘’]/g, ""));
 
-    const d = el("dialog", { class: "play_list" }) as HTMLDialogElement;
+    const d = ele("dialog").class("play_list");
     const playsEl = view("y");
     playEl(sL);
-    d.append(playsEl.el);
+    d.add(playsEl);
     function playEl(l: string[]) {
         playsEl.clear();
         playsEl.add(
@@ -1863,17 +1827,13 @@ async function showLisent(text: string) {
         );
     }
     let pausePlayP: () => void;
-    d.append(
-        el("div", [
-            el("button", "按句", {
-                onclick: () => {
-                    playEl(mainL);
-                },
+    d.add(
+        view().add([
+            button("按句").on("click", () => {
+                playEl(mainL);
             }),
-            el("button", "按小句", {
-                onclick: () => {
-                    playEl(sL);
-                },
+            button("按小句").on("click", () => {
+                playEl(sL);
             }),
             button()
                 .add(iconEl(recume_svg))
@@ -1885,36 +1845,32 @@ async function showLisent(text: string) {
                         pausePlayP = (await runTTS(text)).cancel;
                     }
                 }),
-            el("button", iconEl(close_svg), {
-                onclick: () => {
-                    d.close();
-                    pausePlayP();
-                },
+            button(iconEl(close_svg)).on("click", () => {
+                d.el.close();
+                pausePlayP();
             }),
         ]),
     );
-    dialogX(d);
+    dialogX(d.el);
 }
 
 async function showRecord(text: string) {
-    const d = el("dialog") as HTMLDialogElement;
-    dialogX(d);
+    const d = ele("dialog");
+    dialogX(d.el);
 
     const textEl = p(text);
 
     const x = view().style({ width: "80dvw" });
     const recordX = view().style({ width: "80dvw" });
 
-    d.append(textEl.el);
-    d.append(x.el);
-    d.append(
-        button()
-            .add("+")
-            .on("click", () => {
-                playWs.regions.addRegion({ start: playWs.ws.getDuration() / 2 });
-            }).el,
+    d.add(textEl);
+    d.add(x);
+    d.add(
+        button("+").on("click", () => {
+            playWs.regions.addRegion({ start: playWs.ws.getDuration() / 2 });
+        }),
     );
-    d.append(recordX.el);
+    d.add(recordX);
 
     const tts = await getTTS(text);
 
@@ -2067,7 +2023,7 @@ async function showRecord(text: string) {
 
     const recordWs = wss(recordX.el, "");
 
-    const recordB = button().add(iconEl(mic_svg));
+    const recordB = button(iconEl(mic_svg));
     let startR = false;
 
     const record = RecordPlugin.create({ renderRecordedAudio: false });
@@ -2090,16 +2046,14 @@ async function showRecord(text: string) {
         recordWs.ws.load(recordedUrl);
     });
 
-    d.append(
+    d.add(
         view("x").add([
             recordB,
             spacer(),
-            button()
-                .add(iconEl(close_svg))
-                .on("click", () => {
-                    d.close();
-                }),
-        ]).el,
+            button(iconEl(close_svg)).on("click", () => {
+                d.el.close();
+            }),
+        ]),
     );
 }
 
@@ -2151,12 +2105,11 @@ async function translateContext(p: HTMLElement) {
 
     const f = new autoFun.def({ script: ["把输入的语言翻译成中文"], output: "list:[]" });
     const ff = f.run(text as any);
-    const stopEl = el("button", iconEl(close_svg));
-    stopEl.onclick = () => {
+    const stopEl = button(iconEl(close_svg)).on("click", () => {
         ff.stop.abort();
         pel.remove();
-    };
-    const pel = el("div", [el("p", "AI正在翻译段落"), stopEl]);
+    });
+    const pel = view().add([txt("AI正在翻译段落"), stopEl]);
     putToast(pel, 0);
     ff.result.then((r) => {
         pel.remove();
@@ -2211,13 +2164,13 @@ async function exTrans(pEl: HTMLElement, i: number, book: book) {
                 "backdrop-filter": "var(--blur)",
                 "border-radius": "var(--border-radius)",
             }),
-            last: button().add(iconEl(left_svg)),
-            next: button().add(iconEl(right_svg)),
-            diff: button().add(iconEl(eye_svg)),
-            ai: button().add(iconEl(ai_svg)),
-            close: button().add(iconEl(close_svg)),
+            last: button(iconEl(left_svg)),
+            next: button(iconEl(right_svg)),
+            diff: button(iconEl(eye_svg)),
+            ai: button(iconEl(ai_svg)),
+            close: button(iconEl(close_svg)),
             spellTip: {
-                _: button().add(iconEl(more_svg)),
+                _: button(iconEl(more_svg)),
                 spellTipList: view("y").style({
                     position: "absolute",
                     top: "0",
@@ -2337,8 +2290,8 @@ async function exTrans(pEl: HTMLElement, i: number, book: book) {
             p(t),
             button()
                 .add(iconEl(close_svg))
-                .on("click", () => el.remove()),
-        ]).el;
+                .on("click", () => el.el.remove()),
+        ]);
         putToast(el, 0);
     });
 
@@ -2406,7 +2359,7 @@ async function exTrans(pEl: HTMLElement, i: number, book: book) {
                                       ]
                                     : null,
                                 [
-                                    button().add(iconEl(close_svg)).style({ width: "var(--size0)", "flex-shrink": 0 }),
+                                    button(iconEl(close_svg)).style({ width: "var(--size0)", "flex-shrink": 0 }),
                                     "cancel",
                                 ],
                             ]);
@@ -2642,9 +2595,9 @@ async function changeEdit(b: boolean) {
         changeEditEl.innerHTML = icon(ok_svg);
         return setEdit();
     }
-    const newC = el("div");
+    const newC = view();
     bookContentContainerEl.innerHTML = "";
-    bookContentContainerEl.append(newC);
+    bookContentContainerEl.append(newC.el);
     bookContentEl = newC;
     if (nowBook.book) {
         const book = await getBooksById(nowBook.book);
@@ -2751,92 +2704,94 @@ async function setEdit() {
     const sectionId = nowBook.sections;
     const section = await getSection(sectionId);
     bookContentContainerEl.innerHTML = "";
-    const text = el("textarea");
-    text.disabled = !book.canEdit;
+    const textEl = textarea("text edit").attr({ disabled: !book.canEdit, value: section.text });
+    const text = textEl.el;
     bookContentContainerEl.append(text);
-    bookContentEl = text;
-    text.value = section.text;
+    bookContentEl = textEl;
     setScrollPosi(text, contentScrollPosi);
     setScrollPosi(bookContentContainerEl, 0);
-    // biome-ignore lint:add getText
-    window["getText"] = () => text.value;
-    // biome-ignore lint:^
-    window["setText"] = (str: string) => (text.value = editText = str);
-    text.oninput = () => {
-        editText = text.value;
+    // @ts-ignore
+    window.getText = () => text.el.value;
+    // @ts-ignore
+    window.setText = (str: string) => {
+        text.value = editText = str;
     };
-    text.onkeyup = async (e) => {
-        if (e.key === "Enter" && !e.shiftKey) {
-            const l = text.value.split("\n");
-            let index = 0;
-            const aiRange: { s: number; e: number }[] = [];
-            const startMark = "=ai=";
-            const endMark = "====";
-            let hasAi = false;
-            for (const i of l) {
-                if (i === startMark) {
-                    hasAi = true;
-                    aiRange.push({ s: index + startMark.length, e: index + startMark.length });
+    textEl
+        .on("input", () => {
+            editText = text.value;
+        })
+        .on("keyup", async (e) => {
+            if (e.key === "Enter" && !e.shiftKey) {
+                const l = text.value.split("\n");
+                let index = 0;
+                const aiRange: { s: number; e: number }[] = [];
+                const startMark = "=ai=";
+                const endMark = "====";
+                let hasAi = false;
+                for (const i of l) {
+                    if (i === startMark) {
+                        hasAi = true;
+                        aiRange.push({ s: index + startMark.length, e: index + startMark.length });
+                        index += i.length + 1;
+                        continue;
+                    }
+                    if (hasAi && i === endMark) {
+                        hasAi = false;
+                        aiRange.at(-1).e = index;
+                    }
                     index += i.length + 1;
-                    continue;
                 }
-                if (hasAi && i === endMark) {
-                    hasAi = false;
-                    aiRange.at(-1).e = index;
+                const range = aiRange.find((r) => r.s <= text.selectionStart && text.selectionEnd <= r.e);
+                if (!range) return;
+                const aiM = textAi(text.value.slice(range.s, range.e));
+                if (aiM.at(-1)?.role !== "user") {
+                    text.setRangeText("\n>");
+                    return;
                 }
-                index += i.length + 1;
+                aiM.unshift({ role: "system", content: `This is a passage: ${text.value.slice(0, aiRange[0].s)}` });
+                console.log(aiM);
+                const start = text.selectionStart;
+                const end = text.selectionEnd;
+                const aitext = await ai(aiM, "对话").text;
+                const addText = `ai:\n${aitext}`;
+                const changeText = text.value.slice(0, start) + addText + text.value.slice(end);
+                text.value = changeText;
+                editText = changeText;
+                text.selectionStart = start;
+                text.selectionEnd = start + addText.length;
             }
-            const range = aiRange.find((r) => r.s <= text.selectionStart && text.selectionEnd <= r.e);
-            if (!range) return;
-            const aiM = textAi(text.value.slice(range.s, range.e));
-            if (aiM.at(-1)?.role !== "user") {
-                text.setRangeText("\n>");
-                return;
-            }
-            aiM.unshift({ role: "system", content: `This is a passage: ${text.value.slice(0, aiRange[0].s)}` });
-            console.log(aiM);
-            const start = text.selectionStart;
-            const end = text.selectionEnd;
-            const aitext = await ai(aiM, "对话").text;
-            const addText = `ai:\n${aitext}`;
-            const changeText = text.value.slice(0, start) + addText + text.value.slice(end);
-            text.value = changeText;
-            editText = changeText;
-            text.selectionStart = start;
-            text.selectionEnd = start + addText.length;
-        }
-    };
-    const upel = document.createElement("input");
-    upel.type = "file";
-    upel.onchange = () => {
-        const file = upel.files[0];
-        if (file) {
-            let fileType: "text" | "docx";
-            console.log(file.type);
+        });
+    const upel = ele("input")
+        .attr({ type: "file" })
+        .on("change", () => {
+            const file = upel.el.files[0];
+            if (file) {
+                let fileType: "text" | "docx";
+                console.log(file.type);
 
-            if (file.name.endsWith("doc") || file.name.endsWith("docx")) {
-                fileType = "docx";
-            }
-            if (file.type === "text/plain") {
-                fileType = "text";
-            }
-            const reader = new FileReader();
-            if (fileType === "docx") {
-                reader.readAsArrayBuffer(file);
-            } else if (fileType === "text") {
-                reader.readAsText(file);
-            }
-            reader.onload = async () => {
-                let t = "";
-                if (fileType === "text") {
-                    t = reader.result as string;
+                if (file.name.endsWith("doc") || file.name.endsWith("docx")) {
+                    fileType = "docx";
                 }
-                text.value = t;
-                editText = t;
-            };
-        }
-    };
-    bookContentContainerEl.append(upel);
+                if (file.type === "text/plain") {
+                    fileType = "text";
+                }
+                const reader = new FileReader();
+                if (fileType === "docx") {
+                    reader.readAsArrayBuffer(file);
+                } else if (fileType === "text") {
+                    reader.readAsText(file);
+                }
+                reader.onload = async () => {
+                    let t = "";
+                    if (fileType === "text") {
+                        t = reader.result as string;
+                    }
+                    text.value = t;
+                    editText = t;
+                };
+            }
+        });
+    bookContentContainerEl.append(upel.el);
 
     text.onscroll = () => {
         contentScrollPosi = getScrollPosi(text);
@@ -2889,13 +2844,13 @@ bookdicEl.onclick = async () => {
 };
 
 async function sectionSelectEl() {
-    const bookSectionsSelectEl = el("div", { popover: "auto" });
-    document.body.append(bookSectionsSelectEl);
-    sectionSelect(bookSectionsSelectEl);
+    const bookSectionsSelectEl = view().attr({ popover: "auto" });
+    document.body.append(bookSectionsSelectEl.el);
+    sectionSelect(bookSectionsSelectEl.el);
     return {
         el: el("button", "选择词书", {
             onclick: () => {
-                bookSectionsSelectEl.showPopover();
+                bookSectionsSelectEl.el.showPopover();
             },
         }),
         values: () => getSelectBooks(bookSectionsSelectEl),
@@ -2951,13 +2906,13 @@ async function sectionSelect(menuEl: HTMLElement) {
     return menuEl;
 }
 
-function getSelectBooks(el: HTMLElement) {
+function getSelectBooks(el: ElType<HTMLElement>) {
     return {
-        word: Array.from(el.querySelectorAll("input[data-type='word']:checked"))
-            .map((i: HTMLInputElement) => i.value)
+        word: Array.from(el.queryAll("input[data-type='word']:checked"))
+            .map((i: ElType<HTMLInputElement>) => i.el.value)
             .filter((v) => v),
-        book: Array.from(el.querySelectorAll("input[data-type='text']:checked"))
-            .map((i: HTMLInputElement) => i.value)
+        book: Array.from(el.queryAll("input[data-type='text']:checked"))
+            .map((i: ElType<HTMLInputElement>) => i.el.value)
             .filter((v) => v),
     };
 }
@@ -3208,23 +3163,25 @@ nextMarkEl.onclick = async () => {
 };
 function jumpToMark([start, end]) {
     bookContentContainerEl.style.scrollBehavior = "smooth";
-    const span = bookContentEl.querySelector(`span[data-s="${start}"]`);
-    const spanE = bookContentEl.querySelector(`span[data-e="${end}"]`);
+    const span = bookContentEl.query(`span[data-s="${start}"]`);
+    const spanE = bookContentEl.query(`span[data-e="${end}"]`);
     const e = getDicPosi();
     // 60是粗略计算dic高度
     const dicInView = e + 60 < window.innerHeight && e > 0;
     if (e && dicInView) {
-        bookContentContainerEl.scrollTop += spanE.getBoundingClientRect().bottom - e;
+        bookContentContainerEl.scrollTop += spanE.el.getBoundingClientRect().bottom - e;
     } else {
         bookContentContainerEl.scrollTop =
-            span.getBoundingClientRect().top - bookContentEl.getBoundingClientRect().top + bookContentEl.offsetTop;
+            span.el.getBoundingClientRect().top -
+            bookContentEl.el.getBoundingClientRect().top +
+            bookContentEl.el.offsetTop;
     }
 
     bookContentContainerEl.onscrollend = () => {
         bookContentContainerEl.style.scrollBehavior = "";
     };
     setTimeout(() => {
-        span.classList.remove("flash_word");
+        span.el.classList.remove("flash_word");
     }, 1200);
 }
 
@@ -3233,11 +3190,11 @@ dicMinEl.onclick = () => {
 };
 
 function setDicPosi(el: HTMLElement) {
-    dicEl.style.top = `${el.getBoundingClientRect().bottom - (bookContentEl.getBoundingClientRect().top - bookContentEl.scrollTop) + 24}px`;
+    dicEl.style.top = `${el.getBoundingClientRect().bottom - (bookContentEl.el.getBoundingClientRect().top - bookContentEl.el.scrollTop) + 24}px`;
 }
 function getDicPosi() {
     const top = Number.parseFloat(dicEl.style.top);
-    return top + (bookContentEl.getBoundingClientRect().top - bookContentEl.scrollTop) - 24;
+    return top + (bookContentEl.el.getBoundingClientRect().top - bookContentEl.el.scrollTop) - 24;
 }
 
 let dicTransAi: AbortController;
@@ -3286,7 +3243,7 @@ async function showDic(id: string) {
         } else {
             contextEnd = wordx.index[1] + (Share.context.length - Share.sourceIndex[1]);
         }
-        setDicPosi(bookContentEl.querySelector(`span[data-e="${contextEnd}"]`));
+        setDicPosi(bookContentEl.query(`span[data-e="${contextEnd}"]`).el);
         changeContext();
     }
 
@@ -3613,27 +3570,27 @@ async function showDic(id: string) {
         const endClass = "context_end";
         startEl.classList.add(startClass);
         endEl.classList.add(endClass);
-        bookContentEl.querySelector(`.${startClass}`)?.remove();
-        bookContentEl.querySelector(`.${endClass}`)?.remove();
-        bookContentEl.append(startEl, endEl);
+        bookContentEl.query(`.${startClass}`)?.remove();
+        bookContentEl.query(`.${endClass}`)?.remove();
+        bookContentEl.add([startEl, endEl]);
         function setElPosi(el: HTMLElement, left: boolean) {
             function getOffset(el: HTMLElement) {
                 const pel = bookContentEl;
                 const r = el.getBoundingClientRect();
-                const r0 = pel.getBoundingClientRect();
-                return { left: r.left - r0.left, top: r.top - (r0.top - pel.scrollTop) };
+                const r0 = pel.el.getBoundingClientRect();
+                return { left: r.left - r0.left, top: r.top - (r0.top - pel.el.scrollTop) };
             }
             if (left) {
                 let nel = el;
                 if (!isSentence && Number(el.getAttribute("data-s")) > wordx.index[0]) {
-                    nel = bookContentEl.querySelector(`span[data-s="${wordx.index[0]}"]`);
+                    nel = bookContentEl.query(`span[data-s="${wordx.index[0]}"]`).el;
                 }
                 startEl.style.left = `${getOffset(nel).left}px`;
                 startEl.style.top = `${getOffset(nel).top}px`;
             } else {
                 let nel = el;
                 if (!isSentence && Number(el.getAttribute("data-s")) < wordx.index[0]) {
-                    nel = bookContentEl.querySelector(`span[data-s="${wordx.index[0]}"]`);
+                    nel = bookContentEl.query(`span[data-s="${wordx.index[0]}"]`).el;
                 }
                 endEl.style.left = `${getOffset(nel).left + nel.offsetWidth}px`;
                 endEl.style.top = `${getOffset(nel).top + nel.offsetHeight}px`;
@@ -3642,9 +3599,7 @@ async function showDic(id: string) {
         function matchRangeEl(n: number, left: boolean) {
             for (let i = 0; i < editText.length - n + 1; i++) {
                 for (const ii of [-1, 1]) {
-                    const el = bookContentEl.querySelector(
-                        `span[data-${left ? "s" : "e"}="${n + i * ii}"]`,
-                    ) as HTMLElement;
+                    const el = bookContentEl.query(`span[data-${left ? "s" : "e"}="${n + i * ii}"]`).el as HTMLElement;
                     if (el) {
                         return el;
                     }
@@ -3913,12 +3868,12 @@ async function clearWordMean(record: record) {
 
 function addStyle(x: [number, number]) {
     for (let i = x[0]; i < x[1]; i++) {
-        bookContentEl.querySelector(`span[data-s="${i}"]`)?.classList?.add(MARKWORD);
+        bookContentEl.query(`span[data-s="${i}"]`)?.el?.classList?.add(MARKWORD);
     }
 }
 function rmStyle(x: [number, number]) {
     for (let i = x[0]; i < x[1]; i++) {
-        bookContentEl.querySelector(`span[data-s="${i}"]`)?.classList?.remove(MARKWORD);
+        bookContentEl.query(`span[data-s="${i}"]`)?.el?.classList?.remove(MARKWORD);
     }
 }
 
@@ -4477,7 +4432,7 @@ function ai(m: aim, text?: string) {
         abort.abort();
         pel.remove();
     };
-    const pel = el("div", [el("p", `AI正在思考${text || ""}`), stopEl]);
+    const pel = view().add([txt(`AI正在思考${text || ""}`), stopEl]);
     putToast(pel, 0);
     const url = getSetting("ai.url");
     const key = getSetting("ai.key");
@@ -4506,12 +4461,13 @@ function ai(m: aim, text?: string) {
                     pel.remove();
                     return "";
                 }
-                pel.innerHTML = "";
-                const escEl = el("button", iconEl(close_svg));
-                escEl.onclick = () => {
-                    pel.remove();
-                };
-                pel.append(el("p", `AI处理${text || ""}时出现错误`), el("div", [escEl]));
+                pel.clear();
+                pel.add([
+                    `AI处理${text || ""}时出现错误`,
+                    button(iconEl(close_svg)).on("click", () => {
+                        pel.remove();
+                    }),
+                ]);
             }),
     };
 }
@@ -4633,12 +4589,12 @@ function flatWordCard(record: record, id: string) {
 }
 
 function selectWord(words: string[]) {
-    for (const el of bookContentEl.querySelectorAll(`.${TMPMARKWORD}`)) {
-        el.classList.remove(TMPMARKWORD);
+    for (const el of bookContentEl.queryAll(`.${TMPMARKWORD}`)) {
+        el.el.classList.remove(TMPMARKWORD);
     }
-    for (const el of Array.from(bookContentEl.querySelectorAll("span[data-t]")) as HTMLSpanElement[]) {
-        if (words.includes(el.innerText.toLocaleLowerCase())) {
-            el.classList.add(TMPMARKWORD);
+    for (const el of bookContentEl.queryAll("span[data-t]")) {
+        if (words.includes(el.el.innerText.toLocaleLowerCase())) {
+            el.class(TMPMARKWORD);
         }
     }
 }
@@ -4695,9 +4651,9 @@ async function autoIgnore() {
     const f = el("div");
     const words = Array.from(
         new Set(
-            Array.from(bookContentEl.querySelectorAll(`:scope>*>*>span:not(.${MARKWORD})`)).map((el) =>
-                el.textContent.trim().toLocaleLowerCase(),
-            ),
+            bookContentEl
+                .queryAll(`:scope>*>*>span:not(.${MARKWORD})`)
+                .map((el) => el.el.textContent.trim().toLocaleLowerCase()),
         ),
     );
     const section = await getSection(ignoreWordSection);
@@ -5254,16 +5210,13 @@ async function getWordAiContext() {
 
         const x = f.run({ list: l as any });
 
-        const tipEl = el(
-            "div",
-            el("p", "正在生成AI例句……"),
-            el("button", iconEl(close_svg), {
-                onclick: () => {
-                    tipEl.remove();
-                    x.stop.abort();
-                },
+        const tipEl = view().add([
+            txt("正在生成AI例句……"),
+            button(iconEl(close_svg)).on("click", () => {
+                tipEl.remove();
+                x.stop.abort();
             }),
-        );
+        ]);
 
         putToast(tipEl, 0);
 
@@ -5276,7 +5229,7 @@ async function getWordAiContext() {
             rr = r.sentences;
         }
     } catch (error) {
-        putToast(el("p", "ai错误"));
+        putToast(txt("ai错误"));
     }
 
     aiContexts = {};
@@ -5399,7 +5352,7 @@ function getReviewCardButtons(id: string, card: Card, readText: string, f?: (rat
             await firstClick();
             if (f) f(rating);
         };
-        const b = button().add(icon).on("click", reviewHotkey[rating].f);
+        const b = button(icon).on("click", reviewHotkey[rating].f);
         return b;
     };
     async function firstClick() {
@@ -6369,7 +6322,7 @@ let isSetData = false;
 async function setAllData(json: allData, textId?: string) {
     if (isSetData) return;
     isSetData = true;
-    const tip = el("span", "正在更新……");
+    const tip = txt("正在更新……");
     putToast(tip, 0);
 
     if (Object.keys(json.actions).at(-1) < (await cardActionsStore.keys()).at(-1)) {
@@ -6474,11 +6427,10 @@ async function setDAV(data: Blob) {
         body: data,
     })
         .then(() => {
-            const p = el("span", "上传成功");
-            putToast(p);
+            putToast(txt("上传成功"));
         })
         .catch(() => {
-            putToast(el("span", "上传失败"), 6000);
+            putToast(txt("上传失败"), 6000);
         });
 }
 
@@ -6596,7 +6548,7 @@ const asyncEl = el("div", [
         el("h3", "GitHub"),
         el("button", "↓", {
             onclick: async () => {
-                putToast(el("span", "下载开始"));
+                putToast(txt("下载开始"));
                 try {
                     const data = (await downloadGithub(rmbwGithub1)) as allData;
                     const oldId = await textCacheId();
@@ -6617,14 +6569,14 @@ const asyncEl = el("div", [
                     }
                     setAllData(data, nId);
                 } catch (error) {
-                    putToast(el("span", "下载失败"), 6000);
+                    putToast(txt("下载失败"), 6000);
                     throw error;
                 }
             },
         }),
         el("button", "↑", {
             onclick: async () => {
-                putToast(el("span", "上传开始"));
+                putToast(txt("上传开始"));
                 try {
                     const x = await toAllData();
                     const v = splitAllData(x);
@@ -6635,9 +6587,9 @@ const asyncEl = el("div", [
                     }
                     await uploadGithub(formatAllData(v.data), rmbwGithub1, "更新数据");
                     updataTextId(v.hash);
-                    putToast(el("span", "上传成功"));
+                    putToast(txt("上传成功"));
                 } catch (error) {
-                    putToast(el("span", "上传失败"), 6000);
+                    putToast(txt("上传失败"), 6000);
                     throw error;
                 }
             },
