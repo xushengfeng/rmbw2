@@ -19,6 +19,7 @@ import {
     initDev,
     image,
     elFromId,
+    select,
 } from "dkh-ui";
 
 if (import.meta.env) initDev();
@@ -6014,19 +6015,18 @@ function renderCal(year: number, data: Date[], el: typeof cal1) {
 }
 
 //###### setting
-const settingEl = document.getElementById("setting");
+const settingEl = elFromId("setting");
 document.getElementById("settingb").onclick = () => {
-    settingEl.togglePopover();
+    settingEl.el.togglePopover();
 };
 
 const readerSettingPath = { apostrophe: "reader.apostrophe" };
 
-settingEl.append(
-    el(
-        "div",
-        el("h2", "阅读器"),
+settingEl.add(
+    view().add([
+        ele("h2").add("阅读器"),
         el("label", el("input", { type: "checkbox", "data-path": readerSettingPath.apostrophe }), "把’转为'"),
-    ),
+    ]),
 );
 
 import Sortable from "sortablejs";
@@ -6087,30 +6087,24 @@ if (!(await setting.getItem(onlineDicsPath))) {
     await setting.setItem(onlineDicsPath, defaultOnlineDic);
 }
 
-const moreOnlineDicEl = el("select", el("option", "添加更多"));
-for (const i of defaultOnlineDic) {
-    moreOnlineDicEl.append(el("option", i.name, { value: i.name }));
-}
-moreOnlineDicEl.onchange = () => {
-    const i = defaultOnlineDic.find((i) => i.name === moreOnlineDicEl.value);
+const moreOnlineDicEl = select(defaultOnlineDic.map((i) => ({ name: i.name, value: i.name }))).on("change", () => {
+    const i = defaultOnlineDic.find((i) => i.name === moreOnlineDicEl.el.value);
     if (!i) return;
     onlineDicsEl.append(onlineDicItem(i.name, i.url, i.lan));
     saveSortOnlineDics();
-};
+});
 
-settingEl.append(
-    el(
-        "div",
-        { class: "setting_dic" },
-        el("h3", "在线词典"),
-        onlineDicsEl,
-        el(
-            "div",
-            addOnlineDic1El,
-            addOnlineDic2El,
-            addOnlineDic3El,
-            el("button", iconEl(add_svg), {
-                onclick: () => {
+settingEl.add(
+    view()
+        .class("setting_dic")
+        .add([
+            ele("h3").add("在线词典"),
+            onlineDicsEl,
+            view().add([
+                addOnlineDic1El,
+                addOnlineDic2El,
+                addOnlineDic3El,
+                button(iconEl(add_svg)).on("click", () => {
                     onlineDicsEl.append(
                         onlineDicItem(addOnlineDic1El.value, addOnlineDic2El.value, addOnlineDic3El.value),
                     );
@@ -6118,11 +6112,10 @@ settingEl.append(
                     addOnlineDic2El.value = "";
                     addOnlineDic3El.value = "";
                     saveSortOnlineDics();
-                },
-            }),
-            moreOnlineDicEl,
-        ),
-    ),
+                }),
+                moreOnlineDicEl,
+            ]),
+        ]),
 );
 
 showOnlineDics();
@@ -6193,7 +6186,7 @@ async function getIPA(word: string) {
         .join(",");
 }
 
-settingEl.append(el("label", ["学习语言", el("input", { "data-path": "lan.learn" })]));
+settingEl.add(el("label", ["学习语言", el("input", { "data-path": "lan.learn" })]));
 
 const textCacheIdPath = "file.text.id";
 const textCacheId = () => setting.getItem(textCacheIdPath);
@@ -6467,16 +6460,16 @@ async function getGitHub(fileName: string) {
     };
 }
 
-const uploadDataEl = el("input", "上传数据", {
-    type: "file",
-    onchange: () => {
+const uploadDataEl = input("upload")
+    .add("上传数据")
+    .attr({ type: "file" })
+    .on("change", () => {
         const reader = new FileReader();
-        reader.readAsText(uploadDataEl.files[0]);
+        reader.readAsText(uploadDataEl.el.files[0]);
         reader.onload = () => {
             setAllData(JSON.parse(reader.result as string));
         };
-    },
-});
+    });
 
 import { encode } from "js-base64";
 
@@ -6514,86 +6507,76 @@ async function downloadGithub(fileName: string) {
     return data;
 }
 
-const asyncEl = el("div", [
-    el("h2", "数据"),
-    el("div", [
-        el("button", "导出数据", {
-            onclick: async () => {
-                const data = await getAllData();
-                download(data, rmbwJsonName);
-            },
+const asyncEl = view().add([
+    ele("h2").add("数据"),
+    view().add([
+        button("导出数据").on("click", async () => {
+            const data = await getAllData();
+            download(data, rmbwJsonName);
         }),
         uploadDataEl,
     ]),
-    el("div", [
-        el("h3", "webDAV"),
-        el("button", "↓", {
-            onclick: async () => {
-                const data = await getDAV();
-                const str = await xunzip(data);
-                setAllData(JSON.parse(str));
-            },
+    view().add([
+        ele("h3").add("webDAV"),
+        button("↓").on("click", async () => {
+            const data = await getDAV();
+            const str = await xunzip(data);
+            setAllData(JSON.parse(str));
         }),
-        el("button", "↑", {
-            onclick: async () => {
-                const data = await getAllData();
-                const file = await xzip(data);
-                setDAV(file);
-            },
+        button("↑").on("click", async () => {
+            const data = await getAllData();
+            const file = await xzip(data);
+            setDAV(file);
         }),
         el("form", [
             el("label", ["url：", el("input", { "data-path": DAVConfigPath.url })]),
             el("label", ["用户名：", el("input", { "data-path": DAVConfigPath.user })]),
             el("label", ["密码：", el("input", { "data-path": DAVConfigPath.passwd })]),
         ]),
-        el("h3", "GitHub"),
-        el("button", "↓", {
-            onclick: async () => {
-                putToast(txt("下载开始"));
-                try {
-                    const data = (await downloadGithub(rmbwGithub1)) as allData;
-                    const oldId = await textCacheId();
-                    const nId = data.sections[0]?.text;
-                    if (nId) {
-                        let textData: { [key: string]: string } = {};
-                        if (oldId !== nId) {
-                            textData = await downloadGithub(rmbwGithub2);
-                        } else {
-                            await sectionsStore.iterate((v, k) => {
-                                textData[k] = v.text;
-                            });
-                        }
-                        for (const i in textData) {
-                            data.sections[i].text = textData[i];
-                        }
-                        data.sections[0] = undefined;
+        ele("h3").add("GitHub"),
+        button("↓").on("click", async () => {
+            putToast(txt("下载开始"));
+            try {
+                const data = (await downloadGithub(rmbwGithub1)) as allData;
+                const oldId = await textCacheId();
+                const nId = data.sections[0]?.text;
+                if (nId) {
+                    let textData: { [key: string]: string } = {};
+                    if (oldId !== nId) {
+                        textData = await downloadGithub(rmbwGithub2);
+                    } else {
+                        await sectionsStore.iterate((v, k) => {
+                            textData[k] = v.text;
+                        });
                     }
-                    setAllData(data, nId);
-                } catch (error) {
-                    putToast(txt("下载失败"), 6000);
-                    throw error;
+                    for (const i in textData) {
+                        data.sections[i].text = textData[i];
+                    }
+                    data.sections[0] = undefined;
                 }
-            },
+                setAllData(data, nId);
+            } catch (error) {
+                putToast(txt("下载失败"), 6000);
+                throw error;
+            }
         }),
-        el("button", "↑", {
-            onclick: async () => {
-                putToast(txt("上传开始"));
-                try {
-                    const x = await toAllData();
-                    const v = splitAllData(x);
+        button("↑").on("click", async () => {
+            putToast(txt("上传开始"));
+            try {
+                const x = await toAllData();
+                const v = splitAllData(x);
 
-                    const oldId = await textCacheId();
-                    if (oldId !== v.hash) {
-                        await uploadGithub(JSON.stringify(v.text, null, 2), rmbwGithub2, "更新文本");
-                    }
-                    await uploadGithub(formatAllData(v.data), rmbwGithub1, "更新数据");
-                    updataTextId(v.hash);
-                    putToast(txt("上传成功"));
-                } catch (error) {
-                    putToast(txt("上传失败"), 6000);
-                    throw error;
+                const oldId = await textCacheId();
+                if (oldId !== v.hash) {
+                    await uploadGithub(JSON.stringify(v.text, null, 2), rmbwGithub2, "更新文本");
                 }
-            },
+                await uploadGithub(formatAllData(v.data), rmbwGithub1, "更新数据");
+                updataTextId(v.hash);
+                putToast(txt("上传成功"));
+            } catch (error) {
+                putToast(txt("上传失败"), 6000);
+                throw error;
+            }
         }),
         el("form", [
             el("label", ["用户：", el("input", { "data-path": GitHubConfigPath.user })]),
@@ -6609,7 +6592,7 @@ const asyncEl = el("div", [
     ]),
 ]);
 
-settingEl.append(asyncEl);
+settingEl.add(asyncEl);
 
 async function getCSV(type: "word" | "spell" | "sen") {
     const l = [];
@@ -6646,7 +6629,7 @@ const testSpeedLanEl = el("input");
 const testSpeedContentEl = el("p");
 const readSpeedEl = el("input", { type: "number", "data-path": "user.readSpeed" });
 
-settingEl.append(
+settingEl.add(
     el("div", [
         el("h2", "复习"),
         el("button", "导出词句", {
@@ -6737,27 +6720,23 @@ loadTTSVoicesEl.onclick = async () => {
     };
 };
 
-settingEl.append(el("div", [el("h2", "tts"), ttsEngineEl, loadTTSVoicesEl, voicesListEl]));
+settingEl.add(view().add([ele("h2").add("tts"), ttsEngineEl, loadTTSVoicesEl, voicesListEl]));
 
-settingEl.append(
-    el("div", [
-        el("h2", "缓存"),
-        el("button", "tts", {
-            onclick: () => {
-                ttsCache.clear();
-            },
+settingEl.add(
+    view().add([
+        ele("h2").add("缓存"),
+        button("语音").on("click", () => {
+            ttsCache.clear();
         }),
-        el("button", "trans", {
-            onclick: () => {
-                transCache.clear();
-            },
+        button("翻译").on("click", () => {
+            transCache.clear();
         }),
     ]),
 );
 
-settingEl.append(view().add([ele("h2").add(txt("文档")), a("./docs/docs.html").add("点击查看文档")]).el);
+settingEl.add(view().add([ele("h2").add(txt("文档")), a("./docs/docs.html").add("点击查看文档")]).el);
 
-settingEl.append(
+settingEl.add(
     el("div", { class: "about" }, [
         el("h2", "关于"),
         el("div", [
@@ -6801,11 +6780,11 @@ settingEl.append(
     ]),
 );
 
-for (const el of Array.from(settingEl.querySelectorAll("[data-path]")) as HTMLElement[]) {
-    const path = el.getAttribute("data-path");
+for (const el of settingEl.queryAll("[data-path]")) {
+    const path = el.el.getAttribute("data-path");
     const value = await setting.getItem(path);
-    if (el.tagName === "INPUT") {
-        const iel = el as HTMLInputElement;
+    if (el.el.tagName === "INPUT") {
+        const iel = el.el as HTMLInputElement;
         if (iel.type === "checkbox") {
             iel.checked = value as boolean;
             iel.addEventListener("input", () => {
@@ -6824,7 +6803,7 @@ for (const el of Array.from(settingEl.querySelectorAll("[data-path]")) as HTMLEl
         }
     } else if ("value" in el) {
         el.value = value as string;
-        el.onchange = () => {
+        el.el.onchange = () => {
             setting.setItem(path, el.value);
         };
     }
