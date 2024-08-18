@@ -24,6 +24,21 @@ if (import.meta.env) initDev();
 import localforage from "localforage";
 import { extendPrototype } from "localforage-setitems";
 extendPrototype(localforage);
+const localForage = {
+    createInstance: <data = any>(
+        p: Parameters<LocalForage["createInstance"]>[0],
+    ): {
+        setItem: (key: string, data: data) => Promise<data>;
+        getItem: (key: string) => Promise<data>;
+        removeItem: (key: string) => Promise<void>;
+        iterate<U>(
+            iteratee: (value: data, key: string, iterationNumber: number) => U,
+            callback?: (err, result: U) => void,
+        ): Promise<U>;
+        keys(callback?: (err, keys: string[]) => void): Promise<string[]>;
+        clear(callback?: (err) => void): Promise<void>;
+    } => localforage.createInstance(p),
+};
 
 import * as zip from "@zip.js/zip.js";
 
@@ -110,7 +125,7 @@ if ("serviceWorker" in navigator) {
     }
 }
 
-const setting = localforage.createInstance({
+const setting = localForage.createInstance({
     name: "setting",
     driver: localforage.LOCALSTORAGE,
 });
@@ -443,8 +458,8 @@ function putToast(ele: HTMLElement, time = 2000) {
 const tmpDicEl = el("div", { popover: "auto", class: "tmp_dic" });
 document.body.append(tmpDicEl);
 
-const bookshelfStore = localforage.createInstance({ name: "bookshelf" });
-const sectionsStore = localforage.createInstance({ name: "sections" });
+const bookshelfStore = localForage.createInstance<book>({ name: "bookshelf" });
+const sectionsStore = localForage.createInstance<section>({ name: "sections" });
 
 type book = {
     name: string;
@@ -481,10 +496,10 @@ type section = {
 
 async function getBooksById(id: string) {
     if (id === "0") return coreWordBook;
-    return (await bookshelfStore.getItem(id)) as book;
+    return await bookshelfStore.getItem(id);
 }
 async function getSection(id: string) {
-    return (await sectionsStore.getItem(id)) as section;
+    return await sectionsStore.getItem(id);
 }
 
 async function checkEmptyBook(book: book) {
@@ -587,7 +602,7 @@ bookBEl.onclick = () => {
     booksEl.showModal();
 };
 
-const coverCache = localforage.createInstance({ name: "cache", storeName: "cover" });
+const coverCache = localForage.createInstance<Blob>({ name: "cache", storeName: "cover" });
 
 async function getBookCover(url: string) {
     const src = `${await getOnlineBooksUrl()}/source/${url}`;
@@ -665,7 +680,7 @@ async function showOnlineBooksL(
         if (book.cover) url = await getBookCover(book.cover);
         const div = bookEl(book.name, url);
         const bookCover = div.querySelector("div");
-        bookshelfStore.iterate((v: book, k) => {
+        bookshelfStore.iterate((v, k) => {
             if (book.id === k) {
                 if (v.updateTime < book.updateTime) {
                     div.classList.add(TODOMARK1);
@@ -678,7 +693,7 @@ async function showOnlineBooksL(
                 saveLanguagePackage(book.language, book.sections);
                 return;
             }
-            let xbook = (await bookshelfStore.getItem(book.id)) as book;
+            let xbook = await bookshelfStore.getItem(book.id);
             if (xbook) {
                 if (xbook.updateTime < book.updateTime) {
                     saveBook();
@@ -713,7 +728,7 @@ async function showOnlineBooksL(
                         console.log(results);
                         for (const i of results) {
                             s.push(i.id);
-                            const section = (await sectionsStore.getItem(i.id)) as section;
+                            const section = await sectionsStore.getItem(i.id);
                             if (section) {
                                 const s = changePosi(section, i.content);
                                 s.text = i.content;
@@ -937,7 +952,7 @@ function bookEl(name: string, coverUrl?: string, shortName?: string) {
 
 async function showLocalBooks() {
     let bookList: book[] = [];
-    await bookshelfStore.iterate((book: book) => {
+    await bookshelfStore.iterate((book) => {
         bookList.push(book);
     });
     bookList = bookList.toSorted((a, b) => b.visitTime - a.visitTime);
@@ -960,7 +975,7 @@ async function showLocalBooksL(bookList: book[]) {
     for (const book of bookList) {
         let bookIEl: HTMLDivElement;
         if (book.cover) {
-            const c = (await coverCache.getItem(book.id)) as Blob;
+            const c = await coverCache.getItem(book.id);
             let url = "";
             if (c) {
                 url = URL.createObjectURL(c);
@@ -1106,7 +1121,7 @@ async function showBookContent(book: book, id: string) {
     const s = await getSection(id);
     if (id === wordSection) {
         const l: string[] = [];
-        await wordsStore.iterate((v: record) => {
+        await wordsStore.iterate((v) => {
             l.push(v.word);
         });
         const text = l.join("\n");
@@ -1150,14 +1165,14 @@ async function showWordBook(book: book, s: section) {
     let wordList: typeof rawWordList = [];
     const l = s.text.trim().split("\n");
     const cards: Map<string, Card> = new Map();
-    await cardsStore.iterate((v: Card, k) => {
+    await cardsStore.iterate((v, k) => {
         cards.set(k, v);
     });
     const words: Map<string, record> = new Map();
     const mayMapWords: Map<string, record> = new Map();
     const usS = usSpell.flat();
     const wordMap: { [r: string]: string } = {};
-    await wordsStore.iterate((v: record, k) => {
+    await wordsStore.iterate((v, k) => {
         if (l.includes(k)) words.set(k, v);
         if (usS.includes(k)) mayMapWords.set(k, v);
     });
@@ -1259,7 +1274,7 @@ async function showWordBook(book: book, s: section) {
     requestIdleCallback(async () => {
         let spell = 0;
         const nl = structuredClone(l);
-        await spellStore.iterate((v: Card, k: string) => {
+        await spellStore.iterate((v, k: string) => {
             if (nl.includes(k)) {
                 spell += fsrsSpell.get_retrievability(v, now, false) || 0;
                 nl[nl.indexOf(k)] = null;
@@ -1375,7 +1390,7 @@ async function showWordBook(book: book, s: section) {
                             p.append(pel);
                             const reviewEl = view();
                             pel.append(reviewEl.el);
-                            const card = (await cardsStore.getItem(i.card_id)) as Card;
+                            const card = await cardsStore.getItem(i.card_id);
                             const map: { [k in State]: string } = {
                                 "0": "新",
                                 "1": "学习中",
@@ -2374,10 +2389,10 @@ async function exTrans(pEl: HTMLElement, i: number, book: book) {
                                 add: view(),
                             });
                             let cardId = i.item.toLowerCase();
-                            let card = (await spellStore.getItem(cardId)) as Card;
+                            let card = await spellStore.getItem(cardId);
                             if (!card) {
                                 cardId = lemmatizer(cardId);
-                                card = (await spellStore.getItem(cardId)) as Card;
+                                card = await spellStore.getItem(cardId);
                             }
                             interModal(xx.el, [
                                 card
@@ -2407,7 +2422,7 @@ async function exTrans(pEl: HTMLElement, i: number, book: book) {
     const segmenter = Array.from(new Segmenter(book.language, { granularity: book.wordSplit || "word" }).segment(text));
     const spellWord = await getIgnoreWords();
     const now = time();
-    await spellStore.iterate((v: Card, k: string) => {
+    await spellStore.iterate((v, k: string) => {
         if (v.due.getTime() > now) {
             spellWord.push(k);
         }
@@ -2889,7 +2904,7 @@ async function sectionSelectEl() {
 
 async function sectionSelect(menuEl: HTMLElement) {
     const bookList: book[] = [];
-    await bookshelfStore.iterate((book: book) => {
+    await bookshelfStore.iterate((book) => {
         bookList.push(book);
     });
     const wordBooks = bookList.filter((b) => b.type === "word");
@@ -2950,7 +2965,7 @@ function getSelectBooks(el: HTMLElement) {
 async function wordBooksByWord(word: string) {
     const l: { book: string; section: string }[] = [];
     let bookList: book[] = [];
-    await bookshelfStore.iterate((book: book) => {
+    await bookshelfStore.iterate((book) => {
         bookList.push(book);
     });
     bookList = bookList.filter((b) => b.type === "word");
@@ -2966,9 +2981,9 @@ async function wordBooksByWord(word: string) {
     return l;
 }
 
-const ipaStore = localforage.createInstance({ name: "langPack", storeName: "ipa" });
-const variantStore = localforage.createInstance({ name: "langPack", storeName: "variant" });
-const wordMapStore = localforage.createInstance({ name: "langPack", storeName: "map" });
+const ipaStore = localForage.createInstance<Map<string, string | string[]>>({ name: "langPack", storeName: "ipa" });
+const variantStore = localForage.createInstance<Map<string, string>>({ name: "langPack", storeName: "variant" });
+const wordMapStore = localForage.createInstance<string[][]>({ name: "langPack", storeName: "map" });
 
 const dics: {
     [key: string]: {
@@ -2976,13 +2991,13 @@ const dics: {
         lang: string;
     };
 } = {};
-const dicStore = localforage.createInstance({ name: "dic" });
+const dicStore = localForage.createInstance<dic2>({ name: "dic" });
 setting.getItem("dics").then(async (l: string[]) => {
     for (const i of l || []) {
         dics[i] = (await dicStore.getItem(i)) as dic2;
     }
 });
-dicStore.iterate((v: dic2, k) => {
+dicStore.iterate((v, k) => {
     v.dic = undefined;
     dics[k] = v;
 });
@@ -3005,13 +3020,13 @@ type dic2 = bdic & {
 
 let ipa: Map<string, string | string[]>;
 
-const variant: Map<string, string> = await variantStore.getItem("en");
+const variant = await variantStore.getItem("en");
 
 function lemmatizer(word: string) {
     return variant?.get(word) || word;
 }
 
-let usSpell: string[][] = (await wordMapStore.getItem("en")) || [];
+let usSpell = (await wordMapStore.getItem("en")) || [];
 
 type record = {
     word: string;
@@ -3141,7 +3156,7 @@ async function showMarkList() {
                         if (i.s.type === "sentence") {
                             card2sentence.removeItem(i.s.id);
                         } else {
-                            let record = (await wordsStore.getItem(i.s.id)) as record;
+                            let record = await wordsStore.getItem(i.s.id);
                             record = rmWord(record, i.id);
                             await clearWordMean(record);
                             rmStyle(i.s.index);
@@ -3251,7 +3266,7 @@ async function showDic(id: string) {
     let isSentence = wordx.type === "sentence";
     let sourceWord = "";
     if (!isSentence) {
-        const record = (await wordsStore.getItem(wordx.id)) as record;
+        const record = await wordsStore.getItem(wordx.id);
         Word = { word: wordx.id, record, ...flatWordCard(record, id) };
         const s = source2context(wordx, id);
         if (Word.index === -1) {
@@ -3288,7 +3303,7 @@ async function showDic(id: string) {
             Word.index = i;
             wordx.id = word;
             await saveWordX(wordx);
-            Word.record = (await wordsStore.getItem(wordx.id)) as record;
+            Word.record = await wordsStore.getItem(wordx.id);
         }
     }
 
@@ -3322,7 +3337,7 @@ async function showDic(id: string) {
         }
         dicTransContent.value = text;
         if (isSentence) {
-            const r = (await card2sentence.getItem(wordx.id)) as record2;
+            const r = await card2sentence.getItem(wordx.id);
             r.trans = text;
             await card2sentence.setItem(wordx.id, r);
             visit(true);
@@ -3464,7 +3479,7 @@ async function showDic(id: string) {
                     const x = await addReviewCardMean(Word.word, mean);
                     Word.record = x.record;
                     await changeDicMean(Word.word, x.index);
-                    let record = (await wordsStore.getItem(wordx.id)) as record;
+                    let record = await wordsStore.getItem(wordx.id);
                     record = setRecordContext(record, id, (c) => {
                         c.text = sentence;
                         c.index = index;
@@ -3551,7 +3566,7 @@ async function showDic(id: string) {
 
         dicWordEl.value = "";
         moreWordsEl.innerHTML = "";
-        dicTransContent.value = ((await card2sentence.getItem(wordx.id)) as record2).trans;
+        dicTransContent.value = (await card2sentence.getItem(wordx.id)).trans;
         dicDetailsEl.innerHTML = "";
 
         if (!dicTransContent.value) {
@@ -3559,7 +3574,7 @@ async function showDic(id: string) {
         }
 
         dicTransContent.onchange = async () => {
-            const r = (await card2sentence.getItem(wordx.id)) as record2;
+            const r = await card2sentence.getItem(wordx.id);
             r.trans = dicTransContent.value;
             await card2sentence.setItem(wordx.id, r);
             visit(true);
@@ -3567,7 +3582,7 @@ async function showDic(id: string) {
         };
 
         noteEl.onclick = async () => {
-            const r = (await card2sentence.getItem(wordx.id)) as record2;
+            const r = await card2sentence.getItem(wordx.id);
             addP(r.note || "", null, r.text, null, null, async (text) => {
                 const mean = text.trim();
                 r.note = mean;
@@ -3686,7 +3701,7 @@ async function showDic(id: string) {
             if (isSentence) {
                 wordx.index = [index.start, index.end];
                 await saveWordX(wordx);
-                const r = (await card2sentence.getItem(wordx.id)) as record2;
+                const r = await card2sentence.getItem(wordx.id);
                 r.text = text;
                 card2sentence.setItem(wordx.id, r);
             } else {
@@ -4528,24 +4543,28 @@ const fsrs = new FSRS(generatorParameters(fsrsWordW?.length === 17 ? { w: fsrsWo
 const fsrsSpell = new FSRS(generatorParameters(fsrsSpellW?.length === 17 ? { w: fsrsSpellW } : {}));
 const fsrsSen = new FSRS(generatorParameters(fsrsSenW?.length === 17 ? { w: fsrsSenW } : {}));
 
-const cardsStore = localforage.createInstance({ name: "word", storeName: "cards" });
-const wordsStore = localforage.createInstance({ name: "word", storeName: "words" });
-const tagsStore = localforage.createInstance({ name: "word", storeName: "tags" });
-const card2word = localforage.createInstance({ name: "word", storeName: "card2word" });
-const spellStore = localforage.createInstance({ name: "word", storeName: "spell" });
-const card2sentence = localforage.createInstance({ name: "word", storeName: "card2sentence" });
+const cardsStore = localForage.createInstance<Card>({ name: "word", storeName: "cards" });
+const wordsStore = localForage.createInstance<record>({ name: "word", storeName: "words" });
+const tagsStore = localForage.createInstance({ name: "word", storeName: "tags" });
+const card2word = localForage.createInstance<string>({ name: "word", storeName: "card2word" });
+const spellStore = localForage.createInstance<Card>({ name: "word", storeName: "spell" });
+const card2sentence = localForage.createInstance<record2>({ name: "word", storeName: "card2sentence" });
 
-const cardActionsStore = localforage.createInstance({ name: "word", storeName: "actions" });
+const cardActionsStore = localForage.createInstance<[string] | [string, Rating, State, number]>({
+    name: "word",
+    storeName: "actions",
+});
 function setCardAction(cardId: string, time: Date, rating: Rating, state: State, duration: number) {
-    const o = rating ? [cardId, rating, state, duration] : [cardId];
+    const o: [string, Rating, State, number] | [string] = rating ? [cardId, rating, state, duration] : [cardId];
     cardActionsStore.setItem(String(time.getTime()), o);
 }
 function newCardAction(id: string) {
     setCardAction(id, new Date(), null, null, null);
 }
 
-const transCache = localforage.createInstance({ name: "aiCache", storeName: "trans" });
-const ttsCache = localforage.createInstance({ name: "aiCache", storeName: "tts" });
+const transCache = localForage.createInstance<string>({ name: "aiCache", storeName: "trans" });
+type D = Parameters<Parameters<ReturnType<typeof tts.toStream>["onEnd"]>[0]>["0"];
+const ttsCache = localForage.createInstance<{ blob: Blob; data: D }>({ name: "aiCache", storeName: "tts" });
 
 function setWordC(w: record, meanIndex: number, context: record["means"][0]["contexts"][0]) {
     if (meanIndex < 0) return w;
@@ -4559,7 +4578,7 @@ function setWordC(w: record, meanIndex: number, context: record["means"][0]["con
 }
 
 async function addReviewCardMean(word: string, text: string) {
-    let w = (await wordsStore.getItem(word)) as record;
+    let w = await wordsStore.getItem(word);
     if (!w) {
         w = {
             word: word,
@@ -5033,14 +5052,14 @@ async function getFutureReviewDue(days: number, ...types: review[]) {
     const sentenceList: { id: string; card: Card }[] = [];
 
     const dueL: Map<string, Card> = new Map();
-    await cardsStore.iterate((card: Card, k) => {
+    await cardsStore.iterate((card, k) => {
         if (card.due.getTime() < now) {
             dueL.set(k, card);
         }
     });
 
     if (types.includes("word"))
-        await wordsStore.iterate((v: record, k) => {
+        await wordsStore.iterate((v, k) => {
             if (filterWithScope(k, wordsScope)) {
                 for (const m of v.means) {
                     if (
@@ -5052,7 +5071,7 @@ async function getFutureReviewDue(days: number, ...types: review[]) {
             }
         });
     if (types.includes("spell")) {
-        await spellStore.iterate((value: Card, key) => {
+        await spellStore.iterate((value, key) => {
             if (value.due.getTime() < now) {
                 if (spellIgnore.value === "all")
                     if (filterWithScope(key, wordsScope)) spellList.push({ id: key, card: value });
@@ -5206,8 +5225,8 @@ async function getWordAiContext() {
         .filter((i) => i.card.state === State.Review)
         .slice(0, maxReviewCount);
     for (const x of newDue) {
-        const wordid = (await card2word.getItem(x.id)) as string;
-        const wordRecord = (await wordsStore.getItem(wordid)) as record;
+        const wordid = await card2word.getItem(x.id);
+        const wordRecord = await wordsStore.getItem(wordid);
         for (const i of wordRecord.means) {
             if (i.card_id === x.id) {
                 l.push({ id: x.id, word: wordRecord.word, mean: i.text });
@@ -5304,8 +5323,8 @@ async function aiContext(id: string) {
     return context;
 }
 async function showWordReview(x: { id: string; card: Card }, isAi: boolean) {
-    const wordid = (await card2word.getItem(x.id)) as string;
-    const wordRecord = (await wordsStore.getItem(wordid)) as record;
+    const wordid = await card2word.getItem(x.id);
+    const wordRecord = await wordsStore.getItem(wordid);
     play(wordRecord.word);
     const div = view();
     let context: HTMLDivElement;
@@ -5314,8 +5333,8 @@ async function showWordReview(x: { id: string; card: Card }, isAi: boolean) {
     let hasShowAnswer = false;
     async function showAnswer() {
         hasShowAnswer = true;
-        const word = (await card2word.getItem(x.id)) as string;
-        const d = (await wordsStore.getItem(word)) as record;
+        const word = await card2word.getItem(x.id);
+        const d = await wordsStore.getItem(word);
         for (const i of d.means) {
             if (i.card_id === x.id) {
                 const div = view().attr({ innerText: i.text });
@@ -5528,7 +5547,7 @@ async function showSpellReview(x: { id: string; card: Card }) {
     };
     const context = el("div");
     context.append(el("div", await getIPA(word)));
-    const r = (await wordsStore.getItem(word)) as record;
+    const r = await wordsStore.getItem(word);
     if (r) {
         context.append(
             el("button", iconEl(pen_svg), {
@@ -5640,7 +5659,7 @@ function spellErrorAnimate(pel: ElType<HTMLElement>) {
 }
 
 async function showSentenceReview(x: { id: string; card: Card }) {
-    const sentence = (await card2sentence.getItem(x.id)) as record2;
+    const sentence = await card2sentence.getItem(x.id);
     const div = el("div");
     const context = el(
         "p",
@@ -5710,7 +5729,7 @@ async function getTTS(text: string) {
         OUTPUT_FORMAT.WEBM_24KHZ_16BIT_MONO_OPUS,
     );
     const nText = await ttsNormalize(text);
-    const b = (await ttsCache.getItem(nText)) as { blob: Blob; data: D };
+    const b = await ttsCache.getItem(nText);
     if (b) {
         return { url: URL.createObjectURL(b.blob), metadata: b.data };
     }
@@ -5729,7 +5748,6 @@ async function getTTS(text: string) {
         return mergedArray;
     }
 
-    type D = Parameters<Parameters<(typeof readable)["onEnd"]>[0]>["0"];
     return new Promise((re: (x: { metadata: D; url: string }) => void, rj) => {
         readable.onEnd(async (data) => {
             console.log("STREAM end");
@@ -5864,7 +5882,7 @@ async function renderCardDueAll() {
     const sentenceP: cardPercent = { "0": 0, "1": 0, "2": 0, "3": 0 };
     const spellP: cardPercent = { "0": 0, "1": 0, "2": 0, "3": 0 };
 
-    await wordsStore.iterate((v: record, k: string) => {
+    await wordsStore.iterate((v, k: string) => {
         if (!filterWithScope(k, wordsScope.words)) return;
         if (
             wordsScope.books.length !== 0 &&
@@ -5875,17 +5893,17 @@ async function renderCardDueAll() {
             wordDue.push(m.card_id);
         }
     });
-    await spellStore.iterate((v: Card, k: string) => {
+    await spellStore.iterate((v, k: string) => {
         if (!filterWithScope(k, wordsScope.words)) return;
         spellDue.push(v.due.getTime());
         spellP[v.state]++;
     });
-    await card2sentence.iterate((v: record2, k: string) => {
+    await card2sentence.iterate((v, k: string) => {
         sentenceDue.push(k);
     });
     const wordDue1: number[] = [];
     const sentenceDue1: number[] = [];
-    await cardsStore.iterate((v: Card, k) => {
+    await cardsStore.iterate((v, k) => {
         if (wordDue.includes(k)) {
             wordDue1.push(v.due.getTime());
             wordP[v.state]++;
@@ -5912,7 +5930,7 @@ async function renderCharts() {
 
     const newCard: Date[] = [];
     const reviewCard: Date[] = [];
-    await cardActionsStore.iterate((v: [string] | [string, Rating, State, number], k) => {
+    await cardActionsStore.iterate((v, k) => {
         const date = new Date(Number(k));
         if (!v[1]) {
             newCard.push(date);
@@ -6192,6 +6210,7 @@ async function saveDic(dic: dic) {
         if (x === "dic") ndic[x] = l;
         else ndic[x] = dic[x];
     }
+    // @ts-ignore
     await dicStore.setItem(id, ndic);
     dic.dic = undefined;
     dics[id] = dic;
@@ -6202,7 +6221,7 @@ async function getIPA(word: string) {
         const lan = studyLan || "en";
         const i = await ipaStore.getItem(lan);
         if (!i) return "";
-        ipa = (await i) as Map<string, string | string[]>;
+        ipa = i;
     }
 
     const r = ipa.get(word.toLowerCase());
@@ -6587,7 +6606,7 @@ const asyncEl = el("div", [
                         if (oldId !== nId) {
                             textData = await downloadGithub(rmbwGithub2);
                         } else {
-                            await sectionsStore.iterate((v: section, k) => {
+                            await sectionsStore.iterate((v, k) => {
                                 textData[k] = v.text;
                             });
                         }
