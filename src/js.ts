@@ -1134,7 +1134,7 @@ async function showBookContent(book: book, id: string) {
                 .add(iconEl(recume_svg))
                 .on("click", async () => {
                     autoPlay = true;
-                    autoPlayTTSEl.checked = true;
+                    autoPlayTTSEl.el.checked = true;
                     await pTTS(0);
                     if ((await getTtsEngine()) === "ms")
                         for (let i = 1; i < contentP.length; i++) {
@@ -3513,7 +3513,7 @@ async function showDic(id: string) {
                 };
                 if (Number(i) === Word.index) radio.checked = true;
                 div.onclick = () => radio.click();
-                div.append(radio, await disCard2(m));
+                div.append(radio, ...(await disCard2(m)).map((i) => i.el));
                 dicDetailsEl.append(div);
             }
             if (Word.index !== -1) dicDetailsEl.classList.add(HIDEMEANS);
@@ -3773,29 +3773,25 @@ function onlineDicL(word: string) {
 }
 
 async function disCard2(m: record["means"][0]) {
-    const div = document.createDocumentFragment();
-    const disEl = el("p");
-    disEl.innerText = m.text;
-    const sen = await dicSentences(m.contexts);
-    sen.style.paddingLeft = "1em";
-    div.append(el("div", disEl), sen);
-    return div;
+    const disEl = p(m.text);
+    const sen = (await dicSentences(m.contexts)).style({ "padding-left": "1em" });
+    return [view().add(disEl), sen];
 }
 
 async function dicSentences(contexts: record["means"][0]["contexts"]) {
-    const sen = el("div", { class: "dic_sen" });
+    const sen = view().class("dic_sen");
     for (const s of contexts) {
         const source = s.source;
         const t = await getTitleEl(source.book, source.sections, source.id);
-        sen.append(
-            el("div", [
-                el("p", [
+        sen.add(
+            view().add(
+                p("").add([
                     s.text.slice(0, s.index[0]),
-                    el("span", { class: MARKWORD }, s.text.slice(...s.index)),
+                    txt(s.text.slice(...s.index)).class(MARKWORD),
                     s.text.slice(s.index[1]),
                     t,
                 ]),
-            ]),
+            ),
         );
     }
     return sen;
@@ -4751,45 +4747,37 @@ reviewBEl.onclick = () => {
     reviewCount = 0;
 };
 
-const reviewReflashEl = document.getElementById("review_reflash");
-const reviewAi = el("input", { type: "checkbox" });
-reviewReflashEl.parentElement.append(el("label", [reviewAi, "ai"]));
+const reviewReflashEl = elFromId("review_reflash");
+const reviewReflashPEl = pack(reviewReflashEl.el.parentElement);
+const reviewAi = input("").attr({ type: "checkbox" });
+reviewReflashPEl.add(el("label", [reviewAi, "ai"]));
 const reviewScope = await sectionSelectEl();
-reviewReflashEl.parentElement.append(reviewScope.el);
-const spellIgnore = el(
-    "select",
-    el("option", "全部", { value: "all" }),
-    el("option", "排除忽略词", { value: "exIgnore" }),
-    el("option", "仅忽略词", { value: "ignore" }),
-);
-reviewReflashEl.parentElement.append(spellIgnore);
-const reviewViewEl = document.getElementById("review_view");
-reviewViewEl.lang = studyLan;
+reviewReflashPEl.add(reviewScope);
+const spellIgnore = select([
+    { name: "全部", value: "all" },
+    { name: "排除忽略词", value: "exIgnore" },
+    { name: "仅忽略词", value: "ignore" },
+]);
+reviewReflashPEl.add(spellIgnore);
+const reviewViewEl = elFromId("review_view").attr({ lang: studyLan });
 
 let reviewSortType: "正常" | "学习" | "学习1" | "紧急" | "随机" = "正常";
-const reviewSortEl = el(
-    "select",
-    [
-        el("option", "正常", { value: "正常" }),
-        el("option", "学习 从旧开始", { value: "学习" }),
-        el("option", "学习 趁热打铁", { value: "学习1" }),
-        el("option", "紧急", { value: "紧急" }),
-        el("option", "随机", { value: "随机" }),
-    ],
-    {
-        onchange: () => {
-            reviewSortType = reviewSortEl.value as typeof reviewSortType;
-        },
-    },
-);
-reviewReflashEl.parentElement.append(reviewSortEl);
+const reviewSortEl = select([
+    { name: "正常", value: "正常" },
+    { name: "学习 从旧开始", value: "学习" },
+    { name: "学习 趁热打铁", value: "学习1" },
+    { name: "紧急", value: "紧急" },
+    { name: "随机", value: "随机" },
+]).on("change", () => {
+    reviewSortType = reviewSortEl.el.value as typeof reviewSortType;
+});
 
-reviewReflashEl.parentElement.append(
-    el("button", iconEl(chart_svg), {
-        onclick: () => {
-            plotEl.el.showPopover();
-            renderCharts();
-        },
+reviewReflashPEl.add(reviewSortEl);
+
+reviewReflashPEl.add(
+    button(iconEl(chart_svg)).on("click", () => {
+        plotEl.el.showPopover();
+        renderCharts();
     }),
 );
 
@@ -4799,16 +4787,13 @@ const KEYBOARDHEIGHTPATH = "spell.keyboard.height";
 const keyboardEl = view("y")
     .class("simple-keyboard")
     .style({ height: `${await setting.getItem(KEYBOARDHEIGHTPATH)}px` });
-const handwriterCanvas = el("canvas");
-const handwriterCheck = el("button", iconEl(ok_svg), {
-    style: { display: "none" },
-    onclick: () => {
-        ocrSpell();
-    },
-});
-const handwriterEl = el("div", { class: "spell_write" }, [handwriterCanvas, handwriterCheck]);
-const spellInputEl = el("div", { style: { display: "none" } }, [keyboardEl.el, handwriterEl]);
-reviewEl.append(spellInputEl);
+const handwriterCanvas = ele("canvas").el;
+const handwriterCheck = button(iconEl(ok_svg))
+    .style({ display: "none" })
+    .on("click", () => ocrSpell);
+const handwriterEl = view().class("spell_write").add([handwriterCanvas, handwriterCheck]);
+const spellInputEl = view().style({ display: "none" }).add([keyboardEl.el, handwriterEl]);
+reviewEl.append(spellInputEl.el);
 
 function trackKeyboard(el: ElType<HTMLElement>) {
     el.style({ "touch-action": "none" });
@@ -4957,7 +4942,7 @@ reviewEl.onpointerdown = (e) => {
         spellWriteCtx = handwriterCanvas.getContext("2d");
         handwriterCanvas.width = window.innerWidth;
         handwriterCanvas.height = window.innerHeight - 32;
-        handwriterCheck.style.display = "";
+        handwriterCheck.style({ display: "" });
     }
     spellWriteCtx.moveTo(e.clientX, e.clientY - 32 * 2);
 };
@@ -4977,7 +4962,7 @@ function ocrSpell() {
     // check
     // clean
     handwriterCanvas.width = 0;
-    handwriterCheck.style.display = "none";
+    handwriterCheck.style({ display: "none" });
     spellWriteCtx = null;
 }
 
@@ -5031,11 +5016,11 @@ async function getFutureReviewDue(days: number, ...types: review[]) {
     if (types.includes("spell")) {
         await spellStore.iterate((value, key) => {
             if (value.due.getTime() < now) {
-                if (spellIgnore.value === "all")
+                if (spellIgnore.el.value === "all")
                     if (filterWithScope(key, wordsScope)) spellList.push({ id: key, card: value });
-                if (spellIgnore.value === "exIgnore")
+                if (spellIgnore.el.value === "exIgnore")
                     if (filterWithScope(key, wordsScope, ws.ignore)) spellList.push({ id: key, card: value });
-                if (spellIgnore.value === "ignore")
+                if (spellIgnore.el.value === "ignore")
                     if (filterWithScope(key, ws.ignore)) spellList.push({ id: key, card: value });
             }
         });
@@ -5124,31 +5109,31 @@ const reviewSpellEl = document.getElementById("review_spell") as HTMLInputElemen
 const reviewSentenceEl = document.getElementById("review_sentence") as HTMLInputElement;
 
 reviewWordEl.checked = true;
-spellIgnore.style.display = "none";
+spellIgnore.style({ display: "none" });
 reviewModeEl.onclick = (e) => {
     if ((e.target as HTMLElement).tagName !== "INPUT") return;
     if (reviewWordEl.checked) {
         reviewType = "word";
 
-        spellInputEl.style.display = "none";
+        spellInputEl.style({ display: "none" });
     }
     if (reviewSentenceEl.checked) {
         reviewType = "sentence";
 
-        spellInputEl.style.display = "none";
+        spellInputEl.style({ display: "none" });
     }
     if (reviewSpellEl.checked) {
         reviewType = "spell";
 
-        spellInputEl.style.display = "";
+        spellInputEl.style({ display: "" });
     }
     if (reviewType === "spell") {
-        spellIgnore.style.display = "";
+        spellIgnore.style({ display: "" });
     } else {
-        spellIgnore.style.display = "none";
+        spellIgnore.style({ display: "none" });
     }
 
-    reviewReflashEl.click();
+    reviewReflashEl.el.click();
 };
 
 let reviewCount = 0;
@@ -5160,14 +5145,14 @@ async function nextDue(type: review) {
     return x;
 }
 
-reviewReflashEl.onclick = async () => {
+reviewReflashEl.on("click", async () => {
     due = await getFutureReviewDue(0.1, reviewType);
     const l = await getReviewDue(reviewType);
     console.log(l);
-    if (reviewAi.checked && reviewType === "word") await getWordAiContext();
+    if (reviewAi.el.checked && reviewType === "word") await getWordAiContext();
     showReview(l, reviewType);
     reviewCount = 0;
-};
+});
 
 let spellCheckF: (text: string) => void = (text) => console.log(text);
 let spellF: (text: string) => void = (text) => console.log(text);
@@ -5241,14 +5226,14 @@ async function getWordAiContext() {
 
 async function showReview(x: { id: string; card: Card }, type: review) {
     if (!x) {
-        reviewViewEl.innerText = "暂无复习🎉";
+        reviewViewEl.attr({ innerText: "暂无复习🎉" });
         return;
     }
     if (maxReviewCount > 0 && reviewCount === maxReviewCount) {
-        reviewViewEl.innerText = `连续复习了${maxReviewCount}个项目，休息一下😌\n刷新即可继续复习`;
+        reviewViewEl.attr({ innerText: `连续复习了${maxReviewCount}个项目，休息一下😌\n刷新即可继续复习` });
         return;
     }
-    const isAi = reviewAi.checked;
+    const isAi = reviewAi.el.checked;
     console.log(x);
     if (type === "word") {
         showWordReview(x, isAi);
@@ -5261,7 +5246,7 @@ async function showReview(x: { id: string; card: Card }, type: review) {
     }
 }
 async function crContext(word: record, id: string) {
-    let context = document.createElement("div");
+    let context = view();
     if (!word) return context;
     for (const i of word.means) {
         if (i.card_id === id) {
@@ -5271,10 +5256,10 @@ async function crContext(word: record, id: string) {
     return context;
 }
 async function aiContext(id: string) {
-    const context = document.createElement("div");
+    const context = view();
     const text = aiContexts[id].text;
     const l = text.split(/\*\*(.+)\*\*/);
-    context.append(el("p", [l[0], el("span", l[1], { class: MARKWORD }), l[2]]));
+    context.add(p("").add([l[0], txt(l[1]).class(MARKWORD), l[2]]));
     return context;
 }
 async function showWordReview(x: { id: string; card: Card }, isAi: boolean) {
@@ -5282,7 +5267,7 @@ async function showWordReview(x: { id: string; card: Card }, isAi: boolean) {
     const wordRecord = await wordsStore.getItem(wordid);
     play(wordRecord.word);
     const div = view();
-    let context: HTMLDivElement;
+    let context: ElType<HTMLDivElement>;
     if (isAi && aiContexts[x.id]?.text) context = await aiContext(x.id);
     else context = await crContext(wordRecord, x.id);
     let hasShowAnswer = false;
@@ -5305,7 +5290,7 @@ async function showWordReview(x: { id: string; card: Card }, isAi: boolean) {
         buttons.finish();
     };
     const dic = view().on("click", reviewHotkey.show.f);
-    const buttons = getReviewCardButtons(x.id, x.card, context.innerText, async (rating) => {
+    const buttons = getReviewCardButtons(x.id, x.card, context.el.innerText, async (rating) => {
         if (hasShowAnswer) {
             const next = await nextDue(reviewType);
             showReview(next, reviewType);
@@ -5317,8 +5302,8 @@ async function showWordReview(x: { id: string; card: Card }, isAi: boolean) {
     const wordEl = view().add(wordid).class("main_word");
 
     div.add([wordEl, context, dic.el, buttons.buttons]).class("review_word");
-    reviewViewEl.innerHTML = "";
-    reviewViewEl.append(div.el);
+    reviewViewEl.clear();
+    reviewViewEl.add(div);
 }
 
 const reviewHotkey: { [key: string]: { f: () => void; key: string } } = {
@@ -5384,12 +5369,11 @@ async function showSpellReview(x: { id: string; card: Card }) {
     const word = x.id;
     const wordSpells = usSpell.find((m) => m.includes(word)) || [word];
     const maxWidth = Math.max(...wordSpells.map((w) => w.length));
-    const input = el("div", { class: "spell_input", style: { width: "min-content" } });
-    input.innerText = word; // 占位计算宽度
+    const input = view().class("spell_input").style({ width: "min-content" }).attr({ innerText: word }); // 占位计算宽度
     clearKeyboard();
     const SHOWSENWORD = "spell_sen_word_show";
     const BLURWORD = "blur_word";
-    const wordEl = document.createElement("div");
+    const wordEl = view();
     let isPerfect = false;
     let spellResult: "none" | "right" | "wrong" = "none";
     const showTime = time();
@@ -5411,30 +5395,26 @@ async function showSpellReview(x: { id: string; card: Card }) {
         return l.join("");
     }
     function inputContent(inputWord: string) {
-        input.innerHTML = "";
+        input.clear();
         if (x.card.state === State.New) {
-            input.append(inputWord, el("span", word.slice(inputWord.length), { style: { opacity: "0.5" } }));
+            input.add([inputWord, txt(word.slice(inputWord.length)).style({ opacity: "0.5" })]);
         } else if (x.card.state === State.Learning) {
-            input.append(inputWord, el("span", word.slice(inputWord.length), { class: BLURWORD }));
+            input.add([inputWord, txt(word.slice(inputWord.length)).class(BLURWORD)]);
         } else {
-            input.innerText = inputWord || "|";
+            input.attr({ innerText: inputWord || "|" });
         }
     }
     spellCheckF = async (rawInputWord: string) => {
         const inputWord = matchSpecial(matchCapital(rawInputWord, word), word);
         inputContent(inputWord);
-        wordEl.innerHTML = "";
-        div.classList.remove(SHOWSENWORD);
+        wordEl.clear();
+        div.el.classList.remove(SHOWSENWORD);
         if (wordSpells.includes(inputWord)) {
             // 正确
             const rightL = (await hyphenate(word, { hyphenChar })).split(hyphenChar);
-            const ele = el("div");
-            for (const i of rightL) {
-                ele.append(el("span", i));
-            }
-            input.innerHTML = "";
-            input.append(ele);
-            await spellAnimate(ele);
+            const ele = view().add(rightL.map((i) => txt(i)));
+            input.clear().add(ele);
+            await spellAnimate(ele.el);
 
             if (spellResult === "none")
                 setSpellCard(x.id, x.card, isPerfect ? Rating.Easy : Rating.Good, time() - showTime);
@@ -5445,21 +5425,19 @@ async function showSpellReview(x: { id: string; card: Card }) {
         }
         //错误归位
         if (inputWord.length === maxWidth && !wordSpells.includes(inputWord)) {
-            input.innerHTML = "";
+            input.clear();
             const diffEl = spellDiffWord(word, inputWord);
-            input.append(diffEl.el);
-            input.append(
-                el("button", {
-                    onclick: () => {
-                        diffEl.el.innerHTML = spellDiffWord(word, inputWord).el.innerHTML;
-                        spellErrorAnimate(diffEl);
-                    },
+            input.add(diffEl.el);
+            input.add(
+                button().on("click", () => {
+                    diffEl.el.innerHTML = spellDiffWord(word, inputWord).el.innerHTML;
+                    spellErrorAnimate(diffEl);
                 }),
             );
             spellErrorAnimate(diffEl);
-            wordEl.append(await hyphenate(word, { hyphenChar }));
+            wordEl.add(await hyphenate(word, { hyphenChar }));
             play(word);
-            div.classList.add(SHOWSENWORD);
+            div.el.classList.add(SHOWSENWORD);
             if (spellResult === "none") {
                 const oldCard = x.card;
                 const actionId = setSpellCard(x.id, x.card, 1, time() - showTime);
@@ -5467,15 +5445,13 @@ async function showSpellReview(x: { id: string; card: Card }) {
                 const f = diff.filter((i) => i[0] !== 0);
                 if (f.length === 2) {
                     if (f[0][0] === -1 && f[0][1].length === 1 && f[1][0] === 1 && f[1][1].length === 1)
-                        wordEl.append(
-                            el("button", "手误 撤回", {
-                                onclick: () => {
-                                    spellStore.setItem(x.id, oldCard);
-                                    cardActionsStore.removeItem(actionId);
-                                    spellResult = "none";
-                                    wordEl.innerHTML = "";
-                                    inputContent("");
-                                },
+                        wordEl.add(
+                            button("手误 撤回").on("click", () => {
+                                spellStore.setItem(x.id, oldCard);
+                                cardActionsStore.removeItem(actionId);
+                                spellResult = "none";
+                                wordEl.clear();
+                                inputContent("");
                             }),
                         );
                 }
@@ -5488,25 +5464,24 @@ async function showSpellReview(x: { id: string; card: Card }) {
         console.log(button);
         if (button === "{tip}") {
             // 暂时展示
-            input.innerHTML = "";
-            input.append(el("span", { class: BLURWORD }, word));
+            input.clear();
+            input.add(txt(word).class(BLURWORD));
             clearKeyboard();
             isPerfect = false;
             play(word);
-            div.classList.add(SHOWSENWORD);
+            div.el.classList.add(SHOWSENWORD);
         }
         if (button === "{audio}") {
             // 发音
             play(word);
         }
     };
-    const context = el("div");
-    context.append(el("div", await getIPA(word)));
+    const context = view().add(view().add(await getIPA(word)));
     const r = await wordsStore.getItem(word);
     if (r) {
-        context.append(
-            el("button", iconEl(pen_svg), {
-                onclick: () => {
+        context
+            .add(
+                button(iconEl(pen_svg)).on("click", () => {
                     addP(r.note || "", word, null, null, null, async (text) => {
                         const mean = text.trim();
                         if (r) {
@@ -5514,51 +5489,46 @@ async function showSpellReview(x: { id: string; card: Card }) {
                             wordsStore.setItem(word, r);
                         }
                     });
-                },
-            }),
-        );
-        for (const i of r.means) {
-            context.append(el("div", await disCard2(i)));
-        }
+                }),
+            )
+            .add(await Promise.all(r.means.map(async (i) => view().add(await disCard2(i)))));
     } else {
         const text = await getWordFromDic(word, Object.keys(dics)[0]);
-        context.append(el("div", el("div", el("p", text))));
+        context.add(view().add(view().add(p(text))));
     }
-    const div = document.createElement("div");
-    div.append(input, wordEl, context);
-    div.classList.add("review_spell");
-    div.setAttribute("data-state", String(x.card.state));
-    reviewViewEl.innerHTML = "";
-    reviewViewEl.append(div);
+    const div = view();
+    div.add([input, wordEl, context]);
+    div.class("review_spell");
+    div.data({ state: String(x.card.state) });
+    reviewViewEl.clear();
+    reviewViewEl.add(div);
 
-    input.style.width = `${input.offsetWidth}px`;
+    input.style({ width: `${input.el.offsetWidth}px` });
     inputContent("");
 }
 
 function spellDiffWord(rightWord: string, wrongWord: string) {
     const div = view().class("diff");
     const diff = dmp.diff_main(wrongWord, rightWord);
-    div.el.append(getDiffWord(diff));
-    return div;
-}
-
-function getDiffWord(diff: Diff[]) {
-    const div = document.createDocumentFragment();
     for (let n = 0; n < diff.length; n++) {
         const i = diff[n];
         if (i[0] === -1 && diff[n + 1]?.[0] === 0 && diff[n + 2]?.[0] === 1) {
             if (i[1] === diff[n + 2][1]) {
-                div.append(el("span", { class: "diff_exchange" }, [el("span", i[1]), el("span", diff[n + 1][1])]));
+                div.add(
+                    ele("span")
+                        .class("diff_exchange")
+                        .add([txt(i[1]), txt(diff[n + 1][1])]),
+                );
                 n += 2;
                 continue;
             }
         }
         if (i[0] === 0) {
-            div.append(i[1]);
+            div.add(i[1]);
         } else if (i[0] === 1) {
-            div.append(el("span", { class: "diff_add" }, i[1]));
+            div.add(txt(i[1]).class("diff_add"));
         } else {
-            div.append(el("span", { class: "diff_remove" }, i[1]));
+            div.add(txt(i[1]).class("diff_remove"));
         }
     }
     return div;
@@ -5615,29 +5585,25 @@ function spellErrorAnimate(pel: ElType<HTMLElement>) {
 
 async function showSentenceReview(x: { id: string; card: Card }) {
     const sentence = await card2sentence.getItem(x.id);
-    const div = el("div");
-    const context = el(
-        "p",
-        sentence.text,
+    const div = view();
+    const context = p(sentence.text).add(
         await getTitleEl(sentence.source.book, sentence.source.sections, sentence.source.id),
     );
     let hasShowAnswer = false;
     async function showAnswer() {
         hasShowAnswer = true;
-        dic.innerHTML = "";
-        dic.append(el("p", { class: TRANSLATE }, sentence.trans));
+        dic.clear();
+        dic.add(p(sentence.trans).class(TRANSLATE));
         if (sentence.note) {
-            const p = el("p");
-            p.innerText = sentence.note;
-            dic.append(p);
+            dic.add(p(sentence.note));
         }
     }
-    const dic = el("div");
-    dic.onclick = reviewHotkey.show.f = () => {
+    reviewHotkey.show.f = () => {
         showAnswer();
         buttons.finish();
     };
-    const buttons = getReviewCardButtons(x.id, x.card, context.innerText, async (rating) => {
+    const dic = view().on("click", reviewHotkey.show.f);
+    const buttons = getReviewCardButtons(x.id, x.card, context.el.innerText, async (rating) => {
         if (hasShowAnswer) {
             const next = await nextDue(reviewType);
             showReview(next, reviewType);
@@ -5646,10 +5612,10 @@ async function showSentenceReview(x: { id: string; card: Card }) {
         }
     });
 
-    div.append(context, dic, buttons.buttons.el);
-    div.classList.add("review_sentence");
-    reviewViewEl.innerHTML = "";
-    reviewViewEl.append(div);
+    div.add([context, dic, buttons.buttons]);
+    div.class("review_sentence");
+    reviewViewEl.clear();
+    reviewViewEl.add(div);
 }
 
 const audioEl = <HTMLAudioElement>document.getElementById("audio");
@@ -5743,15 +5709,14 @@ async function localTTS(text: string) {
     return { utterThis, synth };
 }
 
-const pttsEl = document.getElementById("pTTSp");
+const pttsEl = elFromId("pTTSp");
 const SHOWPTTS = "pTTS_show";
-const autoPlayTTSEl = el("input", {
-    type: "checkbox",
-    onchange: () => {
-        autoPlay = autoPlayTTSEl.checked;
-    },
-});
-pttsEl.append(autoPlayTTSEl);
+const autoPlayTTSEl = input("")
+    .attr({ type: "checkbox" })
+    .on("change", () => {
+        autoPlay = autoPlayTTSEl.el.checked;
+    });
+pttsEl.add(autoPlayTTSEl);
 
 let autoPlay = false;
 
@@ -5764,13 +5729,13 @@ async function pTTS(index: number) {
                 return;
             }
         }
-        pttsEl.classList.remove(SHOWPTTS);
+        pttsEl.el.classList.remove(SHOWPTTS);
     };
     if (!text) {
         nextplay();
         return;
     }
-    pttsEl.classList.add(SHOWPTTS);
+    pttsEl.el.classList.add(SHOWPTTS);
 
     if ((await getTtsEngine()) === "browser") {
         const utterThis = (await localTTS(text)).utterThis;
@@ -5933,8 +5898,7 @@ function renderCardDue(text: string, data: number[]) {
         list.push(canvas);
     }
     pc.add(list, 3);
-    const f = el("div");
-    f.append(text, String(count), pc.el);
+    const f = view().add([text, String(count), pc]);
     return f;
 }
 
