@@ -2408,9 +2408,9 @@ const bookStyleList = {
 };
 
 const defaultBookStyle = {
-    fontSize: 2,
+    fontSize: 5,
     lineHeight: 2,
-    contentWidth: 2,
+    contentWidth: 4,
     fontFamily: "serif",
     theme: "auto",
     paper: true,
