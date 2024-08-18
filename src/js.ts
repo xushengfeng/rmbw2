@@ -1452,13 +1452,14 @@ function sortWordList(
 
 function randomList<i>(list: i[]) {
     let rn = list.length;
+    const nList = structuredClone(list);
     while (rn) {
         const r = Math.floor(Math.random() * rn--);
-        const a = structuredClone(list[rn]);
-        list[rn] = list[r];
-        list[r] = a;
+        const a = structuredClone(nList[rn]);
+        nList[rn] = nList[r];
+        nList[r] = a;
     }
-    return list;
+    return nList;
 }
 
 async function showWordBookMore(wordList: { text: string; c: record; type?: "ignore" | "learn"; means?: number }[]) {
