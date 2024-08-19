@@ -1203,26 +1203,32 @@ async function showWordBook(book: book, s: section) {
         else rawWordList.push({ text: t, id: wordMap[i] || t, c: c });
     }
     wordList = sortWordList(rawWordList, (await setting.getItem(WordSortPath)) || "raw");
-    const search = input("word search").on("click", () => {
-        const fuse = new Fuse(wordList, {
-            includeMatches: true,
-            findAllMatches: true,
-            useExtendedSearch: true,
-            includeScore: true,
-            keys: ["text", "c.note", { name: "t", getFn: (x) => (x.c ? x.c.means.map((i) => i.text).join("\n") : "") }],
+    const search = input("word search")
+        .attr({ autocomplete: "off" })
+        .on("input", () => {
+            const fuse = new Fuse(wordList, {
+                includeMatches: true,
+                findAllMatches: true,
+                useExtendedSearch: true,
+                includeScore: true,
+                keys: [
+                    "text",
+                    "c.note",
+                    { name: "t", getFn: (x) => (x.c ? x.c.means.map((i) => i.text).join("\n") : "") },
+                ],
+            });
+            const fr = fuse.search(search.el.value);
+            const list = fr.map((i) => i.item);
+            const nl = list.length ? list : wordList;
+            show.show(nl);
+            if (nl.length === wordList.length) {
+                canRecordScroll = true;
+                setScrollPosi(bookContentContainerEl, contentScrollPosi);
+            } else {
+                canRecordScroll = false;
+                setScrollPosi(bookContentContainerEl, 0);
+            }
         });
-        const fr = fuse.search(search.el.value);
-        const list = fr.map((i) => i.item);
-        const nl = list.length ? list : wordList;
-        show.show(nl);
-        if (nl.length === wordList.length) {
-            canRecordScroll = true;
-            setScrollPosi(bookContentContainerEl, contentScrollPosi);
-        } else {
-            canRecordScroll = false;
-            setScrollPosi(bookContentContainerEl, 0);
-        }
-    });
     const sortEl = view().class("sort_words");
     const sortMap: { type: WordSortType; name: string }[] = [
         { type: "raw", name: "原始" },
