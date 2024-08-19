@@ -138,6 +138,15 @@ function getSetting(p: string) {
     return JSON.parse(localStorage.getItem(`setting/${p}`));
 }
 
+const exTransLog = localForage.createInstance<{ count: number; section: string }>({
+    name: "log",
+    storeName: "exTrans",
+});
+
+function splitWord(text: string, book: book) {
+    return Array.from(new Segmenter(book.language, { granularity: book.wordSplit || "word" }).segment(text));
+}
+
 /************************************UI */
 
 navigator?.storage?.persist();
@@ -2218,6 +2227,11 @@ async function exTrans(pEl: HTMLElement, i: number, book: book) {
     function rm() {
         f.el.el.remove();
         span.className = "";
+        if (f.els.text.gv().trim()) {
+            const now = time();
+            const l = splitWord(f.els.text.gv(), book).filter((i) => i.isWordLike);
+            exTransLog.setItem(String(now), { count: l.length, section: nowBook.sections });
+        }
     }
 
     f.els.close.on("click", () => {
@@ -6180,6 +6194,7 @@ type allData = {
     card2word: object;
     card2sentence: object;
     actions: object;
+    logExTrans: object;
 };
 
 const allData2Store: { [key: string]: LocalForage } = {
@@ -6191,6 +6206,7 @@ const allData2Store: { [key: string]: LocalForage } = {
     card2word: card2word,
     card2sentence: card2sentence,
     actions: cardActionsStore,
+    logExTrans: exTransLog,
 } as { [key in keyof allData]: LocalForage };
 
 async function toAllData() {
@@ -6203,6 +6219,7 @@ async function toAllData() {
         card2word: {},
         card2sentence: {},
         actions: {},
+        logExTrans: {},
     };
     for (const storeName in allData2Store) {
         await allData2Store[storeName].iterate((v, k) => {
