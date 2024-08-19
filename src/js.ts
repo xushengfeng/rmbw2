@@ -22,7 +22,7 @@ import {
     select,
 } from "dkh-ui";
 
-if (import.meta.env) initDev();
+if (import.meta.env.DEV) initDev();
 
 import localforage from "localforage";
 import { extendPrototype } from "localforage-setitems";
