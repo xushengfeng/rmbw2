@@ -6452,7 +6452,7 @@ async function getGitHub(fileName: string) {
 
 const uploadDataEl = input("upload")
     .add("上传数据")
-    .attr({ type: "file" })
+    .attr({ type: "file", accept: ".json" })
     .on("change", () => {
         const reader = new FileReader();
         reader.readAsText(uploadDataEl.el.files[0]);
