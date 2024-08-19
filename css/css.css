@@ -1019,6 +1019,11 @@ div:has(> .translate) > :not(.translate) {
 }
 #review_buttons {
     display: flex;
+    align-items: center;
+}
+#review_mode {
+    display: flex;
+    gap: 2px;
 }
 #review_mode input {
     display: none;

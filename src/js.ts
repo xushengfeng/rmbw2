@@ -91,6 +91,7 @@ import line_height_large_svg from "../assets/icons/line_height_large.svg";
 import content_width_small_svg from "../assets/icons/content_width_small.svg";
 import content_width_large_svg from "../assets/icons/content_width_large.svg";
 import chart_svg from "../assets/icons/chart.svg";
+import filter_svg from "../assets/icons/filter.svg";
 import githubIcon from "../assets/other/Github.svg";
 
 function icon(src: string) {
@@ -4752,14 +4753,13 @@ const reviewReflashEl = elFromId("review_reflash");
 const reviewReflashPEl = pack(reviewReflashEl.el.parentElement);
 const reviewAi = input("").attr({ type: "checkbox" });
 reviewReflashPEl.add(el("label", [reviewAi, "ai"]));
+
 const reviewScope = await sectionSelectEl();
-reviewReflashPEl.add(reviewScope);
 const spellIgnore = select([
     { name: "全部", value: "all" },
     { name: "排除忽略词", value: "exIgnore" },
     { name: "仅忽略词", value: "ignore" },
 ]);
-reviewReflashPEl.add(spellIgnore);
 const reviewViewEl = elFromId("review_view").attr({ lang: studyLan });
 
 let reviewSortType: "正常" | "学习" | "学习1" | "紧急" | "随机" = "正常";
@@ -4773,7 +4773,15 @@ const reviewSortEl = select([
     reviewSortType = reviewSortEl.el.value as typeof reviewSortType;
 });
 
-reviewReflashPEl.add(reviewSortEl);
+const reviewMoreEl = view()
+    .attr({ popover: "auto" })
+    .add([txt("过滤与排序"), view("x").add([reviewScope, spellIgnore, reviewSortEl])]);
+document.body.append(reviewMoreEl.el);
+reviewReflashPEl.add(
+    button(iconEl(filter_svg)).on("click", () => {
+        reviewMoreEl.el.showPopover();
+    }),
+);
 
 reviewReflashPEl.add(
     button(iconEl(chart_svg)).on("click", () => {
