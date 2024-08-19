@@ -1081,6 +1081,7 @@ div:has(> .translate) > :not(.translate) {
 }
 :is(.review_word, .review_sentence) > :last-child {
     margin: 16px;
+    gap: 16px;
 }
 
 .review_b {
