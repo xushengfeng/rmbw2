@@ -1448,12 +1448,12 @@ function sortWordList(
         const x = m(list);
         return x.ig.concat(x.l.toReversed()).concat(x.ul);
     }
-    return randomList(list);
+    return randomList(list, true);
 }
 
-function randomList<i>(list: i[]) {
+function randomList<i>(list: i[], to?: boolean) {
     let rn = list.length;
-    const nList = structuredClone(list);
+    const nList = to ? structuredClone(list) : list;
     while (rn) {
         const r = Math.floor(Math.random() * rn--);
         const a = structuredClone(nList[rn]);
