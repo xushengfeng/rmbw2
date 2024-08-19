@@ -2430,8 +2430,8 @@ const bookStyleList = {
 };
 
 const defaultBookStyle = {
-    fontSize: 5,
-    lineHeight: 2,
+    fontSize: 6,
+    lineHeight: 3,
     contentWidth: 4,
     fontFamily: "serif",
     theme: "auto",

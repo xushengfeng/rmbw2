@@ -309,7 +309,7 @@ body {
     backdrop-filter: var(--blur);
     transition: var(--transition);
     border-radius: 1rem;
-    padding: 4px;
+    padding: 1rem;
     flex-direction: column;
     gap: 4px;
     &:popover-open {
