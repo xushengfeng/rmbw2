@@ -3793,10 +3793,13 @@ function onlineDicL(word: string) {
     return onlineList;
 }
 
-async function disCard2(m: record["means"][0]) {
-    const disEl = p(m.text);
+async function disCard2(m: record["means"][0], filterWords: string[] = []) {
+    let t = m.text;
+    for (const i of filterWords) {
+        t = t.replaceAll(i, "**");
+    }
     const sen = (await dicSentences(m.contexts)).style({ "padding-left": "1em" });
-    return [view().add(disEl), sen];
+    return [view().add(p(t)), sen];
 }
 
 async function dicSentences(contexts: record["means"][0]["contexts"]) {
@@ -5451,15 +5454,14 @@ async function showSpellReview(x: { id: string; card: Card }) {
         }
         //错误归位
         if (inputWord.length === maxWidth && !wordSpells.includes(inputWord)) {
-            input.clear();
             const diffEl = spellDiffWord(word, inputWord);
-            input.add(diffEl.el);
-            input.add(
+            input.clear().add([
+                diffEl.el,
                 button().on("click", () => {
                     diffEl.el.innerHTML = spellDiffWord(word, inputWord).el.innerHTML;
                     spellErrorAnimate(diffEl);
                 }),
-            );
+            ]);
             spellErrorAnimate(diffEl);
             wordEl.add(await hyphenate(word, { hyphenChar }));
             play(word);
@@ -5490,8 +5492,7 @@ async function showSpellReview(x: { id: string; card: Card }) {
         console.log(button);
         if (button === "{tip}") {
             // 暂时展示
-            input.clear();
-            input.add(txt(word).class(BLURWORD));
+            input.clear().add(txt(word).class(BLURWORD));
             clearKeyboard();
             isPerfect = false;
             play(word);
@@ -5517,17 +5518,22 @@ async function showSpellReview(x: { id: string; card: Card }) {
                     });
                 }),
             )
-            .add(await Promise.all(r.means.map(async (i) => view().add(await disCard2(i)))));
+            .add(
+                await Promise.all(
+                    r.means.map(async (i) =>
+                        view().add(await disCard2(i, wordSpells.concat(wordSpells.map((i) => lemmatizer(i))))),
+                    ),
+                ),
+            );
     } else {
         const text = await getWordFromDic(word, Object.keys(dics)[0]);
         context.add(view().add(view().add(p(text))));
     }
-    const div = view();
-    div.add([input, wordEl, context]);
-    div.class("review_spell");
-    div.data({ state: String(x.card.state) });
-    reviewViewEl.clear();
-    reviewViewEl.add(div);
+    const div = view()
+        .add([input, wordEl, context])
+        .class("review_spell")
+        .data({ state: String(x.card.state) });
+    reviewViewEl.clear().add(div);
 
     input.style({ width: `${input.el.offsetWidth}px` });
     inputContent("");
