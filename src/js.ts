@@ -5307,6 +5307,7 @@ async function showWordReview(x: { id: string; card: Card }, isAi: boolean) {
                 break;
             }
         }
+        spellAnimate(wordEl.el);
     }
     reviewHotkey.show.f = () => {
         showAnswer();
@@ -5322,7 +5323,9 @@ async function showWordReview(x: { id: string; card: Card }, isAi: boolean) {
         }
     });
 
-    const wordEl = view().add(wordid).class("main_word");
+    const wordEl = view()
+        .add(wordid.split("").map((i) => txt(i)))
+        .class("main_word");
 
     div.add([wordEl, context, dic.el, buttons.buttons]).class("review_word");
     reviewViewEl.clear();
@@ -5566,7 +5569,8 @@ async function spellAnimate(el: HTMLElement) {
         });
     }
     for (const nel of Array.from(el.children) as HTMLElement[]) {
-        nel.style.opacity = "0.2";
+        nel.style.opacity = "0.6";
+        nel.style.filter = "blur(2px)";
         nel.style.transition = "0.2s";
     }
 
@@ -5576,6 +5580,7 @@ async function spellAnimate(el: HTMLElement) {
     for (let i = 0; i < el.children.length; i++) {
         const e = el.children.item(i) as HTMLElement;
         e.style.opacity = "1";
+        e.style.filter = "none";
         await sleep(el.children.item(i).textContent.length * t);
     }
 }
