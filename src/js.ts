@@ -2227,9 +2227,9 @@ async function exTrans(pEl: HTMLElement, i: number, book: book) {
     function rm() {
         f.el.el.remove();
         span.className = "";
-        if (f.els.text.gv().trim()) {
+        if (f.els.text.gv.trim()) {
             const now = time();
-            const l = splitWord(f.els.text.gv(), book).filter((i) => i.isWordLike);
+            const l = splitWord(f.els.text.gv, book).filter((i) => i.isWordLike);
             exTransLog.setItem(String(now), { count: l.length, section: nowBook.sections });
         }
     }
@@ -5869,9 +5869,7 @@ async function renderCardDueAll() {
 
 async function renderCharts() {
     renderCardDueAll();
-    const t = "加载中……";
-    cal1.els.title.sv(t);
-    cal2.els.title.sv(t);
+    cal1.els.title.gv = cal2.els.title.gv = "加载中……";
 
     const newCard: Date[] = [];
     const reviewCard: Date[] = [];
