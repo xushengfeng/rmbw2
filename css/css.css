@@ -921,7 +921,10 @@ div:has(> .translate) > :not(.translate) {
             display: flex;
             gap: 8px;
             align-items: center;
-            flex-grow: 1;
+            & > .review_b {
+                flex-grow: 1;
+                gap: 8px;
+            }
         }
     }
 }
@@ -1082,6 +1085,9 @@ div:has(> .translate) > :not(.translate) {
 :is(.review_word, .review_sentence) > :last-child {
     margin: 16px;
     gap: 16px;
+    & > button {
+        height: calc(2 * var(--size0));
+    }
 }
 
 .review_b {
@@ -1091,7 +1097,6 @@ div:has(> .translate) > :not(.translate) {
         display: flex;
         justify-content: center;
         align-items: center;
-        height: calc(2 * var(--size0));
         & > .icon {
             position: initial;
         }
