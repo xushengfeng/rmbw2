@@ -5869,7 +5869,9 @@ async function renderCardDueAll() {
 
 async function renderCharts() {
     renderCardDueAll();
-    cal1.els.title.el.innerText = cal2.els.title.el.innerText = "加载中……";
+    const t = "加载中……";
+    cal1.els.title.sv(t);
+    cal2.els.title.sv(t);
 
     const newCard: Date[] = [];
     const reviewCard: Date[] = [];
@@ -5938,8 +5940,10 @@ function renderCardPercent(p: cardPercent) {
 
 function newCal() {
     const f = view().class("cal_plot");
-    const title = view();
-    const list: Array<ReturnType<typeof view>> = [];
+    const title = view().bindSet((v: string, el) => {
+        el.innerText = v;
+    });
+    const list: Array<ElType<HTMLDivElement>> = [];
     for (let x = 1; x <= 53; x++) {
         for (let y = 1; y <= 7; y++) {
             const item = view();
@@ -5950,7 +5954,7 @@ function newCal() {
     f.on("click", (e) => {
         if (e.target === f.el) return;
         const EL = e.target as HTMLElement;
-        title.el.innerText = EL.title;
+        title.sv(EL.title);
     });
     const div = frame("cal", {
         _: view(),
@@ -5997,7 +6001,7 @@ function renderCal(year: number, data: Date[], el: typeof cal1) {
 
         if (date.toDateString() === new Date().toDateString()) {
             item.style({ "border-width": "2px" });
-            el.els.title.el.innerText = item.el.title;
+            el.els.title.sv(item.el.title);
         } else {
             item.style({ "border-width": "" });
         }
