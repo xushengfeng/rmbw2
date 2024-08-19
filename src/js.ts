@@ -5974,31 +5974,44 @@ function renderCal(year: number, data: Date[], el: typeof cal1) {
     l.push(rl.at(-1) + 1);
     const firstDate = new Date(year, 0, 1);
     const zero2first = (firstDate.getDay() + 1) * timeD.d(1);
-    let s_date = new Date(firstDate.getTime() - zero2first);
+    const s_date = new Date(firstDate.getTime() - zero2first + timeD.d(1));
+
+    const isToday = el.els.plot.el.getAttribute("data-d") === new Date().toDateString();
+    el.els.plot.data({ d: new Date().toDateString() });
 
     const els = Array.from(el.els.plot.el.children) as HTMLElement[];
-    for (let x = 1; x <= 53; x++) {
-        for (let y = 1; y <= 7; y++) {
-            s_date = new Date(s_date.getTime() + timeD.d(1));
-            const v = count[s_date.toDateString()] ?? 0;
-            const item = pack(els[7 * (x - 1) + y - 1]).attr({
-                title: `${s_date.toLocaleDateString()}  ${v}`,
-            });
-            if (v) {
-                const nvi = l.findIndex((i) => i > v) - 1;
-                const nv = (100 / c) * nvi + (100 / c) * ((v - l[nvi]) / (l[nvi + 1] - l[nvi])); // 赋分算法，但平均分割区间
-                item.style({ "background-color": `color-mix(in srgb-linear, #9be9a8, #216e39 ${nv}%)` });
-            } else {
-                item.style({ "background-color": "none" });
-            }
-            if (s_date.toDateString() === new Date().toDateString()) {
-                item.style({ "border-width": "2px" });
-                el.els.title.el.innerText = item.el.title;
-            } else {
-                item.style({ "border-width": "" });
-            }
+
+    function renderDay(offsetDay: number) {
+        const date = new Date(s_date.getTime() + timeD.d(offsetDay));
+        const v = count[date.toDateString()] ?? 0;
+        const item = pack(els[offsetDay]).attr({
+            title: `${date.toLocaleDateString()}  ${v}`,
+        });
+        if (v) {
+            const nvi = l.findIndex((i) => i > v) - 1;
+            const nv = (100 / c) * nvi + (100 / c) * ((v - l[nvi]) / (l[nvi + 1] - l[nvi])); // 赋分算法，但平均分割区间
+            item.style({ "background-color": `color-mix(in srgb-linear, #9be9a8, #216e39 ${nv}%)` });
+        } else {
+            item.style({ "background-color": "none" });
+        }
+
+        if (date.toDateString() === new Date().toDateString()) {
+            item.style({ "border-width": "2px" });
+            el.els.title.el.innerText = item.el.title;
+        } else {
+            item.style({ "border-width": "" });
         }
     }
+
+    if (isToday) {
+        renderDay(Math.floor((new Date().getTime() - s_date.getTime()) / timeD.d(1)));
+    } else
+        for (let x = 1; x <= 53; x++) {
+            for (let y = 1; y <= 7; y++) {
+                const offsetDay = 7 * (x - 1) + y - 1;
+                renderDay(offsetDay);
+            }
+        }
 }
 
 //###### setting
