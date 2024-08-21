@@ -27,8 +27,8 @@ importers:
         specifier: ^0.1.3
         version: 0.1.3(diff-match-patch@1.0.5)
       dkh-ui:
-        specifier: ^0.6.0
-        version: 0.6.0
+        specifier: ^0.7.0
+        version: 0.7.0
       fuse.js:
         specifier: ^7.0.0
         version: 7.0.0
@@ -53,9 +53,6 @@ importers:
       pitchfinder:
         specifier: ^2.3.2
         version: 2.3.2
-      redom:
-        specifier: ^4.0.0
-        version: 4.0.0
       sortablejs:
         specifier: ^1.15.2
         version: 1.15.2
@@ -507,8 +504,8 @@ packages:
   diff-match-patch@1.0.5:
     resolution: {integrity: sha512-IayShXAgj/QMXgB0IWmKx+rOPuGMhqm5w6jvFxmVenXKIzRqTAAsbBPT3kWQeGANj3jGgvcvv4yK6SxqYmikgw==}
 
-  dkh-ui@0.6.0:
-    resolution: {integrity: sha512-X+BXUFeQz+IaMrlqlwSb06HbpLB/K8v2WpOo/L9EWvZLlEdrE+Ya9DbzG8fq/RTKRImIeoj2/g9E5mKwXEUcUg==}
+  dkh-ui@0.7.0:
+    resolution: {integrity: sha512-nT80Ob022FfBzWZXI+t5vExsl5at9CN/4c4oI17OYXfPVKDr4QdrXW9HTJ6XrRZRe4Iojei/gRIPttZXOLhaqA==}
 
   download@8.0.0:
     resolution: {integrity: sha512-ASRY5QhDk7FK+XrQtQyvhpDKanLluEEQtWl/J7Lxuf/b+i8RYh997QeXvL85xitrmRKVlx9c7eTrcRdq2GS4eA==}
@@ -871,9 +868,6 @@ packages:
 
   readable-stream@2.3.8:
     resolution: {integrity: sha512-8p0AUk4XODgIewSi0l8Epjs+EVnWiK7NoDIEGU0HhE7+ZyY8D1IMY7odu5lRrFXGg71L15KG8QrPmum45RTtdA==}
-
-  redom@4.0.0:
-    resolution: {integrity: sha512-+UwnK/sKnjqtzQRANQw3gKJsxAO45ZdeF7VNQky7iGirc0nx6IQL9otv6KJwNAJJ/tQ75k42NZUuJPVV5ehVSg==}
 
   regenerator-runtime@0.14.0:
     resolution: {integrity: sha512-srw17NI0TUWHuGa5CFGGmhfNIeja30WMBfbslPNhf6JrqQlLN5gcrvig1oqPxiVaXb0oW0XRKtH6Nngs5lKCIA==}
@@ -1382,7 +1376,7 @@ snapshots:
 
   diff-match-patch@1.0.5: {}
 
-  dkh-ui@0.6.0:
+  dkh-ui@0.7.0:
     dependencies:
       csstype: 3.1.3
 
@@ -1748,8 +1742,6 @@ snapshots:
       safe-buffer: 5.1.2
       string_decoder: 1.1.1
       util-deprecate: 1.0.2
-
-  redom@4.0.0: {}
 
   regenerator-runtime@0.14.0: {}
 
