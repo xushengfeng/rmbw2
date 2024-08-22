@@ -311,7 +311,7 @@ function vlist<ItemType>(
     function s() {
         requestAnimationFrame(() => show());
     }
-    pel.on("scroll", s);
+    pel.el.addEventListener("scroll", s);
 
     const observer = new MutationObserver((mutationsList) => {
         for (const mutation of mutationsList) {
