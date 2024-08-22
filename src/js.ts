@@ -3062,7 +3062,7 @@ async function showMarkList() {
                 jumpToMark(i.s.cIndex);
                 showDic(i.id);
             })
-            .on("click", (e) => {
+            .on("contextmenu", (e) => {
                 e.preventDefault();
                 e.stopPropagation();
                 menuEl.clear();
