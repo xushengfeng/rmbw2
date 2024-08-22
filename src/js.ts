@@ -3932,7 +3932,7 @@ function addP(
         const mean = textEl.gv.trim();
         div.el.close();
         if (index) {
-            const newSentence = sInput1.gv + sourceWord + sInput2.gv;
+            const newSentence = sInput1.el.innerText + sourceWord + sInput2.el.innerText;
             console.log(newSentence);
             const i = diffPosi(sentence, newSentence);
             const nindex = patchPosi(i.source, i.map, index);
