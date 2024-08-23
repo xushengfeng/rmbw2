@@ -5948,6 +5948,7 @@ function onlineDicItem(name: string, url: string, lan: string) {
         input().sv(lan),
         button(iconEl(close_svg)).on("click", () => {
             li.remove();
+            saveSortOnlineDics();
         }),
     ]);
     return li;
