@@ -6024,10 +6024,10 @@ async function saveSortOnlineDics() {
     const l = Array.from(onlineDicsEl.queryAll("li"));
     const dl: onlineDicsType = [];
     for (const i of l) {
-        const l = i.queryAll("input") as ReturnType<typeof input>[];
-        const name = l[0].gv;
-        const url = l[1].gv;
-        const lan = l[2].gv;
+        const l = i.queryAll("input") as ElType<HTMLInputElement>[];
+        const name = l[0].el.value;
+        const url = l[1].el.value;
+        const lan = l[2].el.value;
         dl.push({ name, url, lan });
     }
     await setting.setItem(onlineDicsPath, dl);
