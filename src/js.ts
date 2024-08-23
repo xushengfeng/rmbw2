@@ -490,7 +490,7 @@ type section = {
 };
 
 async function getBooksById(id: string) {
-    if (id === "0") return coreWordBook;
+    if (id === coreWordBook.id) return coreWordBook;
     return await bookshelfStore.getItem(id);
 }
 async function getSection(id: string) {
@@ -840,7 +840,7 @@ addBookEl.on("click", async () => {
 });
 
 addSectionEL.on("click", async () => {
-    if (nowBook.book === "0") return;
+    if (nowBook.book === coreWordBook.id) return;
     if (!nowBook.book) nowBook = await newBook();
     const book = await getBooksById(nowBook.book);
     const sid = uuid();
@@ -1071,7 +1071,7 @@ async function showBookSections(book: book) {
             nowBook.sections = sections[i];
             showBookContent(book, sections[i]);
             setBookS();
-            if (nowBook.book === "0") return;
+            if (nowBook.book === coreWordBook.id) return;
             book.lastPosi = Number(i);
             bookshelfStore.setItem(nowBook.book, book);
         }).on("contextmenu", async (e) => {
@@ -2602,7 +2602,7 @@ async function changeEdit(b: boolean) {
             section = changePosi(section, editText);
             section.text = editText;
             await sectionsStore.setItem(sectionId, section);
-            if (nowBook.book !== "0") await bookshelfStore.setItem(nowBook.book, book);
+            if (nowBook.book !== coreWordBook.id) await bookshelfStore.setItem(nowBook.book, book);
         }
         showBookContent(book, sectionId);
     }
@@ -6451,7 +6451,7 @@ const asyncEl = view().add([
                         textData = await downloadGithub(rmbwGithub2);
                     } else {
                         await sectionsStore.iterate((v, k) => {
-                            if (k !== "0") textData[k] = v.text;
+                            if (k !== coreWordBook.id) textData[k] = v.text;
                         });
                     }
                     for (const i in textData) {
