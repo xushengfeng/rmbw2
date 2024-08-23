@@ -4573,13 +4573,11 @@ async function autoIgnore() {
                 .map((el) => el.el.textContent.trim().toLocaleLowerCase()),
         ),
     );
-    const section = await getSection(ignoreWordSection);
     const markedWords = Object.values((await getSection(nowBook.sections)).words)
         .filter((i) => i.type === "word")
         .map((i) => lemmatizer(i.id.toLocaleLowerCase()));
-    const oldWords = section.text.trim().split("\n");
     const studyWords = await getLearntWords();
-    const hasLentWords = oldWords
+    const hasLentWords = (await getIgnoreWords())
         .concat(studyWords)
         .map((w) => w.toLocaleLowerCase())
         .concat(markedWords);
@@ -4607,6 +4605,8 @@ async function autoIgnore() {
         f,
         button(iconEl(ok_svg)).on("click", async () => {
             const words = f.queryAll("input:checked.ignore_word").map((el: ElType<HTMLInputElement>) => el.el.value);
+            const section = await getSection(ignoreWordSection);
+            const oldWords = section.text.trim().split("\n");
             section.text = oldWords.concat(words).join("\n");
             await sectionsStore.setItem(ignoreWordSection, section);
             const wordsX = f
