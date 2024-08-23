@@ -6451,7 +6451,7 @@ const asyncEl = view().add([
                         textData = await downloadGithub(rmbwGithub2);
                     } else {
                         await sectionsStore.iterate((v, k) => {
-                            textData[k] = v.text;
+                            if (k !== "0") textData[k] = v.text;
                         });
                     }
                     for (const i in textData) {
