@@ -4704,9 +4704,9 @@ reviewReflashPEl.add(
 const KEYBOARDDISPLAYPATH = "spell.keyboard.display";
 const KEYBOARDHEIGHTPATH = "spell.keyboard.height";
 
-const keyboardEl = view("y")
-    .class("simple-keyboard")
-    .style({ height: `${await setting.getItem(KEYBOARDHEIGHTPATH)}px` });
+const keyboardEl = view("y").class("simple-keyboard");
+if (getSetting(KEYBOARDDISPLAYPATH) === "default")
+    keyboardEl.style({ height: `${await setting.getItem(KEYBOARDHEIGHTPATH)}px` });
 const handwriterCanvas = ele("canvas").el;
 const handwriterCheck = button(iconEl(ok_svg))
     .style({ display: "none" })
