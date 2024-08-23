@@ -4605,10 +4605,7 @@ async function autoIgnore() {
         f,
         button(iconEl(ok_svg)).on("click", async () => {
             const words = f.queryAll("input:checked.ignore_word").map((el: ElType<HTMLInputElement>) => el.el.value);
-            const section = await getSection(ignoreWordSection);
-            const oldWords = section.text.trim().split("\n");
-            section.text = oldWords.concat(words).join("\n");
-            await sectionsStore.setItem(ignoreWordSection, section);
+            addIgnore(words);
             const wordsX = f
                 .queryAll("input:checked:not(.ignore_word)")
                 .map((el: ElType<HTMLInputElement>) => el.el.value);
@@ -4619,16 +4616,17 @@ async function autoIgnore() {
     dialogX(dialog);
 }
 
-async function addIgnore(word: string) {
+async function addIgnore(word: string | string[]) {
+    const words = Array.isArray(word) ? word : [word];
     const section = await getSection(ignoreWordSection);
     const oldWords = section.text.trim().split("\n");
-    if (!oldWords.includes(word)) {
-        oldWords.push(word);
-        section.text = oldWords.join("\n");
-        await sectionsStore.setItem(ignoreWordSection, section);
-    } else {
-        return;
+    for (const word of words) {
+        if (!oldWords.includes(word)) {
+            oldWords.push(word);
+        }
     }
+    section.text = oldWords.join("\n");
+    await sectionsStore.setItem(ignoreWordSection, section);
 }
 async function removeIgnore(word: string) {
     const section = await getSection(ignoreWordSection);
