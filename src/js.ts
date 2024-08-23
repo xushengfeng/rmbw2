@@ -4684,7 +4684,8 @@ const reviewSortEl = select([
 
 const reviewMoreEl = view()
     .attr({ popover: "auto" })
-    .add([txt("过滤与排序"), view("y").add([reviewScope, spellIgnore, reviewSortEl])]);
+    .add([txt("过滤与排序"), view("y").add([reviewScope.style({ "max-height": "400px" }), spellIgnore, reviewSortEl])])
+    .style({ "max-width": "80dvw", overflow: "auto" });
 sectionSelect(reviewScope);
 document.body.append(reviewMoreEl.el);
 reviewReflashPEl.add(
