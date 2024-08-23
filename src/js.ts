@@ -2834,25 +2834,13 @@ bookdicEl.on("click", async () => {
     }
 });
 
-async function sectionSelectEl() {
-    const bookSectionsSelectEl = view().attr({ popover: "auto" });
-    document.body.append(bookSectionsSelectEl.el);
-    sectionSelect(bookSectionsSelectEl.el);
-    return {
-        el: button("选择词书").on("click", () => {
-            bookSectionsSelectEl.el.showPopover();
-        }),
-        values: () => getSelectBooks(bookSectionsSelectEl),
-    };
-}
-
-async function sectionSelect(menuEl: HTMLElement) {
+async function sectionSelect(menuEl: ElType<HTMLElement>) {
     const bookList: book[] = [];
     await bookshelfStore.iterate((book) => {
         bookList.push(book);
     });
     const wordBooks = bookList.filter((b) => b.type === "word");
-    menuEl.innerHTML = "";
+    menuEl.clear();
     for (const i of wordBooks) {
         const book = view().add(i.name);
         book.add(
@@ -2865,12 +2853,12 @@ async function sectionSelect(menuEl: HTMLElement) {
             const section = await getSection(s);
             book.add(label([input("checkbox").sv(s).data({ type: i.type }), section.title]));
         }
-        menuEl.append(book.el);
+        menuEl.add(book);
     }
-    menuEl.append(ele("hr").el);
+    menuEl.add(ele("hr"));
     for (const i of bookList.filter((b) => b.type === "text")) {
         const book = view().add(label([i.name, input("checkbox").data({ type: i.type }).sv(i.id)]));
-        menuEl.append(book.el);
+        menuEl.add(book);
     }
     return menuEl;
 }
@@ -4675,7 +4663,7 @@ const reviewReflashPEl = pack(reviewReflashEl.el.parentElement);
 const reviewAi = input("checkbox");
 reviewReflashPEl.add(label([reviewAi, "ai"]));
 
-const reviewScope = await sectionSelectEl();
+const reviewScope = view();
 const spellIgnore = select([
     { name: "全部", value: "all" },
     { name: "排除忽略词", value: "exIgnore" },
@@ -4696,7 +4684,8 @@ const reviewSortEl = select([
 
 const reviewMoreEl = view()
     .attr({ popover: "auto" })
-    .add([txt("过滤与排序"), view("x").add([reviewScope.el, spellIgnore, reviewSortEl])]);
+    .add([txt("过滤与排序"), view("y").add([reviewScope, spellIgnore, reviewSortEl])]);
+sectionSelect(reviewScope);
 document.body.append(reviewMoreEl.el);
 reviewReflashPEl.add(
     button(iconEl(filter_svg)).on("click", () => {
@@ -4897,7 +4886,7 @@ function ocrSpell() {
 }
 
 async function getWordsScope() {
-    const books = reviewScope.values();
+    const books = getSelectBooks(reviewScope);
     const ignore = await getIgnoreWords();
     const b = books.book;
     if (books.word.length === 0) return { words: null, ignore, books: b };
