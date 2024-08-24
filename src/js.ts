@@ -5308,7 +5308,7 @@ async function showSpellReview(x: { id: string; card: Card }) {
     function matchSpecial(input: string, word: string) {
         const l: string[] = [];
         for (let i = 0; i < input.length; i++) {
-            if (word[i].match(/[-'’ ]/)) l.push(word[i]);
+            if (word[i].match(/[-'’. ]/)) l.push(word[i]);
             else l.push(input[i]);
         }
         return l.join("");
