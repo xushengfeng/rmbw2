@@ -3024,14 +3024,7 @@ function tag(tags: tagMap) {
 const markListBarEl = elFromId("mark_word_list");
 const markListEl = view();
 const autoNewWordEl = view().add([
-    button("自动标记生词").on("click", async () => {
-        const words = await getNewWords(editText);
-        selectWord(words);
-    }),
-    button(iconEl(clear_svg)).on("click", () => {
-        selectWord([]);
-    }),
-    button("自动添加到忽略词表").on("click", () => {
+    button("生词忽略与标记").on("click", () => {
         autoIgnore();
     }),
 ]);
@@ -4516,12 +4509,6 @@ function selectWord(words: string[]) {
     }
 }
 
-async function getNewWords(text: string) {
-    const newWords = await getNewWordsFromBook(text);
-    const ignoreWords = await getIgnoreWords();
-    return newWords.filter((w) => !ignoreWords.includes(lemmatizer(w)));
-}
-
 function fillMutiSpell(rl: string[]) {
     const l: string[] = [];
     const m: { [key: string]: string[] } = {};
@@ -4545,17 +4532,6 @@ async function getLearntWords() {
     return fillMutiSpell(learnt);
 }
 
-async function getNewWordsFromBook(text: string) {
-    const learnt = await getLearntWords();
-    const segmenter = new Segmenter(studyLan, { granularity: "word" });
-    const segments = segmenter.segment(text);
-    const list = Array.from(segments)
-        .filter((i) => i.isWordLike)
-        .map((i) => i.segment)
-        .filter((w) => !learnt.includes(lemmatizer(w)));
-    return list;
-}
-
 async function getIgnoreWords() {
     const section = await getSection(ignoreWordSection);
     if (!section) return [];
@@ -4563,9 +4539,7 @@ async function getIgnoreWords() {
     return fillMutiSpell(rl);
 }
 
-async function autoIgnore() {
-    const dialog = ele("dialog").class("words_select").attr({ lang: studyLan });
-    const f = view();
+async function getNewWords() {
     const words = Array.from(
         new Set(
             bookContentEl
@@ -4597,19 +4571,35 @@ async function autoIgnore() {
             willShowWords.push(r);
         }
     }
+    return wordsWithRoot;
+}
+
+async function autoIgnore() {
+    const dialog = ele("dialog").class("words_select").attr({ lang: studyLan });
+    const f = view();
+    const wordsWithRoot = await getNewWords();
     for (const w of wordsWithRoot) {
         const item = label([input("checkbox").class("ignore_word").sv(w.show), w.show, input("checkbox").sv(w.src)]);
         f.add(item);
     }
     dialog.add([
         f,
-        button(iconEl(ok_svg)).on("click", async () => {
-            const words = f.queryAll("input:checked.ignore_word").map((el) => el.el.value);
-            addIgnore(words);
-            const wordsX = f.queryAll("input:checked:not(.ignore_word)").map((el) => el.el.value);
-            selectWord(wordsX);
-            dialog.el.close();
-        }),
+        view("x").add([
+            button("标记所有生词")
+                .on("click", async () => {
+                    const words = (await getNewWords()).map((i) => i.src);
+                    selectWord(words);
+                    dialog.el.close();
+                })
+                .style({ width: "auto" }),
+            button(iconEl(ok_svg)).on("click", async () => {
+                const words = f.queryAll("input:checked.ignore_word").map((el) => el.el.value);
+                addIgnore(words);
+                const wordsX = f.queryAll("input:checked:not(.ignore_word)").map((el) => el.el.value);
+                selectWord(wordsX);
+                dialog.el.close();
+            }),
+        ]),
     ]);
     dialogX(dialog);
 }
