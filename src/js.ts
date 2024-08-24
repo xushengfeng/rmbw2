@@ -2520,10 +2520,10 @@ document.body.appendChild(fontListEl.el);
             color,
         });
     }
-    (themeSelect.query(`input[value='${bookStyle.theme}']`) as ElType<HTMLInputElement>).el.checked = true;
+    themeSelect.query(`input[value='${bookStyle.theme}']`).el.checked = true;
     for (const el of themeSelect.queryAll("input")) {
-        el.on("change", (e) => {
-            bookStyle.theme = (e.target as HTMLInputElement).value;
+        el.on("change", (e, cel) => {
+            bookStyle.theme = cel.el.value;
             setBookStyle();
         });
     }
@@ -2866,10 +2866,10 @@ async function sectionSelect(menuEl: ElType<HTMLElement>) {
 function getSelectBooks(el: ElType<HTMLElement>) {
     return {
         word: Array.from(el.queryAll("input[data-type='word']:checked"))
-            .map((i: ElType<HTMLInputElement>) => i.el.value)
+            .map((i) => i.el.value)
             .filter((v) => v),
         book: Array.from(el.queryAll("input[data-type='text']:checked"))
-            .map((i: ElType<HTMLInputElement>) => i.el.value)
+            .map((i) => i.el.value)
             .filter((v) => v),
     };
 }
@@ -3552,7 +3552,7 @@ async function showDic(id: string) {
         function matchRangeEl(n: number, left: boolean) {
             for (let i = 0; i < editText.length - n + 1; i++) {
                 for (const ii of [-1, 1]) {
-                    const el = bookContentEl.query(`span[data-${left ? "s" : "e"}="${n + i * ii}"]`).el as HTMLElement;
+                    const el = bookContentEl.query(`span[data-${left ? "s" : "e"}="${n + i * ii}"]`).el;
                     if (el) {
                         return el;
                     }
@@ -3696,7 +3696,7 @@ async function showDicEl(mainTextEl: ReturnType<typeof textarea>, word: string, 
                     button(iconEl(ok_svg)).on("click", () => {
                         // 获取所有checked的值
                         const checkedValues = Array.from(list.queryAll("input[type='checkbox']:checked")).map(
-                            (el: ElType<HTMLInputElement>) => el.el.value,
+                            (el) => el.el.value,
                         );
                         mainTextEl.el.setRangeText(checkedValues.join("\n"));
                         div.el.close();
@@ -4604,11 +4604,9 @@ async function autoIgnore() {
     dialog.add([
         f,
         button(iconEl(ok_svg)).on("click", async () => {
-            const words = f.queryAll("input:checked.ignore_word").map((el: ElType<HTMLInputElement>) => el.el.value);
+            const words = f.queryAll("input:checked.ignore_word").map((el) => el.el.value);
             addIgnore(words);
-            const wordsX = f
-                .queryAll("input:checked:not(.ignore_word)")
-                .map((el: ElType<HTMLInputElement>) => el.el.value);
+            const wordsX = f.queryAll("input:checked:not(.ignore_word)").map((el) => el.el.value);
             selectWord(wordsX);
             dialog.el.close();
         }),
@@ -6023,7 +6021,7 @@ async function saveSortOnlineDics() {
     const l = Array.from(onlineDicsEl.queryAll("li"));
     const dl: onlineDicsType = [];
     for (const i of l) {
-        const l = i.queryAll("input") as ElType<HTMLInputElement>[];
+        const l = i.queryAll("input");
         const name = l[0].el.value;
         const url = l[1].el.value;
         const lan = l[2].el.value;
