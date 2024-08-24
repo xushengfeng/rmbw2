@@ -4304,7 +4304,7 @@ async function showArticelAI() {
     text.el.setSelectionRange(text.gv.length, text.gv.length);
     aiText(text, `这是一篇文章：${s.title}\n\n${s.text}`);
     const div = ele("dialog")
-        .add(AIDIALOG)
+        .class(AIDIALOG)
         .add([
             text,
             view()
@@ -4321,7 +4321,7 @@ async function showArticelAI() {
                     }),
                 ]),
         ]);
-    div.style({ left: "auto", right: "0", top: "32ox" });
+    div.style({ left: "auto", right: "0", top: "32px" });
     dialogX(div);
 }
 
