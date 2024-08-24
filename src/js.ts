@@ -1633,7 +1633,7 @@ async function showNormalBook(book: book, s: section) {
 
     for (const paragraph of plist) {
         if (paragraph.length === 0) continue;
-        let pel: ElType<HTMLElement> = p("");
+        let pel: ElType<HTMLElement> = p();
         let t = 0;
         for (let i = 0; i <= 6; i++) {
             const x = paragraph[0]?.[i]?.text;
@@ -1664,7 +1664,7 @@ async function showNormalBook(book: book, s: section) {
 
         for (const si in paragraph) {
             const sen = paragraph[si];
-            const senEl = txt("");
+            const senEl = txt();
             for (const i in sen) {
                 const word = sen[i];
                 if (si === "0" && Number(i) < t) continue;
@@ -2186,7 +2186,7 @@ async function exTrans(pEl: HTMLElement, i: number, book: book) {
                     gap: "2px",
                 }),
             },
-            sum: txt("")
+            sum: txt()
                 .bindSet((v: number, el) => {
                     el.innerText = `${(v * 100).toFixed(1)}%`;
                 })
@@ -2556,7 +2556,7 @@ function createRangeSetEl(value: number, maxV: number, f: (i: number) => void, m
     const div = view();
     const min = button().add(iconEl(minIcon));
     const max = button().add(iconEl(maxIcon));
-    const p = txt("")
+    const p = txt()
         .style({ "flex-grow": 1 })
         .bindSet((v: number, el) => {
             el.innerText = String(v + 1);
@@ -3665,7 +3665,7 @@ async function showDicEl(mainTextEl: ReturnType<typeof textarea>, word: string, 
         const tmpdiv = view();
         tmpdiv.el.innerHTML = await getWordFromDic(word, id);
         for (const i of tmpdiv.el.innerText.split("\n").filter((i) => i.trim() !== "")) {
-            const pel = p("");
+            const pel = p();
             pel.el.innerHTML = i;
             list.add(label([input("checkbox").sv(pel.el.innerText), pel]));
         }
@@ -3732,7 +3732,7 @@ async function dicSentences(contexts: record["means"][0]["contexts"]) {
         const t = await getTitleEl(source.book, source.sections, source.id);
         sen.add(
             view().add(
-                p("").add([
+                p().add([
                     s.text.slice(0, s.index[0]),
                     txt(s.text.slice(...s.index)).class(MARKWORD),
                     s.text.slice(s.index[1]),
@@ -3900,9 +3900,9 @@ function addP(
     tags: bOp,
     f: (text: string, sentence?: string, index?: [number, number], tags?: bOp) => void,
 ) {
-    const pEl = p("").attr({ lang: studyLan });
-    const sInput1 = txt("").attr({ contentEditable: "true" });
-    const sInput2 = txt("").attr({ contentEditable: "true" });
+    const pEl = p().attr({ lang: studyLan });
+    const sInput1 = txt().attr({ contentEditable: "true" });
+    const sInput2 = txt().attr({ contentEditable: "true" });
     let sourceWord = "";
     if (index) {
         sourceWord = sentence.slice(...index);
@@ -5175,7 +5175,7 @@ async function aiContext(id: string) {
     const context = view();
     const text = aiContexts[id].text;
     const l = text.split(/\*\*(.+)\*\*/);
-    context.add(p("").add([l[0], txt(l[1]).class(MARKWORD), l[2]]));
+    context.add(p().add([l[0], txt(l[1]).class(MARKWORD), l[2]]));
     return context;
 }
 async function showWordReview(x: { id: string; card: Card }, isAi: boolean) {
