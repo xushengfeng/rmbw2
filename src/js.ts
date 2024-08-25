@@ -1690,7 +1690,7 @@ async function showNormalBook(book: book, s: section) {
                     if (span.tagName !== "SPAN") return;
                     if (span.getAttribute("data-w") === "false") return;
 
-                    const s = sen.at(t).start;
+                    const s = si === "0" ? sen.at(t).start : sen.at(0).start;
                     const e = sen.at(-1).end;
 
                     const id = await saveCard({
