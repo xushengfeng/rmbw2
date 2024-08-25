@@ -1659,7 +1659,7 @@ async function showNormalBook(book: book, s: section) {
         if (paragraph[0][0].text === ">") {
             pel = ele("blockquote");
             bookContentEl.add(pel);
-            t = 1;
+            t = paragraph[0].findIndex((i) => i.text !== ">" && i.text[0] !== " ");
         }
 
         for (const si in paragraph) {
@@ -1690,7 +1690,7 @@ async function showNormalBook(book: book, s: section) {
                     if (span.tagName !== "SPAN") return;
                     if (span.getAttribute("data-w") === "false") return;
 
-                    const s = sen[0].start;
+                    const s = sen.at(t).start;
                     const e = sen.at(-1).end;
 
                     const id = await saveCard({
