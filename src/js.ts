@@ -5889,6 +5889,7 @@ function renderCal(year: number, data: Date[], el: typeof cal1) {
         if (date.toDateString() === new Date().toDateString()) {
             item.style({ "border-width": "2px" });
             el.els.title.sv(item.el.title);
+            item.el.scrollIntoView();
         } else {
             item.style({ "border-width": "" });
         }
