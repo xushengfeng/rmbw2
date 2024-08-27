@@ -1545,7 +1545,7 @@ async function ignoredWordSpell(list: string[]) {
         putToast(txt("无新添加词"));
         return;
     }
-    const iel = textarea("word list").sv(flist.sort().join("\n")).style({ height: "200px" });
+    const iel = textarea().sv(flist.sort().join("\n")).style({ height: "200px" });
     const p = (await interModal(view().add(["确定添加以下单词到拼写吗？", iel]), null, () => iel.el.value)).v;
     if (!p) return;
     const rlist = randomList(p.split("\n"));
@@ -2137,7 +2137,7 @@ async function exTrans(pEl: HTMLElement, i: number, book: book) {
             top: `${span.offsetTop - (pEl.children[0].getBoundingClientRect().y - pEl.getBoundingClientRect().y)}px`,
             width: "100%",
         }),
-        text: textarea("i")
+        text: textarea()
             .style({
                 width: "100%",
                 resize: "vertical",
@@ -2696,7 +2696,7 @@ async function setEdit() {
     const sectionId = nowBook.sections;
     const section = await getSection(sectionId);
     bookContentContainerEl.clear();
-    const textEl = textarea("text edit").attr({ disabled: !book.canEdit, value: section.text });
+    const textEl = textarea().attr({ disabled: !book.canEdit, value: section.text });
     const text = textEl;
     bookContentContainerEl.add(text);
     bookContentEl = textEl;
@@ -3907,7 +3907,7 @@ function addP(
             pEl.el.scrollLeft = sourceWordEl.el.offsetLeft - pEl.el.offsetWidth / 2;
         }, 100);
     } else pEl.add(word || sentence);
-    const textEl = textarea("").sv(text).attr({ autofocus: true });
+    const textEl = textarea().sv(text).attr({ autofocus: true });
     const aiB = getAiButtons(textEl, word, sentence);
     const okEl = button(iconEl(ok_svg)).on("click", () => {
         const mean = textEl.gv.trim();
@@ -4236,7 +4236,7 @@ function tmpAiB(mainTextEl: ReturnType<typeof textarea>, info: string) {
 }
 
 function tmpAi(mainTextEl: ReturnType<typeof textarea>, info: string, x: number, y: number) {
-    const textEl = textarea("").sv(">");
+    const textEl = textarea().sv(">");
     aiText(textEl, info);
     const div = ele("dialog")
         .class(AIDIALOG)
@@ -4293,7 +4293,7 @@ async function showArticelAI() {
     if (!nowBook.book || !nowBook.sections) return;
     const s = await getSection(nowBook.sections);
     const note = s.note;
-    const text = textarea("").sv(note || "> ");
+    const text = textarea().sv(note || "> ");
     text.el.setSelectionRange(text.gv.length, text.gv.length);
     aiText(text, `这是一篇文章：${s.title}\n\n${s.text}`);
     const div = ele("dialog")
