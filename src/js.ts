@@ -511,9 +511,9 @@ async function getBookShortTitle(bookId: string) {
     return (await getBooksById(bookId)).shortName || (await getBooksById(bookId)).name;
 }
 
-function getSectionTitle(book: book, sectionId: string, sectionTitle: string) {
+function getSectionTitle(book: book, sectionId: string, sectionTitle: string, parse?: boolean) {
     let st = sectionTitle;
-    if (book.titleParse) {
+    if (parse && book.titleParse) {
         const i = book.sections.indexOf(sectionId);
         st = book.titleParse.replaceAll("{i}", String(book.titleIndex?.[i] || i + 1)).replaceAll("{t}", sectionTitle);
     }
@@ -1057,7 +1057,7 @@ async function showBookSections(book: book) {
     vlist(bookSectionsEl, sections, { iHeight: 24, paddingTop: 16, paddingLeft: 16 }, (i) => {
         const sEl = view();
         const s = sectionsX[i];
-        const title = getSectionTitle(book, sections[i], s.title) || `章节${Number(i) + 1}`;
+        const title = getSectionTitle(book, sections[i], s.title, true) || `章节${Number(i) + 1}`;
         sEl.attr({ innerText: title, title });
         if (nowBook.sections === sections[i]) sEl.class(SELECTEDITEM);
         if (Object.values(s.words).some((i) => !i.visit)) sEl.class(TODOMARK);
