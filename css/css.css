@@ -410,6 +410,9 @@ body {
                     opacity: 0.5;
                 }
             }
+            & blockquote {
+                margin-inline: 16px;
+            }
         }
 
         & > * > .p_more {
