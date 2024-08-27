@@ -1327,15 +1327,31 @@ div:has(> .translate) > :not(.translate) {
         & li {
             display: flex;
             align-items: center;
+            gap: 4px;
             & > span {
                 cursor: pointer;
+                width: 20px;
             }
             & > button {
-                --size0: 20px;
+                --size0: 24px;
+            }
+            & > input:nth-of-type(1) {
+                width: 4em;
+            }
+            & > input:nth-of-type(3) {
+                width: 4em;
             }
         }
         & > div {
-            --size0: 20px;
+            --size0: 24px;
+            display: flex;
+            gap: 4px;
+            & > input:nth-of-type(1) {
+                width: 4em;
+            }
+            & > input:nth-of-type(3) {
+                width: 4em;
+            }
         }
     }
 }

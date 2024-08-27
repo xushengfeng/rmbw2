@@ -5980,7 +5980,9 @@ if (!(await setting.getItem(onlineDicsPath))) {
     await setting.setItem(onlineDicsPath, defaultOnlineDic);
 }
 
-const moreOnlineDicEl = select(defaultOnlineDic.map((i) => ({ name: i.name, value: i.name }))).on("change", () => {
+const moreOnlineDicEl = select(
+    [{ name: "更多", value: "" }].concat(defaultOnlineDic.map((i) => ({ name: i.name, value: i.name }))),
+).on("change", () => {
     const i = defaultOnlineDic.find((i) => i.name === moreOnlineDicEl.el.value);
     if (!i) return;
     onlineDicsEl.add(onlineDicItem(i.name, i.url, i.lan));
