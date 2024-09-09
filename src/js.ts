@@ -6610,7 +6610,8 @@ settingEl.add(view().add([ele("h2").add("tts"), ttsEngineEl, loadTTSVoicesEl, vo
 
 settingEl.add(
     view().add([
-        ele("h2").add("缓存"),
+        ele("h2").add("清除缓存"),
+        `≈${((await navigator.storage.estimate()).usage / 1024 / 1024).toFixed(2)}MB`,
         button("语音").on("click", () => {
             ttsCache.clear();
         }),
