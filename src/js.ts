@@ -1688,6 +1688,7 @@ async function showNormalBook(book: book, s: section) {
                 .on("click", async (ev) => {
                     const span = ev.target as HTMLSpanElement;
                     if (span.tagName !== "SPAN") return;
+                    if (!span.getAttribute("data-s")) return;
                     if (span.getAttribute("data-w") === "false") return;
 
                     const s = si === "0" ? sen.at(t).start : sen.at(0).start;
