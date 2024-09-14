@@ -1031,6 +1031,18 @@ async function showLocalBooksL(bookList: book[]) {
                 });
                 dialogX(metaEl);
             });
+        requestIdleCallback(async () => {
+            if (book.type !== "text") return;
+            let unLearn = false;
+            for (const i of book.sections) {
+                const section = await getSection(i);
+                if (Object.values(section.words).find((i) => i.visit === false)) {
+                    unLearn = true;
+                    break;
+                }
+            }
+            if (unLearn) bookIEl.class(TODOMARK1);
+        });
     }
     return grid;
 }
