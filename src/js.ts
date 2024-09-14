@@ -1010,20 +1010,7 @@ async function showLocalBooksL(bookList: book[]) {
                     view()
                         .add("翻译")
                         .on("click", async (_, el) => {
-                            el.el.innerText = await ai(
-                                [
-                                    {
-                                        role: "system",
-                                        content:
-                                            "You are a professional, authentic translation engine. You only return the translated text, without any explanations.",
-                                    },
-                                    {
-                                        role: "user",
-                                        content: `Please translate into ${navigator.language} (avoid explaining the original text):\n\n${book.description}`,
-                                    },
-                                ],
-                                "翻译",
-                            ).text;
+                            el.el.innerText = await (await translate(book.description || "")).text;
                         }),
                 ]);
                 const submitEl = button("确定");
@@ -3247,33 +3234,9 @@ async function showDic(id: string) {
     }
 
     dicTransB.el.onclick = async () => {
-        let text = "";
-        if (dicTransContent.gv) {
-            text = await runAi();
-        } else {
-            text = (await transCache.getItem(Share.context.trim())) as string;
-            if (!text) {
-                text = await runAi();
-            }
-        }
-        function runAi() {
-            const output = ai(
-                [
-                    {
-                        role: "system",
-                        content:
-                            "You are a professional, authentic translation engine. You only return the translated text, without any explanations.",
-                    },
-                    {
-                        role: "user",
-                        content: `Please translate into ${navigator.language} (avoid explaining the original text):\n\n${Share.context}`,
-                    },
-                ],
-                "翻译",
-            );
-            dicTransAi = output.stop;
-            return output.text;
-        }
+        const output = await translate(Share.context, Boolean(dicTransContent.gv));
+        dicTransAi = output.stop;
+        const text = await output.text;
         dicTransContent.sv(text);
         if (isSentence) {
             const r = await card2sentence.getItem(wordx.id);
@@ -3282,8 +3245,6 @@ async function showDic(id: string) {
             visit(true);
             checkVisitAll(section);
         }
-
-        transCache.setItem(Share.context.trim(), text);
     };
 
     toSentenceEl.el.onclick = async () => {
@@ -3932,6 +3893,33 @@ async function tagsEl(b: bOp) {
     }
     const l = oEl(b);
     return l;
+}
+
+async function translate(st: string, f?: boolean) {
+    const tst = st.trim();
+    if (!f) {
+        const text = (await transCache.getItem(tst)) as string;
+        if (text) return { text, stop: new AbortController() };
+    }
+
+    const output = ai(
+        [
+            {
+                role: "system",
+                content:
+                    "You are a professional, authentic translation engine. You only return the translated text, without any explanations.",
+            },
+            {
+                role: "user",
+                content: `Please translate into ${navigator.language} (avoid explaining the original text):\n\n${tst}`,
+            },
+        ],
+        "翻译",
+    );
+    output.text.then((text) => {
+        transCache.setItem(tst, text);
+    });
+    return output;
 }
 
 function addP(
