@@ -469,6 +469,7 @@ type book = {
     author?: string;
     titleParse?: string;
     titleIndex?: number[];
+    description?: string;
     sections: string[];
     canEdit: boolean;
     lastPosi: number;
@@ -1004,9 +1005,30 @@ async function showLocalBooksL(bookList: book[]) {
                             .attr({ value: "text", checked: book.type === "text" }),
                     ]),
                 ]);
+                const dis = view().add([
+                    book.description || "",
+                    view()
+                        .add("翻译")
+                        .on("click", async (_, el) => {
+                            el.el.innerText = await ai(
+                                [
+                                    {
+                                        role: "system",
+                                        content:
+                                            "You are a professional, authentic translation engine. You only return the translated text, without any explanations.",
+                                    },
+                                    {
+                                        role: "user",
+                                        content: `Please translate into ${navigator.language} (avoid explaining the original text):\n\n${book.description}`,
+                                    },
+                                ],
+                                "翻译",
+                            ).text;
+                        }),
+                ]);
                 const submitEl = button("确定");
                 const deleteEl = button("删除");
-                const metaEl = ele("dialog").add([view().add(`id: ${book.id}`), formEl, submitEl, deleteEl]);
+                const metaEl = ele("dialog").add([view().add(`id: ${book.id}`), formEl, dis, submitEl, deleteEl]);
                 submitEl.on("click", () => {
                     const data = new FormData(formEl.el);
                     data.forEach((v, k) => {
