@@ -3964,7 +3964,7 @@ function addP(
             textEl,
             view()
                 .style({ display: "flex" })
-                .add([...aiB, okEl]),
+                .add([...aiB, spacer(), okEl]),
         ]);
     textEl.on("keydown", (e) => {
         if (e.key === "Enter" && e.shiftKey) {
@@ -4630,6 +4630,7 @@ async function autoIgnore() {
                     dialog.el.close();
                 })
                 .style({ width: "auto" }),
+            spacer(),
             button(iconEl(ok_svg)).on("click", async () => {
                 const words = f.queryAll("input:checked.ignore_word").map((el) => el.el.value);
                 addIgnore(words);
