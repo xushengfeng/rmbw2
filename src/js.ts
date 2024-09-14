@@ -4446,6 +4446,7 @@ function newCardAction(id: string) {
 const transCache = localForage.createInstance<string>({ name: "aiCache", storeName: "trans" });
 type D = Parameters<Parameters<ReturnType<typeof tts.toStream>["onEnd"]>[0]>["0"];
 const ttsCache = localForage.createInstance<{ blob: Blob; data: D }>({ name: "aiCache", storeName: "tts" });
+const lijuCache = localForage.createInstance<string[]>({ name: "aiCache", storeName: "liju" });
 
 function setWordC(w: record, meanIndex: number, context: record["means"][0]["contexts"][0]) {
     if (meanIndex < 0) return w;
@@ -5084,14 +5085,21 @@ function clearKeyboard() {
     keyboard.clearInput();
 }
 
-let aiContexts: { [id: string]: { text: string } } = {};
+let aiContexts: Record<string, { text: string }> = {};
 async function getWordAiContext() {
+    aiContexts = {};
     const l: { id: string; word: string; mean: string }[] = [];
     const newDue = due.word
         .toSorted((a, b) => a.card.due.getTime() - b.card.due.getTime())
         .filter((i) => i.card.state === State.Review)
         .slice(0, maxReviewCount);
+    console.log(newDue);
+
     for (const x of newDue) {
+        if (await lijuCache.getItem(x.id)) {
+            aiContexts[x.id] = { text: await lijuCache.getItem(x.id)[0] };
+            continue;
+        }
         const wordid = await card2word.getItem(x.id);
         const wordRecord = await wordsStore.getItem(wordid);
         for (const i of wordRecord.means) {
@@ -5143,9 +5151,10 @@ async function getWordAiContext() {
         putToast(txt("ai错误"));
     }
 
-    aiContexts = {};
-
-    for (const i of rr) aiContexts[i.id] = { text: i.sentence };
+    for (const i of rr) {
+        aiContexts[i.id] = { text: i.sentence };
+        lijuCache.setItem(i.id, [i.sentence]);
+    }
 }
 
 async function showReview(x: { id: string; card: Card }, type: review) {
@@ -5217,6 +5226,7 @@ async function showWordReview(x: { id: string; card: Card }, isAi: boolean) {
     const dic = view().on("click", reviewHotkey.show.f);
     const buttons = getReviewCardButtons(x.id, x.card, context.el.innerText, async (rating) => {
         if (hasShowAnswer) {
+            lijuCache.removeItem(x.id);
             const next = await nextDue(reviewType);
             showReview(next, reviewType);
         } else {
