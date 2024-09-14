@@ -1785,7 +1785,7 @@ async function showLisent(text: string) {
     let sL: string[] = [];
     for (const i of mainL) {
         const nl = i
-            .replaceAll(/(\D)[,，](\D)/g, "$1\n$2")
+            .replaceAll(/(\D)[,，\-—:：](\D)/g, "$1\n$2")
             .split("\n")
             .filter(Boolean);
         for (let i = 0; i < nl.length; i++) {
@@ -1806,7 +1806,7 @@ async function showLisent(text: string) {
             }
         }
     }
-    sL = sL.map((i) => i.replaceAll(/^["'“”‘’]/g, ""));
+    sL = sL.map((i) => i.replaceAll(/^["'“‘]/g, "").replaceAll(/["'”’]$/g, ""));
 
     const d = ele("dialog").class("play_list");
     const playsEl = view("y");
