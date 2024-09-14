@@ -399,6 +399,7 @@ const bookdicEl = elFromId("book_dic");
 const lastMarkEl = button(iconEl(left_svg));
 const nextMarkEl = button(iconEl(right_svg));
 const toSentenceEl = button(iconEl(sentence_svg));
+const feedbackEl = button(iconEl(help_svg));
 const hideDicEl = button(iconEl(close_svg));
 const dicWordEl = input();
 const lessWordEl = txt("-");
@@ -415,7 +416,7 @@ const noteEl = button(iconEl(pen_svg)).style({ "min-height": "24px" });
 const dicDetailsEl = view().class("dic_details");
 
 dicEl.add([
-    view("x").add([lastMarkEl, nextMarkEl, toSentenceEl, ttsContextEl, noteEl, hideDicEl]),
+    view("x").add([lastMarkEl, nextMarkEl, toSentenceEl, ttsContextEl, noteEl, spacer(), feedbackEl, hideDicEl]),
     view("x")
         .style({ "flex-wrap": "wrap", "align-items": "center" })
         .add([dicWordEl, view().add([lessWordEl, moreWordEl]), ttsWordEl, moreWordsEl]),
@@ -3429,6 +3430,19 @@ async function showDic(id: string) {
                     wordsStore.setItem(Word.word, Word.record);
                 }
             });
+        };
+
+        feedbackEl.el.onclick = () => {
+            // todo 根据仓库自定义url
+            const url = "https://github.com/xushengfeng/rmbw-book/issues/new?title=${word} in ${sid}&body=${context}";
+            const index = Word.context.index;
+            const context = Word.context.text;
+            const sourceWord = context.slice(...index);
+            const xurl = url
+                .replaceAll("${word}", sourceWord)
+                .replaceAll("${sid}", Word.context.source.sections)
+                .replaceAll("${context}", `${context.slice(0, index[0])}**${sourceWord}**${context.slice(index[1])}`);
+            window.open(xurl);
         };
 
         async function search(word: string) {
