@@ -12,7 +12,9 @@
     --hover-color: #dfdfdf;
     --box-shadow: 0 0 4px #0002;
     --transition: 0.4s cubic-bezier(0.25, 1, 0.5, 1);
+    --p0: 1rem;
     --border-radius: 8px;
+    --br2: calc(var(--border-radius) + var(--p0));
     --color: #000;
     --font-size: 16px;
     --main-bar-size: 24px;
@@ -169,8 +171,8 @@ dialog {
     background-color: var(--bg1);
     backdrop-filter: var(--blur);
     border: 1px solid var(--color);
-    padding: 1rem;
-    border-radius: 1rem;
+    padding: var(--p0);
+    border-radius: calc(1rem + var(--border-radius));
     outline: none;
 }
 [popover] {
@@ -256,7 +258,7 @@ body {
     background-color: var(--bg1);
     backdrop-filter: var(--blur);
     transition: var(--transition);
-    border-radius: 0 1rem 1rem 0;
+    border-radius: 0 var(--br2) var(--br2) 0;
     font-family: var(--font-family);
     & > :nth-child(3) {
         & > div {
@@ -308,8 +310,7 @@ body {
     background-color: var(--bg1);
     backdrop-filter: var(--blur);
     transition: var(--transition);
-    border-radius: 1rem;
-    padding: 1rem;
+    padding: var(--p0);
     flex-direction: column;
     gap: 4px;
     &:popover-open {
@@ -695,8 +696,8 @@ body {
     background-color: var(--bg1);
     backdrop-filter: var(--blur);
     transition: var(--transition);
-    border-radius: 1rem;
-    padding: 1rem;
+    border-radius: var(--br2);
+    padding: var(--p0);
     box-sizing: border-box;
     opacity: 0;
     visibility: hidden;
@@ -750,8 +751,8 @@ div:has(> .translate) > :not(.translate) {
     display: flex;
     flex-direction: column;
     & > div {
-        border-radius: 0.4em;
-        padding: 0.4em;
+        border-radius: var(--border-radius);
+        padding: var(--border-radius);
         border: solid 1px transparent;
         &:hover {
             border: dashed 1px var(--color);
@@ -956,9 +957,9 @@ div:has(> .translate) > :not(.translate) {
     top: var(--size0);
     height: calc(100dvh - var(--size0));
     width: var(--w);
-    border-radius: 1rem 0 0 1rem;
+    border-radius: var(--br2) 0 0 var(--br2);
     box-sizing: border-box;
-    padding: 1rem;
+    padding: var(--p0);
     background: var(--bar-bg);
     backdrop-filter: var(--blur);
     box-shadow: var(--box-shadow);
@@ -1379,10 +1380,10 @@ div:has(> .translate) > :not(.translate) {
     background-color: var(--bg1);
     backdrop-filter: var(--blur);
     transition: var(--transition);
-    padding: 1rem;
+    padding: var(--p0);
     border: none;
     box-shadow: var(--box-shadow);
-    border-radius: 1rem;
+    border-radius: var(--br2);
     display: flex;
     flex-direction: column;
     gap: 4px;
