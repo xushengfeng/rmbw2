@@ -5097,7 +5097,7 @@ async function getWordAiContext() {
 
     for (const x of newDue) {
         if (await lijuCache.getItem(x.id)) {
-            aiContexts[x.id] = { text: await lijuCache.getItem(x.id)[0] };
+            aiContexts[x.id] = { text: (await lijuCache.getItem(x.id))[0] };
             continue;
         }
         const wordid = await card2word.getItem(x.id);
@@ -5178,14 +5178,14 @@ async function showReview(x: { id: string; card: Card }, type: review) {
         showSentenceReview(x);
     }
 }
-async function crContext(word: record, id: string) {
-    let context = view();
+async function crContext(word: record, id: string, isAi?: boolean) {
+    const context = view();
     if (!word) return context;
-    for (const i of word.means) {
-        if (i.card_id === id) {
-            context = await dicSentences(i.contexts.toReversed());
-        }
-    }
+    const ai = isAi && aiContexts[id]?.text;
+    if (ai) context.add(await aiContext(id));
+    const i = word.means.find((x) => x.card_id === id);
+    if (!i) return context;
+    context.add((await dicSentences(i.contexts.toReversed())).class(ai ? "sen_under_ai" : ""));
     return context;
 }
 async function aiContext(id: string) {
@@ -5200,9 +5200,7 @@ async function showWordReview(x: { id: string; card: Card }, isAi: boolean) {
     const wordRecord = await wordsStore.getItem(wordid);
     play(wordRecord.word);
     const div = view();
-    let context: ElType<HTMLDivElement>;
-    if (isAi && aiContexts[x.id]?.text) context = await aiContext(x.id);
-    else context = await crContext(wordRecord, x.id);
+    const context = await crContext(wordRecord, x.id, isAi);
     let hasShowAnswer = false;
     async function showAnswer() {
         hasShowAnswer = true;
@@ -5218,6 +5216,7 @@ async function showWordReview(x: { id: string; card: Card }, isAi: boolean) {
             }
         }
         spellAnimate(wordEl.el);
+        context.query(".sen_under_ai")?.el.classList.remove("sen_under_ai");
     }
     reviewHotkey.show.f = () => {
         showAnswer();

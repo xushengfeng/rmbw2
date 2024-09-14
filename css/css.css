@@ -1112,6 +1112,10 @@ div:has(> .translate) > :not(.translate) {
     }
 }
 
+.sen_under_ai {
+    display: none;
+}
+
 .review_sentence {
     flex-grow: 1;
     display: flex;
