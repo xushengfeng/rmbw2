@@ -1000,13 +1000,12 @@ div:has(> .translate) > :not(.translate) {
 .words_select {
     display: flex;
     flex-direction: column;
-    align-items: end;
     font-family: var(--font-family);
-    & > div {
+    & > :first-child {
         max-height: 80dvh;
         display: flex;
         flex-direction: column;
-        overflow: scroll;
+        overflow: auto;
     }
 }
 
