@@ -992,18 +992,24 @@ async function showLocalBooksL(bookList: book[]) {
                 const formEl = ele("form").add([
                     input().attr({ name: "name" }).sv(book.name),
                     input().attr({ name: "language" }).sv(book.language),
-                    label([
-                        "词书",
-                        input("radio")
-                            .attr({ name: "type" })
-                            .attr({ value: "word", checked: book.type === "word" }),
-                    ]),
-                    label([
-                        "书",
-                        input("radio")
-                            .attr({ name: "type" })
-                            .attr({ value: "text", checked: book.type === "text" }),
-                    ]),
+                    label(
+                        [
+                            input("radio")
+                                .attr({ name: "type" })
+                                .attr({ value: "word", checked: book.type === "word" }),
+                            "词书",
+                        ],
+                        1,
+                    ),
+                    label(
+                        [
+                            input("radio")
+                                .attr({ name: "type" })
+                                .attr({ value: "text", checked: book.type === "text" }),
+                            "书",
+                        ],
+                        1,
+                    ),
                 ]);
                 const dis = view().add([
                     book.description || "",
@@ -2880,7 +2886,7 @@ async function sectionSelect(menuEl: ElType<HTMLElement>) {
     }
     menuEl.add(ele("hr"));
     for (const i of bookList.filter((b) => b.type === "text")) {
-        const book = view().add(label([i.name, input("checkbox").data({ type: i.type }).sv(i.id)]));
+        const book = view().add(label([input("checkbox").data({ type: i.type }).sv(i.id), i.name], 1));
         menuEl.add(book);
     }
     return menuEl;
@@ -6132,7 +6138,7 @@ async function getIPA(word: string) {
         .join(",");
 }
 
-settingEl.add(label(["学习语言", input().data({ path: "lan.learn" })]));
+settingEl.add(label([input().data({ path: "lan.learn" }), "学习语言"], 1));
 
 const textCacheIdPath = "file.text.id";
 const textCacheId = () => setting.getItem(textCacheIdPath);
@@ -6478,9 +6484,9 @@ const asyncEl = view().add([
             setDAV(file);
         }),
         ele("form").add([
-            label(["url：", input().data({ path: DAVConfigPath.url })]),
-            label(["用户名：", input().data({ path: DAVConfigPath.user })]),
-            label(["密码：", input().data({ path: DAVConfigPath.passwd })]),
+            label([input().data({ path: DAVConfigPath.url }), "url："], 1),
+            label([input().data({ path: DAVConfigPath.user }), "用户名："], 1),
+            label([input().data({ path: DAVConfigPath.passwd }), "密码："], 1),
         ]),
         ele("h3").add("GitHub"),
         button("↓").on("click", async () => {
@@ -6528,15 +6534,18 @@ const asyncEl = view().add([
             }
         }),
         ele("form").add([
-            label(["用户：", input().data({ path: GitHubConfigPath.user })]),
-            label(["仓库（repo）：", input().data({ path: GitHubConfigPath.repo })]),
-            label([
-                "token：",
-                input().data({ path: GitHubConfigPath.token }),
-                a("https://github.com/settings/tokens/new?description=rmbw2&scopes=repo").add("创建"),
-            ]),
-            label(["path：", input().data({ path: GitHubConfigPath.path })]),
-            label(["替换下载：", input().data({ path: GitHubConfigPath.download })]),
+            label([input().data({ path: GitHubConfigPath.user }), "用户："], 1),
+            label([input().data({ path: GitHubConfigPath.repo }), "仓库（repo）："], 1),
+            label(
+                [
+                    input().data({ path: GitHubConfigPath.token }),
+                    "token：",
+                    a("https://github.com/settings/tokens/new?description=rmbw2&scopes=repo").add("创建"),
+                ],
+                1,
+            ),
+            label([input().data({ path: GitHubConfigPath.path }), "path："]),
+            label([input().data({ path: GitHubConfigPath.download }), "替换下载："]),
         ]),
     ]),
 ]);
@@ -6592,9 +6601,9 @@ settingEl.add(
         ele("br"),
         a("https://huggingface.co/spaces/open-spaced-repetition/fsrs4anki_app").add("参数优化器"),
         ele("br"),
-        label(["单词参数：", input().data({ path: "fsrs.word.w" })]),
-        label(["拼写参数：", input().data({ path: "fsrs.spell.w" })]),
-        label(["句子参数：", input().data({ path: "fsrs.sen.w" })]),
+        label([input().data({ path: "fsrs.word.w" }), "单词参数："], 1),
+        label([input().data({ path: "fsrs.spell.w" }), "拼写参数："], 1),
+        label([input().data({ path: "fsrs.sen.w" }), "句子参数："], 1),
 
         ele("h3").add("阅读速度"),
         p("测试阅读速度"),
