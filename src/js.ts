@@ -5246,15 +5246,20 @@ async function showWordReview(x: { id: string; card: Card }, isAi: boolean) {
         buttons.finish();
     };
     const dic = view().on("click", reviewHotkey.show.f);
-    const buttons = getReviewCardButtons(x.id, x.card, context.el.innerText, async (rating) => {
-        if (hasShowAnswer) {
-            lijuCache.removeItem(x.id);
-            const next = await nextDue(reviewType);
-            showReview(next, reviewType);
-        } else {
-            showAnswer();
-        }
-    });
+    const buttons = getReviewCardButtons(
+        x.id,
+        x.card,
+        context.el.children[0].textContent || context.el.children[1].textContent, // ai例句优先
+        async (rating) => {
+            if (hasShowAnswer) {
+                lijuCache.removeItem(x.id);
+                const next = await nextDue(reviewType);
+                showReview(next, reviewType);
+            } else {
+                showAnswer();
+            }
+        },
+    );
 
     const wordEl = view()
         .add(wordid.split("").map((i) => txt(i)))
