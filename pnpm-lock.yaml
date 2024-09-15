@@ -48,8 +48,8 @@ importers:
         specifier: ^14.0.0
         version: 14.0.0
       msedge-tts-browserify:
-        specifier: ^1.4.0
-        version: 1.4.0
+        specifier: ^1.4.1
+        version: 1.4.1
       pitchfinder:
         specifier: ^2.3.2
         version: 2.3.2
@@ -760,8 +760,8 @@ packages:
     resolution: {integrity: sha512-j5EctnkH7amfV/q5Hgmoal1g2QHFJRraOtmx0JpIqkxhBhI/lJSl1nMpQ45hVarwNETOoWEimndZ4QK0RHxuxQ==}
     engines: {node: '>=4'}
 
-  msedge-tts-browserify@1.4.0:
-    resolution: {integrity: sha512-PA+Szr/YAyT68j9OS751En2ISEA0xE6eEcPwfJ8aaD1tcvZpQ/K0p6R22BKmSHcEAcmE7h9kDCD5h/TAv7pO6Q==}
+  msedge-tts-browserify@1.4.1:
+    resolution: {integrity: sha512-T0ilajpYKRz6Eh9WzNvP6AJ9LuWOnGYUZGrJECSQtTVeVZ1jh4rRky3k0xCZVfbNBGSe7PtZAyLTNE82ycdemA==}
 
   nanoid@3.3.7:
     resolution: {integrity: sha512-eSRppjcPIatRIMC1U6UngP8XFcz8MQWGQdt1MTBQ7NaAmvXDfvNxbvWV3x2y6CdEUciCSsDHDQZbhYaB8QEo2g==}
@@ -1649,7 +1649,7 @@ snapshots:
 
   mimic-response@1.0.1: {}
 
-  msedge-tts-browserify@1.4.0:
+  msedge-tts-browserify@1.4.1:
     dependencies:
       buffer: 6.0.3
 
