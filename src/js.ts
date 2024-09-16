@@ -465,7 +465,7 @@ type book = {
     id: string;
     visitTime: number;
     updateTime: number;
-    type: "word" | "text";
+    type: "word" | "text" | "package" | "dictionary";
     wordSplit?: "grapheme" | "word";
     cover?: string;
     author?: string;
@@ -491,6 +491,13 @@ type section = {
     };
     lastPosi: number;
     note?: string;
+};
+type onlineBook = Omit<book, "visitTime" | "sections" | "lastPosi"> & {
+    sections: {
+        id: string;
+        title: string;
+        path: string;
+    }[];
 };
 
 async function getBooksById(id: string) {
@@ -627,21 +634,7 @@ async function getOnlineBooks() {
         });
 }
 
-async function showOnlineBooks(
-    books: {
-        name: string;
-        id: string;
-        type: "word" | "text" | "package";
-        updateTime: number;
-        sections: {
-            id: string;
-            title: string;
-            path: string;
-        }[];
-        language: string;
-        cover?: string;
-    }[],
-) {
+async function showOnlineBooks(books: onlineBook[]) {
     onlineBookEl.clear();
     let grid: ElType<HTMLElement>;
 
@@ -658,21 +651,7 @@ async function showOnlineBooks(
     onlineBookEl.add(l);
 }
 
-async function showOnlineBooksL(
-    books: {
-        name: string;
-        id: string;
-        type: "word" | "text" | "package";
-        updateTime: number;
-        sections: {
-            id: string;
-            title: string;
-            path: string;
-        }[];
-        language: string;
-        cover?: string;
-    }[],
-) {
+async function showOnlineBooksL(books: onlineBook[]) {
     const grid = view().class("books");
     for (const book of books) {
         let url = "";
@@ -690,6 +669,11 @@ async function showOnlineBooksL(
             console.log(book);
             if (book.type === "package") {
                 saveLanguagePackage(book.language, book.sections);
+                return;
+            }
+            if (book.type === "dictionary") {
+                const data = await (await fetch(`${await getOnlineBooksUrl()}/source/${book.sections[0].path}`)).json();
+                saveDic(data);
                 return;
             }
             let xbook = await bookshelfStore.getItem(book.id);
@@ -765,10 +749,7 @@ async function showOnlineBooksL(
     return grid;
 }
 
-function selectBook<BOOK extends { type: "word" | "text" | "package"; language: string }>(
-    books: BOOK[],
-    f: (list: BOOK[]) => void,
-) {
+function selectBook<BOOK extends Pick<book, "type" | "language">>(books: BOOK[], f: (list: BOOK[]) => void) {
     const typeEl = view();
     const lanEl = view();
 
@@ -777,7 +758,7 @@ function selectBook<BOOK extends { type: "word" | "text" | "package"; language: 
 
     const x: { type: number | string; lan: number | string } = { type: 0, lan: 0 };
 
-    const map = { word: "词典", text: "文本", package: "包" };
+    const map: Record<book["type"], string> = { word: "词表", text: "文本", package: "包", dictionary: "词典" };
     function crl(l: string[], text: (text: string) => string, pel: ElType<HTMLElement>, key: keyof typeof x) {
         if (l.length > 1)
             for (const i of [0, ...l]) {
@@ -821,9 +802,6 @@ async function saveLanguagePackage(lan: string, section: { id: string; path: str
             }
             if (i.id === "variant") {
                 variantStore.setItem(lan, map);
-            }
-            if (i.id === "dic") {
-                saveDic(i.content);
             }
             if (i.id === "map") {
                 wordMapStore.setItem(lan, i.content);
