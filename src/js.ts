@@ -759,6 +759,7 @@ function selectBook<BOOK extends Pick<book, "type" | "language">>(books: BOOK[],
     const x: { type: number | string; lan: number | string } = { type: 0, lan: 0 };
 
     const map: Record<book["type"], string> = { word: "词表", text: "文本", package: "包", dictionary: "词典" };
+    const lanMap = new Intl.DisplayNames(navigator.language, { type: "language" });
     function crl(l: string[], text: (text: string) => string, pel: ElType<HTMLElement>, key: keyof typeof x) {
         if (l.length > 1)
             for (const i of [0, ...l]) {
@@ -771,7 +772,7 @@ function selectBook<BOOK extends Pick<book, "type" | "language">>(books: BOOK[],
             }
     }
     crl(tl, (t) => map[t], typeEl, "type");
-    crl(ll, (t) => t, lanEl, "lan");
+    crl(ll, (t) => lanMap.of(t), lanEl, "lan");
 
     function run() {
         let l = books.filter((b) => typeof x.type === "number" || b.type === x.type);
