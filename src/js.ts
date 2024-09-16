@@ -44,6 +44,8 @@ const localForage = {
     } => localforage.createInstance(p),
 };
 
+import { dicParse, dic, type dicMap } from "../dic/src/main";
+
 import * as zip from "@zip.js/zip.js";
 
 import { hyphenate } from "hyphen/en";
@@ -821,7 +823,6 @@ async function saveLanguagePackage(lan: string, section: { id: string; path: str
                 variantStore.setItem(lan, map);
             }
             if (i.id === "dic") {
-                i.content.lang = lan;
                 saveDic(i.content);
             }
             if (i.id === "map") {
@@ -2926,38 +2927,19 @@ const ipaStore = localForage.createInstance<Map<string, string | string[]>>({ na
 const variantStore = localForage.createInstance<Map<string, string>>({ name: "langPack", storeName: "variant" });
 const wordMapStore = localForage.createInstance<string[][]>({ name: "langPack", storeName: "map" });
 
-const dics: {
-    [key: string]: {
-        id: string;
-        lang: string;
-    };
-} = {};
-const dicStore = localForage.createInstance<dic2>({ name: "dic" });
+const dics: Record<string, Omit<dic, "dic">> = {};
+const dicStore = localForage.createInstance<dicMap>({ name: "dic" });
 setting.getItem("dics").then(async (l: string[]) => {
     for (const i of l || []) {
-        dics[i] = (await dicStore.getItem(i)) as dic2;
+        const x = await dicStore.getItem(i);
+        x.dic = undefined;
+        dics[i] = x;
     }
 });
 dicStore.iterate((v, k) => {
     v.dic = undefined;
     dics[k] = v;
 });
-
-type bdic = {
-    id: string;
-    lang: string;
-};
-type dic = bdic & {
-    dic: {
-        [word: string]: {
-            text: string;
-            isAlias?: boolean;
-        };
-    };
-};
-type dic2 = bdic & {
-    dic: Map<string, dic["dic"][0]>;
-};
 
 let ipa: Map<string, string | string[]>;
 
@@ -3660,10 +3642,8 @@ async function showDic(id: string) {
 }
 
 async function getWordFromDic(word: string, id: string) {
-    const d = (await dicStore.getItem(id)) as dic2;
-    let dic = d.dic.get(word);
-    if (dic?.isAlias) dic = d.dic.get(dic.text);
-    return dic?.text || "";
+    const d = dicParse(await dicStore.getItem(id));
+    return d.getContent(word);
 }
 
 async function showDicEl(mainTextEl: ReturnType<typeof textarea>, word: string, x: number, y: number) {
@@ -3680,10 +3660,10 @@ async function showDicEl(mainTextEl: ReturnType<typeof textarea>, word: string, 
         }
     }
     const localDic = view();
-    for (const i in dics) {
+    for (const i of Object.values(dics)) {
         localDic.add(
-            txt(i).on("click", () => {
-                showDic(i);
+            txt(i.name || i.id).on("click", () => {
+                showDic(i.id);
             }),
         );
     }
@@ -6098,21 +6078,11 @@ uploadDicEl.onchange = () => {
     }
 };
 
-async function saveDic(dic: dic) {
-    const ndic = {};
-    const id = dic.id;
-    const l = new Map();
-    for (const i in dic.dic) {
-        l.set(i, dic.dic[i]);
-    }
-    for (const x in dic) {
-        if (x === "dic") ndic[x] = l;
-        else ndic[x] = dic[x];
-    }
-    // @ts-ignore
-    await dicStore.setItem(id, ndic);
-    dic.dic = undefined;
-    dics[id] = dic;
+async function saveDic(dic: object) {
+    const ndic = dicParse(dic);
+    const id = ndic.meta.id;
+    await dicStore.setItem(id, ndic.map);
+    dics[id] = ndic.meta;
 }
 
 async function getIPA(word: string) {

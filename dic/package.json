@@ -1,0 +1,25 @@
+{
+    "name": "rmbw-dic",
+    "version": "1.0.0",
+    "description": "a dic format",
+    "main": "./dist/rmbw-dic.umd.js",
+    "module": "./dist/rmbw-dic.es.js",
+    "exports": {
+        ".": {
+            "import": "./dist/rmbw-dic.es.js",
+            "require": "./dist/rmbw-dic.umd.js"
+        }
+    },
+    "homepage": "https://github.com/xushengfeng/rmbw2/tree/main/dic",
+    "type": "module",
+    "types": "./src/main.ts",
+    "scripts": {
+        "test": "vite ",
+        "dev": "vite --host 0.0.0.0",
+        "build": "vite build",
+        "preview": "vite preview"
+    },
+    "keywords": [],
+    "author": "",
+    "license": "Apache-2.0"
+}
