@@ -130,4 +130,49 @@ function parse(data: canParseType) {
     };
 }
 
-export { parse as dicParse, type dic0, type dic, type dicMap };
+// 摘自 https://github.com/unjs/nanotar
+function tar(buffer: ArrayBuffer) {
+    const filesMap = new Map<string, { data: Uint8Array; text: string; base64: string }>();
+
+    let offset = 0;
+
+    while (offset < buffer.byteLength - 512) {
+        const name = _readString(buffer.slice(offset, offset + 100));
+        if (name.length === 0) {
+            break;
+        }
+        const size = _readNumber(buffer.slice(offset + 124, offset + 124 + 12));
+        const data = new Uint8Array(buffer, offset + 512, size);
+
+        if (!name.startsWith("PaxHeader"))
+            filesMap.set(name, {
+                data,
+                get text() {
+                    return new TextDecoder().decode(data);
+                },
+                get base64() {
+                    const binString = Array.from(data, (byte) => String.fromCodePoint(byte)).join("");
+                    return btoa(binString);
+                },
+            });
+
+        offset += 512 + Math.ceil(size / 512) * 512;
+    }
+
+    return filesMap;
+}
+
+function _readString(buffer: ArrayBuffer) {
+    const view = new Uint8Array(buffer);
+    const i = view.indexOf(0);
+    const td = new TextDecoder();
+    return td.decode(view.slice(0, i));
+}
+
+function _readNumber(buffer: ArrayBuffer) {
+    const view = new Uint8Array(buffer);
+    const str = String.fromCharCode(...view);
+    return Number.parseInt(str, 8);
+}
+
+export { parse as dicParse, tar as dicResouces, type dic0, type dic, type dicMap };
