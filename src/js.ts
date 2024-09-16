@@ -233,11 +233,56 @@ async function prompt(message?: string, defaultValue?: string) {
     ).v;
 }
 
-function dialogX(el: ElType<HTMLDialogElement>) {
+function dialogX(el: ElType<HTMLDialogElement>, fromEl: ElType<HTMLElement>) {
+    const first = fromEl?.el.getBoundingClientRect() || {
+        left: window.innerWidth / 2,
+        top: window.innerHeight / 2,
+        width: 0,
+        height: 0,
+    };
     document.body.append(el.el);
+    el.style({
+        "transform-origin": "top left",
+    });
     el.el.showModal();
+
+    const last = el.el.getBoundingClientRect();
+
+    const deltaX = first.left - last.left;
+    const deltaY = first.top - last.top;
+    const deltaW = first.width / last.width;
+    const deltaH = first.height / last.height;
+
+    el.el.animate(
+        [
+            {
+                transform: `
+                translate(${deltaX}px, ${deltaY}px)
+                scale(${deltaW}, ${deltaH})
+              `,
+            },
+            { transform: "none" },
+        ],
+        { duration: 300 },
+    );
+
     el.on("close", () => {
-        el.remove();
+        el.el
+            .animate(
+                [
+                    { transform: "none" },
+                    {
+                        transform: `
+                translate(${deltaX}px, ${deltaY}px)
+                scale(${deltaW}, ${deltaH})
+              `,
+                    },
+                ],
+                { duration: 300 },
+            )
+            .finished.then(() => {
+                el.remove();
+            });
     });
 }
 
@@ -379,7 +424,7 @@ const bookSectionsEl = view().style({
     position: "relative",
     "flex-grow": "1",
 });
-const bookBEl = elFromId("books_b");
+const bookBEl = elFromId("books_b").style({ "view-transition-name": "dialog" });
 const addBookEl = view().add(iconEl(add_svg));
 const addSectionEL = view().add(iconEl(add_svg));
 const bookNameEl = view();
@@ -1024,7 +1069,7 @@ async function showLocalBooksL(bookList: book[]) {
                     metaEl.el.close();
                     showLocalBooks();
                 });
-                dialogX(metaEl);
+                dialogX(metaEl, bookIEl);
             });
         requestIdleCallback(async () => {
             if (book.type !== "text") return;
@@ -1264,7 +1309,7 @@ async function showWordBook(book: book, s: section) {
             view().add(["拼写 加载中", view().class(LITLEPROGRESS)]),
         ])
         .on("click", () => {
-            showWordBookMore(wordList);
+            showWordBookMore(wordList, chartEl);
         });
     bookContentContainerEl.add(
         view().class("words_book_top").add([chartEl, search, sortEl]).attr({ lang: navigator.language }),
@@ -1351,12 +1396,20 @@ async function showWordBook(book: book, s: section) {
                         const note = p(item.c.note);
                         pEl.add(
                             view().add([
-                                button(iconEl(pen_svg)).on("click", () => {
-                                    addP(item.c.note, item.id, null, null, null, (text) => {
-                                        item.c.note = text.trim();
-                                        wordsStore.setItem(item.id, item.c);
-                                        show();
-                                    });
+                                button(iconEl(pen_svg)).on("click", (_, el) => {
+                                    addP(
+                                        item.c.note,
+                                        item.id,
+                                        null,
+                                        null,
+                                        null,
+                                        (text) => {
+                                            item.c.note = text.trim();
+                                            wordsStore.setItem(item.id, item.c);
+                                            show();
+                                        },
+                                        el,
+                                    );
                                 }),
                                 note,
                             ]),
@@ -1367,12 +1420,20 @@ async function showWordBook(book: book, s: section) {
                     if (item.c)
                         for (const i of item.c.means) {
                             const pel = view().add([
-                                button(iconEl(pen_svg)).on("click", () => {
-                                    addP(i.text, item.id, null, null, null, (text) => {
-                                        i.text = text.trim();
-                                        wordsStore.setItem(item.id, item.c);
-                                        show();
-                                    });
+                                button(iconEl(pen_svg)).on("click", (_, el) => {
+                                    addP(
+                                        i.text,
+                                        item.id,
+                                        null,
+                                        null,
+                                        null,
+                                        (text) => {
+                                            i.text = text.trim();
+                                            wordsStore.setItem(item.id, item.c);
+                                            show();
+                                        },
+                                        el,
+                                    );
                                 }),
                                 view().add(await disCard2(i)),
                             ]);
@@ -1472,9 +1533,12 @@ function randomList<i>(list: i[], to?: boolean) {
     return nList;
 }
 
-async function showWordBookMore(wordList: { text: string; c: record; type?: "ignore" | "learn"; means?: number }[]) {
+async function showWordBookMore(
+    wordList: { text: string; c: record; type?: "ignore" | "learn"; means?: number }[],
+    fromEl: ElType<HTMLElement>,
+) {
     const d = ele("dialog");
-    dialogX(d);
+    dialogX(d, fromEl);
     const unlearnL = wordList.filter((w) => w.means === undefined);
     d.add([
         view()
@@ -1740,7 +1804,7 @@ async function showNormalBook(book: book, s: section) {
                 view()
                     .add(iconEl(recume_svg))
                     .on("click", () => {
-                        showLisent(contentP.at(i));
+                        showLisent(contentP.at(i), moreEl);
                     }),
             );
         }
@@ -1782,7 +1846,7 @@ function getScrollPosi(eel: ElType<HTMLElement>) {
     return n;
 }
 
-async function showLisent(text: string) {
+async function showLisent(text: string, fromEl: ElType<HTMLElement>) {
     const osL = Array.from(new Segmenter("en", { granularity: "sentence" }).segment(text));
     console.log(
         osL,
@@ -1831,8 +1895,8 @@ async function showLisent(text: string) {
                         }),
                     button()
                         .add(iconEl(more_svg))
-                        .on("click", () => {
-                            showRecord(s);
+                        .on("click", (_, el) => {
+                            showRecord(s, el);
                         }),
                     p(s),
                 ]),
@@ -1864,12 +1928,12 @@ async function showLisent(text: string) {
             }),
         ]),
     );
-    dialogX(d);
+    dialogX(d, fromEl);
 }
 
-async function showRecord(text: string) {
+async function showRecord(text: string, fromEl: ElType<HTMLElement>) {
     const d = ele("dialog");
-    dialogX(d);
+    dialogX(d, fromEl);
 
     const textEl = p(text).style({ width: "80dvw" });
 
@@ -3014,8 +3078,8 @@ function tag(tags: tagMap) {
 const markListBarEl = elFromId("mark_word_list");
 const markListEl = view();
 const autoNewWordEl = view().add([
-    button("生词忽略与标记").on("click", () => {
-        autoIgnore();
+    button("生词忽略与标记").on("click", (_, el) => {
+        autoIgnore(el);
     }),
 ]);
 markListBarEl.add([autoNewWordEl, markListEl]);
@@ -3339,59 +3403,83 @@ async function showDic(id: string) {
             }
 
         addMeanEl.el.onclick = () => {
-            addP("", Word.word, Word.context.text, Word.context.index, Word.tag, async (text, sentence, index) => {
-                const mean = text.trim();
-                Word.text = mean;
-                if (mean) {
-                    const x = await addReviewCardMean(Word.word, mean);
-                    Word.record = x.record;
-                    await changeDicMean(Word.word, x.index);
-                    let record = await wordsStore.getItem(wordx.id);
-                    record = setRecordContext(record, id, (c) => {
-                        c.text = sentence;
-                        c.index = index;
-                    });
-                    await wordsStore.setItem(wordx.id, record);
-                    Word = { word: wordx.id, record, ...flatWordCard(record, id) };
-                    visit(true);
-                }
-                search(Word.word);
-                checkVisitAll(section);
-            });
+            addP(
+                "",
+                Word.word,
+                Word.context.text,
+                Word.context.index,
+                Word.tag,
+                async (text, sentence, index) => {
+                    const mean = text.trim();
+                    Word.text = mean;
+                    if (mean) {
+                        const x = await addReviewCardMean(Word.word, mean);
+                        Word.record = x.record;
+                        await changeDicMean(Word.word, x.index);
+                        let record = await wordsStore.getItem(wordx.id);
+                        record = setRecordContext(record, id, (c) => {
+                            c.text = sentence;
+                            c.index = index;
+                        });
+                        await wordsStore.setItem(wordx.id, record);
+                        Word = { word: wordx.id, record, ...flatWordCard(record, id) };
+                        visit(true);
+                    }
+                    search(Word.word);
+                    checkVisitAll(section);
+                },
+                addMeanEl,
+            );
         };
 
         editMeanEl.el.onclick = () => {
-            addP(Word.text, Word.word, Word.context.text, Word.context.index, null, async (text, sentence, index) => {
-                const mean = text.trim();
-                Word.text = mean;
-                if (mean) {
-                    if (Word.record) {
-                        Word.record = setRecordMean(Word.record, Word.card_id, (i) => {
-                            i.text = mean;
-                        });
-                        Word.record = setRecordContext(Word.record, id, (x) => {
-                            x.text = sentence;
-                            x.index = index;
-                        });
-                        wordsStore.setItem(Word.word, Word.record);
+            addP(
+                Word.text,
+                Word.word,
+                Word.context.text,
+                Word.context.index,
+                null,
+                async (text, sentence, index) => {
+                    const mean = text.trim();
+                    Word.text = mean;
+                    if (mean) {
+                        if (Word.record) {
+                            Word.record = setRecordMean(Word.record, Word.card_id, (i) => {
+                                i.text = mean;
+                            });
+                            Word.record = setRecordContext(Word.record, id, (x) => {
+                                x.text = sentence;
+                                x.index = index;
+                            });
+                            wordsStore.setItem(Word.word, Word.record);
+                        }
+                    } else {
+                        await visit(false);
+                        await changeDicMean(Word.word, -1);
                     }
-                } else {
-                    await visit(false);
-                    await changeDicMean(Word.word, -1);
-                }
-                search(Word.word);
-                checkVisitAll(section);
-            });
+                    search(Word.word);
+                    checkVisitAll(section);
+                },
+                editMeanEl,
+            );
         };
 
         noteEl.el.onclick = () => {
-            addP(Word.record?.note || "", Word.word, null, null, null, async (text) => {
-                const mean = text.trim();
-                if (Word.record) {
-                    Word.record.note = mean;
-                    wordsStore.setItem(Word.word, Word.record);
-                }
-            });
+            addP(
+                Word.record?.note || "",
+                Word.word,
+                null,
+                null,
+                null,
+                async (text) => {
+                    const mean = text.trim();
+                    if (Word.record) {
+                        Word.record.note = mean;
+                        wordsStore.setItem(Word.word, Word.record);
+                    }
+                },
+                noteEl,
+            );
         };
 
         feedbackEl.el.onclick = () => {
@@ -3463,11 +3551,19 @@ async function showDic(id: string) {
 
         noteEl.el.onclick = async () => {
             const r = await card2sentence.getItem(wordx.id);
-            addP(r.note || "", null, r.text, null, null, async (text) => {
-                const mean = text.trim();
-                r.note = mean;
-                await card2sentence.setItem(wordx.id, r);
-            });
+            addP(
+                r.note || "",
+                null,
+                r.text,
+                null,
+                null,
+                async (text) => {
+                    const mean = text.trim();
+                    r.note = mean;
+                    await card2sentence.setItem(wordx.id, r);
+                },
+                noteEl,
+            );
         };
     }
 
@@ -3625,7 +3721,8 @@ async function getWordFromDic(word: string, id: string) {
     return d.getContent(word);
 }
 
-async function showDicEl(mainTextEl: ReturnType<typeof textarea>, word: string, x: number, y: number) {
+async function showDicEl(mainTextEl: ReturnType<typeof textarea>, word: string, fromEl: ElType<HTMLElement>) {
+    const { x, y } = fromEl.el.getBoundingClientRect();
     const lan = studyLan;
     const list = view().attr({ lang: lan });
     async function showDic(id: string) {
@@ -3672,7 +3769,7 @@ async function showDicEl(mainTextEl: ReturnType<typeof textarea>, word: string, 
                 ),
         ])
         .style({ left: `min(100vw - 400px, ${x}px)`, top: `min(100dvh - 400px, ${y}px - 400px)` });
-    dialogX(div);
+    dialogX(div, fromEl);
 }
 
 function onlineDicL(word: string) {
@@ -3851,7 +3948,7 @@ async function tagsEl(b: bOp) {
                 }),
             ]);
             d.add([l, search]);
-            dialogX(d);
+            dialogX(d, add);
         });
         l.add(add);
         return l;
@@ -3894,6 +3991,7 @@ function addP(
     index: record["means"][0]["contexts"][0]["index"],
     tags: bOp,
     f: (text: string, sentence?: string, index?: [number, number], tags?: bOp) => void,
+    fromEl: ElType<HTMLElement>,
 ) {
     const pEl = p().attr({ lang: studyLan });
     const sInput1 = txt().attr({ contentEditable: "true" });
@@ -3942,7 +4040,7 @@ function addP(
     if (tags) {
         tagsEl(tags).then((e) => textEl.el.after(e.el));
     }
-    dialogX(div);
+    dialogX(div, fromEl);
 }
 
 function getAiButtons(textEl: ReturnType<typeof textarea>, word: string, sentence: string) {
@@ -4232,12 +4330,13 @@ const sentenceAi = {
 
 function tmpAiB(mainTextEl: ReturnType<typeof textarea>, info: string) {
     const aiB = button("AI").on("click", () => {
-        tmpAi(mainTextEl, info, aiB.el.getBoundingClientRect().x, aiB.el.getBoundingClientRect().y);
+        tmpAi(mainTextEl, info, aiB);
     });
     return aiB;
 }
 
-function tmpAi(mainTextEl: ReturnType<typeof textarea>, info: string, x: number, y: number) {
+function tmpAi(mainTextEl: ReturnType<typeof textarea>, info: string, fromEl: ElType<HTMLElement>) {
+    const { x, y } = fromEl.el.getBoundingClientRect();
     const textEl = textarea().sv(">");
     aiText(textEl, info);
     const div = ele("dialog")
@@ -4258,7 +4357,7 @@ function tmpAi(mainTextEl: ReturnType<typeof textarea>, info: string, x: number,
             left: `min(100vw - 400px, ${x}px)`,
             top: `min(100dvh - 400px, ${y}px - 400px)`,
         });
-    dialogX(div);
+    dialogX(div, fromEl);
 }
 
 function aiText(textEl: ReturnType<typeof textarea>, info: string) {
@@ -4286,7 +4385,7 @@ function aiText(textEl: ReturnType<typeof textarea>, info: string) {
 
 function dicB(mainTextEl: ReturnType<typeof textarea>, word: string) {
     const dicB = button("词典").on("click", () => {
-        showDicEl(mainTextEl, word, dicB.el.getBoundingClientRect().x, dicB.el.getBoundingClientRect().y);
+        showDicEl(mainTextEl, word, dicB);
     });
     return dicB;
 }
@@ -4317,7 +4416,7 @@ async function showArticelAI() {
                 ]),
         ]);
     div.style({ left: "auto", right: "0", top: "32px" });
-    dialogX(div);
+    dialogX(div, articleAi);
 }
 
 type aim = { role: "system" | "user" | "assistant"; content: string }[];
@@ -4577,7 +4676,7 @@ async function getNewWords() {
     return wordsWithRoot;
 }
 
-async function autoIgnore() {
+async function autoIgnore(fromEl: ElType<HTMLElement>) {
     const dialog = ele("dialog").class("words_select").attr({ lang: studyLan });
     const f = view();
     const wordsWithRoot = await getNewWords();
@@ -4605,7 +4704,7 @@ async function autoIgnore() {
             }),
         ]),
     ]);
-    dialogX(dialog);
+    dialogX(dialog, fromEl);
 }
 
 async function addIgnore(word: string | string[]) {
@@ -5408,14 +5507,22 @@ async function showSpellReview(x: { id: string; card: Card }) {
     if (r) {
         context
             .add(
-                button(iconEl(pen_svg)).on("click", () => {
-                    addP(r.note || "", word, null, null, null, async (text) => {
-                        const mean = text.trim();
-                        if (r) {
-                            r.note = mean;
-                            wordsStore.setItem(word, r);
-                        }
-                    });
+                button(iconEl(pen_svg)).on("click", (_, el) => {
+                    addP(
+                        r.note || "",
+                        word,
+                        null,
+                        null,
+                        null,
+                        async (text) => {
+                            const mean = text.trim();
+                            if (r) {
+                                r.note = mean;
+                                wordsStore.setItem(word, r);
+                            }
+                        },
+                        el,
+                    );
                 }),
             )
             .add(
