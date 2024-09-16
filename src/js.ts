@@ -3435,7 +3435,7 @@ async function showDic(id: string) {
 
         feedbackEl.el.onclick = () => {
             // todo 根据仓库自定义url
-            const url = "https://github.com/xushengfeng/rmbw-book/issues/new?title=${word} in ${sid}&body=${context}";
+            const url = "https://github.com/xushengfeng/rmbw-book/issues/new?title=`${word}` in ${sid}&body=${context}";
             const index = Word.context.index;
             const context = Word.context.text;
             const sourceWord = context.slice(...index);
