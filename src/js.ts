@@ -252,34 +252,19 @@ function dialogX(el: ElType<HTMLDialogElement>, fromEl: ElType<HTMLElement>) {
     const deltaY = first.top - last.top;
     const deltaW = first.width / last.width;
     const deltaH = first.height / last.height;
+    const scale = Math.min(deltaW, deltaH);
 
-    el.el.animate(
-        [
-            {
-                transform: `
-                translate(${deltaX}px, ${deltaY}px)
-                scale(${deltaW}, ${deltaH})
-              `,
-            },
-            { transform: "none" },
-        ],
-        { duration: 300 },
-    );
+    const animateList: Keyframe[] = [
+        {
+            transform: `translate(${deltaX}px, ${deltaY}px) scale(${scale})`,
+        },
+        { transform: "none", opacity: 1 },
+    ];
+    el.el.animate(animateList, { duration: 400, easing: "cubic-bezier(0.25, 1, 0.5, 1)" });
 
     el.on("close", () => {
         el.el
-            .animate(
-                [
-                    { transform: "none" },
-                    {
-                        transform: `
-                translate(${deltaX}px, ${deltaY}px)
-                scale(${deltaW}, ${deltaH})
-              `,
-                    },
-                ],
-                { duration: 300 },
-            )
+            .animate(animateList.toReversed(), { duration: 400, easing: "cubic-bezier(0.25, 1, 0.5, 1)" })
             .finished.then(() => {
                 el.remove();
             });
