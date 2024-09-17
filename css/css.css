@@ -177,6 +177,7 @@ dialog {
 }
 [popover] {
     border: 1px solid var(--color);
+    transition: var(--transition) allow-discrete;
 }
 
 body::-webkit-scrollbar {
@@ -306,10 +307,6 @@ body {
     top: var(--size0);
     left: auto;
     right: var(--size0);
-    border: 1px solid var(--color);
-    background-color: var(--bg1);
-    backdrop-filter: var(--blur);
-    transition: var(--transition);
     padding: var(--p0);
     flex-direction: column;
     gap: 4px;

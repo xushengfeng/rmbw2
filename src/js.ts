@@ -240,6 +240,8 @@ function trackAnimate(el: ElType<HTMLElement>, from: ElType<HTMLElement>, to = e
 
     const last = to.el.getBoundingClientRect();
 
+    console.log(first, self, last);
+
     const start = {
         x: first.left - self.left,
         y: first.top - self.top,
@@ -263,6 +265,19 @@ function trackAnimate(el: ElType<HTMLElement>, from: ElType<HTMLElement>, to = e
     ];
 
     return el.el.animate(animateList, { duration: 400, easing: "cubic-bezier(0.25, 1, 0.5, 1)" });
+}
+
+function popoverX(el: ElType<HTMLElement>, fromEl: ElType<HTMLElement>) {
+    el.el.showPopover();
+    trackAnimate(el, fromEl);
+    renderCharts();
+    el.on(
+        "beforetoggle",
+        () => {
+            trackAnimate(el, el, fromEl);
+        },
+        { once: true },
+    );
 }
 
 function dialogX(el: ElType<HTMLDialogElement>, fromEl: ElType<HTMLElement>) {
@@ -2522,7 +2537,7 @@ for (let i = 10; i <= 26; i += 2) {
 }
 
 changeStyleEl.on("click", () => {
-    changeStyleBar.el.togglePopover();
+    popoverX(changeStyleBar, changeStyleEl);
 });
 
 const fontListEl = view().attr({ popover: "auto" }).class("font_list");
@@ -4792,15 +4807,14 @@ const reviewMoreEl = view()
 sectionSelect(reviewScope);
 document.body.append(reviewMoreEl.el);
 reviewReflashPEl.add(
-    button(iconEl(filter_svg)).on("click", () => {
-        reviewMoreEl.el.showPopover();
+    button(iconEl(filter_svg)).on("click", (_, el) => {
+        popoverX(reviewMoreEl, el);
     }),
 );
 
 reviewReflashPEl.add(
-    button(iconEl(chart_svg)).on("click", () => {
-        plotEl.el.showPopover();
-        renderCharts();
+    button(iconEl(chart_svg)).on("click", (_, el) => {
+        popoverX(plotEl, el);
     }),
 );
 
