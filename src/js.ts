@@ -390,6 +390,13 @@ const LITLEPROGRESS = "litle_progress";
 const booksEl = elFromId("books") as ElType<HTMLDialogElement>;
 const localBookEl = view();
 const onlineBookEl = view().style({ display: "none" });
+function booksElclose() {
+    bookBEl.style({ "view-transition-name": "" });
+    // @ts-ignore
+    document.startViewTransition(() => {
+        booksEl.el.close();
+    });
+}
 booksEl.add([
     view("x").add([
         view()
@@ -408,12 +415,12 @@ booksEl.add([
             .add("我的词典")
             .on("click", () => {
                 showBook(coreWordBook);
-                booksEl.el.close();
+                booksElclose();
             }),
         button(iconEl(close_svg))
             .style({ "margin-left": "auto" })
             .on("click", () => {
-                booksEl.el.close();
+                booksElclose();
             }),
     ]),
     localBookEl,
@@ -650,7 +657,13 @@ const coreWordBook: book = {
 };
 
 bookBEl.on("click", () => {
-    booksEl.el.showModal();
+    bookBEl.style({ "view-transition-name": "dialog" });
+    booksEl.style({ "view-transition-name": "dialog" });
+    // @ts-ignore
+    document.startViewTransition(() => {
+        bookBEl.style({ "view-transition-name": "" });
+        booksEl.el.showModal();
+    });
 });
 
 const coverCache = localForage.createInstance<Blob>({ name: "cache", storeName: "cover" });
@@ -863,7 +876,7 @@ addBookEl.on("click", async () => {
     const book = await getBooksById(nowBook.book);
     showBook(book);
     changeEdit(true);
-    booksEl.el.close();
+    booksElclose();
 });
 
 addSectionEL.on("click", async () => {
@@ -1009,7 +1022,7 @@ async function showLocalBooksL(bookList: book[]) {
                 showBook(book);
                 book.visitTime = new Date().getTime();
                 bookshelfStore.setItem(book.id, book);
-                booksEl.el.close();
+                booksElclose();
             })
             .on("contextmenu", async (e) => {
                 e.preventDefault();
