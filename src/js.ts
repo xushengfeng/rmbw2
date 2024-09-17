@@ -1341,7 +1341,8 @@ async function showWordBook(book: book, s: section) {
         wordList,
         { iHeight: 24, gap: 8, paddingTop: 120, paddingBotton: 8 },
         (i, item) => {
-            const iEl = p(item.text);
+            const tEl = txt(item.text); // 动画
+            const iEl = p().add(tEl);
             if (item.type) {
                 iEl.class(item.type);
             }
@@ -1378,8 +1379,14 @@ async function showWordBook(book: book, s: section) {
                     );
             });
             iEl.el.onclick = () => {
-                const pEl = tmpDicEl;
-                pEl.el.showPopover();
+                tEl.style({ "view-transition-name": "wordItem" });
+                const pEl = tmpDicEl.style({ "view-transition-name": "wordItem" });
+                // @ts-ignore
+                document.startViewTransition(() => {
+                    tEl.style({ "view-transition-name": "" });
+                    pEl.el.showPopover();
+                    show();
+                });
                 play(item.text);
                 async function show() {
                     pEl.clear();
@@ -1467,7 +1474,6 @@ async function showWordBook(book: book, s: section) {
                             reviewEl.add(buttons.buttons);
                         }
                 }
-                show();
             };
             return iEl;
         },

@@ -507,6 +507,10 @@ body {
     }
 }
 
+::view-transition-old(wordItem) {
+    display: none;
+}
+
 .context_start,
 .context_end {
     position: absolute;
