@@ -773,6 +773,7 @@ div:has(> .translate) > :not(.translate) {
         }
         & p {
             margin: 0;
+            pointer-events: none;
         }
         & > :nth-child(2) > p {
             margin-block-end: 0.4em;

@@ -3834,9 +3834,15 @@ async function dicSentences(contexts: record["means"][0]["contexts"]) {
         sen.add(
             view().add(
                 p().add([
-                    s.text.slice(0, s.index[0]),
-                    txt(s.text.slice(...s.index)).class(MARKWORD),
-                    s.text.slice(s.index[1]),
+                    view()
+                        .add([
+                            s.text.slice(0, s.index[0]),
+                            txt(s.text.slice(...s.index)).class(MARKWORD),
+                            s.text.slice(s.index[1]),
+                        ])
+                        .on("click", () => {
+                            runTTS(s.text);
+                        }),
                     t,
                 ]),
             ),
