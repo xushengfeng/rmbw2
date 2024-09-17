@@ -390,6 +390,10 @@ body {
 
         & > :not(.context_end, .context_start, #dic) {
             line-height: var(--line-height);
+            &:not(h1) {
+                font-weight: var(--font-weight);
+                /* todo 可变字体 */
+            }
         }
 
         &:not(textarea) {

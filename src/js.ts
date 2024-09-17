@@ -2519,6 +2519,7 @@ const defaultBookStyle = {
     lineHeight: 3,
     contentWidth: 4,
     fontFamily: "serif",
+    fontWeight: 400,
     theme: "auto",
     paper: true,
 };
@@ -2553,8 +2554,7 @@ document.body.appendChild(fontListEl.el);
             // @ts-ignore
             availableFonts = await window.queryLocalFonts();
         } catch (error) {}
-        let fonts = availableFonts.map((i) => i.fullName) as string[];
-        fonts = fonts.concat(availableFonts.map((i) => i.family));
+        let fonts = availableFonts.map((i) => i.family);
         fonts = Array.from(new Set(fonts));
         fonts = fonts.filter((i) => i !== "sans" && i !== "serif").toSorted();
         fonts.unshift("serif", "sans");
@@ -2574,6 +2574,15 @@ document.body.appendChild(fontListEl.el);
         fontEl.el.innerText = name;
         fontEl.el.style.fontFamily = name;
     }
+    const fontWeight = input("range")
+        .attr({ min: "100", max: "900", step: "10" })
+        .on("input", (e, el) => {
+            bookStyle.fontWeight = Number(el.gv);
+            console.log(bookStyle);
+
+            setBookStyle();
+        })
+        .sv(String(bookStyle.fontWeight));
     const fontSize = createRangeSetEl(
         bookStyle.fontSize,
         bookStyleList.fontSize.length - 1,
@@ -2633,7 +2642,7 @@ document.body.appendChild(fontListEl.el);
         })
         .sv(bookStyle.paper);
     const paperEl = label([paperI, "纸质背景"]);
-    changeStyleBar.add([fontEl, fontSize, lineHeight, contentWidth, themeSelect, paperEl]);
+    changeStyleBar.add([fontEl, fontWeight, fontSize, lineHeight, contentWidth, themeSelect, paperEl]);
 }
 
 setBookStyle();
@@ -2642,6 +2651,7 @@ function setBookStyle() {
     document.documentElement.setAttribute("data-theme", bookStyle.theme);
     document.documentElement.style.setProperty("--font-family", `${bookStyle.fontFamily}`);
     document.documentElement.style.setProperty("--font-size", `${bookStyleList.fontSize[bookStyle.fontSize]}px`);
+    bookContentContainerEl.el.style.setProperty("--font-weight", `${bookStyle.fontWeight}`);
     bookContentContainerEl.el.style.setProperty("--line-height", `${bookStyleList.lineHeight[bookStyle.lineHeight]}em`);
     bookContentContainerEl.el.style.setProperty(
         "--content-width",
