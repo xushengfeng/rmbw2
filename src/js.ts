@@ -233,41 +233,48 @@ async function prompt(message?: string, defaultValue?: string) {
     ).v;
 }
 
-function dialogX(el: ElType<HTMLDialogElement>, fromEl: ElType<HTMLElement>) {
-    const first = fromEl?.el.getBoundingClientRect() || {
-        left: window.innerWidth / 2,
-        top: window.innerHeight / 2,
-        width: 0,
-        height: 0,
+function trackAnimate(el: ElType<HTMLElement>, from: ElType<HTMLElement>, to = el) {
+    const first = from.el.getBoundingClientRect();
+
+    const self = el.el.getBoundingClientRect();
+
+    const last = to.el.getBoundingClientRect();
+
+    const start = {
+        x: first.left - self.left,
+        y: first.top - self.top,
+        s: Math.min(first.width / self.width, first.height / self.height),
     };
-    document.body.append(el.el);
+
+    const end = {
+        x: last.left - self.left,
+        y: last.top - self.top,
+        s: Math.min(last.width / self.width, last.height / self.height),
+    };
+
     el.style({
         "transform-origin": "top left",
     });
-    el.el.showModal();
-
-    const last = el.el.getBoundingClientRect();
-
-    const deltaX = first.left - last.left;
-    const deltaY = first.top - last.top;
-    const deltaW = first.width / last.width;
-    const deltaH = first.height / last.height;
-    const scale = Math.min(deltaW, deltaH);
-
     const animateList: Keyframe[] = [
         {
-            transform: `translate(${deltaX}px, ${deltaY}px) scale(${scale})`,
+            transform: `translate(${start.x}px, ${start.y}px) scale(${start.s})`,
         },
-        { transform: "none", opacity: 1 },
+        { transform: `translate(${end.x}px, ${end.y}px) scale(${end.s})` },
     ];
-    el.el.animate(animateList, { duration: 400, easing: "cubic-bezier(0.25, 1, 0.5, 1)" });
+
+    return el.el.animate(animateList, { duration: 400, easing: "cubic-bezier(0.25, 1, 0.5, 1)" });
+}
+
+function dialogX(el: ElType<HTMLDialogElement>, fromEl: ElType<HTMLElement>) {
+    document.body.append(el.el);
+    el.el.showModal();
+
+    trackAnimate(el, fromEl);
 
     el.on("close", () => {
-        el.el
-            .animate(animateList.toReversed(), { duration: 400, easing: "cubic-bezier(0.25, 1, 0.5, 1)" })
-            .finished.then(() => {
-                el.remove();
-            });
+        trackAnimate(el, el, fromEl).finished.then(() => {
+            el.remove();
+        });
     });
 }
 
