@@ -1302,8 +1302,8 @@ async function showWordBook(book: book, s: section) {
                 view()
                     .class(LITLEPROGRESS)
                     .add([
-                        view().style({ width: `${(matchWords / l.length) * 100}%`, background: "#00f" }),
-                        view().style({ width: `${(means1 / l.length) * 100}%`, background: "#0f0" }),
+                        view().style({ "--w": `${(matchWords / l.length) * 100}%`, background: "#00f" }),
+                        view().style({ "--w": `${(means1 / l.length) * 100}%`, background: "#0f0" }),
                     ]),
             ]),
             view().add(["拼写 加载中", view().class(LITLEPROGRESS)]),
@@ -1331,7 +1331,7 @@ async function showWordBook(book: book, s: section) {
                 `拼写 ${spell.toFixed(1)}`,
                 view()
                     .class(LITLEPROGRESS)
-                    .add(view().style({ width: `${(spell / l.length) * 100}%`, background: "#00f" })),
+                    .add(view().style({ "--w": `${(spell / l.length) * 100}%`, background: "#00f" })),
             ]),
         );
     });

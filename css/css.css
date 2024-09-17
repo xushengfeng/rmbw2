@@ -498,6 +498,12 @@ body {
         top: 0;
         right: 0;
         background-color: #0f05;
+        --w: 0px;
+        width: var(--w);
+        transition: var(--transition);
+        @starting-style {
+            width: 0;
+        }
     }
 }
 
