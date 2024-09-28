@@ -5151,35 +5151,23 @@ let due: {
 type review = "word" | "spell" | "sentence";
 let reviewType: review = "word";
 const reviewModeEl = elFromId("review_mode");
-const reviewWordEl = elFromId("review_word") as ElType<HTMLInputElement>;
-const reviewSpellEl = elFromId("review_spell") as ElType<HTMLInputElement>;
-const reviewSentenceEl = elFromId("review_sentence") as ElType<HTMLInputElement>;
+const reviewModeRadio = radioGroup<review>("review_mode");
+reviewModeEl.add([
+    reviewModeRadio.new("word", "单词"),
+    reviewModeRadio.new("spell", "拼写"),
+    reviewModeRadio.new("sentence", "句子"),
+]);
 
-reviewWordEl.el.checked = true;
 spellIgnore.style({ display: "none" });
-reviewModeEl.on("click", (e) => {
-    if ((e.target as HTMLElement).tagName !== "INPUT") return;
-    if (reviewWordEl.el.checked) {
-        reviewType = "word";
-
-        spellInputEl.style({ display: "none" });
-    }
-    if (reviewSentenceEl.el.checked) {
-        reviewType = "sentence";
-
-        spellInputEl.style({ display: "none" });
-    }
-    if (reviewSpellEl.el.checked) {
-        reviewType = "spell";
-
-        spellInputEl.style({ display: "" });
-    }
+reviewModeRadio.on(() => {
+    reviewType = reviewModeRadio.get();
     if (reviewType === "spell") {
+        spellInputEl.style({ display: "" });
         spellIgnore.style({ display: "" });
     } else {
+        spellInputEl.style({ display: "none" });
         spellIgnore.style({ display: "none" });
     }
-
     reviewReflashEl.el.click();
 });
 
