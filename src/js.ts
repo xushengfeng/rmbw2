@@ -21,6 +21,7 @@ import {
     label,
     radioGroup,
     check,
+    setProperties,
 } from "dkh-ui";
 
 if (import.meta.env.DEV) initDev();
@@ -192,7 +193,7 @@ function interModal<el extends ElType<HTMLElement>, v>(
         } else buttonsEl.add(x);
     }
     dialog.add(buttonsEl);
-    document.body.append(dialog.el);
+    dialog.addInto();
     dialog.el.showModal();
     return new Promise((re: (name: { v: v; ok: boolean }) => void, rj) => {
         if (okEl) {
@@ -281,7 +282,7 @@ function popoverX(el: ElType<HTMLElement>, fromEl: ElType<HTMLElement>) {
 }
 
 function dialogX(el: ElType<HTMLDialogElement>, fromEl: ElType<HTMLElement>) {
-    document.body.append(el.el);
+    el.addInto();
     el.el.showModal();
 
     trackAnimate(el, fromEl);
@@ -452,8 +453,7 @@ const articleAi = elFromId("article_ai").on("click", () => {
     showArticelAI();
 });
 const changeStyleEl = elFromId("change_style");
-const changeStyleBar = view().attr({ popover: "auto" }).class("change_style_bar");
-document.body.append(changeStyleBar.el);
+const changeStyleBar = view().attr({ popover: "auto" }).class("change_style_bar").addInto();
 const changeEditEl = elFromId("change_edit");
 const dicEl = elFromId("dic");
 const bookdicEl = elFromId("book_dic");
@@ -490,7 +490,7 @@ function putToast(ele: ElType<HTMLElement>, time = 2000) {
     let toastEl = pack(document.body).query(".toast");
     if (!toastEl) {
         toastEl = view().class("toast").attr({ popover: "auto" });
-        document.body.append(toastEl.el);
+        toastEl.addInto();
     }
     toastEl.el.showPopover();
     toastEl.add(ele);
@@ -512,8 +512,7 @@ function putToast(ele: ElType<HTMLElement>, time = 2000) {
     observer.observe(toastEl.el, { childList: true });
 }
 
-const tmpDicEl = view().attr({ popover: "auto" }).class("tmp_dic");
-document.body.append(tmpDicEl.el);
+const tmpDicEl = view().attr({ popover: "auto" }).class("tmp_dic").addInto();
 
 const bookshelfStore = localForage.createInstance<book>({ name: "bookshelf" });
 const sectionsStore = localForage.createInstance<section>({ name: "sections" });
@@ -901,9 +900,9 @@ addSectionEL.on("click", async () => {
     changeEdit(true);
 });
 
-document.getElementById("book_sections").onclick = () => {
+elFromId("book_sections").on("click", () => {
     bookNavEl.el.classList.toggle("book_nav_show");
-};
+});
 
 let nowBook = {
     book: "",
@@ -2541,8 +2540,7 @@ changeStyleEl.on("click", () => {
     popoverX(changeStyleBar, changeStyleEl);
 });
 
-const fontListEl = view().attr({ popover: "auto" }).class("font_list");
-document.body.appendChild(fontListEl.el);
+const fontListEl = view().attr({ popover: "auto" }).class("font_list").addInto();
 
 {
     const fontEl = view().add("serif");
@@ -2649,13 +2647,18 @@ setBookStyle();
 
 function setBookStyle() {
     document.documentElement.setAttribute("data-theme", bookStyle.theme);
-    document.documentElement.style.setProperty("--font-family", `${bookStyle.fontFamily}`);
-    document.documentElement.style.setProperty("--font-size", `${bookStyleList.fontSize[bookStyle.fontSize]}px`);
-    bookContentContainerEl.el.style.setProperty("--font-weight", `${bookStyle.fontWeight}`);
-    bookContentContainerEl.el.style.setProperty("--line-height", `${bookStyleList.lineHeight[bookStyle.lineHeight]}em`);
-    bookContentContainerEl.el.style.setProperty(
-        "--content-width",
-        `${bookStyleList.contentWidth[bookStyle.contentWidth]}em`,
+    setProperties({
+        "--font-family": bookStyle.fontFamily,
+        "--font-size": `${bookStyleList.fontSize[bookStyle.fontSize]}px`,
+    });
+    setProperties(
+        {
+            "--font-weight": `${bookStyle.fontWeight}`,
+            "--line-height": `${bookStyleList.lineHeight[bookStyle.lineHeight]}em`,
+
+            "--content-width": `${bookStyleList.contentWidth[bookStyle.contentWidth]}em`,
+        },
+        bookContentContainerEl.el,
     );
     bookContentContainerEl.style({ background: bookStyle.paper ? "" : "none" });
     setting.setItem("style.default", bookStyle);
@@ -3399,13 +3402,13 @@ async function showDic(id: string) {
         };
 
         async function adjustWord(type: "+" | "-") {
-            const sEl = document.querySelector(`span[data-s="${wordx.index[0]}"]`);
-            const eEl = document.querySelector(`span[data-e="${wordx.index[1]}"]`);
+            const sEl = bookContentEl.query(`span[data-s="${wordx.index[0]}"]`);
+            const eEl = bookContentEl.query(`span[data-e="${wordx.index[1]}"]`);
             let e = wordx.index[1];
             if (!(type === "-" && sEl === eEl)) {
-                const minE = Number(sEl.getAttribute("data-s"));
+                const minE = Number(sEl.el.getAttribute("data-s"));
                 const maxE = wordx.cIndex[1];
-                const nextEl = type === "-" ? eEl.previousElementSibling : eEl.nextElementSibling;
+                const nextEl = type === "-" ? eEl.el.previousElementSibling : eEl.el.nextElementSibling;
                 const nextE = Number(nextEl.getAttribute("data-e"));
                 e = Math.max(minE, Math.min(maxE, nextE));
             }
@@ -3427,14 +3430,12 @@ async function showDic(id: string) {
         const l = Array.from(new Set([sourceWord, sourceWord.toLocaleLowerCase(), lword]));
         if (l.length !== 1)
             for (const w of l) {
-                const div = document.createElement("span");
-                div.innerText = w;
-                div.onclick = async () => {
+                const div = txt(w).on("click", async () => {
                     dicWordEl.sv(w);
                     await visit(false);
                     await changeDicMean(w, -1);
                     search(w);
-                };
+                });
                 moreWordsEl.add(div);
             }
 
@@ -3543,22 +3544,20 @@ async function showDic(id: string) {
             const means = Word.record.means;
             for (const i in means) {
                 const m = means[i];
-                const div = document.createElement("div");
-                const radio = document.createElement("input");
-                radio.type = "radio";
-                radio.name = "dic_means";
-                radio.onclick = async () => {
-                    if (radio.checked) {
-                        await changeDicMean(word, Number(i));
+                const div = view();
+                const radio = input("radio")
+                    .attr({ name: "dic_means" })
+                    .on("click", async () => {
+                        if (radio.el.checked) {
+                            await changeDicMean(word, Number(i));
 
-                        visit(true);
-                    }
-                    editMeanEl.style({ display: "" });
-                    showWord();
-                };
-                if (Number(i) === Word.index) radio.checked = true;
-                div.onclick = () => radio.click();
-                div.append(radio, ...(await disCard2(m)).map((i) => i.el));
+                            visit(true);
+                        }
+                        editMeanEl.style({ display: "" });
+                        showWord();
+                    });
+                if (Number(i) === Word.index) radio.el.checked = true;
+                div.on("click", () => radio.el.click()).add([radio, ...(await disCard2(m)).map((i) => i.el)]);
                 dicDetailsEl.add(div);
             }
             if (Word.index !== -1) dicDetailsEl.class(HIDEMEANS);
@@ -3619,12 +3618,10 @@ async function showDic(id: string) {
             contextStart = wordx.index[0] - Share.sourceIndex[0];
             contextEnd = wordx.index[1] + (Share.context.length - Share.sourceIndex[1]);
         }
-        const startEl = document.createElement("div");
-        const endEl = document.createElement("div");
         const startClass = "context_start";
         const endClass = "context_end";
-        startEl.classList.add(startClass);
-        endEl.classList.add(endClass);
+        const startEl = view().class(startClass);
+        const endEl = view().class(endClass);
         bookContentEl.query(`.${startClass}`)?.remove();
         bookContentEl.query(`.${endClass}`)?.remove();
         bookContentEl.add([startEl, endEl]);
@@ -3640,15 +3637,16 @@ async function showDic(id: string) {
                 if (!isSentence && Number(el.getAttribute("data-s")) > wordx.index[0]) {
                     nel = bookContentEl.query(`span[data-s="${wordx.index[0]}"]`).el;
                 }
-                startEl.style.left = `${getOffset(nel).left}px`;
-                startEl.style.top = `${getOffset(nel).top}px`;
+                startEl.style({ left: `${getOffset(nel).left}px`, top: `${getOffset(nel).top}px` });
             } else {
                 let nel = el;
                 if (!isSentence && Number(el.getAttribute("data-s")) < wordx.index[0]) {
                     nel = bookContentEl.query(`span[data-s="${wordx.index[0]}"]`).el;
                 }
-                endEl.style.left = `${getOffset(nel).left + nel.offsetWidth}px`;
-                endEl.style.top = `${getOffset(nel).top + nel.offsetHeight}px`;
+                endEl.style({
+                    left: `${getOffset(nel).left + nel.offsetWidth}px`,
+                    top: `${getOffset(nel).top + nel.offsetHeight}px`,
+                });
             }
         }
         function matchRangeEl(n: number, left: boolean) {
@@ -3667,10 +3665,10 @@ async function showDic(id: string) {
         setElPosi(contextEndEl, false);
         const down = { start: false, end: false };
         const index = { start: contextStart, end: contextEnd };
-        startEl.onpointerdown = (e) => {
+        startEl.el.onpointerdown = (e) => {
             down.start = true;
         };
-        endEl.onpointerdown = (e) => {
+        endEl.el.onpointerdown = (e) => {
             down.end = true;
         };
         document.onpointermove = (e) => {
@@ -4137,8 +4135,6 @@ function aiButtons1(textEl: ReturnType<typeof textarea>, word: string) {
     function setText(text: string) {
         textEl.el.setRangeText(text);
     }
-    const buttons = document.createDocumentFragment();
-    buttons.append();
     return [
         button("词根词缀").on("click", async () => {
             setText(wordAiText.fix((await wordAi.fix().run({ word }).result) as any));
@@ -4170,8 +4166,6 @@ function aiButtons2(textEl: ReturnType<typeof textarea>, sentence: string) {
     function setText(text: string) {
         textEl.el.setRangeText(text);
     }
-    const buttons = document.createDocumentFragment();
-    buttons.append();
     return [
         button("分析").on("click", async () => {
             const t = sentenceGm(await sentenceAi.gm(sentence));
@@ -4777,17 +4771,17 @@ setTimeout(async () => {
     const d = await getFutureReviewDue(0.1, "word", "spell", "sentence");
     let c = 0;
     c += Object.keys(d.word).length + Object.keys(d.spell).length;
-    if (c > 0) reviewBEl.classList.add(TODOMARK);
+    if (c > 0) reviewBEl.class(TODOMARK);
 }, 10);
 
-const reviewBEl = document.getElementById("reviewb");
-const reviewEl = document.getElementById("review");
-reviewBEl.onclick = () => {
-    reviewEl.classList.toggle("review_show");
-    reviewBEl.classList.remove(TODOMARK);
+const reviewBEl = elFromId("reviewb");
+const reviewEl = elFromId("review");
+reviewBEl.on("click", () => {
+    reviewEl.el.classList.toggle("review_show");
+    reviewBEl.el.classList.remove(TODOMARK);
 
     reviewCount = 0;
-};
+});
 
 const reviewReflashEl = elFromId("review_reflash");
 const reviewReflashPEl = pack(reviewReflashEl.el.parentElement);
@@ -4821,7 +4815,7 @@ const reviewMoreEl = view()
     ])
     .style({ "max-width": "80dvw", overflow: "auto" });
 sectionSelect(reviewScope);
-document.body.append(reviewMoreEl.el);
+reviewMoreEl.addInto();
 reviewReflashPEl.add(
     button(iconEl(filter_svg)).on("click", (_, el) => {
         popoverX(reviewMoreEl, el);
@@ -4846,7 +4840,7 @@ const handwriterCheck = button(iconEl(ok_svg))
     .on("click", () => ocrSpell);
 const handwriterEl = view().class("spell_write").add([handwriterCanvas, handwriterCheck]);
 const spellInputEl = view().style({ display: "none" }).add([keyboardEl.el, handwriterEl]);
-reviewEl.append(spellInputEl.el);
+reviewEl.add(spellInputEl);
 
 function trackKeyboard(el: ElType<HTMLElement>) {
     el.style({ "touch-action": "none" });
@@ -4962,8 +4956,8 @@ const keyboard = keyB(
 keyboard.setLayout(await setting.getItem(KEYBOARDDISPLAYPATH));
 
 window.addEventListener("keydown", (e) => {
-    if (!(reviewType === "spell" && reviewEl.classList.contains("review_show"))) return;
-    if (!reviewEl.contains(document.elementFromPoint(window.innerWidth / 2, window.innerHeight / 2))) return; // 用于note
+    if (!(reviewType === "spell" && reviewEl.el.classList.contains("review_show"))) return;
+    if (!reviewEl.el.contains(document.elementFromPoint(window.innerWidth / 2, window.innerHeight / 2))) return; // 用于note
     const oldInput = keyboard.getInput();
     if (e.key !== "Backspace") {
         if (e.key === ">") {
@@ -4982,8 +4976,8 @@ window.addEventListener("keydown", (e) => {
 
 let spellWriteE: PointerEvent;
 let spellWriteCtx: CanvasRenderingContext2D;
-reviewEl.onpointerdown = (e) => {
-    if (!(reviewType === "spell" && reviewEl.classList.contains("review_show"))) return;
+reviewEl.on("pointerdown", (e) => {
+    if (!(reviewType === "spell" && reviewEl.el.classList.contains("review_show"))) return;
     const sEl = document.querySelector(".spell_input");
     if (!sEl) return;
     if (e.clientY > sEl.getBoundingClientRect().bottom) return;
@@ -4998,14 +4992,14 @@ reviewEl.onpointerdown = (e) => {
         handwriterCheck.style({ display: "" });
     }
     spellWriteCtx.moveTo(e.clientX, e.clientY - 32 * 2);
-};
+});
 
-reviewEl.onpointermove = (e) => {
+reviewEl.on("pointermove", (e) => {
     if (!spellWriteE) return;
     const ctx = spellWriteCtx;
     ctx.lineTo(e.clientX, e.clientY - 32 * 2);
     ctx.stroke();
-};
+});
 
 window.addEventListener("pointerup", (e) => {
     spellWriteE = null;
@@ -5156,26 +5150,26 @@ let due: {
 
 type review = "word" | "spell" | "sentence";
 let reviewType: review = "word";
-const reviewModeEl = document.getElementById("review_mode");
-const reviewWordEl = document.getElementById("review_word") as HTMLInputElement;
-const reviewSpellEl = document.getElementById("review_spell") as HTMLInputElement;
-const reviewSentenceEl = document.getElementById("review_sentence") as HTMLInputElement;
+const reviewModeEl = elFromId("review_mode");
+const reviewWordEl = elFromId("review_word") as ElType<HTMLInputElement>;
+const reviewSpellEl = elFromId("review_spell") as ElType<HTMLInputElement>;
+const reviewSentenceEl = elFromId("review_sentence") as ElType<HTMLInputElement>;
 
-reviewWordEl.checked = true;
+reviewWordEl.el.checked = true;
 spellIgnore.style({ display: "none" });
-reviewModeEl.onclick = (e) => {
+reviewModeEl.on("click", (e) => {
     if ((e.target as HTMLElement).tagName !== "INPUT") return;
-    if (reviewWordEl.checked) {
+    if (reviewWordEl.el.checked) {
         reviewType = "word";
 
         spellInputEl.style({ display: "none" });
     }
-    if (reviewSentenceEl.checked) {
+    if (reviewSentenceEl.el.checked) {
         reviewType = "sentence";
 
         spellInputEl.style({ display: "none" });
     }
-    if (reviewSpellEl.checked) {
+    if (reviewSpellEl.el.checked) {
         reviewType = "spell";
 
         spellInputEl.style({ display: "" });
@@ -5187,7 +5181,7 @@ reviewModeEl.onclick = (e) => {
     }
 
     reviewReflashEl.el.click();
-};
+});
 
 let reviewCount = 0;
 const maxReviewCount = Number((await setting.getItem("review.maxCount")) || "30");
@@ -5383,7 +5377,7 @@ const reviewHotkey: { [key: string]: { f: () => void; key: string } } = {
 };
 
 document.addEventListener("keydown", (e) => {
-    if (!reviewEl.classList.contains("review_show") && reviewType !== "spell") return;
+    if (!reviewEl.el.classList.contains("review_show") && reviewType !== "spell") return;
     for (const i in reviewHotkey) {
         if (e.key === reviewHotkey[i].key) {
             reviewHotkey[i].f();
@@ -5700,12 +5694,12 @@ async function showSentenceReview(x: { id: string; card: Card }) {
     reviewViewEl.add(div);
 }
 
-const audioEl = <HTMLAudioElement>document.getElementById("audio");
-const pTTSEl = <HTMLAudioElement>document.getElementById("pTTS");
+const audioEl = <ElType<HTMLAudioElement>>elFromId("audio");
+const pTTSEl = <ElType<HTMLAudioElement>>elFromId("pTTS");
 
 function play(word: string) {
-    audioEl.src = `https://dict.youdao.com/dictvoice?le=eng&type=1&audio=${word}`;
-    audioEl.play();
+    audioEl.el.src = `https://dict.youdao.com/dictvoice?le=eng&type=1&audio=${word}`;
+    audioEl.el.play();
 }
 
 const tts = new MsEdgeTTS();
@@ -5767,11 +5761,11 @@ async function runTTS(text: string): Promise<{ cancel: () => void }> {
         const x = await localTTS(text);
         return { cancel: () => x.synth.cancel() };
     }
-    audioEl.src = (await getTTS(text)).url;
-    audioEl.play();
+    audioEl.el.src = (await getTTS(text)).url;
+    audioEl.el.play();
     return {
         cancel: () => {
-            audioEl.src = "";
+            audioEl.el.src = "";
         },
     };
 }
@@ -5822,9 +5816,9 @@ async function pTTS(index: number) {
         utterThis.onend = nextplay;
     } else {
         const url = await getTTS(text);
-        pTTSEl.src = url.url;
-        pTTSEl.play();
-        pTTSEl.onended = nextplay;
+        pTTSEl.el.src = url.url;
+        pTTSEl.el.play();
+        pTTSEl.el.onended = nextplay;
     }
 }
 
@@ -5866,11 +5860,17 @@ const plotEl = view().attr({ popover: "auto" }).class("plot");
 const cardDue = view();
 const cal1 = newCal();
 const cal2 = newCal();
-plotEl.add([
-    cardDue,
-    view().add([ele("h2").attr({ innerText: "新卡片" }), cal1.el, ele("h2").attr({ innerText: "已复习" }), cal2.el]),
-]);
-document.body.append(plotEl.el);
+plotEl
+    .add([
+        cardDue,
+        view().add([
+            ele("h2").attr({ innerText: "新卡片" }),
+            cal1.el,
+            ele("h2").attr({ innerText: "已复习" }),
+            cal2.el,
+        ]),
+    ])
+    .addInto();
 
 async function renderCardDueAll() {
     const wordsScope = await getWordsScope();
@@ -6076,9 +6076,9 @@ function renderCal(year: number, data: Date[], el: typeof cal1) {
 
 //###### setting
 const settingEl = elFromId("setting");
-document.getElementById("settingb").onclick = () => {
+elFromId("settingb").on("click", () => {
     settingEl.el.togglePopover();
-};
+});
 
 const readerSettingPath = { apostrophe: "reader.apostrophe" };
 
@@ -6191,9 +6191,9 @@ async function saveSortOnlineDics() {
     await setting.setItem(onlineDicsPath, dl);
 }
 
-const uploadDicEl = document.getElementById("upload_dic") as HTMLInputElement;
-uploadDicEl.onchange = () => {
-    const file = uploadDicEl.files[0];
+const uploadDicEl = elFromId("upload_dic") as ElType<HTMLInputElement>;
+uploadDicEl.on("change", () => {
+    const file = uploadDicEl.el.files[0];
     if (file) {
         const reader = new FileReader();
         reader.readAsText(file);
@@ -6203,7 +6203,7 @@ uploadDicEl.onchange = () => {
             saveDic(dic);
         };
     }
-};
+});
 
 async function saveDic(dic: object) {
     const ndic = dicParse(dic);
@@ -6527,10 +6527,7 @@ import { encode } from "js-base64";
 
 function download(text: string, name: string, type?: string) {
     const blob = new Blob([text], { type: type || "text/plain;charset=utf-8" });
-    const a = document.createElement("a");
-    a.href = URL.createObjectURL(blob);
-    a.download = name;
-    a.click();
+    a(URL.createObjectURL(blob)).attr({ download: name }).el.click();
 }
 
 async function uploadGithub(data: string, fileName: string, m: string) {
