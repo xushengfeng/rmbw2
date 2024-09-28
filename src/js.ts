@@ -487,7 +487,7 @@ dicEl.add([
 ]);
 
 function putToast(ele: ElType<HTMLElement>, time = 2000) {
-    let toastEl = pack(document.body.querySelector(".toast") as HTMLElement);
+    let toastEl = pack(document.body).query(".toast");
     if (!toastEl) {
         toastEl = view().class("toast").attr({ popover: "auto" });
         document.body.append(toastEl.el);
@@ -5950,7 +5950,7 @@ function renderCardDue(text: string, data: number[]) {
     let _min = Number.POSITIVE_INFINITY;
     for (const d of data.concat([now])) if (d < _min) _min = d;
     let count = 0;
-    const list: Array<ReturnType<typeof pack<HTMLElement>>> = [];
+    const list: Array<ElType<HTMLElement>> = [];
     for (let min = _min; min < _max; min += 2048 / zoom) {
         const max = Math.min(min + 2048 / zoom, _max);
         const canvas = ele("canvas");
