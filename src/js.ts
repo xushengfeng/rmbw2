@@ -2815,7 +2815,7 @@ async function setEdit() {
     window.getText = () => text.gv;
     // @ts-ignore
     window.setText = (str: string) => {
-        text.gv = editText = str;
+        text.svc = editText = str;
     };
     textEl
         .on("input", () => {
@@ -2856,7 +2856,7 @@ async function setEdit() {
                 const aitext = await ai(aiM, "对话").text;
                 const addText = `ai:\n${aitext}`;
                 const changeText = text.gv.slice(0, start) + addText + text.gv.slice(end);
-                text.gv = changeText;
+                text.sv(changeText);
                 editText = changeText;
                 text.el.setSelectionRange(start, start + addText.length);
             }
@@ -2886,7 +2886,7 @@ async function setEdit() {
                     if (fileType === "text") {
                         t = reader.result as string;
                     }
-                    text.gv = t;
+                    text.sv(t);
                     editText = t;
                 };
             }
@@ -3380,10 +3380,10 @@ async function showDic(id: string) {
 
     async function showWord() {
         dicEl.el.classList.remove(DICSENTENCE);
-        dicTransContent.gv = "";
+        dicTransContent.sv("");
 
         search(Word.word);
-        dicWordEl.gv = Word.word;
+        dicWordEl.sv(Word.word);
         dicWordEl.el.onchange = async () => {
             const newWord = dicWordEl.gv.trim();
             await visit(false);
@@ -3430,7 +3430,7 @@ async function showDic(id: string) {
                 const div = document.createElement("span");
                 div.innerText = w;
                 div.onclick = async () => {
-                    dicWordEl.gv = w;
+                    dicWordEl.sv(w);
                     await visit(false);
                     await changeDicMean(w, -1);
                     search(w);
@@ -3568,9 +3568,9 @@ async function showDic(id: string) {
     async function showSentence() {
         dicEl.class(DICSENTENCE);
 
-        dicWordEl.gv = "";
+        dicWordEl.sv("");
         moreWordsEl.clear();
-        dicTransContent.gv = (await card2sentence.getItem(wordx.id)).trans;
+        dicTransContent.sv((await card2sentence.getItem(wordx.id)).trans);
         dicDetailsEl.clear();
 
         if (!dicTransContent.gv) {
@@ -4418,7 +4418,7 @@ function aiText(textEl: ReturnType<typeof textarea>, info: string) {
             const aitext = await ai(aiM, "对话").text;
             const addText = `ai:\n${aitext}`;
             const changeText = textEl.gv.slice(0, start) + addText + textEl.gv.slice(end);
-            textEl.gv = changeText;
+            textEl.sv(changeText);
             textEl.el.selectionStart = start;
             textEl.el.selectionEnd = start + addText.length;
         }
@@ -4856,12 +4856,12 @@ function trackKeyboard(el: ElType<HTMLElement>) {
             const h = keyboardEl.el.offsetHeight;
             return { x: 0, y: 0, data: { h } };
         },
-        ing: (p, _, __, data) => {
+        ing: (p, _, { startData: data }) => {
             const h = Math.round(data.h - p.y);
             keyboardEl.style({ height: `${h}px` });
             return h;
         },
-        end: (_, __, data) => {
+        end: (_, { ingData: data }) => {
             setting.setItem(KEYBOARDHEIGHTPATH, data);
         },
     });
@@ -5926,7 +5926,7 @@ async function renderCardDueAll() {
 
 async function renderCharts() {
     renderCardDueAll();
-    cal1.els.title.gv = cal2.els.title.gv = "加载中……";
+    cal1.els.title.svc = cal2.els.title.svc = "加载中……";
 
     const newCard: Date[] = [];
     const reviewCard: Date[] = [];
@@ -6166,9 +6166,9 @@ settingEl.add(
                 addOnlineDic3El,
                 button(iconEl(add_svg)).on("click", () => {
                     onlineDicsEl.add(onlineDicItem(addOnlineDic1El.gv, addOnlineDic2El.gv, addOnlineDic3El.gv));
-                    addOnlineDic1El.gv = "";
-                    addOnlineDic2El.gv = "";
-                    addOnlineDic3El.gv = "";
+                    addOnlineDic1El.sv("");
+                    addOnlineDic2El.sv("");
+                    addOnlineDic3El.sv("");
                     saveSortOnlineDics();
                 }),
                 moreOnlineDicEl,
