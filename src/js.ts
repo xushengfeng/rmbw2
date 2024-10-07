@@ -16,7 +16,6 @@ import {
     spacer,
     initDev,
     image,
-    elFromId,
     select,
     label,
     radioGroup,
@@ -128,7 +127,9 @@ navigator?.storage?.persist();
 
 document.body.translate = false;
 
-const menuEl = elFromId("menu");
+const studyLan = ((await setting.getItem("lan.learn")) as string) || "en";
+
+const menuEl = view().attr({ id: "menu", popover: "auto" }).addInto();
 let willShowMenu = false;
 function showMenu(x: number, y: number) {
     menuEl.style({ left: `${x}px`, top: `${y}px` }).on("click", () => {
@@ -369,7 +370,7 @@ const DICDIALOG = "dic_dialog";
 const SELECTEDITEM = "selected_item";
 const LITLEPROGRESS = "litle_progress";
 
-const booksEl = elFromId("books") as ElType<HTMLDialogElement>;
+const booksEl = ele("dialog").addInto().attr({ id: "books" });
 const localBookEl = view();
 const onlineBookEl = view().style({ display: "none" });
 function booksElclose() {
@@ -413,24 +414,46 @@ const bookSectionsEl = view().style({
     position: "relative",
     "flex-grow": "1",
 });
-const bookBEl = elFromId("books_b").style({ "view-transition-name": "dialog" });
+const mainEl = view().addInto();
 const addBookEl = iconEl("add");
 const addSectionEL = iconEl("add");
 const bookNameEl = view();
-const bookNavEl = elFromId("book_nav").add([bookNameEl, addSectionEL, bookSectionsEl]);
-let bookContentEl = elFromId("book_content");
-const bookContentContainerEl = pack(bookContentEl.el.parentElement);
-const paghMore = elFromId("pagh_more").on("click", () => {
-    bookContentEl.el.classList.toggle("show_p_more");
-});
-const articleAi = elFromId("article_ai").on("click", () => {
+const bookNavEl = view().attr({ id: "book_nav" }).add([bookNameEl, addSectionEL, bookSectionsEl]).addInto(mainEl);
+const xbookEl = view().attr({ id: "book" }).addInto(mainEl);
+const bookButtons = view().attr({ id: "book_buttons" }).addInto(xbookEl);
+const bookBEl = iconEl("books").attr({ id: "books_b" }).style({ "view-transition-name": "dialog" });
+const bookSectionsB = iconEl("side_panel").attr({ id: "book_sections" });
+const reviewBEl = iconEl("review").attr({ id: "reviewb" });
+const settingBEl = iconEl("setting").attr({ id: "settingb" });
+const articleAi = iconEl("ai").on("click", () => {
     showArticelAI();
 });
-const changeStyleEl = elFromId("change_style");
+const changeStyleEl = iconEl("style");
+const changeEditEl = button();
+const bookdicEl = iconEl("search").attr({ accessKey: "/" });
+
+bookButtons.add([
+    bookBEl,
+    bookSectionsB,
+    reviewBEl,
+    settingBEl,
+    spacer().attr({ id: "book_name" }),
+    iconEl("more").on("click", () => {
+        bookContentEl.el.classList.toggle("show_p_more");
+    }),
+    articleAi,
+    changeStyleEl,
+    changeEditEl,
+    bookdicEl,
+]);
+
+let bookContentEl = view().attr({ id: "book_content" }) as ElType<HTMLElement>;
+const bookContentContainerEl = view().attr({ id: "book_content_container" }).addInto(bookContentEl).addInto(xbookEl);
+
 const changeStyleBar = view().attr({ popover: "auto" }).class("change_style_bar").addInto();
-const changeEditEl = elFromId("change_edit");
-const dicEl = elFromId("dic");
-const bookdicEl = elFromId("book_dic");
+
+const dicEl = view().attr({ id: "dic" }).addInto(mainEl);
+
 const lastMarkEl = iconEl("left");
 const nextMarkEl = iconEl("right");
 const toSentenceEl = iconEl("sentence");
@@ -459,6 +482,19 @@ dicEl.add([
     view("x").add([dicMinEl, addMeanEl, editMeanEl]),
     dicDetailsEl,
 ]);
+
+const markListBarEl = view().attr({ id: "mark_word_list" }).addInto(mainEl);
+
+const reviewButtonsEl = view().attr({ id: "review_buttons" });
+const reviewViewEl = view().attr({ id: "review_view", lang: studyLan });
+
+const reviewEl = view()
+    .attr({ id: "review" })
+    .addInto(mainEl)
+    .add(view().attr({ id: "review_list" }).add([reviewButtonsEl, reviewViewEl]));
+
+const reviewReflashEl = iconEl("reload").addInto(reviewButtonsEl);
+const reviewModeEl = view().attr({ id: "review_mode" }).addInto(reviewButtonsEl);
 
 function putToast(ele: ElType<HTMLElement>, time = 2000) {
     let toastEl = pack(document.body).query(".toast");
@@ -874,7 +910,7 @@ addSectionEL.on("click", async () => {
     changeEdit(true);
 });
 
-elFromId("book_sections").on("click", () => {
+bookSectionsB.on("click", () => {
     bookNavEl.el.classList.toggle("book_nav_show");
 });
 
@@ -884,7 +920,6 @@ let nowBook = {
 };
 
 let isWordBook = false;
-const studyLan = ((await setting.getItem("lan.learn")) as string) || "en";
 
 showLocalBooks();
 setBookS();
@@ -3066,7 +3101,6 @@ function tag(tags: tagMap) {
     return x;
 }
 
-const markListBarEl = elFromId("mark_word_list");
 const markListEl = view();
 const autoNewWordEl = view().add([
     button("生词忽略与标记").on("click", (_, el) => {
@@ -4726,8 +4760,6 @@ setTimeout(async () => {
     if (c > 0) reviewBEl.class(TODOMARK);
 }, 10);
 
-const reviewBEl = elFromId("reviewb");
-const reviewEl = elFromId("review");
 reviewBEl.on("click", () => {
     reviewEl.el.classList.toggle("review_show");
     reviewBEl.el.classList.remove(TODOMARK);
@@ -4735,10 +4767,8 @@ reviewBEl.on("click", () => {
     reviewCount = 0;
 });
 
-const reviewReflashEl = elFromId("review_reflash");
-const reviewReflashPEl = pack(reviewReflashEl.el.parentElement);
 const reviewAi = input("checkbox");
-reviewReflashPEl.add(label([reviewAi, "ai"]));
+reviewButtonsEl.add(label([reviewAi, "ai"]));
 
 const reviewScope = view();
 const spellIgnore = select([
@@ -4746,7 +4776,6 @@ const spellIgnore = select([
     { name: "排除忽略词", value: "exIgnore" },
     { name: "仅忽略词", value: "ignore" },
 ]);
-const reviewViewEl = elFromId("review_view").attr({ lang: studyLan });
 
 let reviewSortType: "正常" | "学习" | "学习1" | "紧急" | "随机" = "正常";
 const reviewSortEl = select([
@@ -4768,13 +4797,13 @@ const reviewMoreEl = view()
     .style({ "max-width": "80dvw", overflow: "auto" });
 sectionSelect(reviewScope);
 reviewMoreEl.addInto();
-reviewReflashPEl.add(
+reviewButtonsEl.add(
     iconEl("filter").on("click", (_, el) => {
         popoverX(reviewMoreEl, el);
     }),
 );
 
-reviewReflashPEl.add(
+reviewButtonsEl.add(
     iconEl("chart").on("click", (_, el) => {
         popoverX(plotEl, el);
     }),
@@ -5102,7 +5131,6 @@ let due: {
 
 type review = "word" | "spell" | "sentence";
 let reviewType: review = "word";
-const reviewModeEl = elFromId("review_mode");
 const reviewModeRadio = radioGroup<review>("review_mode");
 reviewModeEl.add([
     reviewModeRadio.new("word", "单词"),
@@ -5635,8 +5663,8 @@ async function showSentenceReview(x: { id: string; card: Card }) {
     reviewViewEl.add(div);
 }
 
-const audioEl = <ElType<HTMLAudioElement>>elFromId("audio");
-const pTTSEl = <ElType<HTMLAudioElement>>elFromId("pTTS");
+const audioEl = ele("audio").addInto();
+const pTTSEl = ele("audio").attr({ controls: true });
 
 function play(word: string) {
     audioEl.el.src = `https://dict.youdao.com/dictvoice?le=eng&type=1&audio=${word}`;
@@ -5726,12 +5754,12 @@ async function localTTS(text: string) {
     return { utterThis, synth };
 }
 
-const pttsEl = elFromId("pTTSp");
+const pttsEl = view().attr({ id: "pTTSp" }).addInto();
 const SHOWPTTS = "pTTS_show";
 const autoPlayTTSEl = input("checkbox").on("change", () => {
     autoPlay = autoPlayTTSEl.el.checked;
 });
-pttsEl.add(autoPlayTTSEl);
+pttsEl.add([autoPlayTTSEl, pTTSEl]);
 
 let autoPlay = false;
 
@@ -6016,10 +6044,27 @@ function renderCal(year: number, data: Date[], el: typeof cal1) {
 }
 
 //###### setting
-const settingEl = elFromId("setting");
-elFromId("settingb").on("click", () => {
+const settingEl = view().attr({ id: "setting", popover: "manual" }).addInto();
+settingBEl.on("click", () => {
     settingEl.el.togglePopover();
 });
+
+settingEl.add([ele("h2").add("书"), "远程地址：", input().data({ path: "onlineBooks.url" })]);
+
+const uploadDicEl = input("file").attr({ id: "upload_dic" });
+
+settingEl.add([ele("h2").add("词典"), uploadDicEl]);
+
+settingEl.add([
+    ele("h2").add("AI"),
+    input().attr({ placeholder: "ai url" }).data({ path: "ai.url" }),
+    input().attr({ placeholder: "ai key" }).data({ path: "ai.key" }),
+    textarea("ai config").data({ path: "ai.config" }).style({
+        // @ts-ignore
+        "field-sizing": "content",
+        minHeight: "2lh",
+    }),
+]);
 
 const readerSettingPath = { apostrophe: "reader.apostrophe" };
 
@@ -6132,7 +6177,6 @@ async function saveSortOnlineDics() {
     await setting.setItem(onlineDicsPath, dl);
 }
 
-const uploadDicEl = elFromId("upload_dic") as ElType<HTMLInputElement>;
 uploadDicEl.on("change", () => {
     const file = uploadDicEl.el.files[0];
     if (file) {

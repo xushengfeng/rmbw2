@@ -11,62 +11,7 @@
     <link rel="stylesheet" type="text/css" href="css/css.css">
 </head>
 
-<body class="fill_t">
-    <div class="main">
-        <dialog id="books"></dialog>
-        <div id="main">
-            <div id="book_nav"></div>
-            <div id="book">
-                <div id="book_buttons">
-                    <div id="books_b"><img src="./assets/icons/books.svg" class="icon"></div>
-                    <div id="book_sections"><img src="./assets/icons/side_panel.svg" class="icon"></div>
-                    <div id="reviewb"><img src="./assets/icons/review.svg" class="icon"></div>
-                    <div id="settingb"><img src="./assets/icons/setting.svg" class="icon"></div>
-                    <div id="book_name"></div>
-                    <div id="pagh_more"><img src="./assets/icons/more.svg" class="icon"></div>
-                    <div id="article_ai"><img src="./assets/icons/ai.svg" class="icon"></div>
-                    <div id="change_style"><img src="./assets/icons/style.svg" class="icon"></div>
-                    <div id="change_edit"></div>
-                    <div id="book_dic"><img src="./assets/icons/search.svg" class="icon" accesskey="/"></div>
-                </div>
-                <div id="book_content_container">
-                    <div id="book_content"></div>
-                </div>
-            </div>
-            <div id="dic">
-            </div>
-            <div id="mark_word_list"></div>
-            <div id="review">
-                <div id="review_all"></div>
-                <div id="review_list">
-                    <div id="review_buttons">
-                        <div id="review_reflash"><img src="./assets/icons/reload.svg" class="icon">
-                        </div>
-                        <div id="review_mode"> </div>
-                    </div>
-                    <div id="review_view"></div>
-                </div>
-            </div>
-        </div>
-        <div id="setting" popover="manual">
-            <h2>书</h2>
-            远程地址：<input type="text" id="book_url" data-path="onlineBooks.url">
-            <h2>词典</h2>
-            <input type="file" id="upload_dic">
-            <div id="setting_dics"></div>
-            <h2>AI</h2>
-            <input type="text" data-path="ai.url" placeholder="ai url">
-            <input type="text" data-path="ai.key" placeholder="ai key">
-            <textarea name="ai_config" id="ai_config" cols="30" rows="10" data-path="ai.config"
-                placeholder="ai config"></textarea>
-        </div>
-        <audio src="" id="audio"></audio>
-        <div id="pTTSp">
-            <audio controls src="" id="pTTS"></audio>
-        </div>
-        <audio src="" id="pTTS"></audio>
-        <div id="menu" popover></div>
-    </div>
+<body>
     <script src="./src/js.ts" type="module"></script>
 </body>
 
