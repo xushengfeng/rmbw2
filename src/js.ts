@@ -73,7 +73,7 @@ import githubIcon from "../assets/other/Github.svg";
 
 // @auto-path:../assets/icons/$.svg
 function iconEl(name: string) {
-    return image(new URL(`../assets/icons/${name}.svg`, import.meta.url).href, "按钮图标").class("icon");
+    return button(image(new URL(`../assets/icons/${name}.svg`, import.meta.url).href, "按钮图标").class("icon"));
 }
 
 function uuid() {
@@ -399,7 +399,7 @@ booksEl.add([
                 showBook(coreWordBook);
                 booksElclose();
             }),
-        button(iconEl("close"))
+        iconEl("close")
             .style({ "margin-left": "auto" })
             .on("click", () => {
                 booksElclose();
@@ -414,8 +414,8 @@ const bookSectionsEl = view().style({
     "flex-grow": "1",
 });
 const bookBEl = elFromId("books_b").style({ "view-transition-name": "dialog" });
-const addBookEl = view().add(iconEl("add"));
-const addSectionEL = view().add(iconEl("add"));
+const addBookEl = iconEl("add");
+const addSectionEL = iconEl("add");
 const bookNameEl = view();
 const bookNavEl = elFromId("book_nav").add([bookNameEl, addSectionEL, bookSectionsEl]);
 let bookContentEl = elFromId("book_content");
@@ -431,23 +431,23 @@ const changeStyleBar = view().attr({ popover: "auto" }).class("change_style_bar"
 const changeEditEl = elFromId("change_edit");
 const dicEl = elFromId("dic");
 const bookdicEl = elFromId("book_dic");
-const lastMarkEl = button(iconEl("left"));
-const nextMarkEl = button(iconEl("right"));
-const toSentenceEl = button(iconEl("sentence"));
-const feedbackEl = button(iconEl("help"));
-const hideDicEl = button(iconEl("close"));
+const lastMarkEl = iconEl("left");
+const nextMarkEl = iconEl("right");
+const toSentenceEl = iconEl("sentence");
+const feedbackEl = iconEl("help");
+const hideDicEl = iconEl("close");
 const dicWordEl = input();
 const lessWordEl = txt("-");
 const moreWordEl = txt("+");
 const moreWordsEl = view().class("more_words");
 const ttsWordEl = button().style({ width: "auto", height: "auto", "font-size": "inherit" });
-const ttsContextEl = button(iconEl("recume"));
-const dicTransB = button(iconEl("translate"));
+const ttsContextEl = iconEl("recume");
+const dicTransB = iconEl("translate");
 const dicTransContent = input().class(TRANSLATE).style({ border: "none", width: "100%", "font-size": "1rem" });
-const dicMinEl = button(iconEl("more")).style({ "min-height": "24px" });
-const addMeanEl = button(iconEl("add")).style({ "min-height": "24px" });
-const editMeanEl = button(iconEl("pen")).style({ "min-height": "24px" });
-const noteEl = button(iconEl("pen")).style({ "min-height": "24px" });
+const dicMinEl = iconEl("more").style({ "min-height": "24px" });
+const addMeanEl = iconEl("add").style({ "min-height": "24px" });
+const editMeanEl = iconEl("pen").style({ "min-height": "24px" });
+const noteEl = iconEl("pen").style({ "min-height": "24px" });
 const dicDetailsEl = view().class("dic_details");
 
 dicEl.add([
@@ -902,7 +902,7 @@ async function setSectionTitle(sid: string) {
                 output: "title:string",
             });
             const ff = f.run(editText);
-            const stopEl = button(iconEl("close")).on("click", () => {
+            const stopEl = iconEl("close").on("click", () => {
                 ff.stop.abort();
                 pel.remove();
             });
@@ -1171,17 +1171,15 @@ async function showBookContent(book: book, id: string) {
 
     if (!isWordBook)
         bookContentEl.add(
-            view()
-                .add(iconEl("recume"))
-                .on("click", async () => {
-                    autoPlay = true;
-                    autoPlayTTSEl.el.checked = true;
-                    await pTTS(0);
-                    if ((await getTtsEngine()) === "ms")
-                        for (let i = 1; i < contentP.length; i++) {
-                            await getTTS(contentP[i]);
-                        }
-                }),
+            iconEl("recume").on("click", async () => {
+                autoPlay = true;
+                autoPlayTTSEl.el.checked = true;
+                await pTTS(0);
+                if ((await getTtsEngine()) === "ms")
+                    for (let i = 1; i < contentP.length; i++) {
+                        await getTTS(contentP[i]);
+                    }
+            }),
         );
 
     contentP = [];
@@ -1396,7 +1394,7 @@ async function showWordBook(book: book, s: section) {
                         const note = p(item.c.note);
                         pEl.add(
                             view().add([
-                                button(iconEl("pen")).on("click", (_, el) => {
+                                iconEl("pen").on("click", (_, el) => {
                                     addP(
                                         item.c.note,
                                         item.id,
@@ -1420,7 +1418,7 @@ async function showWordBook(book: book, s: section) {
                     if (item.c)
                         for (const i of item.c.means) {
                             const pel = view().add([
-                                button(iconEl("pen")).on("click", (_, el) => {
+                                iconEl("pen").on("click", (_, el) => {
                                     addP(
                                         i.text,
                                         item.id,
@@ -1542,7 +1540,7 @@ async function showWordBookMore(
     d.add([
         view()
             .style({ display: "flex", "flex-direction": "row-reverse" })
-            .add(button(iconEl("close")).on("click", () => d.el.close())),
+            .add(iconEl("close").on("click", () => d.el.close())),
         view().add([
             p("导出未学习的单词"),
             button("导出").on("click", () => {
@@ -1598,7 +1596,7 @@ async function showWordBookMore(
     ]);
     d.add([
         p("添加忽略词到拼写"),
-        button(iconEl("add")).on("click", () => {
+        iconEl("add").on("click", () => {
             ignoredWordSpell(
                 wordList
                     .filter((w) => w.type === "ignore")
@@ -1800,26 +1798,20 @@ async function showNormalBook(book: book, s: section) {
         if (pText) {
             const i = contentP.length;
             moreEl.add(
-                view()
-                    .add(iconEl("recume"))
-                    .on("click", () => {
-                        showLisent(contentP.at(i), moreEl);
-                    }),
+                iconEl("recume").on("click", () => {
+                    showLisent(contentP.at(i), moreEl);
+                }),
             );
         }
         contentP.push(pText);
 
         moreEl.add([
-            view()
-                .add(iconEl("translate"))
-                .on("click", () => {
-                    translateContext(pel.el);
-                }),
-            view()
-                .add(iconEl("exTrans"))
-                .on("click", () => {
-                    exTrans(pel.el, 0, book);
-                }),
+            iconEl("translate").on("click", () => {
+                translateContext(pel.el);
+            }),
+            iconEl("exTrans").on("click", () => {
+                exTrans(pel.el, 0, book);
+            }),
         ]);
 
         pel.add(moreEl);
@@ -1887,16 +1879,12 @@ async function showLisent(text: string, fromEl: ElType<HTMLElement>) {
         playsEl.add(
             l.map((s) =>
                 view().add([
-                    button()
-                        .add(iconEl("recume"))
-                        .on("click", () => {
-                            runTTS(s);
-                        }),
-                    button()
-                        .add(iconEl("more"))
-                        .on("click", (_, el) => {
-                            showRecord(s, el);
-                        }),
+                    iconEl("recume").on("click", () => {
+                        runTTS(s);
+                    }),
+                    iconEl("more").on("click", (_, el) => {
+                        showRecord(s, el);
+                    }),
                     p(s),
                 ]),
             ),
@@ -1911,17 +1899,15 @@ async function showLisent(text: string, fromEl: ElType<HTMLElement>) {
             button("按小句").on("click", () => {
                 playEl(sL);
             }),
-            button()
-                .add(iconEl("recume"))
-                .on("click", async () => {
-                    if (pausePlayP) {
-                        pausePlayP();
-                        pausePlayP = null;
-                    } else {
-                        pausePlayP = (await runTTS(text)).cancel;
-                    }
-                }),
-            button(iconEl("close")).on("click", () => {
+            iconEl("recume").on("click", async () => {
+                if (pausePlayP) {
+                    pausePlayP();
+                    pausePlayP = null;
+                } else {
+                    pausePlayP = (await runTTS(text)).cancel;
+                }
+            }),
+            iconEl("close").on("click", () => {
                 d.el.close();
                 pausePlayP();
             }),
@@ -2099,7 +2085,7 @@ async function showRecord(text: string, fromEl: ElType<HTMLElement>) {
 
     const recordWs = wss(recordX.el, "");
 
-    const recordB = button(iconEl("mic"));
+    const recordB = iconEl("mic");
     let startR = false;
 
     const record = RecordPlugin.create({ renderRecordedAudio: false });
@@ -2126,7 +2112,7 @@ async function showRecord(text: string, fromEl: ElType<HTMLElement>) {
         view("x").add([
             recordB,
             spacer(),
-            button(iconEl("close")).on("click", () => {
+            iconEl("close").on("click", () => {
                 d.el.close();
             }),
         ]),
@@ -2181,7 +2167,7 @@ async function translateContext(p: HTMLElement) {
 
     const f = new autoFun.def({ script: ["把输入的语言翻译成中文"], output: "list:[]" });
     const ff = f.run(text as any);
-    const stopEl = button(iconEl("close")).on("click", () => {
+    const stopEl = iconEl("close").on("click", () => {
         ff.stop.abort();
         pel.remove();
     });
@@ -2240,13 +2226,13 @@ async function exTrans(pEl: HTMLElement, i: number, book: book) {
                 "backdrop-filter": "var(--blur)",
                 "border-radius": "var(--border-radius)",
             }),
-            last: button(iconEl("left")),
-            next: button(iconEl("right")),
-            diff: button(iconEl("eye")),
-            ai: button(iconEl("ai")),
-            close: button(iconEl("close")),
+            last: iconEl("left"),
+            next: iconEl("right"),
+            diff: iconEl("eye"),
+            ai: iconEl("ai"),
+            close: iconEl("close"),
             spellTip: {
-                _: button(iconEl("more")),
+                _: iconEl("more"),
                 spellTipList: view("y").style({
                     position: "absolute",
                     top: "0",
@@ -2367,12 +2353,7 @@ async function exTrans(pEl: HTMLElement, i: number, book: book) {
     f.els.ai.on("click", async () => {
         const x = `这是我默写的一个句子：\n${f.els.text.el.value}\n这是句子的原文\n${text}\n翻译我的默写\n暗示我：对于词语词组表达的不同，指出原文表达，指出他们与默写的差别；对于语法结构的不同，提示我需要改成什么语法结构，不需要指出原文，不需要给出修改。上述不同，若没有则不用提示。我将根据你的暗示，猜测需要的具体修改`;
         const t = await ai([{ role: "user", content: x }]).text;
-        const el = view().add([
-            p(t),
-            button()
-                .add(iconEl("close"))
-                .on("click", () => el.el.remove()),
-        ]);
+        const el = view().add([p(t), iconEl("close").on("click", () => el.el.remove())]);
         putToast(el, 0);
     });
 
@@ -2439,7 +2420,7 @@ async function exTrans(pEl: HTMLElement, i: number, book: book) {
                                           "ok",
                                       ]
                                     : null,
-                                [button(iconEl("close")).style({ width: "var(--size0)", "flex-shrink": 0 }), "cancel"],
+                                [iconEl("close").style({ width: "var(--size0)", "flex-shrink": 0 }), "cancel"],
                             ]);
 
                             spellErrorAnimate(xx.els.diffE);
@@ -2637,8 +2618,8 @@ function setBookStyle() {
 
 function createRangeSetEl(value: number, maxV: number, f: (i: number) => void, minIcon: string, maxIcon: string) {
     const div = view();
-    const min = button().add(iconEl(minIcon));
-    const max = button().add(iconEl(maxIcon));
+    const min = iconEl(minIcon);
+    const max = iconEl(maxIcon);
     const p = txt()
         .style({ "flex-grow": 1 })
         .bindSet((v: number, el) => {
@@ -3763,7 +3744,7 @@ async function showDicEl(mainTextEl: ReturnType<typeof textarea>, word: string, 
             view("x")
                 .style({ "justify-content": "flex-end" })
                 .add(
-                    button(iconEl("ok")).on("click", () => {
+                    iconEl("ok").on("click", () => {
                         // 获取所有checked的值
                         const checkedValues = Array.from(list.queryAll("input[type='checkbox']:checked")).map(
                             (el) => el.el.value,
@@ -4020,7 +4001,7 @@ function addP(
     } else pEl.add(word || sentence);
     const textEl = textarea().sv(text).attr({ autofocus: true });
     const aiB = getAiButtons(textEl, word, sentence);
-    const okEl = button(iconEl("ok")).on("click", () => {
+    const okEl = iconEl("ok").on("click", () => {
         const mean = textEl.gv.trim();
         div.el.close();
         if (index) {
@@ -4353,7 +4334,7 @@ function tmpAi(mainTextEl: ReturnType<typeof textarea>, info: string, fromEl: El
             view("x")
                 .style({ "justify-content": "flex-end" })
                 .add(
-                    button(iconEl("ok")).on("click", () => {
+                    iconEl("ok").on("click", () => {
                         const mean = textEl.gv.trim();
                         div.el.close();
                         if (mean !== ">") mainTextEl.el.setRangeText(`\n${mean}`);
@@ -4411,7 +4392,7 @@ async function showArticelAI() {
             view()
                 .style({ display: "flex", "justify-content": "flex-end" })
                 .add([
-                    button(iconEl("ok")).on("click", async () => {
+                    iconEl("ok").on("click", async () => {
                         const t = text.gv.trim();
                         div.el.close();
                         if (t !== ">") {
@@ -4446,7 +4427,7 @@ function ai(m: aim, text?: string) {
         userConfig = JSON.stringify(config);
     }
     const abort = new AbortController();
-    const stopEl = button(iconEl("close")).on("click", () => {
+    const stopEl = iconEl("close").on("click", () => {
         abort.abort();
         pel.remove();
     });
@@ -4482,7 +4463,7 @@ function ai(m: aim, text?: string) {
                 pel.clear();
                 pel.add([
                     `AI处理${text || ""}时出现错误`,
-                    button(iconEl("close")).on("click", () => {
+                    iconEl("close").on("click", () => {
                         pel.remove();
                     }),
                 ]);
@@ -4702,7 +4683,7 @@ async function autoIgnore(fromEl: ElType<HTMLElement>) {
                 })
                 .style({ width: "auto" }),
             spacer(),
-            button(iconEl("ok")).on("click", async () => {
+            iconEl("ok").on("click", async () => {
                 const words = f.queryAll("input:checked.ignore_word").map((el) => el.el.value);
                 addIgnore(words);
                 const wordsX = f.queryAll("input:checked:not(.ignore_word)").map((el) => el.el.value);
@@ -4788,13 +4769,13 @@ const reviewMoreEl = view()
 sectionSelect(reviewScope);
 reviewMoreEl.addInto();
 reviewReflashPEl.add(
-    button(iconEl("filter")).on("click", (_, el) => {
+    iconEl("filter").on("click", (_, el) => {
         popoverX(reviewMoreEl, el);
     }),
 );
 
 reviewReflashPEl.add(
-    button(iconEl("chart")).on("click", (_, el) => {
+    iconEl("chart").on("click", (_, el) => {
         popoverX(plotEl, el);
     }),
 );
@@ -4806,7 +4787,7 @@ const keyboardEl = view("y").class("simple-keyboard");
 if (getSetting(KEYBOARDDISPLAYPATH) === "default")
     keyboardEl.style({ height: `${await setting.getItem(KEYBOARDHEIGHTPATH)}px` });
 const handwriterCanvas = ele("canvas").el;
-const handwriterCheck = button(iconEl("ok"))
+const handwriterCheck = iconEl("ok")
     .style({ display: "none" })
     .on("click", () => ocrSpell);
 const handwriterEl = view().class("spell_write").add([handwriterCanvas, handwriterCheck]);
@@ -5212,7 +5193,7 @@ async function getWordAiContext() {
 
         const tipEl = view().add([
             txt("正在生成AI例句……"),
-            button(iconEl("close")).on("click", () => {
+            iconEl("close").on("click", () => {
                 tipEl.remove();
                 x.stop.abort();
             }),
@@ -5361,7 +5342,7 @@ function getReviewCardButtons(id: string, card: Card, readText: string, f?: (rat
             await firstClick();
             if (f) f(rating);
         };
-        const b = button(icon).on("click", reviewHotkey[rating].f);
+        const b = icon.on("click", reviewHotkey[rating].f);
         return b;
     };
     async function firstClick() {
@@ -5501,7 +5482,7 @@ async function showSpellReview(x: { id: string; card: Card }) {
     if (r) {
         context
             .add([
-                button(iconEl("pen")).on("click", (_, el) => {
+                iconEl("pen").on("click", (_, el) => {
                     addP(
                         r.note || "",
                         word,
@@ -6061,7 +6042,7 @@ function onlineDicItem(name: string, url: string, lan: string) {
         input().sv(name),
         input().sv(url),
         input().sv(lan),
-        button(iconEl("close")).on("click", () => {
+        iconEl("close").on("click", () => {
             li.remove();
             saveSortOnlineDics();
         }),
@@ -6124,7 +6105,7 @@ settingEl.add(
                 addOnlineDic1El,
                 addOnlineDic2El,
                 addOnlineDic3El,
-                button(iconEl("add")).on("click", () => {
+                iconEl("add").on("click", () => {
                     onlineDicsEl.add(onlineDicItem(addOnlineDic1El.gv, addOnlineDic2El.gv, addOnlineDic3El.gv));
                     addOnlineDic1El.sv("");
                     addOnlineDic2El.sv("");
