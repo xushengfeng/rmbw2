@@ -5500,7 +5500,7 @@ async function showSpellReview(x: { id: string; card: Card }) {
     const r = await wordsStore.getItem(word);
     if (r) {
         context
-            .add(
+            .add([
                 button(iconEl("pen")).on("click", (_, el) => {
                     addP(
                         r.note || "",
@@ -5518,7 +5518,8 @@ async function showSpellReview(x: { id: string; card: Card }) {
                         el,
                     );
                 }),
-            )
+                onlineDicL(word),
+            ])
             .add(
                 await Promise.all(
                     r.means.map(async (i) =>
