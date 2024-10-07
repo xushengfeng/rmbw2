@@ -68,38 +68,12 @@ import RecordPlugin from "wavesurfer.js/dist/plugins/record";
 
 import Pitchfinder from "pitchfinder";
 
-import ai_svg from "../assets/icons/ai.svg";
-import pen_svg from "../assets/icons/pen.svg";
-import ok_svg from "../assets/icons/ok.svg";
 import very_ok_svg from "../assets/icons/very_ok.svg";
-import help_svg from "../assets/icons/help.svg";
-import translate_svg from "../assets/icons/translate.svg";
-import left_svg from "../assets/icons/left.svg";
-import right_svg from "../assets/icons/right.svg";
-import sentence_svg from "../assets/icons/sentence.svg";
-import clear_svg from "../assets/icons/clear.svg";
-import close_svg from "../assets/icons/close.svg";
-import more_svg from "../assets/icons/more.svg";
-import reload_svg from "../assets/icons/reload.svg";
-import recume_svg from "../assets/icons/recume.svg";
-import add_svg from "../assets/icons/add.svg";
-import exTrans_svg from "../assets/icons/exTrans.svg";
-import eye_svg from "../assets/icons/eye.svg";
-import mic_svg from "../assets/icons/mic.svg";
-import pause_svg from "../assets/icons/pause.svg";
-import style_svg from "../assets/icons/style.svg";
-import font_small_svg from "../assets/icons/font_small.svg";
-import font_large_svg from "../assets/icons/font_large.svg";
-import line_height_small_svg from "../assets/icons/line_height_small.svg";
-import line_height_large_svg from "../assets/icons/line_height_large.svg";
-import content_width_small_svg from "../assets/icons/content_width_small.svg";
-import content_width_large_svg from "../assets/icons/content_width_large.svg";
-import chart_svg from "../assets/icons/chart.svg";
-import filter_svg from "../assets/icons/filter.svg";
 import githubIcon from "../assets/other/Github.svg";
 
-function iconEl(src: string) {
-    return image(src, "按钮图标").class("icon");
+// @auto-path:../assets/icons/$.svg
+function iconEl(name: string) {
+    return image(new URL(`../assets/icons/${name}.svg`, import.meta.url).href, "按钮图标").class("icon");
 }
 
 function uuid() {
@@ -425,7 +399,7 @@ booksEl.add([
                 showBook(coreWordBook);
                 booksElclose();
             }),
-        button(iconEl(close_svg))
+        button(iconEl("close"))
             .style({ "margin-left": "auto" })
             .on("click", () => {
                 booksElclose();
@@ -440,8 +414,8 @@ const bookSectionsEl = view().style({
     "flex-grow": "1",
 });
 const bookBEl = elFromId("books_b").style({ "view-transition-name": "dialog" });
-const addBookEl = view().add(iconEl(add_svg));
-const addSectionEL = view().add(iconEl(add_svg));
+const addBookEl = view().add(iconEl("add"));
+const addSectionEL = view().add(iconEl("add"));
 const bookNameEl = view();
 const bookNavEl = elFromId("book_nav").add([bookNameEl, addSectionEL, bookSectionsEl]);
 let bookContentEl = elFromId("book_content");
@@ -457,23 +431,23 @@ const changeStyleBar = view().attr({ popover: "auto" }).class("change_style_bar"
 const changeEditEl = elFromId("change_edit");
 const dicEl = elFromId("dic");
 const bookdicEl = elFromId("book_dic");
-const lastMarkEl = button(iconEl(left_svg));
-const nextMarkEl = button(iconEl(right_svg));
-const toSentenceEl = button(iconEl(sentence_svg));
-const feedbackEl = button(iconEl(help_svg));
-const hideDicEl = button(iconEl(close_svg));
+const lastMarkEl = button(iconEl("left"));
+const nextMarkEl = button(iconEl("right"));
+const toSentenceEl = button(iconEl("sentence"));
+const feedbackEl = button(iconEl("help"));
+const hideDicEl = button(iconEl("close"));
 const dicWordEl = input();
 const lessWordEl = txt("-");
 const moreWordEl = txt("+");
 const moreWordsEl = view().class("more_words");
 const ttsWordEl = button().style({ width: "auto", height: "auto", "font-size": "inherit" });
-const ttsContextEl = button(iconEl(recume_svg));
-const dicTransB = button(iconEl(translate_svg));
+const ttsContextEl = button(iconEl("recume"));
+const dicTransB = button(iconEl("translate"));
 const dicTransContent = input().class(TRANSLATE).style({ border: "none", width: "100%", "font-size": "1rem" });
-const dicMinEl = button(iconEl(more_svg)).style({ "min-height": "24px" });
-const addMeanEl = button(iconEl(add_svg)).style({ "min-height": "24px" });
-const editMeanEl = button(iconEl(pen_svg)).style({ "min-height": "24px" });
-const noteEl = button(iconEl(pen_svg)).style({ "min-height": "24px" });
+const dicMinEl = button(iconEl("more")).style({ "min-height": "24px" });
+const addMeanEl = button(iconEl("add")).style({ "min-height": "24px" });
+const editMeanEl = button(iconEl("pen")).style({ "min-height": "24px" });
+const noteEl = button(iconEl("pen")).style({ "min-height": "24px" });
 const dicDetailsEl = view().class("dic_details");
 
 dicEl.add([
@@ -928,7 +902,7 @@ async function setSectionTitle(sid: string) {
                 output: "title:string",
             });
             const ff = f.run(editText);
-            const stopEl = button(iconEl(close_svg)).on("click", () => {
+            const stopEl = button(iconEl("close")).on("click", () => {
                 ff.stop.abort();
                 pel.remove();
             });
@@ -1198,7 +1172,7 @@ async function showBookContent(book: book, id: string) {
     if (!isWordBook)
         bookContentEl.add(
             view()
-                .add(iconEl(recume_svg))
+                .add(iconEl("recume"))
                 .on("click", async () => {
                     autoPlay = true;
                     autoPlayTTSEl.el.checked = true;
@@ -1422,7 +1396,7 @@ async function showWordBook(book: book, s: section) {
                         const note = p(item.c.note);
                         pEl.add(
                             view().add([
-                                button(iconEl(pen_svg)).on("click", (_, el) => {
+                                button(iconEl("pen")).on("click", (_, el) => {
                                     addP(
                                         item.c.note,
                                         item.id,
@@ -1446,7 +1420,7 @@ async function showWordBook(book: book, s: section) {
                     if (item.c)
                         for (const i of item.c.means) {
                             const pel = view().add([
-                                button(iconEl(pen_svg)).on("click", (_, el) => {
+                                button(iconEl("pen")).on("click", (_, el) => {
                                     addP(
                                         i.text,
                                         item.id,
@@ -1568,7 +1542,7 @@ async function showWordBookMore(
     d.add([
         view()
             .style({ display: "flex", "flex-direction": "row-reverse" })
-            .add(button(iconEl(close_svg)).on("click", () => d.el.close())),
+            .add(button(iconEl("close")).on("click", () => d.el.close())),
         view().add([
             p("导出未学习的单词"),
             button("导出").on("click", () => {
@@ -1624,7 +1598,7 @@ async function showWordBookMore(
     ]);
     d.add([
         p("添加忽略词到拼写"),
-        button(iconEl(add_svg)).on("click", () => {
+        button(iconEl("add")).on("click", () => {
             ignoredWordSpell(
                 wordList
                     .filter((w) => w.type === "ignore")
@@ -1827,7 +1801,7 @@ async function showNormalBook(book: book, s: section) {
             const i = contentP.length;
             moreEl.add(
                 view()
-                    .add(iconEl(recume_svg))
+                    .add(iconEl("recume"))
                     .on("click", () => {
                         showLisent(contentP.at(i), moreEl);
                     }),
@@ -1837,12 +1811,12 @@ async function showNormalBook(book: book, s: section) {
 
         moreEl.add([
             view()
-                .add(iconEl(translate_svg))
+                .add(iconEl("translate"))
                 .on("click", () => {
                     translateContext(pel.el);
                 }),
             view()
-                .add(iconEl(exTrans_svg))
+                .add(iconEl("exTrans"))
                 .on("click", () => {
                     exTrans(pel.el, 0, book);
                 }),
@@ -1914,12 +1888,12 @@ async function showLisent(text: string, fromEl: ElType<HTMLElement>) {
             l.map((s) =>
                 view().add([
                     button()
-                        .add(iconEl(recume_svg))
+                        .add(iconEl("recume"))
                         .on("click", () => {
                             runTTS(s);
                         }),
                     button()
-                        .add(iconEl(more_svg))
+                        .add(iconEl("more"))
                         .on("click", (_, el) => {
                             showRecord(s, el);
                         }),
@@ -1938,7 +1912,7 @@ async function showLisent(text: string, fromEl: ElType<HTMLElement>) {
                 playEl(sL);
             }),
             button()
-                .add(iconEl(recume_svg))
+                .add(iconEl("recume"))
                 .on("click", async () => {
                     if (pausePlayP) {
                         pausePlayP();
@@ -1947,7 +1921,7 @@ async function showLisent(text: string, fromEl: ElType<HTMLElement>) {
                         pausePlayP = (await runTTS(text)).cancel;
                     }
                 }),
-            button(iconEl(close_svg)).on("click", () => {
+            button(iconEl("close")).on("click", () => {
                 d.el.close();
                 pausePlayP();
             }),
@@ -2125,18 +2099,18 @@ async function showRecord(text: string, fromEl: ElType<HTMLElement>) {
 
     const recordWs = wss(recordX.el, "");
 
-    const recordB = button(iconEl(mic_svg));
+    const recordB = button(iconEl("mic"));
     let startR = false;
 
     const record = RecordPlugin.create({ renderRecordedAudio: false });
     recordB.on("click", async () => {
         if (startR) {
             stopR();
-            recordB.clear().add(iconEl(mic_svg));
+            recordB.clear().add(iconEl("mic"));
         } else {
             startR = true;
             await record.startRecording();
-            recordB.clear().add(iconEl(pause_svg));
+            recordB.clear().add(iconEl("pause"));
         }
     });
     function stopR() {
@@ -2152,7 +2126,7 @@ async function showRecord(text: string, fromEl: ElType<HTMLElement>) {
         view("x").add([
             recordB,
             spacer(),
-            button(iconEl(close_svg)).on("click", () => {
+            button(iconEl("close")).on("click", () => {
                 d.el.close();
             }),
         ]),
@@ -2207,7 +2181,7 @@ async function translateContext(p: HTMLElement) {
 
     const f = new autoFun.def({ script: ["把输入的语言翻译成中文"], output: "list:[]" });
     const ff = f.run(text as any);
-    const stopEl = button(iconEl(close_svg)).on("click", () => {
+    const stopEl = button(iconEl("close")).on("click", () => {
         ff.stop.abort();
         pel.remove();
     });
@@ -2266,13 +2240,13 @@ async function exTrans(pEl: HTMLElement, i: number, book: book) {
                 "backdrop-filter": "var(--blur)",
                 "border-radius": "var(--border-radius)",
             }),
-            last: button(iconEl(left_svg)),
-            next: button(iconEl(right_svg)),
-            diff: button(iconEl(eye_svg)),
-            ai: button(iconEl(ai_svg)),
-            close: button(iconEl(close_svg)),
+            last: button(iconEl("left")),
+            next: button(iconEl("right")),
+            diff: button(iconEl("eye")),
+            ai: button(iconEl("ai")),
+            close: button(iconEl("close")),
             spellTip: {
-                _: button(iconEl(more_svg)),
+                _: button(iconEl("more")),
                 spellTipList: view("y").style({
                     position: "absolute",
                     top: "0",
@@ -2396,7 +2370,7 @@ async function exTrans(pEl: HTMLElement, i: number, book: book) {
         const el = view().add([
             p(t),
             button()
-                .add(iconEl(close_svg))
+                .add(iconEl("close"))
                 .on("click", () => el.el.remove()),
         ]);
         putToast(el, 0);
@@ -2465,10 +2439,7 @@ async function exTrans(pEl: HTMLElement, i: number, book: book) {
                                           "ok",
                                       ]
                                     : null,
-                                [
-                                    button(iconEl(close_svg)).style({ width: "var(--size0)", "flex-shrink": 0 }),
-                                    "cancel",
-                                ],
+                                [button(iconEl("close")).style({ width: "var(--size0)", "flex-shrink": 0 }), "cancel"],
                             ]);
 
                             spellErrorAnimate(xx.els.diffE);
@@ -2588,8 +2559,8 @@ const fontListEl = view().attr({ popover: "auto" }).class("font_list").addInto()
             bookStyle.fontSize = i;
             setBookStyle();
         },
-        font_small_svg,
-        font_large_svg,
+        "font_small",
+        "font_large",
     );
     const lineHeight = createRangeSetEl(
         bookStyle.lineHeight,
@@ -2598,8 +2569,8 @@ const fontListEl = view().attr({ popover: "auto" }).class("font_list").addInto()
             bookStyle.lineHeight = i;
             setBookStyle();
         },
-        line_height_small_svg,
-        line_height_large_svg,
+        "line_height_small",
+        "line_height_large",
     );
     const contentWidth = createRangeSetEl(
         bookStyle.contentWidth,
@@ -2608,8 +2579,8 @@ const fontListEl = view().attr({ popover: "auto" }).class("font_list").addInto()
             bookStyle.contentWidth = i;
             setBookStyle();
         },
-        content_width_small_svg,
-        content_width_large_svg,
+        "content_width_small",
+        "content_width_large",
     );
     const themei = radioGroup("theme");
     const themeSelect = view()
@@ -2697,7 +2668,7 @@ let editText = "";
 async function changeEdit(b: boolean) {
     isEdit = b;
     if (isEdit) {
-        changeEditEl.clear().add(iconEl(ok_svg));
+        changeEditEl.clear().add(iconEl("ok"));
         return setEdit();
     }
     const newC = view();
@@ -2718,7 +2689,7 @@ async function changeEdit(b: boolean) {
         }
         showBookContent(book, sectionId);
     }
-    changeEditEl.clear().add(iconEl(pen_svg));
+    changeEditEl.clear().add(iconEl("pen"));
 }
 changeEditEl.on("click", () => {
     isEdit = !isEdit;
@@ -3792,7 +3763,7 @@ async function showDicEl(mainTextEl: ReturnType<typeof textarea>, word: string, 
             view("x")
                 .style({ "justify-content": "flex-end" })
                 .add(
-                    button(iconEl(ok_svg)).on("click", () => {
+                    button(iconEl("ok")).on("click", () => {
                         // 获取所有checked的值
                         const checkedValues = Array.from(list.queryAll("input[type='checkbox']:checked")).map(
                             (el) => el.el.value,
@@ -4049,7 +4020,7 @@ function addP(
     } else pEl.add(word || sentence);
     const textEl = textarea().sv(text).attr({ autofocus: true });
     const aiB = getAiButtons(textEl, word, sentence);
-    const okEl = button(iconEl(ok_svg)).on("click", () => {
+    const okEl = button(iconEl("ok")).on("click", () => {
         const mean = textEl.gv.trim();
         div.el.close();
         if (index) {
@@ -4382,7 +4353,7 @@ function tmpAi(mainTextEl: ReturnType<typeof textarea>, info: string, fromEl: El
             view("x")
                 .style({ "justify-content": "flex-end" })
                 .add(
-                    button(iconEl(ok_svg)).on("click", () => {
+                    button(iconEl("ok")).on("click", () => {
                         const mean = textEl.gv.trim();
                         div.el.close();
                         if (mean !== ">") mainTextEl.el.setRangeText(`\n${mean}`);
@@ -4440,7 +4411,7 @@ async function showArticelAI() {
             view()
                 .style({ display: "flex", "justify-content": "flex-end" })
                 .add([
-                    button(iconEl(ok_svg)).on("click", async () => {
+                    button(iconEl("ok")).on("click", async () => {
                         const t = text.gv.trim();
                         div.el.close();
                         if (t !== ">") {
@@ -4475,7 +4446,7 @@ function ai(m: aim, text?: string) {
         userConfig = JSON.stringify(config);
     }
     const abort = new AbortController();
-    const stopEl = button(iconEl(close_svg)).on("click", () => {
+    const stopEl = button(iconEl("close")).on("click", () => {
         abort.abort();
         pel.remove();
     });
@@ -4511,7 +4482,7 @@ function ai(m: aim, text?: string) {
                 pel.clear();
                 pel.add([
                     `AI处理${text || ""}时出现错误`,
-                    button(iconEl(close_svg)).on("click", () => {
+                    button(iconEl("close")).on("click", () => {
                         pel.remove();
                     }),
                 ]);
@@ -4731,7 +4702,7 @@ async function autoIgnore(fromEl: ElType<HTMLElement>) {
                 })
                 .style({ width: "auto" }),
             spacer(),
-            button(iconEl(ok_svg)).on("click", async () => {
+            button(iconEl("ok")).on("click", async () => {
                 const words = f.queryAll("input:checked.ignore_word").map((el) => el.el.value);
                 addIgnore(words);
                 const wordsX = f.queryAll("input:checked:not(.ignore_word)").map((el) => el.el.value);
@@ -4817,13 +4788,13 @@ const reviewMoreEl = view()
 sectionSelect(reviewScope);
 reviewMoreEl.addInto();
 reviewReflashPEl.add(
-    button(iconEl(filter_svg)).on("click", (_, el) => {
+    button(iconEl("filter")).on("click", (_, el) => {
         popoverX(reviewMoreEl, el);
     }),
 );
 
 reviewReflashPEl.add(
-    button(iconEl(chart_svg)).on("click", (_, el) => {
+    button(iconEl("chart")).on("click", (_, el) => {
         popoverX(plotEl, el);
     }),
 );
@@ -4835,7 +4806,7 @@ const keyboardEl = view("y").class("simple-keyboard");
 if (getSetting(KEYBOARDDISPLAYPATH) === "default")
     keyboardEl.style({ height: `${await setting.getItem(KEYBOARDHEIGHTPATH)}px` });
 const handwriterCanvas = ele("canvas").el;
-const handwriterCheck = button(iconEl(ok_svg))
+const handwriterCheck = button(iconEl("ok"))
     .style({ display: "none" })
     .on("click", () => ocrSpell);
 const handwriterEl = view().class("spell_write").add([handwriterCanvas, handwriterCheck]);
@@ -5241,7 +5212,7 @@ async function getWordAiContext() {
 
         const tipEl = view().add([
             txt("正在生成AI例句……"),
-            button(iconEl(close_svg)).on("click", () => {
+            button(iconEl("close")).on("click", () => {
                 tipEl.remove();
                 x.stop.abort();
             }),
@@ -5399,9 +5370,9 @@ function getReviewCardButtons(id: string, card: Card, readText: string, f?: (rat
         quickly = finishTime - showTime < (await getReadTime(readText)) + 400;
         if (quickly) goodB.el.querySelector("img").src = very_ok_svg;
     }
-    const againB = b(Rating.Again, iconEl(close_svg));
-    const hardB = b(Rating.Hard, iconEl(help_svg));
-    const goodB = b(Rating.Good, iconEl(ok_svg));
+    const againB = b(Rating.Again, iconEl("close"));
+    const hardB = b(Rating.Hard, iconEl("help"));
+    const goodB = b(Rating.Good, iconEl("ok"));
     const buttons = view().add([againB, hardB, goodB]).class("review_b");
     return {
         buttons,
@@ -5530,7 +5501,7 @@ async function showSpellReview(x: { id: string; card: Card }) {
     if (r) {
         context
             .add(
-                button(iconEl(pen_svg)).on("click", (_, el) => {
+                button(iconEl("pen")).on("click", (_, el) => {
                     addP(
                         r.note || "",
                         word,
@@ -6089,7 +6060,7 @@ function onlineDicItem(name: string, url: string, lan: string) {
         input().sv(name),
         input().sv(url),
         input().sv(lan),
-        button(iconEl(close_svg)).on("click", () => {
+        button(iconEl("close")).on("click", () => {
             li.remove();
             saveSortOnlineDics();
         }),
@@ -6152,7 +6123,7 @@ settingEl.add(
                 addOnlineDic1El,
                 addOnlineDic2El,
                 addOnlineDic3El,
-                button(iconEl(add_svg)).on("click", () => {
+                button(iconEl("add")).on("click", () => {
                     onlineDicsEl.add(onlineDicItem(addOnlineDic1El.gv, addOnlineDic2El.gv, addOnlineDic3El.gv));
                     addOnlineDic1El.sv("");
                     addOnlineDic2El.sv("");
