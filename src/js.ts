@@ -5182,7 +5182,7 @@ async function getWordAiContext() {
     const newDue = due.word
         .toSorted((a, b) => a.card.due.getTime() - b.card.due.getTime())
         .filter((i) => i.card.state === State.Review)
-        .slice(0, maxReviewCount);
+        .slice(0, maxReviewCount * 3);
     console.log(newDue);
 
     for (const x of newDue) {
