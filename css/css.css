@@ -411,9 +411,9 @@ body {
 
         & > * > .p_more {
             display: none;
-            opacity: 0.2;
-            & > div {
-                display: inline-block;
+            & > button {
+                width: var(--font-size);
+                height: var(--font-size);
             }
         }
     }
