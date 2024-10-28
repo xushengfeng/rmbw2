@@ -192,8 +192,8 @@ body {
     position: relative;
 }
 :is(div, button) > .icon {
-    height: var(--size0);
-    width: var(--size0);
+    height: 100%;
+    width: 100%;
 }
 
 .hiden {
