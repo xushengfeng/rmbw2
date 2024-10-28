@@ -414,7 +414,7 @@ const bookSectionsEl = view().style({
     position: "relative",
     "flex-grow": "1",
 });
-const mainEl = view().addInto();
+const mainEl = view().style({ backgroundColor: "var(--bg)" }).addInto();
 const addBookEl = iconEl("add");
 const addSectionEL = iconEl("add");
 const bookNameEl = view();
