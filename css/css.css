@@ -194,6 +194,8 @@ body {
 :is(div, button) > .icon {
     height: 100%;
     width: 100%;
+    max-height: var(--b-button);
+    object-fit: contain;
 }
 
 .hiden {
