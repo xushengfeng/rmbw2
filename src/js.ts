@@ -3685,6 +3685,7 @@ async function showDic(id: string) {
             if (down.start || down.end) {
                 console.log(editText.slice(index.start, index.end));
                 saveChange();
+                setDicPosi(bookContentEl.query(`span[data-e="${index.end}"]`).el);
             }
             down.start = false;
             down.end = false;
