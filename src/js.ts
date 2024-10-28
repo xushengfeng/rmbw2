@@ -4419,6 +4419,7 @@ async function showArticelAI() {
     const text = textarea().sv(note || "> ");
     text.el.setSelectionRange(text.gv.length, text.gv.length);
     aiText(text, `这是一篇文章：${s.title}\n\n${s.text}`);
+    const handle = spacer().style({ cursor: "grab" });
     const div = ele("dialog")
         .class(AIDIALOG)
         .add([
@@ -4426,19 +4427,34 @@ async function showArticelAI() {
             view()
                 .style({ display: "flex", "justify-content": "flex-end" })
                 .add([
-                    iconEl("ok").on("click", async () => {
+                    handle,
+                    iconEl("close").on("click", async () => {
                         const t = text.gv.trim();
-                        div.el.close();
                         if (t !== ">") {
                             const s = await getSection(nowBook.sections);
                             s.note = t;
                             sectionsStore.setItem(nowBook.sections, s);
                         }
+                        div.remove();
                     }),
                 ]),
-        ]);
-    div.style({ left: "auto", right: "0", top: "32px" });
-    dialogX(div, articleAi);
+        ])
+        .style({ position: "fixed", left: "auto", right: "0", top: "32px" })
+        .addInto();
+    trackPoint(handle, {
+        start: () => {
+            const x = div.el.getBoundingClientRect().x;
+            const y = div.el.getBoundingClientRect().y;
+            return { x, y };
+        },
+        ing: (p) => {
+            div.style({ left: `${p.x}px`, top: `${p.y}px`, right: "" });
+            handle.style({ cursor: "grabbing" });
+        },
+        end: () => {
+            handle.style({ cursor: "grab" });
+        },
+    });
 }
 
 type aim = { role: "system" | "user" | "assistant"; content: string }[];
