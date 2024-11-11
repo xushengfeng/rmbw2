@@ -6654,8 +6654,8 @@ const asyncEl = view().add([
                 ],
                 1,
             ),
-            label([input().data({ path: GitHubConfigPath.path }), "path："]),
-            label([input().data({ path: GitHubConfigPath.download }), "替换下载："]),
+            label([input().data({ path: GitHubConfigPath.path }), "path："], 1),
+            label([input().data({ path: GitHubConfigPath.download }), "替换下载："], 1),
         ]),
     ]),
 ]);
