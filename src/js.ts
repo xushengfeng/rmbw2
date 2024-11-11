@@ -3109,6 +3109,13 @@ const autoNewWordEl = view().add([
 ]);
 markListBarEl.add([autoNewWordEl, markListEl]);
 
+function wordMarkChanged(w: section["words"], init?: boolean) {
+    console.log(w, Object.values(w).length);
+    if (!init) {
+        checkVisitAll(w);
+    }
+}
+
 async function showMarkList() {
     markListEl.clear().attr({ lang: studyLan });
     const list = await getAllMarks();
@@ -3143,6 +3150,7 @@ async function showMarkList() {
                             }
                             delete section.words[i.id];
                             sectionsStore.setItem(sectionId, section);
+                            wordMarkChanged(section.words);
                             remove();
 
                             if (i.id === nowDicId && dicEl.el.classList.contains(DICSHOW)) hideDicEl.el.click();
@@ -3299,7 +3307,6 @@ async function showDic(id: string) {
             r.trans = text;
             await card2sentence.setItem(wordx.id, r);
             visit(true);
-            checkVisitAll(section);
         }
     };
 
@@ -3317,7 +3324,7 @@ async function showDic(id: string) {
         wordx.id = sentenceCardId;
         if (dicTransContent.gv) {
             wordx.visit = true;
-            checkVisitAll(section);
+            wordMarkChanged(section.words);
         }
         await saveWordX(wordx);
 
@@ -3365,6 +3372,7 @@ async function showDic(id: string) {
     async function visit(t: boolean) {
         wordx.visit = t;
         await saveWordX(wordx);
+        wordMarkChanged(section.words);
     }
 
     async function showWord() {
@@ -3449,7 +3457,7 @@ async function showDic(id: string) {
                         visit(true);
                     }
                     search(Word.word);
-                    checkVisitAll(section);
+                    wordMarkChanged(section.words);
                 },
                 addMeanEl,
             );
@@ -3481,7 +3489,7 @@ async function showDic(id: string) {
                         await changeDicMean(Word.word, -1);
                     }
                     search(Word.word);
-                    checkVisitAll(section);
+                    wordMarkChanged(section.words);
                 },
                 editMeanEl,
             );
@@ -3567,7 +3575,6 @@ async function showDic(id: string) {
             r.trans = dicTransContent.gv;
             await card2sentence.setItem(wordx.id, r);
             visit(true);
-            checkVisitAll(section);
         };
 
         noteEl.el.onclick = async () => {
@@ -3859,6 +3866,7 @@ async function saveCard(v: {
     };
 
     sectionsStore.setItem(sectionId, section);
+    wordMarkChanged(section.words);
     return id;
 }
 
@@ -4527,8 +4535,8 @@ const checkVisit = {
     time: 0,
 };
 
-function checkVisitAll(section: section) {
-    const l = Object.values(section.words);
+function checkVisitAll(words: section["words"]) {
+    const l = Object.values(words);
     const visitAll = l.every((i) => i.visit);
     if (
         visitAll &&
