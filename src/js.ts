@@ -6406,7 +6406,7 @@ async function setAllData(json: allData, textId?: string) {
     const wrongL: { [name: string]: { n: number; o: number } } = {};
     for (const storeName in allData2Store) {
         const oldLength = await allData2Store[storeName].length();
-        const newLength = Object.keys(json[storeName]).length;
+        const newLength = Object.keys(json[storeName] ?? {}).length;
         if (oldLength > 10 && newLength < 0.5 * oldLength) {
             wrongL[storeName] = { n: newLength, o: oldLength };
         }
