@@ -919,6 +919,8 @@ let nowBook = {
     sections: "",
 };
 
+let reflashSectionEl = (words: section["words"]) => {};
+
 let isWordBook = false;
 
 showLocalBooks();
@@ -1135,7 +1137,7 @@ async function showBookSections(book: book) {
     for (const i of sections) {
         sectionsX.push(await getSection(i));
     }
-    vlist(bookSectionsEl, sections, { iHeight: 24, paddingTop: 16, paddingLeft: 16 }, (i) => {
+    const r = vlist(bookSectionsEl, sections, { iHeight: 24, paddingTop: 16, paddingLeft: 16 }, (i) => {
         const sEl = view();
         const s = sectionsX[i];
         const title = getSectionTitle(book, sections[i], s.title, true) || `章节${Number(i) + 1}`;
@@ -1144,8 +1146,6 @@ async function showBookSections(book: book) {
         if (Object.values(s.words).some((i) => !i.visit)) sEl.class(TODOMARK);
         if (book.type === "text" && Object.values(s.words).length === 0) sEl.class(UNREAD);
         sEl.on("click", async () => {
-            sEl.el.classList.remove(TODOMARK);
-
             bookSectionsEl.query(`.${SELECTEDITEM}`).el.classList.remove(SELECTEDITEM);
             sEl.class(SELECTEDITEM);
 
@@ -1180,6 +1180,11 @@ async function showBookSections(book: book) {
         });
         return sEl;
     });
+    reflashSectionEl = (words: section["words"]) => {
+        const nowSection = sectionsX[sections.indexOf(nowBook.sections)];
+        nowSection.words = words;
+        r.show();
+    };
 }
 
 let contentP: string[] = [];
@@ -3114,6 +3119,7 @@ function wordMarkChanged(w: section["words"], init?: boolean) {
     if (!init) {
         checkVisitAll(w);
     }
+    reflashSectionEl(w);
 }
 
 async function showMarkList() {
