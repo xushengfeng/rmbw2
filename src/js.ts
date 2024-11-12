@@ -5874,7 +5874,7 @@ plotEl
 
 async function renderCardDueAll() {
     const wordsScope = await getWordsScope();
-    const wordDue: string[] = [];
+    const wordDue = new Set<string>();
     const spellDue: number[] = [];
     const sentenceDue: string[] = [];
 
@@ -5890,7 +5890,7 @@ async function renderCardDueAll() {
         )
             return;
         for (const m of v.means) {
-            wordDue.push(m.card_id);
+            wordDue.add(m.card_id);
         }
     });
     await spellStore.iterate((v, k: string) => {
@@ -5904,7 +5904,7 @@ async function renderCardDueAll() {
     const wordDue1: number[] = [];
     const sentenceDue1: number[] = [];
     await cardsStore.iterate((v, k) => {
-        if (wordDue.includes(k)) {
+        if (wordDue.has(k)) {
             wordDue1.push(v.due.getTime());
             wordP[v.state]++;
             return;
@@ -5943,42 +5943,9 @@ async function renderCharts() {
 }
 
 function renderCardDue(text: string, data: number[]) {
-    const pc = view().class("oneD_plot");
     const now = time();
-    const zoom = 1 / (timeD.h(1) / 10);
-    const _max = now + timeD.d(7);
-    let _min = Number.POSITIVE_INFINITY;
-    for (const d of data.concat([now])) if (d < _min) _min = d;
-    let count = 0;
-    const list: Array<ElType<HTMLElement>> = [];
-    for (let min = _min; min < _max; min += 2048 / zoom) {
-        const max = Math.min(min + 2048 / zoom, _max);
-        const canvas = ele("canvas");
-        canvas.el.width = (max - min) * zoom;
-        if (max === _max) canvas.el.width++;
-        canvas.el.height = 16;
-        const ctx = canvas.el.getContext("2d");
-        function l(x: number, color: string) {
-            ctx.strokeStyle = color;
-            ctx.beginPath();
-            ctx.moveTo(x, 0);
-            ctx.lineTo(x, 16);
-            ctx.stroke();
-        }
-        const nowx = (now - min) * zoom;
-        for (const d of data) {
-            if (d < min || max < d) continue;
-            const x = (d - min) * zoom;
-            l(x, "#000");
-            if (x < nowx) count++;
-        }
-        l(nowx, "#f00");
-        l((now + timeD.h(1) - min) * zoom, "#00f");
-        l((now + timeD.d(1) - min) * zoom, "#00f");
-        list.push(canvas);
-    }
-    pc.add(list, 3);
-    const f = view().add([text, String(count), pc]);
+    const c = data.filter((i) => i < now).length;
+    const f = view().add([text, String(c)]);
     return f;
 }
 
