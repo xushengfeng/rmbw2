@@ -3666,9 +3666,11 @@ async function showDic(id: string) {
         const index = { start: contextStart, end: contextEnd };
         startEl.el.onpointerdown = (e) => {
             down.start = true;
+            dicEl.el.classList.remove(DICSHOW);
         };
         endEl.el.onpointerdown = (e) => {
             down.end = true;
+            dicEl.el.classList.remove(DICSHOW);
         };
         document.onpointermove = (e) => {
             if (down.start) {
@@ -3699,6 +3701,7 @@ async function showDic(id: string) {
                 console.log(editText.slice(index.start, index.end));
                 saveChange();
                 setDicPosi(bookContentEl.query(`span[data-e="${index.end}"]`).el);
+                dicEl.class(DICSHOW);
             }
             down.start = false;
             down.end = false;
