@@ -1137,53 +1137,57 @@ async function showBookSections(book: book) {
     for (const i of sections) {
         sectionsX.push(await getSection(i));
     }
-    const r = vlist(bookSectionsEl, sections, { iHeight: 24, paddingTop: 16, paddingLeft: 16 }, (i) => {
-        const sEl = view();
-        const s = sectionsX[i];
-        const title = getSectionTitle(book, sections[i], s.title, true) || `章节${Number(i) + 1}`;
-        sEl.attr({ innerText: title, title });
-        if (nowBook.sections === sections[i]) sEl.class(SELECTEDITEM);
-        if (Object.values(s.words).some((i) => !i.visit)) sEl.class(TODOMARK);
-        if (book.type === "text" && Object.values(s.words).length === 0) sEl.class(UNREAD);
-        sEl.on("click", async () => {
-            bookSectionsEl.query(`.${SELECTEDITEM}`).el.classList.remove(SELECTEDITEM);
-            sEl.class(SELECTEDITEM);
+    function show() {
+        bookSectionsEl.clear();
+        for (const i in sectionsX) {
+            const sEl = view();
+            const s = sectionsX[i];
+            const title = getSectionTitle(book, sections[i], s.title, true) || `章节${Number(i) + 1}`;
+            sEl.attr({ innerText: title, title });
+            if (nowBook.sections === sections[i]) sEl.class(SELECTEDITEM);
+            if (Object.values(s.words).some((i) => !i.visit)) sEl.class(TODOMARK);
+            if (book.type === "text" && Object.values(s.words).length === 0) sEl.class(UNREAD);
+            sEl.on("click", async () => {
+                bookSectionsEl.query(`.${SELECTEDITEM}`).el.classList.remove(SELECTEDITEM);
+                sEl.class(SELECTEDITEM);
 
-            nowBook.sections = sections[i];
-            showBookContent(book, sections[i]);
-            setBookS();
-            if (nowBook.book === coreWordBook.id) return;
-            book.lastPosi = Number(i);
-            bookshelfStore.setItem(nowBook.book, book);
-        }).on("contextmenu", async (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            menuEl.clear();
-            if ((await getBooksById(nowBook.book)).canEdit) {
+                nowBook.sections = sections[i];
+                showBookContent(book, sections[i]);
+                setBookS();
+                if (nowBook.book === coreWordBook.id) return;
+                book.lastPosi = Number(i);
+                bookshelfStore.setItem(nowBook.book, book);
+            }).on("contextmenu", async (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                menuEl.clear();
+                if ((await getBooksById(nowBook.book)).canEdit) {
+                    menuEl.add(
+                        view()
+                            .add("重命名")
+                            .on("click", async () => {
+                                const t = await setSectionTitle(sections[i]);
+                                if (t) sEl.attr({ innerText: t });
+                            }).el,
+                    );
+                }
                 menuEl.add(
                     view()
-                        .add("重命名")
+                        .add("复制id")
                         .on("click", async () => {
-                            const t = await setSectionTitle(sections[i]);
-                            if (t) sEl.attr({ innerText: t });
+                            navigator.clipboard.writeText(sections[i]);
                         }).el,
                 );
-            }
-            menuEl.add(
-                view()
-                    .add("复制id")
-                    .on("click", async () => {
-                        navigator.clipboard.writeText(sections[i]);
-                    }).el,
-            );
-            showMenu(e.clientX, e.clientY);
-        });
-        return sEl;
-    });
+                showMenu(e.clientX, e.clientY);
+            });
+            bookSectionsEl.add(sEl);
+        }
+    }
+    show();
     reflashSectionEl = (words: section["words"]) => {
         const nowSection = sectionsX[sections.indexOf(nowBook.sections)];
         nowSection.words = words;
-        r.show();
+        show();
     };
 }
 

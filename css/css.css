@@ -256,6 +256,7 @@ body {
     border-radius: 0 var(--br2) var(--br2) 0;
     font-family: var(--font-family);
     & > :nth-child(3) {
+        padding-left: 1rem;
         & > div {
             white-space: nowrap;
             overflow: hidden;
