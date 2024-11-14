@@ -5203,8 +5203,8 @@ reviewReflashEl.on("click", async () => {
     const l = await getReviewDue(reviewType);
     console.log(l);
     if (reviewAi.el.checked && reviewType === "word") await getWordAiContext();
-    showReview(l, reviewType);
     reviewCount = 0;
+    showReview(l, reviewType);
 });
 
 let spellCheckF: (text: string) => void = (text) => console.log(text);
