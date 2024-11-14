@@ -1239,7 +1239,7 @@ async function showBookContent(book: book, id: string) {
 async function showWordBook(book: book, s: section) {
     const rawWordList: { text: string; c: record; id: string; type?: "ignore" | "learn"; means?: number }[] = [];
     let wordList: typeof rawWordList = [];
-    const l = s.text.trim().split("\n");
+    const l = s.text.split("\n").filter((i) => i.trim());
     const cards: Map<string, Card> = new Map();
     await cardsStore.iterate((v, k) => {
         cards.set(k, v);
