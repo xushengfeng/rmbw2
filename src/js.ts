@@ -444,7 +444,11 @@ bookButtons.add([
 ]);
 
 let bookContentEl = view().attr({ id: "book_content" }) as ElType<HTMLElement>;
-const bookContentContainerEl = view().attr({ id: "book_content_container" }).addInto(bookContentEl).addInto(xbookEl);
+const bookContentContainerEl = view()
+    .attr({ id: "book_content_container" })
+    .style({ "--paper-bg": `url("${await nosieBg()}") repeat` })
+    .addInto(bookContentEl)
+    .addInto(xbookEl);
 
 const changeStyleBar = view().attr({ popover: "auto" }).class("change_style_bar").addInto();
 
@@ -491,6 +495,32 @@ const reviewEl = view()
 
 const reviewReflashEl = iconEl("reload").addInto(reviewButtonsEl);
 const reviewModeEl = view().attr({ id: "review_mode" }).addInto(reviewButtonsEl);
+
+function nosieBg() {
+    const canvas = document.createElement("canvas");
+    const w = 100;
+    canvas.width = w;
+    canvas.height = w;
+    const ctx = canvas.getContext("2d");
+    for (let x = 0; x < w; x += 1) {
+        for (let y = 0; y < w; y += 1) {
+            if (Math.random() > 0.1) continue;
+            const f = 0.2 * Math.random();
+            ctx.fillStyle = `rgb(0,0,0,${f})`;
+            ctx.fillRect(x, y, 1, 1);
+        }
+    }
+    const { promise, resolve } = Promise.withResolvers<string>();
+    canvas.toBlob(
+        (b) => {
+            const url = URL.createObjectURL(b);
+            resolve(url);
+        },
+        "image/webp",
+        1,
+    );
+    return promise;
+}
 
 function putToast(ele: ElType<HTMLElement>, time = 2000) {
     let toastEl = pack(document.body).query(".toast");
