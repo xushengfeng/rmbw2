@@ -17,7 +17,6 @@
     "dependencies": {
         "@oddbird/popover-polyfill": "^0.3.7",
         "@types/diff-match-patch": "^1.0.36",
-        "@zip.js/zip.js": "^2.7.32",
         "auto-fun": "^2.1.2",
         "diff-match-patch": "^1.0.5",
         "diff-match-patch-line-and-word": "^0.1.3",

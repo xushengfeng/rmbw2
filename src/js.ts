@@ -46,13 +46,6 @@ const localForage = {
 
 import { dicParse, dic, type dicMap } from "../dic/src/main";
 
-import {
-    BlobReader as zipBlobReader,
-    TextWriter as zipTextWriter,
-    ZipReader as zipZipReader,
-    fs as zipfs,
-} from "@zip.js/zip.js";
-
 import { hyphenate } from "hyphen/en";
 const hyphenChar = "·";
 
@@ -6416,20 +6409,17 @@ async function setAllData(json: allData, textId?: string) {
     });
 }
 
-async function xunzip(file: Blob) {
-    const zipFileReader = new zipBlobReader(file);
-    const strWriter = new zipTextWriter();
-    const zipReader = new zipZipReader(zipFileReader);
-    const firstEntry = (await zipReader.getEntries()).shift();
-    const str = await firstEntry.getData(strWriter);
-    await zipReader.close();
-    return str;
+async function xUnGzip(file: Blob) {
+    const stream = file.stream().pipeThrough(new DecompressionStream("gzip"));
+    const blob = await new Response(stream).blob();
+    return blob.text();
 }
 
-function xzip(data: string) {
-    const fs = new zipfs.FS();
-    fs.addText(rmbwJsonName, data);
-    return fs.exportBlob();
+async function xGzip(data: string) {
+    const file = new File([data], rmbwJsonName, { type: "text/json;charset=utf-8" });
+    const stream = file.stream().pipeThrough(new CompressionStream("gzip"));
+    const blob = new Response(stream).blob();
+    return blob;
 }
 
 function basicAuth(username: string, passwd: string) {
@@ -6566,12 +6556,12 @@ const asyncEl = view().add([
         ele("h3").add("webDAV"),
         button("↓").on("click", async () => {
             const data = await getDAV();
-            const str = await xunzip(data);
+            const str = await xUnGzip(data);
             setAllData(JSON.parse(str));
         }),
         button("↑").on("click", async () => {
             const data = await getAllData();
-            const file = await xzip(data);
+            const file = await xGzip(data);
             setDAV(file);
         }),
         ele("form").add([
