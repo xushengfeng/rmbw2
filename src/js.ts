@@ -46,7 +46,12 @@ const localForage = {
 
 import { dicParse, dic, type dicMap } from "../dic/src/main";
 
-import * as zip from "@zip.js/zip.js";
+import {
+    BlobReader as zipBlobReader,
+    TextWriter as zipTextWriter,
+    ZipReader as zipZipReader,
+    fs as zipfs,
+} from "@zip.js/zip.js";
 
 import { hyphenate } from "hyphen/en";
 const hyphenChar = "·";
@@ -6412,9 +6417,9 @@ async function setAllData(json: allData, textId?: string) {
 }
 
 async function xunzip(file: Blob) {
-    const zipFileReader = new zip.BlobReader(file);
-    const strWriter = new zip.TextWriter();
-    const zipReader = new zip.ZipReader(zipFileReader);
+    const zipFileReader = new zipBlobReader(file);
+    const strWriter = new zipTextWriter();
+    const zipReader = new zipZipReader(zipFileReader);
     const firstEntry = (await zipReader.getEntries()).shift();
     const str = await firstEntry.getData(strWriter);
     await zipReader.close();
@@ -6422,7 +6427,7 @@ async function xunzip(file: Blob) {
 }
 
 function xzip(data: string) {
-    const fs = new zip.fs.FS();
+    const fs = new zipfs.FS();
     fs.addText(rmbwJsonName, data);
     return fs.exportBlob();
 }
