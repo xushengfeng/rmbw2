@@ -5219,25 +5219,29 @@ async function getWordAiContext() {
     const l: { id: string; word: string; mean: string }[] = [];
     const newDue = due.word
         .toSorted((a, b) => a.card.due.getTime() - b.card.due.getTime())
-        .filter((i) => i.card.state === State.Review)
-        .slice(0, maxReviewCount * 3);
-    console.log(newDue);
+        .filter((i) => i.card.state === State.Review);
+    const needDue = newDue.slice(0, maxReviewCount);
+    const willNeedDue = newDue.slice(maxReviewCount, maxReviewCount * 3);
 
-    for (const x of newDue) {
-        if (await lijuCache.getItem(x.id)) {
-            aiContexts[x.id] = { text: (await lijuCache.getItem(x.id))[0] };
-            continue;
-        }
-        const wordid = await card2word.getItem(x.id);
-        const wordRecord = await wordsStore.getItem(wordid);
-        for (const i of wordRecord.means) {
-            if (i.card_id === x.id) {
-                l.push({ id: x.id, word: wordRecord.word, mean: i.text });
-                break;
+    async function add(due: typeof newDue) {
+        for (const x of due) {
+            if (await lijuCache.getItem(x.id)) {
+                aiContexts[x.id] = { text: (await lijuCache.getItem(x.id))[0] };
+                continue;
+            }
+            const wordid = await card2word.getItem(x.id);
+            const wordRecord = await wordsStore.getItem(wordid);
+            for (const i of wordRecord.means) {
+                if (i.card_id === x.id) {
+                    l.push({ id: x.id, word: wordRecord.word, mean: i.text });
+                    break;
+                }
             }
         }
     }
-
+    await add(needDue);
+    if (l.length === 0) return;
+    await add(willNeedDue);
     if (l.length === 0) return;
 
     let rr: { id: string; word: string; sentence: string }[] = [];
