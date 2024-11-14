@@ -6773,7 +6773,12 @@ settingEl.add(
     ]),
 );
 
-settingEl.add(view().add([ele("h2").add(txt("文档")), a("./docs/docs.html").add("点击查看文档")]).el);
+settingEl.add(
+    view().add([
+        ele("h2").add(txt("文档")),
+        a("https://github.com/xushengfeng/rmbw2/blob/master/docs/tutorial.md").add("点击查看文档"),
+    ]).el,
+);
 
 settingEl.add(
     view()
@@ -6799,7 +6804,7 @@ settingEl.add(
                 }),
             ]),
             view().add([a("https://github.com/xushengfeng/rmbw2/").add(["项目开源地址", image(githubIcon, "")])]),
-            view().add(a("https://github.com/xushengfeng/xlinkote/blob/master/LICENSE").add("GPL-3.0")),
+            view().add(a("https://github.com/xushengfeng/rmbw2/blob/master/LICENSE").add("GPL-3.0")),
             view().add([
                 "Designed and programmed by xsf ",
                 a("mailto:xushengfeng_zg@163.com").add("xushengfeng_zg@163.com"),

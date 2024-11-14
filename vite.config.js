@@ -10,7 +10,7 @@ export default defineConfig({
         target: "esnext",
         sourcemap: true,
         rollupOptions: {
-            input: { index: resolve(__dirname, "index.html"), docs: resolve(__dirname, "docs/docs.html") },
+            input: { index: resolve(__dirname, "index.html") },
         },
     },
     esbuild: {
