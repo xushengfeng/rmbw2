@@ -5418,7 +5418,7 @@ function getReviewCardButtons(id: string, card: Card, readText: string, f?: (rat
     async function firstClick() {
         hasClick = true;
         finishTime = time();
-        quickly = finishTime - showTime < (await getReadTime(readText)) + 400;
+        quickly = finishTime - showTime < (await getReadTime(readText)) + 800;
         if (quickly) goodB.el.querySelector("img").src = very_ok_svg;
     }
     const againB = b(Rating.Again, iconEl("close"));
@@ -5434,8 +5434,8 @@ function getReviewCardButtons(id: string, card: Card, readText: string, f?: (rat
 async function getReadTime(text: string) {
     const segmenter = new Segmenter(studyLan, { granularity: "word" });
     const segments = segmenter.segment(text);
-    const wordsCount = Array.from(segments).length;
-    return wordsCount * (Number(await setting.getItem("user.readSpeed")) || 100);
+    const wordsCount = Array.from(segments).filter((i) => i.isWordLike).length;
+    return Math.max(wordsCount, 16) * (Number(await setting.getItem("user.readSpeed")) || 150);
 }
 
 async function showSpellReview(x: { id: string; card: Card }) {
