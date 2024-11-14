@@ -53,8 +53,6 @@ const hyphenChar = "·";
 
 const Segmenter = Intl.Segmenter;
 
-import "@oddbird/popover-polyfill";
-
 import { MsEdgeTTS, OUTPUT_FORMAT } from "msedge-tts-browserify";
 
 import { type Card, createEmptyCard, generatorParameters, FSRS, Rating, State } from "ts-fsrs";
