@@ -577,8 +577,8 @@ type section = {
     words: {
         [key: string]: {
             id: string;
-            index: [number, number]; // 文章绝对定位
-            cIndex: [number, number];
+            index: txtSlice;
+            cIndex: txtSlice;
             visit: boolean;
             type: "word" | "sentence";
         };
@@ -1837,8 +1837,8 @@ async function showNormalBook(book: book, s: section) {
 
                     const id = await saveCard({
                         key: span.getAttribute("data-t"),
-                        index: { start: Number(span.getAttribute("data-s")), end: Number(span.getAttribute("data-e")) },
-                        cindex: { start: s, end: e },
+                        index: [Number(span.getAttribute("data-s")), Number(span.getAttribute("data-e"))] as txtSlice,
+                        cindex: [s, e] as txtSlice,
                     });
                     if (
                         span.classList.contains(MARKWORD) ||
@@ -2805,7 +2805,7 @@ function changePosi(section: section, text: string) {
     return section;
 }
 
-function patchPosi(source: number[], map: number[], index: [number, number]) {
+function patchPosi<i extends [number, number]>(source: number[], map: number[], index: i) {
     const start = index[0];
     const end = index[1];
     let Start = 0;
@@ -2818,7 +2818,7 @@ function patchPosi(source: number[], map: number[], index: [number, number]) {
             End = Math.min(map[i] + (end - source[i]), map[i + 1]);
         }
     }
-    return [Start, End] as [number, number];
+    return [Start, End] as i;
 }
 
 import diff_match_patch, { type Diff } from "diff-match-patch";
@@ -3057,13 +3057,16 @@ function lemmatizer(word: string) {
 
 let usSpell = (await wordMapStore.getItem("en")) || [];
 
+type reSlice = [number, number] & { readonly __tag: unique symbol };
+type txtSlice = [number, number] & { readonly __tag: unique symbol }; // 文章绝对定位
+
 type record = {
     word: string;
     means: {
         text: string;
         contexts: {
             text: string;
-            index: [number, number]; // 语境定位
+            index: reSlice; // 语境定位
             source: { book: string; sections: string; id: string }; // 原句通过对比计算
         }[];
         card_id: string;
@@ -3352,7 +3355,7 @@ async function showDic(id: string) {
                 s.wordRecord.set(record);
             }
         },
-        contextIndex: async (v: [number, number], oldV) => {
+        contextIndex: async (v: txtSlice, oldV) => {
             const context = editText.slice(...v);
             if (oldV) {
                 wordx.cIndex = v;
@@ -3374,7 +3377,7 @@ async function showDic(id: string) {
             }
             trackDic();
         },
-        sourceIndex: (v: [number, number], oldV) => {
+        sourceIndex: (v: txtSlice, oldV) => {
             if (oldV)
                 if (s.type.get() === "word") {
                     const means = s.wordMeans.get();
@@ -3499,7 +3502,7 @@ async function showDic(id: string) {
     function wordIndex() {
         const sI = s.sourceIndex.get();
         const cI = s.contextIndex.get();
-        return [sI[0] - cI[0], sI[1] - cI[0]] as [number, number];
+        return [sI[0] - cI[0], sI[1] - cI[0]] as [number, number] as reSlice;
     }
 
     dicTransB.el.onclick = async () => {
@@ -3526,7 +3529,7 @@ async function showDic(id: string) {
         const sentenceCardId = uuid();
         const contextStart = s.contextIndex.get()[0];
         const contextEnd = s.contextIndex.get()[1];
-        s.sourceIndex.set([contextStart, contextEnd]);
+        s.sourceIndex.set([contextStart, contextEnd] as txtSlice);
         wordx.index[0] = contextStart;
         wordx.index[1] = contextEnd;
         wordx.type = "sentence";
@@ -3878,9 +3881,9 @@ async function showDic(id: string) {
             down.end = false;
         };
         async function saveChange() {
-            s.contextIndex.set([index.start, index.end]);
+            s.contextIndex.set([index.start, index.end] as txtSlice);
             if (isSentence) {
-                wordx.index = [index.start, index.end];
+                wordx.index = [index.start, index.end] as txtSlice;
                 await saveWordX(wordx);
             }
         }
@@ -4003,22 +4006,22 @@ async function dicSentences(contexts: record["means"][0]["contexts"]) {
 
 async function saveCard(v: {
     key: string;
-    index: { start: number; end: number };
-    cindex: { start: number; end: number };
+    index: txtSlice;
+    cindex: txtSlice;
 }) {
     const sectionId = nowBook.sections;
     const section = await getSection(sectionId);
     for (const i in section.words) {
         const index = section.words[i].index;
-        if (index[0] <= v.index.start && v.index.end <= index[1] && section.words[i].type === "word") {
+        if (index[0] <= v.index[0] && v.index[1] <= index[1] && section.words[i].type === "word") {
             return i;
         }
     }
     const id = uuid();
     section.words[id] = {
         id: v.key,
-        index: [v.index.start, v.index.end],
-        cIndex: [v.cindex.start, v.cindex.end],
+        index: v.index,
+        cIndex: v.cindex,
         visit: false,
         type: "word",
     };
@@ -4183,7 +4186,7 @@ function addP(
     sentence: string,
     index: record["means"][0]["contexts"][0]["index"],
     tags: bOp,
-    f: (text: string, sentence?: string, index?: [number, number], tags?: bOp) => void,
+    f: (text: string, sentence?: string, index?: reSlice, tags?: bOp) => void,
     fromEl: ElType<HTMLElement>,
 ) {
     const pEl = p().attr({ lang: studyLan });
@@ -4775,7 +4778,7 @@ function flatWordCard(record: record, id: string) {
         index: -1,
         card_id: "",
         text: "",
-        context: { index: [Number.NaN, Number.NaN], source: { book: "", sections: "", id: "" }, text: "" },
+        context: { index: [Number.NaN, Number.NaN] as reSlice, source: { book: "", sections: "", id: "" }, text: "" },
         tag: [tOp.and],
     };
     if (!record) return Word;
