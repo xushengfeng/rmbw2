@@ -1708,6 +1708,8 @@ let wordFreq: { [word: string]: number } = {};
 let properN: string[] = [];
 
 async function showNormalBook(book: book, s: section) {
+    console.log(s);
+
     const segmenter = new Segmenter(book.language, { granularity: book.wordSplit || "word" });
     const osL = Array.from(new Segmenter(book.language, { granularity: "sentence" }).segment(s.text));
     const sL: Intl.SegmentData[] = [];
@@ -3270,6 +3272,50 @@ let dicTransAi: AbortController;
 
 let nowDicId = "";
 
+function states<t extends Record<string, (v, oldV) => void>>(states: t) {
+    const s = new Map<keyof t, t[keyof t]>();
+    // @ts-ignore
+    const x = {};
+    for (const [k, v] of Object.entries(states)) {
+        const setK = (newV) => {
+            const oldV = s.get(k);
+            s.set(k, newV);
+            return oldV;
+        };
+        x[k] = {
+            get: () => structuredClone(s.get(k)),
+            set: (newV) => {
+                const oldV = setK(newV);
+                // @ts-ignore
+                if (oldV !== newV) v(newV, oldV);
+                // todo obj diff
+                console.log(`set ${k}:`, structuredClone(newV));
+                return newV;
+            },
+            setV: (newV) => {
+                setK(newV);
+                return newV;
+            },
+            setAsync: async (newV) => {
+                const oldV = setK(newV);
+                console.trace();
+                // @ts-ignore
+                if (oldV !== newV) await v(newV, oldV);
+                console.log(`${k}:`, structuredClone(newV));
+                return newV;
+            },
+        };
+    }
+    return x as {
+        [k in keyof t]: {
+            get: () => Parameters<t[k]>["0"];
+            set: (v: Parameters<t[k]>["0"]) => Parameters<t[k]>["0"];
+            setV: (v: Parameters<t[k]>["0"]) => Parameters<t[k]>["0"];
+            setAsync: (v: Parameters<t[k]>["0"]) => Promise<Parameters<t[k]>["0"]>;
+        };
+    };
+}
+
 async function showDic(id: string) {
     dicTransAi?.abort();
     dicTransAi = null;
@@ -3281,64 +3327,187 @@ async function showDic(id: string) {
     const sectionId = nowBook.sections;
     const section = await getSection(sectionId);
 
+    const s = states({
+        type: async (v: "word" | "sentence", oldV) => {
+            if (oldV === "word") {
+                await change2Sentence();
+            }
+            if (v === "sentence") {
+                showSentence(); // 最多触发两次
+            } else {
+                showWord(wordx.id); // 最多触发一次
+            }
+        },
+        word: (v: string, oldV) => {
+            if (oldV) changeWord(v, oldV);
+        },
+        context: async (v: string, oldV) => {
+            if (oldV) {
+                const record = s.wordRecord.get();
+                const m = record?.means[s.wordMeansI.get()];
+                if (m) {
+                    const context = m.contexts.find((i) => i.source.id === id);
+                    context.text = v;
+                }
+                s.wordRecord.set(record);
+            }
+        },
+        contextIndex: async (v: [number, number], oldV) => {
+            const context = editText.slice(...v);
+            if (oldV) {
+                wordx.cIndex = v;
+                await saveWordX(wordx);
+                if (s.type.get() === "word") {
+                    const means = s.wordMeans.get();
+                    const m = means[s.wordMeansI.get()];
+                    if (m) {
+                        const c = m.contexts.find((i) => i.source.id === id);
+                        c.text = context;
+                        c.index = wordIndex();
+                        s.wordMeans.set(means);
+                    }
+                } else {
+                    const r = await card2sentence.getItem(wordx.id);
+                    r.text = context;
+                    card2sentence.setItem(wordx.id, r);
+                }
+            }
+            trackDic();
+        },
+        sourceIndex: (v: [number, number], oldV) => {
+            if (oldV)
+                if (s.type.get() === "word") {
+                    const means = s.wordMeans.get();
+                    const m = means[s.wordMeansI.get()];
+                    const c = m.contexts.find((i) => i.source.id === id);
+                    c.index = wordIndex();
+                    s.wordMeans.set(means);
+                }
+        }, // sen sI和cI是一样的，word的sI小一点
+        bookSource: (v: record["means"][0]["contexts"][0]["source"], oldV) => {},
+        wordMeansI: (v: number, oldV) => {
+            if (oldV !== undefined) changeDicMean(s.word.get(), v, oldV);
+        },
+        wordMeans: async (v: record["means"], oldV) => {
+            if (oldV) {
+                const record = s.wordRecord.get();
+                console.log(record);
+
+                if (record) {
+                    record.means = v;
+                    await s.wordRecord.setAsync(record);
+                    const context = v[s.wordMeansI.get()]?.contexts.find((i) => i.source.id === id);
+                    if (context) {
+                        const sI = wordx.index;
+                        s.sourceIndex.setV(sI);
+                        s.context.setV(context.text);
+                    }
+                }
+            }
+
+            editMeanEl.style({ display: s.wordMeansI.get() === -1 ? "none" : "" });
+
+            if (v.length) dicDetailsEl.clear();
+            else {
+                dicDetailsEl.el.innerText = "请添加义项";
+                return;
+            }
+            const means = v;
+            for (const i in means) {
+                const m = means[i];
+                const div = view();
+                const radio = input("radio")
+                    .attr({ name: "dic_means" })
+                    .on("click", async () => {
+                        if (radio.el.checked) {
+                            s.wordMeansI.set(Number(i));
+
+                            visit(true);
+                        }
+                        editMeanEl.style({ display: "" });
+                    });
+                if (Number(i) === s.wordMeansI.get()) radio.el.checked = true;
+                div.on("click", () => radio.el.click()).add([radio, ...(await disCard2(m)).map((i) => i.el)]);
+                dicDetailsEl.add(div);
+            }
+            if (s.wordMeansI.get() !== -1) dicDetailsEl.class(HIDEMEANS);
+            else dicDetailsEl.el.classList.remove(HIDEMEANS);
+        },
+        wordCardId: (v: string, oldV) => {},
+        wordRecord: async (v: record, oldV) => {
+            if (oldV && v) {
+                await wordsStore.setItem(wordx.id, v);
+            }
+        },
+        wordNote: async (v: string, oldV) => {
+            const record = await wordsStore.getItem(wordx.id);
+            if (record) {
+                record.note = v;
+                await wordsStore.setItem(wordx.id, record);
+            }
+        },
+        wordTag: (v: bOp, oldV) => {},
+    });
+
     const wordx = section.words[id];
 
-    let Word: { word: string; record: record } & flatWord;
+    s.type.set(wordx.type);
 
-    const Share = {
-        context: "",
-        sourceIndex: [0, 0],
-    };
-    let isSentence = wordx.type === "sentence";
-    let sourceWord = "";
-    if (!isSentence) {
-        const record = await wordsStore.getItem(wordx.id);
-        Word = { word: wordx.id, record, ...flatWordCard(record, id) };
-        const s = source2context(wordx, id);
-        if (Word.index === -1) {
-            Word.context = s;
-        }
-        Share.context = s.text;
-        Share.sourceIndex = s.index;
-        sourceWord = Word.context.text.slice(...Word.context.index);
-    } else {
-        Share.context = ((await card2sentence.getItem(wordx.id)) as record2).text;
-    }
-
-    {
-        let contextEnd = 0;
-        if (isSentence) {
-            contextEnd = wordx.index[1];
+    async function changeDicMean(word: string, i: number, oldI: number) {
+        const means = s.wordMeans.get();
+        const m = means[oldI];
+        let nowContext: record["means"][0]["contexts"][0];
+        if (m) {
+            nowContext = m.contexts.find((i) => i.source.id === id);
+            m.contexts = m.contexts.filter((i) => i.source.id !== id);
         } else {
-            contextEnd = wordx.index[1] + (Share.context.length - Share.sourceIndex[1]);
+            console.log(`没有找到${oldI}的义项`);
         }
-        setDicPosi(bookContentEl.query(`span[data-e="${contextEnd}"]`).el);
-        changeContext();
+
+        if (i !== -1) {
+            const m = means[i];
+            if (m) {
+                if (!nowContext)
+                    nowContext = {
+                        index: wordIndex(),
+                        text: s.context.get(),
+                        source: s.bookSource.get(),
+                    };
+                m.contexts.push(nowContext);
+            } else {
+                console.log(`没有找到${i}的义项，先创建`);
+            }
+        }
+        console.trace("x");
+        await s.wordMeans.setAsync(means);
+        if (i === -1) await clearWordMean(s.wordRecord.get());
     }
 
-    async function changeDicMean(word: string, i: number) {
-        if (word !== Word.word || i !== Word.index) {
-            Word.record = rmWord(Word.record, Word.context.source.id);
+    async function changeWord(newWord: string, oldWord: string) {
+        await s.wordMeansI.setAsync(-1);
 
-            if (i !== -1) {
-                Word.record = setWordC(Word.record, i, Word.context);
-                await wordsStore.setItem(Word.word, Word.record);
-            } else await clearWordMean(Word.record);
+        const record = s.wordRecord.get();
+        const nr = rmWord(record, s.bookSource.get().id);
+        await clearWordMean(nr);
 
-            Word.word = word;
-            Word.index = i;
-            wordx.id = word;
-            await saveWordX(wordx);
-            Word.record = await wordsStore.getItem(wordx.id);
-        }
+        wordx.id = newWord;
+        await saveWordX(wordx);
+
+        showWord(newWord);
+    }
+
+    function wordIndex() {
+        const sI = s.sourceIndex.get();
+        const cI = s.contextIndex.get();
+        return [sI[0] - cI[0], sI[1] - cI[0]] as [number, number];
     }
 
     dicTransB.el.onclick = async () => {
-        const output = await translate(Share.context, Boolean(dicTransContent.gv));
+        const output = await translate(s.context.get(), Boolean(dicTransContent.gv));
         dicTransAi = output.stop;
         const text = await output.text;
         dicTransContent.sv(text);
-        if (isSentence) {
+        if (s.type.get() === "sentence") {
             const r = await card2sentence.getItem(wordx.id);
             r.trans = text;
             await card2sentence.setItem(wordx.id, r);
@@ -3347,13 +3516,17 @@ async function showDic(id: string) {
     };
 
     toSentenceEl.el.onclick = async () => {
-        if (isSentence) return;
+        if (s.type.get() === "sentence") return;
         if (!(await confirm("这将删除此单词，并将语境转为句子"))) return;
-        isSentence = true;
+        s.type.set("sentence");
+    };
+
+    async function change2Sentence() {
         rmStyle(wordx.index);
         const sentenceCardId = uuid();
-        const contextStart = wordx.index[0] - Share.sourceIndex[0];
-        const contextEnd = wordx.index[1] + (Share.context.length - Share.sourceIndex[1]);
+        const contextStart = s.contextIndex.get()[0];
+        const contextEnd = s.contextIndex.get()[1];
+        s.sourceIndex.set([contextStart, contextEnd]);
         wordx.index[0] = contextStart;
         wordx.index[1] = contextEnd;
         wordx.type = "sentence";
@@ -3365,14 +3538,14 @@ async function showDic(id: string) {
         await saveWordX(wordx);
 
         const r: record2 = {
-            text: Share.context,
+            text: s.context.get(),
             source: null,
             trans: dicTransContent.gv,
         };
 
         let card: Card;
 
-        mf: for (const i of Word.record?.means || []) {
+        mf: for (const i of s.wordRecord.get()?.means || []) {
             for (const j of i.contexts) {
                 if (j.source.id === id) {
                     r.source = j.source;
@@ -3390,19 +3563,15 @@ async function showDic(id: string) {
 
         await card2sentence.setItem(sentenceCardId, r);
 
-        Word.record = rmWord(Word.record, Word.context.source.id);
-        clearWordMean(Word.record);
-
-        showSentence();
-    };
-
-    if (!isSentence) play(Word.word);
+        const record = rmWord(s.wordRecord.get(), s.bookSource.get().id);
+        clearWordMean(record);
+    }
 
     ttsWordEl.el.onclick = () => {
-        play(Word.word);
+        play(s.word.get());
     };
     ttsContextEl.el.onclick = () => {
-        runTTS(Share.context);
+        runTTS(s.context.get());
     };
 
     async function visit(t: boolean) {
@@ -3411,17 +3580,37 @@ async function showDic(id: string) {
         wordMarkChanged(section.words);
     }
 
-    async function showWord() {
+    function trackDic() {
+        const contextEnd = s.contextIndex.get()[1];
+        setDicPosi(bookContentEl.query(`span[data-e="${contextEnd}"]`).el);
+        changeContext();
+    }
+
+    async function showWord(word: string) {
+        const record = await wordsStore.getItem(wordx.id);
+        console.log(wordx.id, record);
+        s.word.set(wordx.id);
+        const fl = flatWordCard(record, id);
+        s.wordRecord.set(record);
+        const ss = source2context(wordx, id);
+        s.sourceIndex.set(wordx.index);
+        s.contextIndex.set(wordx.cIndex);
+        s.context.set(ss.text);
+        s.bookSource.set(ss.source);
+        s.wordMeansI.set(fl.index);
+        s.wordCardId.set(fl.card_id);
+        s.wordMeans.set(record?.means || []);
+        const sourceWord = s.context.get().slice(...wordIndex());
+        console.log(s.context.get(), wordIndex(), sourceWord);
+
         dicEl.el.classList.remove(DICSENTENCE);
         dicTransContent.sv("");
 
-        search(Word.word);
-        dicWordEl.sv(Word.word);
+        dicWordEl.sv(word);
         dicWordEl.el.onchange = async () => {
             const newWord = dicWordEl.gv.trim();
             await visit(false);
-            await changeDicMean(newWord, -1);
-            search(newWord);
+            s.word.set(newWord);
         };
 
         lessWordEl.el.onclick = () => {
@@ -3453,7 +3642,9 @@ async function showDic(id: string) {
             showDic(id);
         }
 
-        ttsWordEl.el.innerText = await getIPA(Word.word);
+        play(s.word.get());
+
+        ttsWordEl.el.innerText = await getIPA(word);
 
         const lword = lemmatizer(sourceWord.toLocaleLowerCase());
         moreWordsEl.clear();
@@ -3463,8 +3654,7 @@ async function showDic(id: string) {
                 const div = txt(w).on("click", async () => {
                     dicWordEl.sv(w);
                     await visit(false);
-                    await changeDicMean(w, -1);
-                    search(w);
+                    s.word.set(w);
                 });
                 moreWordsEl.add(div);
             }
@@ -3472,27 +3662,26 @@ async function showDic(id: string) {
         addMeanEl.el.onclick = () => {
             addP(
                 "",
-                Word.word,
-                Word.context.text,
-                Word.context.index,
-                Word.tag,
+                word,
+                s.context.get(),
+                wordIndex(),
+                s.wordTag.get(),
                 async (text, sentence, index) => {
                     const mean = text.trim();
-                    Word.text = mean;
+                    const x = s.wordMeans.get();
+
                     if (mean) {
-                        const x = await addReviewCardMean(Word.word, mean);
-                        Word.record = x.record;
-                        await changeDicMean(Word.word, x.index);
-                        let record = await wordsStore.getItem(wordx.id);
-                        record = setRecordContext(record, id, (c) => {
-                            c.text = sentence;
-                            c.index = index;
+                        tryInitWord(word);
+                        const cardId = await newWordCard_Mean(word);
+                        x.push({
+                            card_id: cardId,
+                            text: mean,
+                            contexts: [],
                         });
-                        await wordsStore.setItem(wordx.id, record);
-                        Word = { word: wordx.id, record, ...flatWordCard(record, id) };
+                        s.wordMeans.set(x);
+                        s.wordMeansI.set(x.length - 1);
                         visit(true);
                     }
-                    search(Word.word);
                     wordMarkChanged(section.words);
                 },
                 addMeanEl,
@@ -3501,30 +3690,25 @@ async function showDic(id: string) {
 
         editMeanEl.el.onclick = () => {
             addP(
-                Word.text,
-                Word.word,
-                Word.context.text,
-                Word.context.index,
+                s.wordMeans.get().at(s.wordMeansI.get()).text,
+                word,
+                s.context.get(),
+                wordIndex(),
                 null,
                 async (text, sentence, index) => {
                     const mean = text.trim();
-                    Word.text = mean;
                     if (mean) {
-                        if (Word.record) {
-                            Word.record = setRecordMean(Word.record, Word.card_id, (i) => {
-                                i.text = mean;
-                            });
-                            Word.record = setRecordContext(Word.record, id, (x) => {
-                                x.text = sentence;
-                                x.index = index;
-                            });
-                            wordsStore.setItem(Word.word, Word.record);
-                        }
+                        const means = s.wordMeans.get();
+                        const m = means.at(s.wordMeansI.get());
+                        m.text = mean;
+                        const con = m.contexts.find((i) => i.source.id === id);
+                        con.text = sentence;
+                        con.index = index;
+                        s.wordMeans.set(means);
                     } else {
                         await visit(false);
-                        await changeDicMean(Word.word, -1);
+                        s.wordMeansI.set(-1);
                     }
-                    search(Word.word);
                     wordMarkChanged(section.words);
                 },
                 editMeanEl,
@@ -3533,17 +3717,14 @@ async function showDic(id: string) {
 
         noteEl.el.onclick = () => {
             addP(
-                Word.record?.note || "",
-                Word.word,
+                s.wordNote.get() || "",
+                word,
                 null,
                 null,
                 null,
                 async (text) => {
                     const mean = text.trim();
-                    if (Word.record) {
-                        Word.record.note = mean;
-                        wordsStore.setItem(Word.word, Word.record);
-                    }
+                    if (mean) s.wordNote.set(mean);
                 },
                 noteEl,
             );
@@ -3552,49 +3733,20 @@ async function showDic(id: string) {
         feedbackEl.el.onclick = () => {
             // todo 根据仓库自定义url
             const url = "https://github.com/xushengfeng/rmbw-book/issues/new?title=`${word}` in ${sid}&body=${context}";
-            const index = Word.context.index;
-            const context = Word.context.text;
+            const index = wordIndex();
+            const context = s.context.get();
             const sourceWord = context.slice(...index);
             const xurl = url
                 .replaceAll("${word}", sourceWord)
-                .replaceAll("${sid}", Word.context.source.sections)
+                .replaceAll("${sid}", s.bookSource.get().sections)
                 .replaceAll("${context}", `${context.slice(0, index[0])}**${sourceWord}**${context.slice(index[1])}`);
             window.open(xurl);
         };
-
-        async function search(word: string) {
-            console.log(Word.record);
-
-            editMeanEl.style({ display: flatWordCard(Word.record, id).index === -1 ? "none" : "" });
-            if (Word.record) dicDetailsEl.clear();
-            else {
-                dicDetailsEl.el.innerText = "请添加义项";
-                return;
-            }
-            const means = Word.record.means;
-            for (const i in means) {
-                const m = means[i];
-                const div = view();
-                const radio = input("radio")
-                    .attr({ name: "dic_means" })
-                    .on("click", async () => {
-                        if (radio.el.checked) {
-                            await changeDicMean(word, Number(i));
-
-                            visit(true);
-                        }
-                        editMeanEl.style({ display: "" });
-                        showWord();
-                    });
-                if (Number(i) === Word.index) radio.el.checked = true;
-                div.on("click", () => radio.el.click()).add([radio, ...(await disCard2(m)).map((i) => i.el)]);
-                dicDetailsEl.add(div);
-            }
-            if (Word.index !== -1) dicDetailsEl.class(HIDEMEANS);
-            else dicDetailsEl.el.classList.remove(HIDEMEANS);
-        }
     }
     async function showSentence() {
+        s.sourceIndex.set(wordx.index);
+        s.contextIndex.set(wordx.index);
+
         dicEl.class(DICSENTENCE);
 
         dicWordEl.sv("");
@@ -3631,22 +3783,12 @@ async function showDic(id: string) {
         };
     }
 
-    if (!isSentence) {
-        showWord();
-    } else {
-        showSentence();
-    }
-
     function changeContext() {
         let contextStart = 0;
         let contextEnd = 0;
-        if (isSentence) {
-            contextStart = wordx.index[0];
-            contextEnd = wordx.index[1];
-        } else {
-            contextStart = wordx.index[0] - Share.sourceIndex[0];
-            contextEnd = wordx.index[1] + (Share.context.length - Share.sourceIndex[1]);
-        }
+        const isSentence = s.type.get() === "sentence";
+        contextStart = s.contextIndex.get()[0];
+        contextEnd = s.contextIndex.get()[1];
         const startClass = "context_start";
         const endClass = "context_end";
         const startEl = view().class(startClass);
@@ -3730,39 +3872,16 @@ async function showDic(id: string) {
             if (down.start || down.end) {
                 console.log(editText.slice(index.start, index.end));
                 saveChange();
-                setDicPosi(bookContentEl.query(`span[data-e="${index.end}"]`).el);
                 dicEl.class(DICSHOW);
             }
             down.start = false;
             down.end = false;
         };
         async function saveChange() {
-            const text = editText.slice(index.start, index.end);
-            Share.context = text;
+            s.contextIndex.set([index.start, index.end]);
             if (isSentence) {
                 wordx.index = [index.start, index.end];
                 await saveWordX(wordx);
-                const r = await card2sentence.getItem(wordx.id);
-                r.text = text;
-                card2sentence.setItem(wordx.id, r);
-            } else {
-                const cIndex = [wordx.index[0] - index.start, wordx.index[1] - index.start] as [number, number];
-                if (Word.record) {
-                    Word.record = setRecordContext(Word.record, id, (j) => {
-                        j.index = cIndex;
-                        j.text = text;
-                    });
-                    await wordsStore.setItem(Word.word, Word.record);
-                }
-                Word.context.text = text;
-                Word.context.index = cIndex;
-                Share.sourceIndex = cIndex;
-                Share.context = text;
-            }
-            wordx.cIndex = [index.start, index.end];
-            await saveWordX(wordx);
-            if (!isSentence) {
-                showWord();
             }
         }
         hideDicEl.el.onclick = () => {
@@ -4620,37 +4739,27 @@ type D = Parameters<Parameters<ReturnType<typeof tts.toStream>["onEnd"]>[0]>["0"
 const ttsCache = localForage.createInstance<{ blob: Blob; data: D }>({ name: "aiCache", storeName: "tts" });
 const lijuCache = localForage.createInstance<string[]>({ name: "aiCache", storeName: "liju" });
 
-function setWordC(w: record, meanIndex: number, context: record["means"][0]["contexts"][0]) {
-    if (meanIndex < 0) return w;
-    for (const index in w.means) {
-        const i = w.means[index];
-        if (Number(index) === meanIndex) {
-            if (!i.contexts.includes(context)) i.contexts.push(context);
-            return w;
-        }
-    }
-}
-
-async function addReviewCardMean(word: string, text: string) {
-    let w = await wordsStore.getItem(word);
+async function tryInitWord(word: string) {
+    const w = await wordsStore.getItem(word);
     if (!w) {
-        w = {
+        const w = {
             word: word,
             means: [],
         };
         const card2 = createEmptyCard();
         newCardAction(word);
         await spellStore.setItem(word, card2);
+        await wordsStore.setItem(word, w);
     }
+}
+
+async function newWordCard_Mean(word: string) {
     const cardId = uuid();
-    const m = { text, contexts: [], card_id: cardId };
-    w.means.push(m);
     const card = createEmptyCard();
     newCardAction(cardId);
     await cardsStore.setItem(cardId, card);
     await card2word.setItem(cardId, word);
-    await wordsStore.setItem(word, w);
-    return { index: w.means.length - 1, record: w };
+    return cardId;
 }
 
 type flatWord = {
