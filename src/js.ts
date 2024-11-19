@@ -3748,7 +3748,7 @@ async function showDic(id: string) {
 
         const lword = lemmatizer(sourceWord.toLocaleLowerCase());
         moreWordsEl.clear();
-        const l = Array.from(new Set([sourceWord, sourceWord.toLocaleLowerCase(), lword]));
+        const l = Array.from(new Set([sourceWord, sourceWord.toLocaleLowerCase(), lword, word]));
         if (l.length !== 1)
             for (const w of l) {
                 const div = txt(w).on("click", async () => {
