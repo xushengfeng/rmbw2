@@ -504,8 +504,8 @@ function nosieBg() {
     const ctx = canvas.getContext("2d") as CanvasRenderingContext2D;
     for (let x = 0; x < w; x += 1) {
         for (let y = 0; y < w; y += 1) {
-            if (Math.random() > 0.1) continue;
-            const f = 0.2 * Math.random();
+            if (Math.random() > 0.08) continue;
+            const f = 0.13 * Math.random();
             ctx.fillStyle = `rgb(0,0,0,${f})`;
             ctx.fillRect(x, y, 1, 1);
         }
