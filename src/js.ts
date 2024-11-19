@@ -1887,7 +1887,7 @@ async function showNormalBook(book: book, s: section) {
 
                     const s = si === "0" ? sen.at(t)?.start : sen.at(0)?.start;
                     const e = sen.at(-1)?.end;
-                    if (!s || !e) return;
+                    if (s === undefined || e === undefined) return;
 
                     const id = await saveCard({
                         key: span.getAttribute("data-t") as string,
