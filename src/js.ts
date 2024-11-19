@@ -3542,6 +3542,8 @@ async function showDic(id: string) {
     s.type.set(wordx.type);
 
     async function changeDicMean(word: string, i: number, oldI: number) {
+        console.log(i, oldI);
+
         const means = s.wordMeans.get();
         const m = means[oldI];
         let nowContext: record["means"][0]["contexts"][0] | undefined;
@@ -3769,7 +3771,7 @@ async function showDic(id: string) {
                     const x = s.wordMeans.get();
 
                     if (mean) {
-                        tryInitWord(word);
+                        s.wordRecord.setV(await tryInitWord(word));
                         const cardId = await newWordCard_Mean(word);
                         x.push({
                             card_id: cardId,
@@ -4867,7 +4869,9 @@ async function tryInitWord(word: string) {
         newCardAction(word);
         await spellStore.setItem(word, card2);
         await wordsStore.setItem(word, w);
+        return w;
     }
+    return w;
 }
 
 async function newWordCard_Mean(word: string) {
