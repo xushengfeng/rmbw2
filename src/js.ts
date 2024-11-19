@@ -4896,7 +4896,7 @@ async function tryInitWord(word: string) {
         };
         const card2 = createEmptyCard();
         newCardAction(word);
-        await spellStore.setItem(word, card2);
+        if (!(await spellStore.getItem(word))) await spellStore.setItem(word, card2);
         await wordsStore.setItem(word, w);
         return w;
     }
