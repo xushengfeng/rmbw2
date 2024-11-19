@@ -5938,7 +5938,7 @@ async function spellAnimate(el: HTMLElement) {
         const e = el.children.item(i) as HTMLElement;
         e.style.opacity = "1";
         e.style.filter = "none";
-        await sleep(el.children.item(i)?.textContent?.length ?? 0 * t);
+        await sleep((e.textContent?.length ?? 0) * t);
     }
 }
 
