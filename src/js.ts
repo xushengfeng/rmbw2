@@ -1885,9 +1885,20 @@ async function showNormalBook(book: book, s: section) {
                     if (!span.getAttribute("data-s")) return;
                     if (span.getAttribute("data-w") === "false") return;
 
-                    const s = si === "0" ? sen.at(t)?.start : sen.at(0)?.start;
-                    const e = sen.at(-1)?.end;
-                    if (s === undefined || e === undefined) return;
+                    let startI = si === "0" ? t : 0;
+                    let endI = -1;
+                    while (sen.at(startI + 1) && sen.at(startI)?.text === " ") {
+                        startI++;
+                    }
+                    while (sen.at(endI - 1) && sen.at(endI)?.text === " ") {
+                        endI--;
+                    }
+
+                    const s = (sen.at(startI) as (typeof sen)[0]).start;
+                    const e = (sen.at(endI) as (typeof sen)[0]).end;
+
+                    // 由于点击了单词，单词不是空格，单词在句子里
+                    // 故句子一定有至少一个元素，且不全是空格，至少能匹配到此单词
 
                     const id = await saveCard({
                         key: span.getAttribute("data-t") as string,
@@ -3347,6 +3358,20 @@ function getDicPosi() {
     return top + (bookContentEl.el.getBoundingClientRect().top - bookContentEl.el.scrollTop) - 24;
 }
 
+function igBlankEl(el: HTMLElement, left: boolean) {
+    let tel = el;
+    if (left) {
+        while (tel.nextElementSibling && tel.getAttribute("data-t") === " ") {
+            tel = tel.nextElementSibling as HTMLElement;
+        }
+    } else {
+        while (tel.previousElementSibling && tel.getAttribute("data-t") === " ") {
+            tel = tel.previousElementSibling as HTMLElement;
+        }
+    }
+    return tel;
+}
+
 let dicTransAi: AbortController | null;
 
 let nowDicId = "";
@@ -3902,8 +3927,7 @@ async function showDic(id: string) {
         bookContentEl.query(`.${startClass}`)?.remove();
         bookContentEl.query(`.${endClass}`)?.remove();
         bookContentEl.add([startEl, endEl]);
-        function setElPosi(el: HTMLElement | undefined, left: boolean) {
-            if (!el) return;
+        function setElPosi(el: HTMLElement, left: boolean) {
             function getOffset(el: HTMLElement) {
                 const pel = bookContentEl;
                 const r = el.getBoundingClientRect();
@@ -3916,18 +3940,22 @@ async function showDic(id: string) {
                     const _nel = bookContentEl.query(`span[data-s="${wordx.index[0]}"]`)?.el;
                     if (_nel) nel = _nel;
                 }
+                nel = igBlankEl(nel, true);
                 startEl.style({ left: `${getOffset(nel).left}px`, top: `${getOffset(nel).top}px` });
-            } else {
-                let nel = el;
-                if (!isSentence && Number(el.getAttribute("data-s")) < wordx.index[0]) {
-                    const _nel = bookContentEl.query(`span[data-s="${wordx.index[0]}"]`)?.el;
-                    if (_nel) nel = _nel;
-                }
-                endEl.style({
-                    left: `${getOffset(nel).left + nel.offsetWidth}px`,
-                    top: `${getOffset(nel).top + nel.offsetHeight}px`,
-                });
+                return Number(nel.getAttribute("data-s"));
             }
+            // right
+            let nel = el;
+            if (!isSentence && Number(el.getAttribute("data-s")) < wordx.index[0]) {
+                const _nel = bookContentEl.query(`span[data-s="${wordx.index[0]}"]`)?.el;
+                if (_nel) nel = _nel;
+            }
+            nel = igBlankEl(nel, false);
+            endEl.style({
+                left: `${getOffset(nel).left + nel.offsetWidth}px`,
+                top: `${getOffset(nel).top + nel.offsetHeight}px`,
+            });
+            return Number(nel.getAttribute("data-e"));
         }
         function matchRangeEl(n: number, left: boolean) {
             for (let i = 0; i < editText.length - n + 1; i++) {
@@ -3941,8 +3969,9 @@ async function showDic(id: string) {
         }
         const contextStartEl = matchRangeEl(contextStart, true);
         const contextEndEl = matchRangeEl(contextEnd, false);
-        setElPosi(contextStartEl, true);
-        setElPosi(contextEndEl, false);
+        if (!contextStartEl || !contextEndEl) return;
+        contextStart = setElPosi(contextStartEl, true);
+        contextEnd = setElPosi(contextEndEl, false);
         const down = { start: false, end: false };
         const index = { start: contextStart, end: contextEnd };
         startEl.el.onpointerdown = (e) => {
@@ -3960,8 +3989,7 @@ async function showDic(id: string) {
                 const list = document.elementsFromPoint(x, y);
                 for (const i of list) {
                     if (i.getAttribute("data-t")) {
-                        setElPosi(i as HTMLElement, true);
-                        index.start = Number(i.getAttribute("data-s"));
+                        index.start = setElPosi(i as HTMLElement, true);
                     }
                 }
             }
@@ -3971,8 +3999,7 @@ async function showDic(id: string) {
                 const list = document.elementsFromPoint(x, y);
                 for (const i of list) {
                     if (i.getAttribute("data-t")) {
-                        setElPosi(i as HTMLElement, false);
-                        index.end = Number(i.getAttribute("data-e"));
+                        index.end = setElPosi(i as HTMLElement, false);
                     }
                 }
             }
