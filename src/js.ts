@@ -772,13 +772,10 @@ async function showOnlineBooksL(books: onlineBook[]) {
         if (book.cover) url = await getBookCover(book.cover);
         const div = bookEl(book.name, url);
         const bookCover = div.query("div");
-        bookshelfStore.iterate((v, k) => {
-            if (book.id === k) {
-                if (v.updateTime < book.updateTime) {
-                    div.el.classList.add(TODOMARK1);
-                }
-            }
-        });
+        const localBook = await bookshelfStore.getItem(book.id);
+        if (localBook && localBook.updateTime < book.updateTime) {
+            div.el.classList.add(TODOMARK1);
+        }
         div.on("click", async () => {
             console.log(book);
             if (book.type === "package") {
