@@ -6560,7 +6560,7 @@ async function toAllData() {
             const r = l[key][i] as Card;
             const nr = structuredClone(r) as any;
             nr.due = r.due?.getTime() || 0;
-            nr.last_review = r.last_review?.getTime() || 0;
+            nr.last_review = r.last_review?.getTime?.() || 0;
             // @ts-ignore
             l[key][i] = nr;
         }
