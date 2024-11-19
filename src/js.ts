@@ -4161,6 +4161,7 @@ async function saveCard(v: {
         visit: false,
         type: "word",
     };
+    section.words = Object.fromEntries(Object.entries(section.words).toSorted((a, b) => a[1].index[0] - b[1].index[0]));
 
     sectionsStore.setItem(sectionId, section);
     wordMarkChanged(section?.words);
