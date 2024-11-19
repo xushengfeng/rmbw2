@@ -3266,8 +3266,8 @@ async function showMarkList() {
                                 if (record) {
                                     record = rmWord(record, i.id);
                                     await clearWordMean(record);
-                                    rmStyle(i.s.index);
                                 }
+                                rmStyle(i.s.index);
                             }
                             delete section?.words[i.id];
                             if (section) {
