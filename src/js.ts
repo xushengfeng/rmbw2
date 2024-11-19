@@ -787,25 +787,21 @@ async function showOnlineBooksL(books: onlineBook[]) {
                 saveDic(data);
                 return;
             }
-            let _xbook = await bookshelfStore.getItem(book.id);
-            if (_xbook) {
-                if (_xbook.updateTime < book.updateTime) {
-                    saveBook();
-                    div.el.classList.remove(TODOMARK1);
-                }
+            let xbook = (await bookshelfStore.getItem(book.id)) as book;
+            if (xbook) {
+                saveBook();
+                div.el.classList.remove(TODOMARK1);
             } else {
-                _xbook = {
+                xbook = {
                     ...book,
                     visitTime: 0,
                     updateTime: 0,
                     sections: [],
                     canEdit: false,
                     lastPosi: 0,
-                    language: "en",
                 } as book;
                 saveBook();
             }
-            const xbook = _xbook as book;
             function saveBook() {
                 const s: string[] = [];
                 let count = 0;
