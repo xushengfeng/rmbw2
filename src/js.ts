@@ -3564,6 +3564,12 @@ async function showDic(id: string) {
 
     const wordx = section.words[id];
 
+    const ss = source2context(wordx, id);
+    s.sourceIndex.set(wordx.index);
+    s.contextIndex.set(wordx.cIndex);
+    s.context.set(ss.text);
+    s.bookSource.set(ss.source);
+
     s.type.set(wordx.type);
 
     async function changeDicMean(word: string, i: number, oldI: number) {
@@ -3714,11 +3720,6 @@ async function showDic(id: string) {
         s.word.set(wordx.id);
         const fl = flatWordCard(record, id);
         s.wordRecord.set(record);
-        const ss = source2context(wordx, id);
-        s.sourceIndex.set(wordx.index);
-        s.contextIndex.set(wordx.cIndex);
-        s.context.set(ss.text);
-        s.bookSource.set(ss.source);
         s.wordMeansI.set(fl.index);
         s.wordCardId.set(fl.card_id);
         s.wordMeans.set(record?.means || []);
