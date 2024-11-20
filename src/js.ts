@@ -6919,8 +6919,12 @@ const asyncEl = view().add([
         p2pIdShowEl,
         p2pIdInputEl,
         button("启动").on("click", async () => {
-            const peer = new Peer();
-            peer.on("open", (id) => {
+            const id = uuid();
+            function toId(id: string) {
+                return `rmbw2-${id}`;
+            }
+            const peer = new Peer(toId(id));
+            peer.on("open", () => {
                 p2pIdShowEl.sv(id);
                 p2pIdInputEl.el.style.display = "";
                 p2pLinkBtnEl.el.style.display = "";
@@ -6957,14 +6961,19 @@ const asyncEl = view().add([
                     }
                 });
                 p2pLinkBtnEl.sv("断开").sv("连接中");
+                // todo 断开连接，恢复连接按钮状态
             }
             peer.on("connection", (c) => {
                 handleConnection(c);
             });
             p2pLinkBtnEl.el.onclick = () => {
-                const id = p2pIdInputEl.gv;
-                if (!id) return;
-                const conn = peer.connect(id);
+                const inputId = p2pIdInputEl.gv;
+                if (!inputId) return;
+                if (inputId === id) {
+                    putToast(txt("不能与自己连接"));
+                    return;
+                }
+                const conn = peer.connect(toId(inputId));
                 handleConnection(conn);
             };
         }),
