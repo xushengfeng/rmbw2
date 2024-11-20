@@ -3336,9 +3336,6 @@ function jumpToMark([start, end]: [number, number]) {
     bookContentContainerEl.el.onscrollend = () => {
         bookContentContainerEl.style({ "scroll-behavior": "initial" });
     };
-    setTimeout(() => {
-        span.el.classList.remove("flash_word");
-    }, 1200);
 }
 
 dicMinEl.on("click", () => {
@@ -4217,29 +4214,6 @@ function rmStyle(x: [number, number]) {
         bookContentEl.query(`span[data-s="${i}"]`)?.el?.classList?.remove(MARKWORD);
         bookContentEl.query(`span[data-s="${i}"]`)?.el?.classList?.remove(VISITMARKWORD);
     }
-}
-
-function setRecordMean(orecord: record, id: string, f: (c: record["means"][0]) => void) {
-    const record = structuredClone(orecord);
-    for (const n of record.means) {
-        if (n.card_id === id) {
-            f(n);
-            return record;
-        }
-    }
-    return record;
-}
-function setRecordContext(orecord: record, id: string, f: (c: record["means"][0]["contexts"][0]) => void) {
-    const record = structuredClone(orecord);
-    for (const n of record.means) {
-        for (const j of n.contexts) {
-            if (j.source.id === id) {
-                f(j);
-                return record;
-            }
-        }
-    }
-    return record;
 }
 
 async function tagsEl(b: bOp) {
