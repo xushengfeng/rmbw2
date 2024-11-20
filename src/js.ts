@@ -354,6 +354,7 @@ function vlist<ItemType>(
 const DICSHOW = "dic_show";
 const MARKWORD = "mark_word";
 const TMPMARKWORD = "tmp_mark_word";
+const VISITMARKWORD = "visit_mark_word";
 const TRANSLATE = "translate";
 const DICSENTENCE = "dic_sentence";
 const HIDEMEANS = "hide_means";
@@ -1860,6 +1861,9 @@ async function showNormalBook(book: book, s: section) {
                     const index = s.words[i].index;
                     if (index[0] <= word.start && word.end <= index[1] && s.words[i].type === "word") {
                         span.el.classList.add(MARKWORD);
+                        if (s.words[i].visit) {
+                            span.el.classList.add(VISITMARKWORD);
+                        }
                     }
                 }
                 span.data({ s: String(word.start), e: String(word.end), w: String(word.isWord), t: word.text });
@@ -4211,6 +4215,7 @@ function addStyle(x: [number, number]) {
 function rmStyle(x: [number, number]) {
     for (let i = x[0]; i < x[1]; i++) {
         bookContentEl.query(`span[data-s="${i}"]`)?.el?.classList?.remove(MARKWORD);
+        bookContentEl.query(`span[data-s="${i}"]`)?.el?.classList?.remove(VISITMARKWORD);
     }
 }
 
