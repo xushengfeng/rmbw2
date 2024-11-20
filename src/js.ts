@@ -373,11 +373,7 @@ const booksEl = ele("dialog").addInto().attr({ id: "books" });
 const localBookEl = view();
 const onlineBookEl = view().style({ display: "none" });
 function booksElclose() {
-    bookBEl.style({ "view-transition-name": "" });
-    // @ts-ignore
-    document.startViewTransition(() => {
-        booksEl.el.close();
-    });
+    booksEl.el.close();
 }
 booksEl.add([
     view("x").add([
@@ -716,13 +712,7 @@ const coreWordBook: book = {
 };
 
 bookBEl.on("click", () => {
-    bookBEl.style({ "view-transition-name": "dialog" });
-    booksEl.style({ "view-transition-name": "dialog" });
-    // @ts-ignore
-    document.startViewTransition(() => {
-        bookBEl.style({ "view-transition-name": "" });
-        booksEl.el.showModal();
-    });
+    booksEl.el.showModal();
 });
 
 const coverCache = localForage.createInstance<Blob>({ name: "cache", storeName: "cover" });
@@ -1488,14 +1478,9 @@ async function showWordBook(book: book, s: section) {
                     );
             });
             iEl.el.onclick = () => {
-                tEl.style({ "view-transition-name": "wordItem" });
-                const pEl = tmpDicEl.style({ "view-transition-name": "wordItem" });
-                // @ts-ignore
-                document.startViewTransition(() => {
-                    tEl.style({ "view-transition-name": "" });
-                    pEl.el.showPopover();
-                    show();
-                });
+                const pEl = tmpDicEl;
+                pEl.el.showPopover();
+                show();
                 play(item.text);
                 async function show() {
                     pEl.clear();
