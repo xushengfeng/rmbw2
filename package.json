@@ -28,6 +28,7 @@
         "localforage": "^1.10.0",
         "localforage-setitems": "^1.4.0",
         "msedge-tts-browserify": "^1.4.1",
+        "peerjs": "^1.5.4",
         "pitchfinder": "^2.3.2",
         "sortablejs": "^1.15.2",
         "spark-md5": "^3.0.2",

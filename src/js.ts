@@ -63,6 +63,8 @@ import RecordPlugin from "wavesurfer.js/dist/plugins/record";
 
 import Pitchfinder from "pitchfinder";
 
+import Peer, { type DataConnection } from "peerjs";
+
 import very_ok_svg from "../assets/icons/very_ok.svg";
 import githubIcon from "../assets/other/Github.svg";
 
@@ -6831,6 +6833,16 @@ async function downloadGithub(fileName: string) {
     return data;
 }
 
+const p2pIdShowEl = txt();
+const p2pIdInputEl = input().style({ display: "none" });
+const p2pLinkBtnEl = button("连接")
+    .style({ display: "none" })
+    .bindSet((v: string, el) => {
+        el.innerText = v;
+    });
+const p2pUL = view().style({ display: "none" });
+const p2pSend = button("->").addInto(p2pUL);
+
 const asyncEl = view().add([
     ele("h2").add("数据"),
     view().add([
@@ -6917,6 +6929,49 @@ const asyncEl = view().add([
             label([input().data({ path: GitHubConfigPath.path }), "path："], 1),
             label([input().data({ path: GitHubConfigPath.download }), "替换下载："], 1),
         ]),
+        ele("h3").add("P2P"),
+        p2pIdShowEl,
+        p2pIdInputEl,
+        button("启动").on("click", async () => {
+            const peer = new Peer();
+            peer.on("open", (id) => {
+                p2pIdShowEl.sv(id);
+                p2pIdInputEl.el.style.display = "";
+                p2pLinkBtnEl.el.style.display = "";
+            });
+            function handleConnection(conn: DataConnection) {
+                type Data = { type: "all_data"; data: string };
+                conn.on("open", () => {
+                    p2pLinkBtnEl.sv("断开").el.onclick = () => {
+                        conn.close();
+                    };
+                    p2pUL.el.style.display = "";
+                    p2pSend.el.onclick = async () => {
+                        const data = await getAllData();
+                        conn.send({ type: "all_data", data } as Data);
+                    };
+                });
+                // @ts-ignore
+                conn.on("data", (data: Data) => {
+                    console.log(data);
+                    if (data.type === "all_data") {
+                        setAllData(JSON.parse(data.data));
+                    }
+                });
+                p2pLinkBtnEl.sv("断开").sv("连接中");
+            }
+            peer.on("connection", (c) => {
+                handleConnection(c);
+            });
+            p2pLinkBtnEl.el.onclick = () => {
+                const id = p2pIdInputEl.gv;
+                if (!id) return;
+                const conn = peer.connect(id);
+                handleConnection(conn);
+            };
+        }),
+        p2pLinkBtnEl,
+        p2pUL,
     ]),
 ]);
 
