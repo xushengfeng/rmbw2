@@ -1366,6 +1366,10 @@ div:has(> .translate) > :not(.translate) {
             }
         }
     }
+    & button {
+        width: auto;
+        min-width: var(--size0);
+    }
 }
 
 #menu {

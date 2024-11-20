@@ -6841,7 +6841,8 @@ const p2pLinkBtnEl = button("连接")
         el.innerText = v;
     });
 const p2pUL = view().style({ display: "none" });
-const p2pSend = button("->").addInto(p2pUL);
+const p2pSend = button("发送数据").addInto(p2pUL);
+const p2pSendTrans = button("发送翻译缓存").addInto(p2pUL);
 
 const asyncEl = view().add([
     ele("h2").add("数据"),
@@ -6940,7 +6941,7 @@ const asyncEl = view().add([
                 p2pLinkBtnEl.el.style.display = "";
             });
             function handleConnection(conn: DataConnection) {
-                type Data = { type: "all_data"; data: string };
+                type Data = { type: "all_data"; data: string } | { type: "trans"; data: Record<string, string> };
                 conn.on("open", () => {
                     p2pLinkBtnEl.sv("断开").el.onclick = () => {
                         conn.close();
@@ -6950,12 +6951,24 @@ const asyncEl = view().add([
                         const data = await getAllData();
                         conn.send({ type: "all_data", data } as Data);
                     };
+                    p2pSendTrans.el.onclick = async () => {
+                        const t: Record<string, string> = {};
+                        await transCache.iterate((v, k) => {
+                            t[k] = v;
+                        });
+                        conn.send({ type: "trans", data: t } as Data);
+                    };
                 });
                 // @ts-ignore
-                conn.on("data", (data: Data) => {
+                conn.on("data", async (data: Data) => {
                     console.log(data);
                     if (data.type === "all_data") {
                         setAllData(JSON.parse(data.data));
+                    }
+                    if (data.type === "trans") {
+                        for (const k in data.data) {
+                            await transCache.setItem(k, data.data[k]);
+                        }
                     }
                 });
                 p2pLinkBtnEl.sv("断开").sv("连接中");
