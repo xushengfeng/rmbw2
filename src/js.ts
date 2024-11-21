@@ -3604,22 +3604,21 @@ async function showDic(id: string) {
         return [sI[0] - cI[0], sI[1] - cI[0]] as [number, number] as reSlice;
     }
 
-    dicTransB.el.onclick = async () => {
+    dicTransB.el.onclick = () => {
+        trans();
+    };
+
+    async function trans() {
         const output = await translate(s.context.get(), Boolean(dicTransContent.gv));
         dicTransAi = output.stop;
         const text = await output.text;
         if (text) {
             dicTransContent.sv(text);
             if (s.type.get() === "sentence") {
-                const r = await card2sentence.getItem(wordx.id);
-                if (r) {
-                    r.trans = text;
-                    await card2sentence.setItem(wordx.id, r);
-                }
-                visit(true);
+                setSentenceTrans();
             }
         }
-    };
+    }
 
     toSentenceEl.el.onclick = async () => {
         if (s.type.get() === "sentence") return;
@@ -3627,20 +3626,23 @@ async function showDic(id: string) {
         s.type.set("sentence");
     };
 
+    let setSentenceTrans = () => {};
+
     async function change2Sentence() {
         if (!section) return;
         rmStyle(wordx.index);
         const sentenceCardId = uuid();
         const contextStart = s.contextIndex.get()[0];
         const contextEnd = s.contextIndex.get()[1];
-        s.sourceIndex.set([contextStart, contextEnd] as txtSlice);
+        s.sourceIndex.setV([contextStart, contextEnd] as txtSlice);
         wordx.index[0] = contextStart;
         wordx.index[1] = contextEnd;
         wordx.type = "sentence";
         wordx.id = sentenceCardId;
         if (dicTransContent.gv) {
             wordx.visit = true;
-            wordMarkChanged(section.words);
+        } else {
+            wordx.visit = false;
         }
         await saveWordX(wordx);
 
@@ -3855,8 +3857,8 @@ async function showDic(id: string) {
         };
     }
     async function showSentence() {
-        s.sourceIndex.set(wordx.index);
-        s.contextIndex.set(wordx.index);
+        s.sourceIndex.setV(wordx.index);
+        s.contextIndex.setV(wordx.index);
 
         dicEl.class(DICSENTENCE);
 
@@ -3865,16 +3867,20 @@ async function showDic(id: string) {
         dicTransContent.sv((await card2sentence.getItem(wordx.id))?.trans);
         dicDetailsEl.clear();
 
-        if (!dicTransContent.gv) {
-            dicTransB.el.click();
-        }
-
-        dicTransContent.el.onchange = async () => {
+        setSentenceTrans = async () => {
             const r = await card2sentence.getItem(wordx.id);
             if (!r) return;
             r.trans = dicTransContent.gv;
             await card2sentence.setItem(wordx.id, r);
             visit(true);
+        };
+
+        if (!dicTransContent.gv) {
+            trans();
+        }
+
+        dicTransContent.el.onchange = () => {
+            setSentenceTrans();
         };
 
         noteEl.el.onclick = async () => {
