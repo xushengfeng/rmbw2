@@ -6925,7 +6925,9 @@ const asyncEl = view().add([
         p2pIdShowEl,
         p2pIdInputEl,
         button("启动").on("click", async () => {
-            const id = uuid();
+            const randomNumber = crypto.getRandomValues(new Uint32Array(1))[0] % 1e6;
+            const id = String(randomNumber).padStart(6, "0");
+
             function toId(id: string) {
                 return `rmbw2-${id}`;
             }
