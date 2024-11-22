@@ -3757,7 +3757,7 @@ async function showDic(id: string) {
 
         const lword = lemmatizer(sourceWord.toLocaleLowerCase());
         moreWordsEl.clear();
-        const l = Array.from(new Set([sourceWord, sourceWord.toLocaleLowerCase(), lword, word]));
+        const l = Array.from(new Set([sourceWord, sourceWord.toLocaleLowerCase(), lword, word, ...mutiSpell(word)]));
         if (l.length !== 1)
             for (const w of l) {
                 const div = txt(w).on("click", async () => {
@@ -4939,6 +4939,10 @@ function fillMutiSpell(rl: string[]) {
     return l;
 }
 
+function mutiSpell(word: string) {
+    return usSpell.find((m) => m.includes(word)) || [word];
+}
+
 async function getLearntWords() {
     const learnt = await wordsStore.keys();
     return fillMutiSpell(learnt);
@@ -5703,7 +5707,7 @@ async function getReadTime(text: string) {
 
 async function showSpellReview(x: { id: string; card: Card }) {
     const word = x.id;
-    const wordSpells = usSpell.find((m) => m.includes(word)) || [word];
+    const wordSpells = mutiSpell(word);
     const maxWidth = Math.max(...wordSpells.map((w) => w.length));
     const input = view().class("spell_input").style({ width: "min-content" }).attr({ innerText: word }); // 占位计算宽度
     clearKeyboard();
