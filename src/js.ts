@@ -3070,6 +3070,7 @@ function getSelectBooks(el: ElType<HTMLElement>) {
 
 async function wordBooksByWord(word: string) {
     const l: { book: string; section: string }[] = [];
+    const words = mutiSpell(word);
     let bookList: book[] = [];
     await bookshelfStore.iterate((book) => {
         bookList.push(book);
@@ -3080,11 +3081,14 @@ async function wordBooksByWord(word: string) {
             const section = await getSection(s);
             if (!section) continue;
             const wl = section.text.split("\n");
-            if (wl.includes(word)) {
-                l.push({ book: i.id, section: s });
+            for (const w of words) {
+                if (wl.includes(w)) {
+                    if (!l.some((x) => x.section === s)) l.push({ book: i.id, section: s });
+                }
             }
         }
     }
+
     return l;
 }
 
