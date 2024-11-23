@@ -47,6 +47,122 @@ import { encode } from "js-base64";
 import very_ok_svg from "../assets/icons/very_ok.svg";
 import githubIcon from "../assets/other/Github.svg";
 
+type Book = {
+    name: string;
+    shortName?: string;
+    id: string;
+    visitTime: number;
+    updateTime: number;
+    type: "word" | "text" | "package" | "dictionary";
+    wordSplit?: "grapheme" | "word";
+    cover?: string;
+    author?: string;
+    titleParse?: string;
+    titleIndex?: number[];
+    description?: string;
+    sections: string[];
+    canEdit: boolean;
+    lastPosi: number;
+    language: string;
+};
+type Section = {
+    title: string;
+    text: string;
+    words: {
+        [key: string]: {
+            id: string;
+            index: TxtSlice;
+            cIndex: TxtSlice;
+            visit: boolean;
+            type: "word" | "sentence";
+        };
+    };
+    lastPosi: number;
+    note?: string;
+};
+type OnlineBook = Omit<Book, "visitTime" | "sections" | "lastPosi"> & {
+    sections: {
+        id: string;
+        title: string;
+        path: string;
+    }[];
+};
+
+type WordBookList = ({ text: string; id: string } & (
+    | { type: "ignore"; c: undefined; means: number }
+    | { type: "learn"; c: record; means: number }
+    | { type: null; c: undefined; means: number }
+))[];
+
+type WordSortType = "raw" | "az" | "za" | "10" | "01" | "random";
+
+type ReSlice = [number, number] & { readonly __tag: unique symbol };
+type TxtSlice = [number, number] & { readonly __tag: unique symbol }; // 文章绝对定位
+
+type record = {
+    word: string;
+    means: {
+        text: string;
+        contexts: {
+            text: string;
+            index: ReSlice; // 语境定位
+            source: { book: string; sections: string; id: string }; // 原句通过对比计算
+        }[];
+        card_id: string;
+        tags?: bOp;
+    }[];
+    note?: string;
+};
+type record2 = {
+    text: string;
+    trans: string;
+    source: { book: string; sections: string; id: string }; // 原句通过对比计算
+    note?: string;
+};
+
+enum tOp {
+    and = 0,
+    or = 1,
+    not = 2,
+}
+
+type bOp = [tOp, ...(string | bOp)[]];
+type bOp2 = [tOp, ...string[]];
+type TAG = { c: string; b?: bOp; t: number; n: number };
+type tagMap = { [key: string]: TAG };
+
+type senNode = ({ text: senNode; isPost: boolean } | string)[];
+
+type AIm = { role: "system" | "user" | "assistant"; content: string }[];
+
+type D = Parameters<Parameters<ReturnType<typeof tts.toStream>["onEnd"]>[0]>["0"];
+
+type FlatWord = {
+    index: number;
+    text: string;
+    card_id: record["means"][0]["card_id"];
+    context: record["means"][0]["contexts"][0];
+    tag: bOp;
+};
+
+type Review = "word" | "spell" | "sentence";
+
+type CardPercent = Record<State, number>;
+
+type OnlineDicsType = { name: string; url: string; lan: string }[];
+
+type AllData = {
+    bookshelf: { [key: string]: Book };
+    sections: { [key: string]: Section };
+    cards: object;
+    words: object;
+    spell: object;
+    card2word: object;
+    card2sentence: object;
+    actions: object;
+    logExTrans: object;
+};
+
 if (import.meta.env.DEV) initDev();
 
 const localForage = {
@@ -116,7 +232,7 @@ const exTransLog = localForage.createInstance<{ count: number; section: string }
     storeName: "exTrans",
 });
 
-function splitWord(text: string, book: book) {
+function splitWord(text: string, book: Book) {
     return Array.from(new Segmenter(book.language, { granularity: book.wordSplit || "word" }).segment(text));
 }
 
@@ -554,49 +670,8 @@ function putToast(ele: ElType<HTMLElement>, time = 2000) {
 
 const tmpDicEl = view().attr({ popover: "auto" }).class("tmp_dic").addInto();
 
-const bookshelfStore = localForage.createInstance<book>({ name: "bookshelf" });
-const sectionsStore = localForage.createInstance<section>({ name: "sections" });
-
-type book = {
-    name: string;
-    shortName?: string;
-    id: string;
-    visitTime: number;
-    updateTime: number;
-    type: "word" | "text" | "package" | "dictionary";
-    wordSplit?: "grapheme" | "word";
-    cover?: string;
-    author?: string;
-    titleParse?: string;
-    titleIndex?: number[];
-    description?: string;
-    sections: string[];
-    canEdit: boolean;
-    lastPosi: number;
-    language: string;
-};
-type section = {
-    title: string;
-    text: string;
-    words: {
-        [key: string]: {
-            id: string;
-            index: txtSlice;
-            cIndex: txtSlice;
-            visit: boolean;
-            type: "word" | "sentence";
-        };
-    };
-    lastPosi: number;
-    note?: string;
-};
-type onlineBook = Omit<book, "visitTime" | "sections" | "lastPosi"> & {
-    sections: {
-        id: string;
-        title: string;
-        path: string;
-    }[];
-};
+const bookshelfStore = localForage.createInstance<Book>({ name: "bookshelf" });
+const sectionsStore = localForage.createInstance<Section>({ name: "sections" });
 
 async function getBooksById(id: string) {
     if (id === coreWordBook.id) return coreWordBook;
@@ -612,7 +687,7 @@ async function sectionWords(id: string) {
     return Object.entries(section.words);
 }
 
-async function checkEmptyBook(book: book) {
+async function checkEmptyBook(book: Book) {
     const e = true;
     for (const sis of book.sections) {
         if ((await sectionWords(sis)).length) {
@@ -626,7 +701,7 @@ async function getBookShortTitle(bookId: string) {
     return (await getBooksById(bookId))?.shortName || (await getBooksById(bookId))?.name || "无名书籍";
 }
 
-function getSectionTitle(book: book, sectionId: string, sectionTitle: string, parse?: boolean) {
+function getSectionTitle(book: Book, sectionId: string, sectionTitle: string, parse?: boolean) {
     let st = sectionTitle;
     if (parse && book.titleParse) {
         const i = book.sections.indexOf(sectionId);
@@ -658,7 +733,7 @@ async function getTitleEl(bookId: string, sectionN: string, markId: string, x?: 
 async function newBook() {
     const id = uuid();
     const sid = uuid();
-    const book: book = {
+    const book: Book = {
         name: "新书",
         id: id,
         visitTime: 0,
@@ -676,7 +751,7 @@ async function newBook() {
 }
 
 function newSection() {
-    const s: section = { title: "新章节", lastPosi: 0, text: "", words: {} };
+    const s: Section = { title: "新章节", lastPosi: 0, text: "", words: {} };
     return s;
 }
 
@@ -687,7 +762,7 @@ if (!(await sectionsStore.getItem(ignoreWordSection))) {
         lastPosi: 0,
         text: "",
         words: {},
-    } as section);
+    } as Section);
 }
 
 const wordSection = "words";
@@ -697,10 +772,10 @@ if (!(await sectionsStore.getItem(wordSection))) {
         lastPosi: 0,
         text: "",
         words: {},
-    } as section);
+    } as Section);
 }
 
-const coreWordBook: book = {
+const coreWordBook: Book = {
     canEdit: true,
     id: "0",
     language: "en",
@@ -742,7 +817,7 @@ async function getOnlineBooks() {
         });
 }
 
-async function showOnlineBooks(books?: onlineBook[]) {
+async function showOnlineBooks(books?: OnlineBook[]) {
     onlineBookEl.clear();
     let grid: ElType<HTMLElement>;
 
@@ -759,7 +834,7 @@ async function showOnlineBooks(books?: onlineBook[]) {
     onlineBookEl.add(l);
 }
 
-async function showOnlineBooksL(books: onlineBook[]) {
+async function showOnlineBooksL(books: OnlineBook[]) {
     const grid = view().class("books");
     for (const book of books) {
         let url = "";
@@ -781,7 +856,7 @@ async function showOnlineBooksL(books: onlineBook[]) {
                 saveDic(data);
                 return;
             }
-            let xbook = (await bookshelfStore.getItem(book.id)) as book;
+            let xbook = (await bookshelfStore.getItem(book.id)) as Book;
             if (xbook) {
                 saveBook();
                 div.el.classList.remove(TODOMARK1);
@@ -793,7 +868,7 @@ async function showOnlineBooksL(books: onlineBook[]) {
                     sections: [],
                     canEdit: false,
                     lastPosi: 0,
-                } as book;
+                } as Book;
                 saveBook();
             }
             function saveBook() {
@@ -825,7 +900,7 @@ async function showOnlineBooksL(books: onlineBook[]) {
                                     lastPosi: 0,
                                     text: i.content,
                                     words: {},
-                                } as section);
+                                } as Section);
                             }
                         }
                         for (const i in book) {
@@ -852,7 +927,7 @@ async function showOnlineBooksL(books: onlineBook[]) {
     return grid;
 }
 
-function selectBook<BOOK extends Pick<book, "type" | "language">>(books: BOOK[], f: (list: BOOK[]) => void) {
+function selectBook<BOOK extends Pick<Book, "type" | "language">>(books: BOOK[], f: (list: BOOK[]) => void) {
     const typeEl = view();
     const lanEl = view();
 
@@ -861,7 +936,7 @@ function selectBook<BOOK extends Pick<book, "type" | "language">>(books: BOOK[],
 
     const x: { type: number | string; lan: number | string } = { type: 0, lan: 0 };
 
-    const map: Record<book["type"], string> = { word: "词表", text: "文本", package: "包", dictionary: "词典" };
+    const map: Record<Book["type"], string> = { word: "词表", text: "文本", package: "包", dictionary: "词典" };
     const lanMap = new Intl.DisplayNames(navigator.language, { type: "language" });
     function crl(l: string[], text: (text: string) => string, pel: ElType<HTMLElement>, key: keyof typeof x) {
         if (l.length > 1)
@@ -920,7 +995,7 @@ async function saveLanguagePackage(lan: string, section: { id: string; path: str
 addBookEl.on("click", async () => {
     const b = await newBook();
     nowBook = b;
-    const book = (await getBooksById(nowBook.book)) as book;
+    const book = (await getBooksById(nowBook.book)) as Book;
     showBook(book);
     changeEdit(true);
     booksElclose();
@@ -954,7 +1029,7 @@ let nowBook = {
     sections: "", //!!! 现在假定一定有section
 };
 
-let reflashSectionEl = (words: section["words"]) => {};
+let reflashSectionEl = (words: Section["words"]) => {};
 
 let isWordBook = false;
 
@@ -1035,7 +1110,7 @@ function bookEl(name: string, coverUrl?: string, shortName?: string) {
 }
 
 async function showLocalBooks() {
-    let bookList: book[] = [];
+    let bookList: Book[] = [];
     await bookshelfStore.iterate((book) => {
         bookList.push(book);
     });
@@ -1054,7 +1129,7 @@ async function showLocalBooks() {
     localBookEl.add(l);
 }
 
-async function showLocalBooksL(bookList: book[]) {
+async function showLocalBooksL(bookList: Book[]) {
     const grid = view().class("books");
     for (const book of bookList) {
         let bookIEl: ElType<HTMLDivElement>;
@@ -1161,7 +1236,7 @@ async function showLocalBooksL(bookList: book[]) {
     }
     return grid;
 }
-async function showBook(book: book, sid?: string) {
+async function showBook(book: Book, sid?: string) {
     if (book.language !== studyLan) {
         if (!(await confirm(`书籍语言${book.language}与学习语言${studyLan}不符，是否继续显示书籍？`))) return;
     }
@@ -1173,12 +1248,12 @@ async function showBook(book: book, sid?: string) {
     await showBookContent(book, sid || book.sections[book.lastPosi]);
     await setBookS();
 }
-async function showBookSections(book: book) {
+async function showBookSections(book: Book) {
     addSectionEL.style({ display: book.canEdit ? "" : "none" });
 
     const sections = structuredClone(book.sections);
     bookSectionsEl.clear().attr({ lang: studyLan });
-    const sectionsX: section[] = [];
+    const sectionsX: Section[] = [];
     for (const i of sections) {
         const s = await getSection(i);
         if (!s) continue;
@@ -1231,7 +1306,7 @@ async function showBookSections(book: book) {
         }
     }
     show();
-    reflashSectionEl = (words: section["words"]) => {
+    reflashSectionEl = (words: Section["words"]) => {
         const nowSection = sectionsX[sections.indexOf(nowBook.sections)];
         nowSection.words = words;
         show();
@@ -1240,7 +1315,7 @@ async function showBookSections(book: book) {
 
 let contentP: string[] = [];
 
-async function showBookContent(book: book, id: string) {
+async function showBookContent(book: Book, id: string) {
     const s = await getSection(id);
     if (!s) return;
     if (id === wordSection) {
@@ -1282,14 +1357,8 @@ async function showBookContent(book: book, id: string) {
     if (!isWordBook) bookContentEl.add(dicEl);
 }
 
-type wordBookList = ({ text: string; id: string } & (
-    | { type: "ignore"; c: undefined; means: number }
-    | { type: "learn"; c: record; means: number }
-    | { type: null; c: undefined; means: number }
-))[];
-
-async function showWordBook(book: book, s: section) {
-    const rawWordList: wordBookList = [];
+async function showWordBook(book: Book, s: Section) {
+    const rawWordList: WordBookList = [];
     let wordList: typeof rawWordList = [];
     const l = s.text.split("\n").filter((i) => i.trim());
     const cards: Map<string, Card> = new Map();
@@ -1583,9 +1652,7 @@ async function showWordBook(book: book, s: section) {
 
 const WordSortPath = "words.sort";
 
-type WordSortType = "raw" | "az" | "za" | "10" | "01" | "random";
-
-function sortWordList(list: wordBookList, type: WordSortType) {
+function sortWordList(list: WordBookList, type: WordSortType) {
     if (type === "raw") return list;
     if (type === "az")
         return list.toSorted((a, b) => {
@@ -1635,7 +1702,7 @@ function randomList<i>(list: i[], to?: boolean) {
     return nList;
 }
 
-async function showWordBookMore(wordList: wordBookList, fromEl: ElType<HTMLElement>) {
+async function showWordBookMore(wordList: WordBookList, fromEl: ElType<HTMLElement>) {
     const d = ele("dialog");
     dialogX(d, fromEl);
     const unlearnL = wordList.filter((w) => w.means === undefined);
@@ -1739,7 +1806,7 @@ async function textTransformer(text: string) {
 let wordFreq: { [word: string]: number } = {};
 let properN: string[] = [];
 
-async function showNormalBook(book: book, s: section) {
+async function showNormalBook(book: Book, s: Section) {
     console.log(s);
 
     const segmenter = new Segmenter(book.language, { granularity: book.wordSplit || "word" });
@@ -1885,8 +1952,8 @@ async function showNormalBook(book: book, s: section) {
 
                     const id = await saveCard({
                         key: span.getAttribute("data-t") as string,
-                        index: [Number(span.getAttribute("data-s")), Number(span.getAttribute("data-e"))] as txtSlice,
-                        cindex: [s, e] as txtSlice,
+                        index: [Number(span.getAttribute("data-s")), Number(span.getAttribute("data-e"))] as TxtSlice,
+                        cindex: [s, e] as TxtSlice,
                     });
                     if (id)
                         if (
@@ -2311,7 +2378,7 @@ async function translateContext(p: HTMLElement) {
     });
 }
 
-async function exTrans(pEl: HTMLElement, i: number, book: book) {
+async function exTrans(pEl: HTMLElement, i: number, book: Book) {
     const span = pEl.children[i] as HTMLSpanElement;
 
     const f = frame("exTrans", {
@@ -2848,7 +2915,7 @@ function diffPosi(oldText: string, text: string) {
     return { source, map };
 }
 
-function changePosi(section: section, text: string) {
+function changePosi(section: Section, text: string) {
     const { source, map } = diffPosi(section.text, text);
     for (const w in section.words) {
         section.words[w].index = patchPosi(source, map, section.words[w].index);
@@ -2985,7 +3052,7 @@ function textAi(text: string) {
     const ignoreMark = "//";
     const userMark = ">";
     const aiMark = "ai:";
-    const aiM: aim = [];
+    const aiM: AIm = [];
     for (const i of l) {
         if (i.startsWith(aiMark)) {
             aiM.push({ role: "assistant", content: i.replace(aiMark, "").trim() });
@@ -3025,7 +3092,7 @@ bookdicEl.on("click", async () => {
 });
 
 async function sectionSelect(menuEl: ElType<HTMLElement>) {
-    const bookList: book[] = [];
+    const bookList: Book[] = [];
     await bookshelfStore.iterate((book) => {
         bookList.push(book);
     });
@@ -3068,7 +3135,7 @@ function getSelectBooks(el: ElType<HTMLElement>) {
 async function wordBooksByWord(word: string) {
     const l: { book: string; section: string }[] = [];
     const words = mutiSpell(word);
-    let bookList: book[] = [];
+    let bookList: Book[] = [];
     await bookshelfStore.iterate((book) => {
         bookList.push(book);
     });
@@ -3119,41 +3186,6 @@ function lemmatizer(word: string) {
 }
 
 let usSpell = (await wordMapStore.getItem("en")) || [];
-
-type reSlice = [number, number] & { readonly __tag: unique symbol };
-type txtSlice = [number, number] & { readonly __tag: unique symbol }; // 文章绝对定位
-
-type record = {
-    word: string;
-    means: {
-        text: string;
-        contexts: {
-            text: string;
-            index: reSlice; // 语境定位
-            source: { book: string; sections: string; id: string }; // 原句通过对比计算
-        }[];
-        card_id: string;
-        tags?: bOp;
-    }[];
-    note?: string;
-};
-type record2 = {
-    text: string;
-    trans: string;
-    source: { book: string; sections: string; id: string }; // 原句通过对比计算
-    note?: string;
-};
-
-enum tOp {
-    and = 0,
-    or = 1,
-    not = 2,
-}
-
-type bOp = [tOp, ...(string | bOp)[]];
-type bOp2 = [tOp, ...string[]];
-type TAG = { c: string; b?: bOp; t: number; n: number };
-type tagMap = { [key: string]: TAG };
 
 function tag(tags: tagMap) {
     const x = {
@@ -3212,7 +3244,7 @@ const autoNewWordEl = view().add([
 ]);
 markListBarEl.add([autoNewWordEl, markListEl]);
 
-function wordMarkChanged(w: section["words"] = {}, init?: boolean) {
+function wordMarkChanged(w: Section["words"] = {}, init?: boolean) {
     console.log(w, Object.values(w).length);
     if (!init) {
         checkVisitAll(w);
@@ -3273,7 +3305,7 @@ async function showMarkList() {
 async function getAllMarks() {
     const sectionId = nowBook.sections;
     const section = await getSection(sectionId);
-    let list: { id: string; s: section["words"][0] }[] = [];
+    let list: { id: string; s: Section["words"][0] }[] = [];
     if (!section) return list;
     for (const i in section.words) {
         list.push({ id: i, s: section.words[i] });
@@ -3444,7 +3476,7 @@ async function showDic(id: string) {
                 s.wordRecord.set(record);
             }
         },
-        contextIndex: async (v: txtSlice, oldV) => {
+        contextIndex: async (v: TxtSlice, oldV) => {
             const context = editText.slice(...v);
             if (oldV) {
                 wordx.cIndex = v;
@@ -3467,7 +3499,7 @@ async function showDic(id: string) {
             }
             trackDic();
         },
-        sourceIndex: (v: txtSlice, oldV) => {
+        sourceIndex: (v: TxtSlice, oldV) => {
             if (oldV)
                 if (s.type.get() === "word") {
                     const means = s.wordMeans.get();
@@ -3602,7 +3634,7 @@ async function showDic(id: string) {
     function wordIndex() {
         const sI = s.sourceIndex.get();
         const cI = s.contextIndex.get();
-        return [sI[0] - cI[0], sI[1] - cI[0]] as [number, number] as reSlice;
+        return [sI[0] - cI[0], sI[1] - cI[0]] as [number, number] as ReSlice;
     }
 
     dicTransB.el.onclick = () => {
@@ -3635,7 +3667,7 @@ async function showDic(id: string) {
         const sentenceCardId = uuid();
         const contextStart = s.contextIndex.get()[0];
         const contextEnd = s.contextIndex.get()[1];
-        s.sourceIndex.setV([contextStart, contextEnd] as txtSlice);
+        s.sourceIndex.setV([contextStart, contextEnd] as TxtSlice);
         wordx.index[0] = contextStart;
         wordx.index[1] = contextEnd;
         wordx.type = "sentence";
@@ -3817,7 +3849,7 @@ async function showDic(id: string) {
                         const con = m.contexts.find((i) => i.source.id === id);
                         if (!con) return;
                         con.text = sentence ?? "";
-                        con.index = index ?? ([0, 0] as reSlice);
+                        con.index = index ?? ([0, 0] as ReSlice);
                         s.wordMeans.set(means);
                     } else {
                         await visit(false);
@@ -4003,9 +4035,9 @@ async function showDic(id: string) {
             down.end = false;
         };
         async function saveChange() {
-            s.contextIndex.set([index.start, index.end] as txtSlice);
+            s.contextIndex.set([index.start, index.end] as TxtSlice);
             if (isSentence) {
-                wordx.index = [index.start, index.end] as txtSlice;
+                wordx.index = [index.start, index.end] as TxtSlice;
                 await saveWordX(wordx);
             }
         }
@@ -4087,7 +4119,7 @@ async function showDicEl(mainTextEl: ReturnType<typeof textarea>, word: string, 
 function onlineDicL(word: string) {
     const lan = studyLan;
     const onlineList = view().class("online_dic");
-    let l: onlineDicsType = getSetting(onlineDicsPath);
+    let l: OnlineDicsType = getSetting(onlineDicsPath);
     l = l.filter((i) => !i.lan || i.lan === lan);
     onlineList.add(l.map((i) => a(i.url.replace("%s", word)).add(i.name)));
     return onlineList;
@@ -4130,8 +4162,8 @@ async function dicSentences(contexts: record["means"][0]["contexts"]) {
 
 async function saveCard(v: {
     key: string;
-    index: txtSlice;
-    cindex: txtSlice;
+    index: TxtSlice;
+    cindex: TxtSlice;
 }) {
     const sectionId = nowBook.sections;
     const section = await getSection(sectionId);
@@ -4157,7 +4189,7 @@ async function saveCard(v: {
     return id;
 }
 
-function source2context(source: section["words"][0], sourceId: string) {
+function source2context(source: Section["words"][0], sourceId: string) {
     return {
         text: editText.slice(...source.cIndex),
         index: [source.index[0] - source.cIndex[0], source.index[1] - source.cIndex[0]] as [number, number],
@@ -4290,7 +4322,7 @@ function addP(
     sentence: string,
     index: record["means"][0]["contexts"][0]["index"] | null,
     tags: bOp | null,
-    f: (text: string, sentence?: string, index?: reSlice, tags?: bOp) => void,
+    f: (text: string, sentence?: string, index?: ReSlice, tags?: bOp) => void,
     fromEl: ElType<HTMLElement>,
 ) {
     const pEl = p().attr({ lang: studyLan });
@@ -4555,8 +4587,6 @@ const wordAiText = {
     },
 };
 
-type senNode = ({ text: senNode; isPost: boolean } | string)[];
-
 const sentenceAi = {
     gm: async (sentence: string) => {
         type splitS = ({ text: string; isPost: boolean } | string)[];
@@ -4732,9 +4762,7 @@ async function showArticelAI() {
     });
 }
 
-type aim = { role: "system" | "user" | "assistant"; content: string }[];
-
-function ai(m: aim, text?: string) {
+function ai(m: AIm, text?: string) {
     const config = {
         model: "gpt-4o-mini",
         temperature: 0.5,
@@ -4801,7 +4829,7 @@ const checkVisit = {
     time: 0,
 };
 
-function checkVisitAll(words: section["words"]) {
+function checkVisitAll(words: Section["words"]) {
     const l = Object.values(words);
     const visitAll = l.every((i) => i.visit);
     if (
@@ -4847,7 +4875,6 @@ function newCardAction(id: string) {
 }
 
 const transCache = localForage.createInstance<string>({ name: "aiCache", storeName: "trans" });
-type D = Parameters<Parameters<ReturnType<typeof tts.toStream>["onEnd"]>[0]>["0"];
 const ttsCache = localForage.createInstance<{ blob: Blob; data: D }>({ name: "aiCache", storeName: "tts" });
 const lijuCache = localForage.createInstance<string[]>({ name: "aiCache", storeName: "liju" });
 
@@ -4876,20 +4903,12 @@ async function newWordCard_Mean(word: string) {
     return cardId;
 }
 
-type flatWord = {
-    index: number;
-    text: string;
-    card_id: record["means"][0]["card_id"];
-    context: record["means"][0]["contexts"][0];
-    tag: bOp;
-};
-
 function flatWordCard(record: record | null, id: string) {
-    const Word: flatWord = {
+    const Word: FlatWord = {
         index: -1,
         card_id: "",
         text: "",
-        context: { index: [Number.NaN, Number.NaN] as reSlice, source: { book: "", sections: "", id: "" }, text: "" },
+        context: { index: [Number.NaN, Number.NaN] as ReSlice, source: { book: "", sections: "", id: "" }, text: "" },
         tag: [tOp.and],
     };
     if (!record) return Word;
@@ -5307,7 +5326,7 @@ function filterWithScope(word: string, scope: string[] | null, exScope?: string[
     return !scope || scope.includes(word);
 }
 
-async function getFutureReviewDue(days: number, ...types: review[]) {
+async function getFutureReviewDue(days: number, ...types: Review[]) {
     let now = new Date().getTime();
     now += timeD.d(days);
     now = Math.round(now);
@@ -5357,7 +5376,7 @@ async function getFutureReviewDue(days: number, ...types: review[]) {
         }
     return { word: wordList, spell: spellList, sentence: sentenceList };
 }
-async function getReviewDue(type: review) {
+async function getReviewDue(type: Review) {
     const now = new Date().getTime();
     const wordList: { id: string; card: Card }[] = [];
     const spellList: { id: string; card: Card }[] = [];
@@ -5420,9 +5439,8 @@ let due: {
     sentence: [],
 };
 
-type review = "word" | "spell" | "sentence";
-let reviewType: review = "word";
-const reviewModeRadio = radioGroup<review>("review_mode");
+let reviewType: Review = "word";
+const reviewModeRadio = radioGroup<Review>("review_mode");
 reviewModeEl.add([
     reviewModeRadio.new("word", "单词"),
     reviewModeRadio.new("spell", "拼写"),
@@ -5445,7 +5463,7 @@ reviewModeRadio.on(() => {
 let reviewCount = 0;
 const maxReviewCount = Number((await setting.getItem("review.maxCount")) || "30");
 
-async function nextDue(type: review) {
+async function nextDue(type: Review) {
     const x = await getReviewDue(type);
     reviewCount++;
     return x;
@@ -5545,7 +5563,7 @@ async function getWordAiContext() {
     }
 }
 
-async function showReview(x: { id: string; card: Card }, type: review) {
+async function showReview(x: { id: string; card: Card }, type: Review) {
     if (!x) {
         reviewViewEl.attr({ innerText: "暂无复习🎉" });
         return;
@@ -6157,9 +6175,9 @@ async function renderCardDueAll() {
     const spellDue: number[] = [];
     const sentenceDue: string[] = [];
 
-    const wordP: cardPercent = { "0": 0, "1": 0, "2": 0, "3": 0 };
-    const sentenceP: cardPercent = { "0": 0, "1": 0, "2": 0, "3": 0 };
-    const spellP: cardPercent = { "0": 0, "1": 0, "2": 0, "3": 0 };
+    const wordP: CardPercent = { "0": 0, "1": 0, "2": 0, "3": 0 };
+    const sentenceP: CardPercent = { "0": 0, "1": 0, "2": 0, "3": 0 };
+    const spellP: CardPercent = { "0": 0, "1": 0, "2": 0, "3": 0 };
 
     await wordsStore.iterate((v, k: string) => {
         if (!filterWithScope(k, wordsScope.words)) return;
@@ -6228,9 +6246,7 @@ function renderCardDue(text: string, data: number[]) {
     return f;
 }
 
-type cardPercent = Record<State, number>;
-
-function renderCardPercent(p: cardPercent) {
+function renderCardPercent(p: CardPercent) {
     const sum = Object.values(p).reduce((a, b) => a + b, 0);
     const el = view("x").class("cardPercent");
     for (const i of Object.keys(p)) {
@@ -6355,7 +6371,6 @@ settingEl.add(
 
 const onlineDicsEl = ele("ul").style({ "list-style-type": "none" });
 const onlineDicsPath = "dics.online";
-type onlineDicsType = { name: string; url: string; lan: string }[];
 
 function onlineDicItem(name: string, url: string, lan: string) {
     const li = ele("li").add([
@@ -6372,7 +6387,7 @@ function onlineDicItem(name: string, url: string, lan: string) {
 }
 
 async function showOnlineDics() {
-    const l = ((await setting.getItem(onlineDicsPath)) || []) as onlineDicsType;
+    const l = ((await setting.getItem(onlineDicsPath)) || []) as OnlineDicsType;
     for (const i of l) {
         onlineDicsEl.add(onlineDicItem(i.name, i.url, i.lan));
     }
@@ -6389,7 +6404,7 @@ const addOnlineDic1El = input();
 const addOnlineDic2El = input();
 const addOnlineDic3El = input();
 
-const defaultOnlineDic: onlineDicsType = [
+const defaultOnlineDic: OnlineDicsType = [
     { name: "必应", url: "https://cn.bing.com/search?q=%s", lan: "" },
     { name: "汉典", url: "https://www.zdic.net/hans/%s", lan: "cn" },
     {
@@ -6442,7 +6457,7 @@ showOnlineDics();
 
 async function saveSortOnlineDics() {
     const l = Array.from(onlineDicsEl.queryAll("li"));
-    const dl: onlineDicsType = [];
+    const dl: OnlineDicsType = [];
     for (const i of l) {
         const l = i.queryAll("input");
         const name = l[0].el.value;
@@ -6508,18 +6523,6 @@ const rmbwZipName = "rmbw.zip";
 const rmbwGithub1 = "data.json";
 const rmbwGithub2 = "text.json";
 
-type allData = {
-    bookshelf: { [key: string]: book };
-    sections: { [key: string]: section };
-    cards: object;
-    words: object;
-    spell: object;
-    card2word: object;
-    card2sentence: object;
-    actions: object;
-    logExTrans: object;
-};
-
 const allData2Store: { [key: string]: LocalForage } = {
     bookshelf: bookshelfStore,
     sections: sectionsStore,
@@ -6530,10 +6533,10 @@ const allData2Store: { [key: string]: LocalForage } = {
     card2sentence: card2sentence,
     actions: cardActionsStore,
     logExTrans: exTransLog,
-} as { [key in keyof allData]: LocalForage };
+} as { [key in keyof AllData]: LocalForage };
 
 async function toAllData() {
-    const l: allData = {
+    const l: AllData = {
         bookshelf: {},
         sections: {},
         cards: {},
@@ -6564,7 +6567,7 @@ async function toAllData() {
     }
     return l;
 }
-function formatAllData(l: allData) {
+function formatAllData(l: AllData) {
     return jsonStringify(l, (path) => {
         if (path.length === 2 && (path[0] === "cards" || path[0] === "spell")) {
             return true;
@@ -6586,7 +6589,7 @@ async function getAllData() {
     return formatAllData(l);
 }
 
-function splitAllData(dl: allData) {
+function splitAllData(dl: AllData) {
     const l = structuredClone(dl);
     const text: { [id: string]: string } = {};
     for (const i in l.sections) {
@@ -6630,7 +6633,7 @@ function jsonStringify(value: unknown, unBr: (path: string[]) => boolean) {
 
 let isSetData = false;
 
-async function setAllData(json: allData, textId?: string) {
+async function setAllData(json: AllData, textId?: string) {
     if (isSetData) return;
     isSetData = true;
     const tip = txt("正在更新……");
@@ -6862,7 +6865,7 @@ const asyncEl = view().add([
         button("↓").on("click", async () => {
             putToast(txt("下载开始"));
             try {
-                const data = (await downloadGithub(rmbwGithub1)) as allData;
+                const data = (await downloadGithub(rmbwGithub1)) as AllData;
                 const oldId = await textCacheId();
                 const nId = data.sections[0]?.text;
                 if (nId) {
@@ -7046,7 +7049,7 @@ settingEl.add(
         p("测试阅读速度"),
         testSpeedLanEl,
         button("load").on("click", async () => {
-            const l: aim = [{ content: `生成一段${testSpeedLanEl.gv || "en"}小短文，使用简单词`, role: "user" }];
+            const l: AIm = [{ content: `生成一段${testSpeedLanEl.gv || "en"}小短文，使用简单词`, role: "user" }];
             testSpeedContentEl.el.setAttribute("data-text", (await ai(l).text) ?? "hello world");
         }),
         button("start").on("click", () => {
