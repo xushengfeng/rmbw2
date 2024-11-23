@@ -163,7 +163,349 @@ type AllData = {
     logExTrans: object;
 };
 
-if (import.meta.env.DEV) initDev();
+// data
+
+const hyphenChar = "·";
+
+const ignoreWordSection = "ignore";
+
+const wordSection = "words";
+
+const coreWordBook: Book = {
+    canEdit: true,
+    id: "0",
+    language: "en",
+    lastPosi: 0,
+    name: "词典",
+    sections: [wordSection, ignoreWordSection],
+    type: "word",
+    updateTime: 0,
+    visitTime: 0,
+};
+
+let nowBook = {
+    book: "",
+    sections: "", //!!! 现在假定一定有section
+};
+
+let isWordBook = false;
+
+let contentP: string[] = [];
+
+let wordFreq: { [word: string]: number } = {};
+let properN: string[] = [];
+
+const WordSortPath = "words.sort";
+
+const bookStyleList = {
+    fontSize: [] as number[],
+    lineHeight: [] as number[],
+    contentWidth: [] as number[],
+};
+
+const defaultBookStyle = {
+    fontSize: 6,
+    lineHeight: 3,
+    contentWidth: 4,
+    fontFamily: "serif",
+    fontWeight: 400,
+    theme: "auto",
+    paper: true,
+};
+
+let canRecordScroll = true;
+let contentScrollPosi = 0;
+
+let isEdit = false;
+let editText = "";
+
+let dicTransAi: AbortController | null;
+
+let nowDicId = "";
+
+const dics: Record<string, Omit<dic, "dic">> = {};
+
+let ipa: Map<string, string | string[]>;
+
+const checkVisit = {
+    section: "",
+    time: 0,
+};
+
+let aiContexts: Record<string, { text: string }> = {};
+
+let reviewSortType: "正常" | "学习" | "学习1" | "紧急" | "随机" = "正常";
+
+const KEYBOARDDISPLAYPATH = "spell.keyboard.display";
+const KEYBOARDHEIGHTPATH = "spell.keyboard.height";
+
+let spellWriteE: PointerEvent | null;
+let spellWriteCtx: CanvasRenderingContext2D | null;
+
+let due: {
+    word: {
+        id: string;
+        card: Card;
+    }[];
+    spell: {
+        id: string;
+        card: Card;
+    }[];
+    sentence: {
+        id: string;
+        card: Card;
+    }[];
+} = {
+    word: [],
+    spell: [],
+    sentence: [],
+};
+
+let reviewType: Review = "word";
+
+let reviewCount = 0;
+
+const ttsVoiceConfig = "tts.voice";
+const ttsEngineConfig = "tts.engine";
+
+const SHOWPTTS = "pTTS_show";
+
+let autoPlay = false;
+
+const readerSettingPath = { apostrophe: "reader.apostrophe" };
+
+const onlineDicsPath = "dics.online";
+
+const defaultOnlineDic: OnlineDicsType = [
+    { name: "必应", url: "https://cn.bing.com/search?q=%s", lan: "" },
+    { name: "汉典", url: "https://www.zdic.net/hans/%s", lan: "cn" },
+    {
+        name: "剑桥",
+        url: "https://dictionary.cambridge.org/zhs/%E8%AF%8D%E5%85%B8/%E8%8B%B1%E8%AF%AD-%E6%B1%89%E8%AF%AD-%E7%AE%80%E4%BD%93/%s",
+        lan: "en",
+    },
+    { name: "牛津", url: "https://www.oed.com/search/dictionary/?scope=Entries&q=%s", lan: "en" },
+    { name: "柯林斯", url: "https://www.collinsdictionary.com/zh/dictionary/english-chinese/%s", lan: "en" },
+    { name: "韦氏", url: "https://www.merriam-webster.com/dictionary/%s", lan: "en" },
+    { name: "词源在线", url: "https://www.etymonline.com/cn/word/%s", lan: "en" },
+];
+
+const textCacheIdPath = "file.text.id";
+
+const rmbwJsonName = "rmbw.json";
+const rmbwZipName = "rmbw.zip";
+
+const rmbwGithub1 = "data.json";
+const rmbwGithub2 = "text.json";
+
+const DAVConfigPath = { url: "webStore.dav.url", user: "webStore.dav.user", passwd: "webStore.dav.passwd" };
+
+const GitHubConfigPath = {
+    user: "webStore.github.user",
+    repo: "webStore.github.repo",
+    token: "webStore.github.token",
+    path: "webStore.github.path",
+    download: "webStore.github.download",
+};
+
+let isSetData = false;
+
+let willShowMenu = false;
+
+const DICSHOW = "dic_show";
+const MARKWORD = "mark_word";
+const TMPMARKWORD = "tmp_mark_word";
+const VISITMARKWORD = "visit_mark_word";
+const TRANSLATE = "translate";
+const DICSENTENCE = "dic_sentence";
+const HIDEMEANS = "hide_means";
+const TODOMARK = "to_visit";
+const TODOMARK1 = "to_visit1";
+const UNREAD = "unread";
+const NOTEDIALOG = "note_dialog";
+const AIDIALOG = "ai_dialog";
+const DICDIALOG = "dic_dialog";
+const SELECTEDITEM = "selected_item";
+const LITLEPROGRESS = "litle_progress";
+const SHOWMARKLIST = "show_mark_word_list";
+
+// const fun
+
+const Segmenter = Intl.Segmenter;
+
+const timeD = {
+    s: (n: number) => n * 1000,
+    m: (n: number) => n * timeD.s(60),
+    h: (n: number) => n * timeD.m(60),
+    d: (n: number) => n * timeD.h(24),
+};
+
+const dmp = new diff_match_patch();
+
+const wordAi = {
+    mean: (sourceLan: string, userLan: string) => {
+        const f = new autoFun.def({
+            input: { word: "string 单词", context: "string 单词所在的语境" },
+            output: {
+                mean1: `string ${sourceLan}释义`,
+                mean2: `string ${userLan}释义`,
+            },
+            script: [
+                "翻译$context",
+                "分析$word在$context这个上下文语境中的具体意思",
+                `根据意思，返回用${sourceLan}解释的$mean1和用${userLan}解释的$mean2`,
+            ],
+        });
+        return f;
+    },
+    meanEmoji: () => {
+        const f = new autoFun.def({
+            input: { word: "string 单词" },
+            output: { mean: "string 用emoji表示的意思" },
+            script: ["根据context中word的意思，返回emoji"],
+        });
+        return f;
+    },
+    synOpp: () => {
+        const f = new autoFun.def({
+            input: { word: "string 单词", context: "string 单词所在的语境" },
+            output: { list0: "string[] 同义词", list1: "string[] 近义词", list2: "string[] 近义词" },
+            script: [
+                "判断context中word的意思",
+                "若存在该语境下能进行同义替换的词，添加到list0同义词表，同义词应比word更简单",
+                "克制地添加若干近义词到list1",
+                "克制地添加若干反义词到list2",
+            ],
+        });
+        return f;
+    },
+    fix: () => {
+        const f = new autoFun.def({
+            input: { word: "string 单词" },
+            output: { list: `{ type: "prefix" | "root" | "suffix"; t: string; dis: string }[]词根词缀列表` },
+            script: ["分析word词根词缀", "根据测试例,依次将词根词缀添加到list"],
+            test: {
+                input: "unbelievably",
+                output: {
+                    list: [
+                        { type: "prefix", t: "un", dis: "否定" },
+                        { type: "root", t: "believe", dis: "相信" },
+                        { type: "suffix", t: "able", dis: "能" },
+                        { type: "suffix", t: "ly", dis: "副词" },
+                    ],
+                },
+            },
+        });
+        return f;
+    },
+    etymology: () => {
+        const f = new autoFun.def({
+            input: { word: "string 单词" },
+            output: { list: "string[]词源" },
+            script: ["分析word词源并返回他们"],
+        });
+        return f;
+    },
+};
+
+const wordAiText = {
+    mean: (x: { mean1: string; mean2: string }) => {
+        return `${x.mean1}\n${x.mean2}`;
+    },
+    meanEmoji: (x: { mean: string }) => {
+        return x.mean;
+    },
+    synOpp: (x: { list0: string[]; list1: string[]; list2: string[] }) => {
+        const text = [];
+        if (x.list0?.length) text.push(`= ${x.list0.join(", ")}`);
+        if (x.list1?.length) text.push(`≈ ${x.list1.join(", ")}`);
+        if (x.list2?.length) text.push(`- ${x.list2.join(", ")}`);
+        return text.join("\n");
+    },
+    fix: (f: { list: { type: "prefix" | "root" | "suffix"; t: string; dis: string }[] }) => {
+        const text = wordFix2str(f.list);
+        return text.join(" + ");
+    },
+    etymology: (x: { list: string[] }) => {
+        return x.list.join(", ");
+    },
+};
+
+const sentenceAi = {
+    gm: async (sentence: string) => {
+        type splitS = ({ text: string; isPost: boolean } | string)[];
+        const f = new autoFun.def({
+            input: { sentence: "string 句子" },
+            output: { split: "({ text: string; isPost: boolean } | string)[]" },
+            script: [
+                "分析sentence修饰成分和被修饰成分",
+                "被修饰成分包括主谓宾核心词或词组，修饰成分包括具有限定或修饰的词、词组或从句",
+                "将他们按顺序添加到split",
+                "被修饰成分直接以string形式添加到split",
+                "修饰成分以{ text: string 修饰成分; isPost: boolean }形式添加到split",
+                "对于修饰成分，如果修饰成分在被修饰成分之后，isPost 为 true，反之为false",
+                "如果这个句子不是一个完整句，只有修饰成分，直接返回split:[该句子]",
+            ],
+            test: [
+                {
+                    input: "The yong",
+                    output: {
+                        split: ["The yong"] as splitS,
+                    },
+                },
+                {
+                    input: "The yong man who walled to us is our teacher",
+                    output: {
+                        split: [
+                            { text: "The yong", isPost: false },
+                            "man",
+                            { text: "who walled to us", isPost: true },
+                            "is",
+                            { text: "our", isPost: false },
+                            "teacher",
+                        ] as splitS,
+                    },
+                },
+            ],
+        });
+        async function splitSen(sentence: string) {
+            const t: senNode = [];
+            // @ts-ignore
+            const l = (await f.run(`sentence:${sentence}`).result).split as splitS;
+            for (const i of l) {
+                if (typeof i === "string") {
+                    t.push(i);
+                } else {
+                    const x: senNode[0] = { text: [i.text], isPost: i.isPost };
+                    x.text = await splitSen(i.text);
+                }
+            }
+            return t;
+        }
+        const x = await splitSen(sentence);
+        console.log(x);
+        return x;
+    },
+    split: (sentence: string) => {
+        const f = new autoFun.def({
+            input: { sentence: "string 长句子" },
+            output: { shortSentences: "string[] 短句子" },
+            script: ["将sentence改写成几个短句，输出到shortSentences"],
+        });
+        return f.run(`sentence:${sentence}`).result as Promise<{ shortSentences: string[] }>;
+    },
+};
+
+const reviewHotkey: { [key: string]: { f: () => void; key: string } } = {
+    1: { key: "1", f: () => {} },
+    2: { key: "2", f: () => {} },
+    3: { key: "3", f: () => {} },
+    show: { key: " ", f: () => {} },
+};
+
+const tts = new MsEdgeTTS();
+
+const synth = window.speechSynthesis;
 
 const localForage = {
     createInstance: <data = any>(
@@ -181,14 +523,8 @@ const localForage = {
     } => localforage.createInstance(p),
 };
 
-const hyphenChar = "·";
-
-const Segmenter = Intl.Segmenter;
-
-// @auto-path:../assets/icons/$.svg
-function iconEl(name: string) {
-    return button(image(new URL(`../assets/icons/${name}.svg`, import.meta.url).href, "按钮图标").class("icon"));
-}
+const textCacheId = () => setting.getItem(textCacheIdPath);
+const updataTextId = (id: string) => setting.setItem(textCacheIdPath, id);
 
 function uuid() {
     if (crypto.randomUUID) {
@@ -205,60 +541,1190 @@ function time() {
     return new Date().getTime();
 }
 
-const timeD = {
-    s: (n: number) => n * 1000,
-    m: (n: number) => n * timeD.s(60),
-    h: (n: number) => n * timeD.m(60),
-    d: (n: number) => n * timeD.h(24),
-};
-
-if ("serviceWorker" in navigator) {
-    if (import.meta.env.PROD) {
-        navigator.serviceWorker.register("/sw.js");
-    }
-}
-
-const setting = localForage.createInstance({
-    name: "setting",
-    driver: localforage.LOCALSTORAGE,
-});
-
 function getSetting(p: string) {
     return JSON.parse(localStorage.getItem(`setting/${p}`) as string);
 }
-
-const exTransLog = localForage.createInstance<{ count: number; section: string }>({
-    name: "log",
-    storeName: "exTrans",
-});
 
 function splitWord(text: string, book: Book) {
     return Array.from(new Segmenter(book.language, { granularity: book.wordSplit || "word" }).segment(text));
 }
 
-/************************************UI */
+async function getBooksById(id: string) {
+    if (id === coreWordBook.id) return coreWordBook;
+    return await bookshelfStore.getItem(id);
+}
+async function getSection(id: string) {
+    return await sectionsStore.getItem(id);
+}
 
-navigator?.storage?.persist();
+async function sectionWords(id: string) {
+    const section = await getSection(id);
+    if (!section) return Object.entries({}) as [];
+    return Object.entries(section.words);
+}
 
-document.body.translate = false;
+async function checkEmptyBook(book: Book) {
+    const e = true;
+    for (const sis of book.sections) {
+        if ((await sectionWords(sis)).length) {
+            return false;
+        }
+    }
+    return e;
+}
 
-const studyLan = ((await setting.getItem("lan.learn")) as string) || "en";
+async function getBookShortTitle(bookId: string) {
+    return (await getBooksById(bookId))?.shortName || (await getBooksById(bookId))?.name || "无名书籍";
+}
 
-const menuEl = view().attr({ id: "menu", popover: "auto" }).addInto();
-let willShowMenu = false;
+function getSectionTitle(book: Book, sectionId: string, sectionTitle: string, parse?: boolean) {
+    let st = sectionTitle;
+    if (parse && book.titleParse) {
+        const i = book.sections.indexOf(sectionId);
+        st = book.titleParse.replaceAll("{i}", String(book.titleIndex?.[i] || i + 1)).replaceAll("{t}", sectionTitle);
+    }
+    return st;
+}
+
+async function newBook() {
+    const id = uuid();
+    const sid = uuid();
+    const book: Book = {
+        name: "新书",
+        id: id,
+        visitTime: 0,
+        updateTime: 0,
+        type: "text",
+        sections: [sid],
+        canEdit: true,
+        lastPosi: 0,
+        language: "en",
+    };
+    const s = newSection();
+    bookshelfStore.setItem(id, book);
+    await sectionsStore.setItem(sid, s);
+    return { book: id, sections: sid };
+}
+
+function newSection() {
+    const s: Section = { title: "新章节", lastPosi: 0, text: "", words: {} };
+    return s;
+}
+
+async function getBookCover(url: string) {
+    const src = `${await getOnlineBooksUrl()}/source/${url}`;
+    return src;
+}
+
+async function getOnlineBooksUrl() {
+    return (
+        ((await setting.getItem("onlineBooks.url")) as string) ||
+        "https://raw.githubusercontent.com/xushengfeng/rmbw-book/master"
+    ).replace(/\/$/, "");
+}
+
+async function saveLanguagePackage(lan: string, section: { id: string; path: string }[]) {
+    const fetchPromises = section.map(async (item) => {
+        const { id, path } = item;
+        const response = await fetch(`${await getOnlineBooksUrl()}/source/${path}`);
+        const content = await response.json();
+        return { id, content };
+    });
+    Promise.all(fetchPromises).then(async (results) => {
+        console.log(results);
+        for (const i of results) {
+            const map = new Map();
+            for (const x in i.content) {
+                map.set(x, i.content[x]);
+            }
+            if (i.id === "ipa") {
+                ipaStore.setItem(lan, map);
+            }
+            if (i.id === "variant") {
+                variantStore.setItem(lan, map);
+            }
+            if (i.id === "map") {
+                wordMapStore.setItem(lan, i.content);
+                usSpell = i.content;
+            }
+        }
+    });
+}
+
+function sortWordList(list: WordBookList, type: WordSortType) {
+    if (type === "raw") return list;
+    if (type === "az")
+        return list.toSorted((a, b) => {
+            return a.text.localeCompare(b.text, studyLan);
+        });
+    if (type === "za")
+        return list.toSorted((a, b) => {
+            return b.text.localeCompare(a.text, studyLan);
+        });
+
+    function m(l: typeof list) {
+        const ig: typeof list = [];
+        const ul: typeof list = [];
+        const learnt: typeof list = [];
+        for (const i of l) {
+            if (i.type) {
+                if (i.type === "ignore") ig.push(i);
+                else learnt.push(i);
+            } else ul.push(i);
+        }
+        return {
+            ig,
+            ul,
+            l: learnt.toSorted((a, b) => (a.means ?? 0) - (b.means ?? 0)),
+        };
+    }
+    if (type === "01") {
+        const x = m(list);
+        return x.ul.concat(x.l).concat(x.ig);
+    }
+    if (type === "10") {
+        const x = m(list);
+        return x.ig.concat(x.l.toReversed()).concat(x.ul);
+    }
+    return randomList(list, true);
+}
+
+function randomList<i>(list: i[], to?: boolean) {
+    let rn = list.length;
+    const nList = to ? structuredClone(list) : list;
+    while (rn) {
+        const r = Math.floor(Math.random() * rn--);
+        const a = structuredClone(nList[rn]);
+        nList[rn] = nList[r];
+        nList[r] = a;
+    }
+    return nList;
+}
+
+async function textTransformer(text: string) {
+    if (await setting.getItem(readerSettingPath.apostrophe)) {
+        return text.replace(/’(\w)/g, "'$1");
+    }
+    return text;
+}
+
+function findPitch(peaks: Float32Array, sampleRate: number) {
+    const algo = "AMDF";
+    const detectPitch = Pitchfinder[algo]({ sampleRate });
+    const duration = peaks.length / sampleRate;
+    const bpm = peaks.length / duration / 60;
+
+    const frequencies = Pitchfinder.frequencies(detectPitch, peaks, {
+        tempo: bpm,
+        quantization: bpm,
+    });
+
+    // Find the baseline frequency (the value that appears most often)
+    const frequencyMap: Record<number, number> = {};
+    let maxAmount = 0;
+    let baseFrequency = 0;
+    for (let frequency of frequencies) {
+        if (!frequency) continue;
+        const tolerance = 10;
+        frequency = Math.round(frequency * tolerance) / tolerance;
+        if (!frequencyMap[frequency]) frequencyMap[frequency] = 0;
+        frequencyMap[frequency] += 1;
+        if (frequencyMap[frequency] > maxAmount) {
+            maxAmount = frequencyMap[frequency];
+            baseFrequency = frequency;
+        }
+    }
+
+    return {
+        frequencies,
+        baseFrequency,
+    };
+}
+
+function cleanWordBook(text: string) {
+    return Array.from(new Set(text.split("\n")))
+        .map((w) => w.trim())
+        .filter((i) => i)
+        .join("\n");
+}
+
+function diffPosi(oldText: string, text: string) {
+    const diff = dmp.diff_main(oldText, text);
+    console.log(diff);
+    const source: number[] = [0];
+    const map: number[] = [0];
+    if (diff.at(-1)?.[0] === 1) diff.push([0, ""]);
+    let p0 = 0;
+    let p1 = 0;
+    for (let i = 0; i < diff.length; i++) {
+        const d = diff[i];
+        const dn = diff[i + 1];
+        if (d[0] === -1 && dn && dn[0] === 1) {
+            p0 += d[1].length;
+            p1 += dn[1].length;
+            source.push(p0);
+            map.push(p1);
+            i++;
+        } else {
+            if (d[0] === 0) {
+                p0 += d[1].length;
+                p1 += d[1].length;
+                source.push(p0);
+                map.push(p1);
+            } else if (d[0] === 1) {
+                p1 += d[1].length;
+                source.push(p0);
+                map.push(p1);
+            } else if (d[0] === -1) {
+                p0 += d[1].length;
+                source.push(p0);
+                map.push(p1);
+            }
+        }
+    }
+    source.push(oldText.length);
+    map.push(text.length);
+    console.log(source, map);
+    return { source, map };
+}
+
+function changePosi(section: Section, text: string) {
+    const { source, map } = diffPosi(section.text, text);
+    for (const w in section.words) {
+        section.words[w].index = patchPosi(source, map, section.words[w].index);
+        section.words[w].cIndex = patchPosi(source, map, section.words[w].cIndex);
+    }
+    return section;
+}
+
+function patchPosi<i extends [number, number]>(source: number[], map: number[], index: i) {
+    const start = index[0];
+    const end = index[1];
+    let Start = 0;
+    let End = 0;
+    for (let i = 0; i < source.length; i++) {
+        if (source[i] <= start && start <= source[i + 1]) {
+            Start = Math.min(map[i] + (start - source[i]), map[i + 1]);
+        }
+        if (source[i] <= end && end <= source[i + 1]) {
+            End = Math.min(map[i] + (end - source[i]), map[i + 1]);
+        }
+    }
+    return [Start, End] as i;
+}
+
+function textAi(text: string) {
+    const l = text.split("\n");
+    let index = 0;
+    const ignoreMark = "//";
+    const userMark = ">";
+    const aiMark = "ai:";
+    const aiM: AIm = [];
+    for (const i of l) {
+        if (i.startsWith(aiMark)) {
+            aiM.push({ role: "assistant", content: i.replace(aiMark, "").trim() });
+        } else if (i.startsWith(userMark)) {
+            aiM.push({ role: "user", content: i.replace(userMark, "").trim() });
+        } else if (i.startsWith(ignoreMark)) {
+            index += i.length + 1;
+            continue;
+        } else {
+            const last = aiM.at(-1);
+            if (last) last.content += `\n${i}`;
+        }
+        index += i.length + 1;
+    }
+    return aiM;
+}
+
+async function wordBooksByWord(word: string) {
+    const l: { book: string; section: string }[] = [];
+    const words = mutiSpell(word);
+    let bookList: Book[] = [];
+    await bookshelfStore.iterate((book) => {
+        bookList.push(book);
+    });
+    bookList = bookList.filter((b) => b.type === "word");
+    for (const i of bookList) {
+        for (const s of i.sections) {
+            const section = await getSection(s);
+            if (!section) continue;
+            const wl = section.text.split("\n");
+            for (const w of words) {
+                if (wl.includes(w)) {
+                    if (!l.some((x) => x.section === s)) l.push({ book: i.id, section: s });
+                }
+            }
+        }
+    }
+
+    return l;
+}
+
+function lemmatizer(word: string) {
+    return variant?.get(word) || word;
+}
+
+function tag(tags: tagMap) {
+    const x = {
+        get: (id: string) => tags[id],
+        getCid: (c: string) => {
+            for (const i in tags) {
+                if (tags[i].c === c) {
+                    return i;
+                }
+            }
+            return null;
+        },
+        getAll: (b: bOp2) => {
+            function w(b: bOp) {
+                const l: bOp = [b[0]];
+                const ids = b.slice(1) as string[];
+                for (const id of ids) {
+                    const t = x.get(id);
+                    if (t.b) {
+                        l.push(w(t.b));
+                    } else {
+                        l.push(id);
+                    }
+                }
+                return l as bOp2;
+            }
+            return w(b);
+        },
+        simplily: (b: bOp) => {
+            return b;
+        },
+        new: (c: string, b?: bOp) => {
+            const id = uuid();
+            const t = time();
+            tags[id] = { c, t, n: 1 };
+            if (b) tags[id].b = b;
+            return tags;
+        },
+        getList: () => {
+            const l: [string, TAG][] = [];
+            for (const i in tags) {
+                l.push([i, tags[i]]);
+            }
+            l.sort((a, b) => a[1].t - b[1].t);
+            return l;
+        },
+    };
+    return x;
+}
+
+async function getAllMarks() {
+    const sectionId = nowBook.sections;
+    const section = await getSection(sectionId);
+    let list: { id: string; s: Section["words"][0] }[] = [];
+    if (!section) return list;
+    for (const i in section.words) {
+        list.push({ id: i, s: section.words[i] });
+    }
+    list = list.toSorted((a, b) => a.s.index[0] - b.s.index[0]);
+    return list;
+}
+
+// @ts-ignore
+function states<t extends Record<string, (v, oldV) => void>>(states: t) {
+    const s = new Map<keyof t, t[keyof t]>();
+    // @ts-ignore
+    const x = {};
+    for (const [k, v] of Object.entries(states)) {
+        // @ts-ignore
+        const setK = (newV) => {
+            const oldV = s.get(k);
+            s.set(k, newV);
+            return oldV;
+        };
+        // @ts-ignore
+        x[k] = {
+            get: () => structuredClone(s.get(k)),
+            // @ts-ignore
+            set: (newV) => {
+                const oldV = setK(newV);
+                // @ts-ignore
+                if (oldV !== newV) v(newV, oldV);
+                // todo obj diff
+                console.log(`set ${k}:`, structuredClone(newV));
+                return newV;
+            },
+            // @ts-ignore
+            setV: (newV) => {
+                setK(newV);
+                return newV;
+            },
+            // @ts-ignore
+            setAsync: async (newV) => {
+                const oldV = setK(newV);
+                console.trace();
+                // @ts-ignore
+                if (oldV !== newV) await v(newV, oldV);
+                console.log(`${k}:`, structuredClone(newV));
+                return newV;
+            },
+        };
+    }
+    return x as {
+        [k in keyof t]: {
+            get: () => Parameters<t[k]>["0"];
+            set: (v: Parameters<t[k]>["0"]) => Parameters<t[k]>["0"];
+            setV: (v: Parameters<t[k]>["0"]) => Parameters<t[k]>["0"];
+            setAsync: (v: Parameters<t[k]>["0"]) => Promise<Parameters<t[k]>["0"]>;
+        };
+    };
+}
+
+async function getWordFromDic(word: string, id: string) {
+    const d = dicParse(await dicStore.getItem(id));
+    return d.getContent(word);
+}
+
+async function saveCard(v: {
+    key: string;
+    index: TxtSlice;
+    cindex: TxtSlice;
+}) {
+    const sectionId = nowBook.sections;
+    const section = await getSection(sectionId);
+    if (!section) return;
+    for (const i in section.words) {
+        const index = section.words[i].index;
+        if (index[0] <= v.index[0] && v.index[1] <= index[1] && section.words[i].type === "word") {
+            return i;
+        }
+    }
+    const id = uuid();
+    section.words[id] = {
+        id: v.key,
+        index: v.index,
+        cIndex: v.cindex,
+        visit: false,
+        type: "word",
+    };
+    section.words = Object.fromEntries(Object.entries(section.words).toSorted((a, b) => a[1].index[0] - b[1].index[0]));
+
+    sectionsStore.setItem(sectionId, section);
+    wordMarkChanged(section?.words);
+    return id;
+}
+
+function source2context(source: Section["words"][0], sourceId: string) {
+    return {
+        text: editText.slice(...source.cIndex),
+        index: [source.index[0] - source.cIndex[0], source.index[1] - source.cIndex[0]] as [number, number],
+        source: { ...nowBook, id: sourceId },
+    };
+}
+
+function rmWord(record: record | null, sourceId: string) {
+    const Word = flatWordCard(record, sourceId);
+    const i = Word.index;
+    if (i === -1 || !record) return record;
+    for (const index in record.means) {
+        const m = record.means[index];
+        if (Number(index) === i) {
+            m.contexts = m.contexts.filter((c) => c.source.id !== sourceId);
+            break;
+        }
+    }
+    return record;
+}
+async function clearWordMean(record: record | null) {
+    if (!record) return;
+    const means: record["means"] = [];
+    for (const m of record.means) {
+        if (m.contexts.length === 0) {
+            await card2word.removeItem(m.card_id);
+            await cardsStore.removeItem(m.card_id);
+        } else {
+            means.push(m);
+        }
+    }
+    if (means.length === 0) {
+        await wordsStore.removeItem(record.word);
+        await spellStore.removeItem(record.word);
+    } else {
+        record.means = means;
+        await wordsStore.setItem(record.word, record);
+    }
+}
+
+async function translate(st: string, f?: boolean) {
+    const tst = st.trim();
+    if (!f) {
+        const text = (await transCache.getItem(tst)) as string;
+        if (text) return { text, stop: new AbortController() };
+    }
+
+    const output = ai(
+        [
+            {
+                role: "system",
+                content:
+                    "You are a professional, authentic translation engine. You only return the translated text, without any explanations.",
+            },
+            {
+                role: "user",
+                content: `Please translate into ${navigator.language} (avoid explaining the original text):\n\n${tst}`,
+            },
+        ],
+        "翻译",
+    );
+    output.text.then((text) => {
+        if (text) transCache.setItem(tst, text);
+    });
+    return output;
+}
+
+function wordFix2str(f: { type: "prefix" | "root" | "suffix"; t: string; dis: string }[]) {
+    const text = [];
+    for (const ff of f) {
+        let t = ff.t;
+        if (ff.type === "prefix") t = `${t}-`;
+        if (ff.type === "suffix") t = `-${t}`;
+        if (ff.dis) t += ` (${ff.dis})`;
+        text.push(t);
+    }
+    return text;
+}
+
+function sentenceGm(t: senNode) {
+    function get(T: senNode) {
+        let text = "";
+        for (const t of T) {
+            if (typeof t === "string") {
+                text += t;
+            } else {
+                let tx = get(t.text);
+                if (t.isPost) tx = `<(${tx})`;
+                else tx = `(${tx})>`;
+                text += tx;
+            }
+        }
+        return text;
+    }
+    return get(t);
+}
+
+function setCardAction(cardId: string, time: Date, rating: Rating, state: State, duration: number) {
+    const o: [string, Rating, State, number] = [cardId, rating, state, duration];
+    cardActionsStore.setItem(String(time.getTime()), o);
+}
+function setCardAction2(cardId: string, time: Date) {
+    const o: [string] = [cardId];
+    cardActionsStore.setItem(String(time.getTime()), o);
+}
+function newCardAction(id: string) {
+    setCardAction2(id, new Date());
+}
+
+async function tryInitWord(word: string) {
+    const w = await wordsStore.getItem(word);
+    if (!w) {
+        const w = {
+            word: word,
+            means: [],
+        };
+        const card2 = createEmptyCard();
+        newCardAction(word);
+        if (!(await spellStore.getItem(word))) await spellStore.setItem(word, card2);
+        await wordsStore.setItem(word, w);
+        return w;
+    }
+    return w;
+}
+
+async function newWordCard_Mean(word: string) {
+    const cardId = uuid();
+    const card = createEmptyCard();
+    newCardAction(cardId);
+    await cardsStore.setItem(cardId, card);
+    await card2word.setItem(cardId, word);
+    return cardId;
+}
+
+function flatWordCard(record: record | null, id: string) {
+    const Word: FlatWord = {
+        index: -1,
+        card_id: "",
+        text: "",
+        context: { index: [Number.NaN, Number.NaN] as ReSlice, source: { book: "", sections: "", id: "" }, text: "" },
+        tag: [tOp.and],
+    };
+    if (!record) return Word;
+    for (const n in record.means) {
+        const i = record.means[n];
+        for (const j of i.contexts) {
+            if (j.source.id === id) {
+                Word.index = Number(n);
+                Word.card_id = i.card_id;
+                Word.text = i.text;
+                Word.context = j;
+                if (i.tags) Word.tag = i.tags;
+                return Word;
+            }
+        }
+    }
+    return Word;
+}
+
+function fillMutiSpell(rl: string[]) {
+    const l: string[] = [];
+    const m: { [key: string]: string[] } = {};
+    for (const i of usSpell) {
+        for (const j of i) {
+            m[j] = i;
+        }
+    }
+    for (const w of rl) {
+        if (m[w]) {
+            l.push(...m[w]);
+        } else {
+            l.push(w);
+        }
+    }
+    return l;
+}
+
+function mutiSpell(word: string) {
+    return usSpell.find((m) => m.includes(word)) || [word];
+}
+
+async function getLearntWords() {
+    const learnt = await wordsStore.keys();
+    return fillMutiSpell(learnt);
+}
+
+async function getIgnoreWords() {
+    const section = await getSection(ignoreWordSection);
+    if (!section) return [];
+    const rl = section.text.trim().split("\n");
+    return fillMutiSpell(rl);
+}
+
+async function addIgnore(word: string | string[]) {
+    const words = Array.isArray(word) ? word : [word];
+    const section = await getSection(ignoreWordSection);
+    if (!section) return;
+    const oldWords = section.text.trim().split("\n");
+    for (const word of words) {
+        if (!oldWords.includes(word)) {
+            oldWords.push(word);
+        }
+    }
+    section.text = oldWords.join("\n");
+    await sectionsStore.setItem(ignoreWordSection, section);
+}
+async function removeIgnore(word: string) {
+    const section = await getSection(ignoreWordSection);
+    if (!section) return;
+    const oldWords = section.text.trim().split("\n");
+    if (!oldWords.includes(word)) return;
+    section.text = oldWords.filter((w) => w !== word).join("\n");
+    await sectionsStore.setItem(ignoreWordSection, section);
+    if (!(await wordsStore.getItem(word))) {
+        // 移除添加的拼写
+        spellStore.removeItem(word);
+    }
+}
+
+async function getWordsScope() {
+    const books = getSelectBooks(reviewScope);
+    const ignore = await getIgnoreWords();
+    const b = books.book;
+    if (books.word.length === 0) return { words: null, ignore, books: b };
+    const words: string[] = [];
+    for (const book of books.word) {
+        const w = (await getSection(book))?.text.trim().split("\n") ?? [];
+        words.push(...w);
+    }
+    return { words, ignore: words.filter((i) => ignore.includes(i)), books: b };
+}
+
+function filterWithScope(word: string, scope: string[] | null, exScope?: string[]) {
+    if (exScope?.includes(word)) return false;
+    return !scope || scope.includes(word);
+}
+
+async function getFutureReviewDue(days: number, ...types: Review[]) {
+    let now = new Date().getTime();
+    now += timeD.d(days);
+    now = Math.round(now);
+    const ws = await getWordsScope();
+    const wordsScope = ws.words;
+    const wordList: { id: string; card: Card }[] = [];
+    const spellList: { id: string; card: Card }[] = [];
+    const sentenceList: { id: string; card: Card }[] = [];
+
+    const dueL: Map<string, Card> = new Map();
+    await cardsStore.iterate((card, k) => {
+        if (card.due.getTime() < now) {
+            dueL.set(k, card);
+        }
+    });
+
+    if (types.includes("word"))
+        await wordsStore.iterate((v, k) => {
+            if (filterWithScope(k, wordsScope)) {
+                for (const m of v.means) {
+                    if (
+                        dueL.has(m.card_id) &&
+                        (ws.books.length === 0 || m.contexts.find((b) => ws.books.includes(b.source.book)))
+                    )
+                        wordList.push({ id: m.card_id, card: dueL.get(m.card_id) as Card });
+                }
+            }
+        });
+    if (types.includes("spell")) {
+        await spellStore.iterate((value, key) => {
+            if (value.due.getTime() < now) {
+                if (spellIgnore.el.value === "all")
+                    if (filterWithScope(key, wordsScope)) spellList.push({ id: key, card: value });
+                if (spellIgnore.el.value === "exIgnore")
+                    if (filterWithScope(key, wordsScope, ws.ignore)) spellList.push({ id: key, card: value });
+                if (spellIgnore.el.value === "ignore")
+                    if (filterWithScope(key, ws.ignore)) spellList.push({ id: key, card: value });
+            }
+        });
+    }
+
+    if (types.includes("sentence"))
+        for (const key of await card2sentence.keys()) {
+            if (dueL.has(key)) {
+                sentenceList.push({ id: key, card: dueL.get(key) as Card });
+            }
+        }
+    return { word: wordList, spell: spellList, sentence: sentenceList };
+}
+async function getReviewDue(type: Review) {
+    const now = new Date().getTime();
+    const wordList: { id: string; card: Card }[] = [];
+    const spellList: { id: string; card: Card }[] = [];
+    const sentenceList: { id: string; card: Card }[] = [];
+    for (const i of due.word) {
+        if (i.card.due.getTime() < now) {
+            wordList.push(i);
+        }
+    }
+    for (const i of due.spell) {
+        if (i.card.due.getTime() < now) {
+            spellList.push(i);
+        }
+    }
+    for (const i of due.sentence) {
+        if (i.card.due.getTime() < now) {
+            sentenceList.push(i);
+        }
+    }
+    for (const x of [wordList, spellList, sentenceList]) x.sort((a, b) => a.card.due.getTime() - b.card.due.getTime());
+    if (reviewSortType === "学习")
+        for (const x of [wordList, spellList, sentenceList])
+            x.reverse().sort((a, b) => (a.card.state === State.New ? -1 : 1));
+    if (reviewSortType === "学习1")
+        for (const x of [wordList, spellList, sentenceList]) x.sort((a, b) => (a.card.state === State.New ? -1 : 1));
+    if (reviewSortType === "紧急") {
+        function gRe(fsrs: FSRS, c: Card) {
+            return fsrs.get_retrievability(c, now, false) ?? 0;
+        }
+        wordList.sort((a, b) => gRe(fsrs, a.card) - gRe(fsrs, b.card));
+        spellList.sort((a, b) => gRe(fsrsSpell, a.card) - gRe(fsrsSpell, b.card));
+        sentenceList.sort((a, b) => gRe(fsrsSen, a.card) - gRe(fsrsSen, b.card));
+    }
+    if (reviewSortType === "随机") for (const x of [wordList, spellList, sentenceList]) randomList(x);
+    if (type === "word") {
+        return wordList[0];
+    }
+    if (type === "spell") {
+        return spellList[0];
+    }
+    return sentenceList[0];
+}
+
+async function nextDue(type: Review) {
+    const x = await getReviewDue(type);
+    reviewCount++;
+    return x;
+}
+
+async function getReadTime(text: string) {
+    const segmenter = new Segmenter(studyLan, { granularity: "word" });
+    const segments = segmenter.segment(text);
+    const wordsCount = Array.from(segments).filter((i) => i.isWordLike).length;
+    return Math.max(wordsCount, 16) * (Number(await setting.getItem("user.readSpeed")) || 150);
+}
+
+async function getTtsEngine() {
+    return ((await setting.getItem(ttsEngineConfig)) || "browser") as "browser" | "ms";
+}
+
+async function ttsNormalize(text: string) {
+    const posi = (((await setting.getItem(ttsVoiceConfig)) as string) || "en-GB-LibbyNeural").slice(0, 2);
+    if (posi === "zh" || posi === "ja" || posi === "ko") return text;
+    return text.normalize("NFKC");
+}
+
+async function getTTS(text: string) {
+    await tts.setMetadata(
+        (await setting.getItem(ttsVoiceConfig)) || "en-GB-LibbyNeural",
+        OUTPUT_FORMAT.WEBM_24KHZ_16BIT_MONO_OPUS,
+    );
+    const nText = await ttsNormalize(text);
+    const b = await ttsCache.getItem(nText);
+    if (b) {
+        return { url: URL.createObjectURL(b.blob), metadata: b.data };
+    }
+
+    const readable = tts.toStream(nText);
+    let base = new Uint8Array();
+    readable.onData((data) => {
+        console.log("DATA RECEIVED");
+        // raw audio file data
+        base = concat(base, data);
+    });
+    function concat(array1: Uint8Array, array2: Uint8Array) {
+        const mergedArray = new Uint8Array(array1.length + array2.length);
+        mergedArray.set(array1);
+        mergedArray.set(array2, array1.length);
+        return mergedArray;
+    }
+
+    return new Promise((re: (x: { metadata: D; url: string }) => void, rj) => {
+        readable.onEnd(async (data) => {
+            console.log("STREAM end");
+            let blob = new Blob([base], { type: "audio/webm" });
+            blob = await fixWebmDuration(blob);
+            if (blob.size > 0) ttsCache.setItem(text, { blob, data });
+            re({ url: URL.createObjectURL(blob), metadata: data });
+        });
+    });
+}
+
+async function setReviewCard(id: string, card: Card, rating: Rating, duration: number) {
+    const now = new Date();
+    setCardAction(id, now, rating, card.state, duration);
+    const sCards = fsrs.repeat(card, now);
+    // @ts-ignore
+    const nCard = sCards[rating].card;
+    await cardsStore.setItem(id, nCard);
+
+    for (const i of due.word)
+        if (i.id === id) {
+            i.card = structuredClone(nCard);
+            return;
+        }
+    for (const i of due.sentence)
+        if (i.id === id) {
+            i.card = structuredClone(nCard);
+            break;
+        }
+}
+function setSpellCard(id: string, card: Card, rating: Rating, duration: number) {
+    const now = new Date();
+    setCardAction(id, now, rating, card.state, duration);
+    const sCards = fsrsSpell.repeat(card, now);
+    // @ts-ignore
+    const nCard = sCards[rating].card;
+    spellStore.setItem(id, nCard);
+
+    for (const i of due.spell)
+        if (i.id === id) {
+            i.card = structuredClone(nCard);
+            break;
+        }
+
+    return String(now.getTime());
+}
+
+async function saveDic(dic: object) {
+    const ndic = dicParse(dic);
+    const id = ndic.meta.id;
+    await dicStore.setItem(id, ndic.map);
+    dics[id] = ndic.meta;
+}
+
+async function getIPA(word: string) {
+    if (!ipa) {
+        const lan = studyLan || "en";
+        const i = await ipaStore.getItem(lan);
+        if (!i) return "";
+        ipa = i;
+    }
+
+    const r = ipa.get(word.toLowerCase());
+    if (!r) return "";
+    if (Array.isArray(r)) {
+        let l: string[] = [];
+        for (const i of r) {
+            l = l.concat(i.split(",").map((w) => w.trim()));
+        }
+        return l.join(",");
+    }
+    return r
+        .split(",")
+        .map((w) => w.trim())
+        .join(",");
+}
+
+async function toAllData() {
+    const l: AllData = {
+        bookshelf: {},
+        sections: {},
+        cards: {},
+        words: {},
+        spell: {},
+        card2word: {},
+        card2sentence: {},
+        actions: {},
+        logExTrans: {},
+    };
+    for (const storeName in allData2Store) {
+        await allData2Store[storeName].iterate((v, k) => {
+            // @ts-ignore
+            l[storeName][k] = v;
+        });
+    }
+
+    for (const key of ["cards", "spell"] as const) {
+        for (const i in l[key]) {
+            // @ts-ignore
+            const r = l[key][i] as Card;
+            const nr = structuredClone(r) as any;
+            nr.due = r.due?.getTime() || 0;
+            nr.last_review = r.last_review?.getTime?.() || 0;
+            // @ts-ignore
+            l[key][i] = nr;
+        }
+    }
+    return l;
+}
+function formatAllData(l: AllData) {
+    return jsonStringify(l, (path) => {
+        if (path.length === 2 && (path[0] === "cards" || path[0] === "spell")) {
+            return true;
+        }
+        if (path.length === 4 && path[0] === "sections" && path[2] === "words") {
+            return true;
+        }
+        if (path.length === 3 && !(path[0] === "sections" && path[2] === "words")) {
+            return true;
+        }
+        if (path[0] === "actions" && path.length === 2) {
+            return true;
+        }
+        return false;
+    });
+}
+async function getAllData() {
+    const l = await toAllData();
+    return formatAllData(l);
+}
+
+function splitAllData(dl: AllData) {
+    const l = structuredClone(dl);
+    const text: { [id: string]: string } = {};
+    for (const i in l.sections) {
+        if (i === ignoreWordSection) continue;
+        if (!l.sections[i]) continue;
+        const t = l.sections[i].text;
+        // @ts-ignore
+        l.sections[i].text = undefined;
+        text[i] = t;
+    }
+    const hash = spark.hash(JSON.stringify(text));
+    l.sections[0] = { lastPosi: 0, text: hash, title: "", words: {} };
+    return { data: l, text, hash: hash };
+}
+
+function jsonStringify(value: unknown, unBr: (path: string[]) => boolean) {
+    const l: string[] = [];
+
+    function w(value: object, l: string[]) {
+        const str: string[] = [];
+        for (const [i, v] of Object.entries(value)) {
+            const path = l.concat(i);
+            if (typeof v === "object" && v?.constructor === Object) {
+                const isBr = !unBr(path);
+                if (isBr) {
+                    str.push(`"${i}":${w(v, path)}`);
+                } else {
+                    str.push(`"${i}":${JSON.stringify(v)}`);
+                }
+            } else {
+                let _v = v;
+                if (typeof _v === "undefined") _v = null;
+                str.push(`"${i}":${JSON.stringify(_v)}`);
+            }
+        }
+        if (str.length === 0) return "{}";
+        return `{\n${str.join(",\n")}\n}`;
+    }
+    return w(value as object, l);
+}
+
+async function xUnGzip(file: Blob) {
+    const stream = file.stream().pipeThrough(new DecompressionStream("gzip"));
+    const blob = await new Response(stream).blob();
+    return blob.text();
+}
+
+async function xGzip(data: string) {
+    const file = new File([data], rmbwJsonName, { type: "text/json;charset=utf-8" });
+    const stream = file.stream().pipeThrough(new CompressionStream("gzip"));
+    const blob = new Response(stream).blob();
+    return blob;
+}
+
+function basicAuth(username: string, passwd: string) {
+    return `Basic ${username}:${passwd}`;
+}
+
+function joinFilePath(baseurl: string, name: string) {
+    let url = baseurl;
+    if (url.at(-1) !== "/") url += "/";
+    url += rmbwZipName;
+    return url;
+}
+
+async function getDAV() {
+    const baseurl = (await setting.getItem(DAVConfigPath.url)) as string;
+    const username = (await setting.getItem(DAVConfigPath.user)) as string;
+    const passwd = (await setting.getItem(DAVConfigPath.passwd)) as string;
+    const url = joinFilePath(baseurl, rmbwZipName);
+    const data = (
+        await fetch(url, {
+            method: "get",
+            headers: { Authorization: basicAuth(username, passwd) },
+        })
+    ).blob();
+    return data;
+}
+
+async function setDAV(data: Blob) {
+    const baseurl = (await setting.getItem(DAVConfigPath.url)) as string;
+    const username = (await setting.getItem(DAVConfigPath.user)) as string;
+    const passwd = (await setting.getItem(DAVConfigPath.passwd)) as string;
+    const url = joinFilePath(baseurl, rmbwZipName);
+    fetch(url, {
+        method: "put",
+        headers: { Authorization: basicAuth(username, passwd) },
+        body: data,
+    })
+        .then(() => {
+            putToast(txt("上传成功"));
+        })
+        .catch(() => {
+            putToast(txt("上传失败"), 6000);
+        });
+}
+
+async function getGitHub(fileName: string) {
+    const user = (await setting.getItem(GitHubConfigPath.user)) as string;
+    const repo = (await setting.getItem(GitHubConfigPath.repo)) as string;
+    const token = (await setting.getItem(GitHubConfigPath.token)) as string;
+    const path = ((await setting.getItem(GitHubConfigPath.path)) as string) || "";
+    const downloadPath = `${
+        ((await setting.getItem(GitHubConfigPath.download)) as string) ||
+        (`https://raw.githubusercontent.com/${user}/${repo}/main/${path}` as string)
+    }/${fileName}`;
+    return {
+        url: `https://api.github.com/repos/${user}/${repo}/contents/${path}/${fileName}`.replace(
+            "contents//",
+            "contents/",
+        ),
+        auth: {
+            Authorization: `Bearer ${token}`,
+        },
+        fileDownload: downloadPath,
+        user,
+        repo,
+        path,
+    };
+}
+
+async function uploadGithub(data: string, fileName: string, m: string) {
+    const base64 = encode(data);
+    const config = await getGitHub(fileName);
+    let sha = "";
+    sha = (await (await fetch(config.url, { headers: { ...config.auth } })).json()).sha;
+    const x = {
+        message: m,
+        content: base64,
+        sha,
+    };
+    // @ts-ignore
+    if (!sha) x.sha = undefined;
+    fetch(config.url, {
+        method: "PUT",
+        headers: {
+            ...config.auth,
+        },
+        body: JSON.stringify(x),
+    });
+}
+
+async function downloadGithub(fileName: string) {
+    const config = await getGitHub(fileName);
+    const data = await (await fetch(config.fileDownload)).json();
+    return data;
+}
+
+async function getCSV(type: "word" | "spell" | "sen") {
+    const l: string[] = [];
+    if (type === "word" || type === "sen") {
+        // todo 区分sen
+        await cardsStore.iterate((v, k) => {
+            l.push(k);
+        });
+    } else {
+        await spellStore.iterate((_, k) => {
+            l.push(k);
+        });
+    }
+    const spChar = ",";
+    const text: string[] = [
+        ["card_id", "review_time", "review_rating", "review_state", "review_duration"].join(spChar),
+    ];
+    await cardActionsStore.iterate((v, k) => {
+        if (!v[1]) return;
+        const card_id = v[0];
+        if (!l.includes(card_id)) return;
+        const review_time = Number(k);
+        const review_rating = v[1];
+        const review_state = v[2];
+        const review_duration = v[3];
+        const row = [card_id, review_time, review_rating, review_state, review_duration].join(spChar);
+        text.push(row);
+    });
+    const csv = text.join("\n");
+    return csv;
+}
+
+// fun ui
+
+// @auto-path:../assets/icons/$.svg
+function iconEl(name: string) {
+    return button(image(new URL(`../assets/icons/${name}.svg`, import.meta.url).href, "按钮图标").class("icon"));
+}
+
+function setFontElF(name: string) {
+    fontEl.el.innerText = name;
+    fontEl.el.style.fontFamily = name;
+}
+function themeI(value: string, name: string, bg: string, color: string) {
+    return themei.new(value, name).style({
+        background: bg,
+        color,
+    });
+}
+
 function showMenu(x: number, y: number) {
     menuEl.style({ left: `${x}px`, top: `${y}px` }).on("click", () => {
         menuEl.el.hidePopover();
     });
     willShowMenu = true;
 }
-
-document.body.addEventListener("pointerup", (e) => {
-    if (willShowMenu) {
-        menuEl.el.showPopover();
-        willShowMenu = false;
-    }
-});
 
 function interModal<el extends ElType<HTMLElement>, v>(
     el: el,
@@ -469,149 +1935,9 @@ function vlist<ItemType>(
     return { show };
 }
 
-/************************************main */
-const DICSHOW = "dic_show";
-const MARKWORD = "mark_word";
-const TMPMARKWORD = "tmp_mark_word";
-const VISITMARKWORD = "visit_mark_word";
-const TRANSLATE = "translate";
-const DICSENTENCE = "dic_sentence";
-const HIDEMEANS = "hide_means";
-const TODOMARK = "to_visit";
-const TODOMARK1 = "to_visit1";
-const UNREAD = "unread";
-const NOTEDIALOG = "note_dialog";
-const AIDIALOG = "ai_dialog";
-const DICDIALOG = "dic_dialog";
-const SELECTEDITEM = "selected_item";
-const LITLEPROGRESS = "litle_progress";
-
-const booksEl = ele("dialog").addInto().attr({ id: "books" });
-const localBookEl = view();
-const onlineBookEl = view().style({ display: "none" });
 function booksElclose() {
     booksEl.el.close();
 }
-booksEl.add([
-    view("x").add([
-        view()
-            .add("本地书籍")
-            .on("click", () => {
-                showLocalBooks();
-                booksEl.el.classList.remove("show_online_book");
-            }),
-        view()
-            .add("在线书籍")
-            .on("click", () => {
-                getOnlineBooks();
-                booksEl.el.classList.add("show_online_book");
-            }),
-        view()
-            .add("我的词典")
-            .on("click", () => {
-                showBook(coreWordBook);
-                booksElclose();
-            }),
-        iconEl("close")
-            .style({ "margin-left": "auto" })
-            .on("click", () => {
-                booksElclose();
-            }),
-    ]),
-    localBookEl,
-    onlineBookEl,
-]);
-const bookSectionsEl = view().style({
-    overflow: "scroll",
-    position: "relative",
-    "flex-grow": "1",
-});
-const mainEl = view().style({ backgroundColor: "var(--bg)" }).addInto();
-const addBookEl = iconEl("add");
-const addSectionEL = iconEl("add");
-const bookNameEl = view();
-const bookNavEl = view().attr({ id: "book_nav" }).add([bookNameEl, addSectionEL, bookSectionsEl]).addInto(mainEl);
-const xbookEl = view().attr({ id: "book" }).addInto(mainEl);
-const bookButtons = view().attr({ id: "book_buttons" }).addInto(xbookEl);
-const bookBEl = iconEl("books").attr({ id: "books_b" }).style({ "view-transition-name": "dialog" });
-const bookSectionsB = iconEl("side_panel").attr({ id: "book_sections" });
-const reviewBEl = iconEl("review").attr({ id: "reviewb" });
-const settingBEl = iconEl("setting").attr({ id: "settingb" });
-const articleAi = iconEl("ai").on("click", () => {
-    showArticelAI();
-});
-const changeStyleEl = iconEl("style");
-const changeEditEl = button();
-const bookdicEl = iconEl("search").attr({ accessKey: "/" });
-
-bookButtons.add([
-    bookBEl,
-    bookSectionsB,
-    reviewBEl,
-    settingBEl,
-    spacer().attr({ id: "book_name" }),
-    iconEl("more").on("click", () => {
-        bookContentEl.el.classList.toggle("show_p_more");
-    }),
-    articleAi,
-    changeStyleEl,
-    changeEditEl,
-    bookdicEl,
-]);
-
-let bookContentEl = view().attr({ id: "book_content" }) as ElType<HTMLElement>;
-const bookContentContainerEl = view()
-    .attr({ id: "book_content_container" })
-    .style({ "--paper-bg": `url("${await nosieBg()}") repeat` })
-    .addInto(bookContentEl)
-    .addInto(xbookEl);
-
-const changeStyleBar = view().attr({ popover: "auto" }).class("change_style_bar").addInto();
-
-const dicEl = view().attr({ id: "dic" }).addInto(mainEl);
-
-const lastMarkEl = iconEl("left");
-const nextMarkEl = iconEl("right");
-const toSentenceEl = iconEl("sentence");
-const feedbackEl = iconEl("help");
-const hideDicEl = iconEl("close");
-const dicWordEl = input();
-const lessWordEl = txt("-");
-const moreWordEl = txt("+");
-const moreWordsEl = view().class("more_words");
-const ttsWordEl = button().style({ width: "auto", height: "auto", "font-size": "inherit" });
-const ttsContextEl = iconEl("recume");
-const dicTransB = iconEl("translate");
-const dicTransContent = input().class(TRANSLATE).style({ border: "none", width: "100%", "font-size": "1rem" });
-const dicMinEl = iconEl("more").style({ "min-height": "24px" });
-const addMeanEl = iconEl("add").style({ "min-height": "24px" });
-const editMeanEl = iconEl("pen").style({ "min-height": "24px" });
-const noteEl = iconEl("pen").style({ "min-height": "24px" });
-const dicDetailsEl = view().class("dic_details");
-
-dicEl.add([
-    view("x").add([lastMarkEl, nextMarkEl, toSentenceEl, ttsContextEl, noteEl, spacer(), feedbackEl, hideDicEl]),
-    view("x")
-        .style({ "flex-wrap": "wrap", "align-items": "center" })
-        .add([dicWordEl, view().add([lessWordEl, moreWordEl]), ttsWordEl, moreWordsEl]),
-    view("x").add([dicTransB, dicTransContent]),
-    view("x").add([dicMinEl, addMeanEl, editMeanEl]),
-    dicDetailsEl,
-]);
-
-const markListBarEl = view().attr({ id: "mark_word_list" }).addInto(mainEl);
-
-const reviewButtonsEl = view().attr({ id: "review_buttons" });
-const reviewViewEl = view().attr({ id: "review_view", lang: studyLan });
-
-const reviewEl = view()
-    .attr({ id: "review" })
-    .addInto(mainEl)
-    .add(view().attr({ id: "review_list" }).add([reviewButtonsEl, reviewViewEl]));
-
-const reviewReflashEl = iconEl("reload").addInto(reviewButtonsEl);
-const reviewModeEl = view().attr({ id: "review_mode" }).addInto(reviewButtonsEl);
-
 function nosieBg() {
     const canvas = document.createElement("canvas");
     const w = 100;
@@ -668,48 +1994,6 @@ function putToast(ele: ElType<HTMLElement>, time = 2000) {
     observer.observe(toastEl.el, { childList: true });
 }
 
-const tmpDicEl = view().attr({ popover: "auto" }).class("tmp_dic").addInto();
-
-const bookshelfStore = localForage.createInstance<Book>({ name: "bookshelf" });
-const sectionsStore = localForage.createInstance<Section>({ name: "sections" });
-
-async function getBooksById(id: string) {
-    if (id === coreWordBook.id) return coreWordBook;
-    return await bookshelfStore.getItem(id);
-}
-async function getSection(id: string) {
-    return await sectionsStore.getItem(id);
-}
-
-async function sectionWords(id: string) {
-    const section = await getSection(id);
-    if (!section) return Object.entries({}) as [];
-    return Object.entries(section.words);
-}
-
-async function checkEmptyBook(book: Book) {
-    const e = true;
-    for (const sis of book.sections) {
-        if ((await sectionWords(sis)).length) {
-            return false;
-        }
-    }
-    return e;
-}
-
-async function getBookShortTitle(bookId: string) {
-    return (await getBooksById(bookId))?.shortName || (await getBooksById(bookId))?.name || "无名书籍";
-}
-
-function getSectionTitle(book: Book, sectionId: string, sectionTitle: string, parse?: boolean) {
-    let st = sectionTitle;
-    if (parse && book.titleParse) {
-        const i = book.sections.indexOf(sectionId);
-        st = book.titleParse.replaceAll("{i}", String(book.titleIndex?.[i] || i + 1)).replaceAll("{t}", sectionTitle);
-    }
-    return st;
-}
-
 async function getTitleEl(bookId: string, sectionN: string, markId: string, x?: string) {
     const book = await getBooksById(bookId);
     const section = await getSection(sectionN);
@@ -728,81 +2012,6 @@ async function getTitleEl(bookId: string, sectionN: string, markId: string, x?: 
             showDic(id);
         });
     return v;
-}
-
-async function newBook() {
-    const id = uuid();
-    const sid = uuid();
-    const book: Book = {
-        name: "新书",
-        id: id,
-        visitTime: 0,
-        updateTime: 0,
-        type: "text",
-        sections: [sid],
-        canEdit: true,
-        lastPosi: 0,
-        language: "en",
-    };
-    const s = newSection();
-    bookshelfStore.setItem(id, book);
-    await sectionsStore.setItem(sid, s);
-    return { book: id, sections: sid };
-}
-
-function newSection() {
-    const s: Section = { title: "新章节", lastPosi: 0, text: "", words: {} };
-    return s;
-}
-
-const ignoreWordSection = "ignore";
-if (!(await sectionsStore.getItem(ignoreWordSection))) {
-    await sectionsStore.setItem(ignoreWordSection, {
-        title: "ignore",
-        lastPosi: 0,
-        text: "",
-        words: {},
-    } as Section);
-}
-
-const wordSection = "words";
-if (!(await sectionsStore.getItem(wordSection))) {
-    await sectionsStore.setItem(wordSection, {
-        title: "words",
-        lastPosi: 0,
-        text: "",
-        words: {},
-    } as Section);
-}
-
-const coreWordBook: Book = {
-    canEdit: true,
-    id: "0",
-    language: "en",
-    lastPosi: 0,
-    name: "词典",
-    sections: [wordSection, ignoreWordSection],
-    type: "word",
-    updateTime: 0,
-    visitTime: 0,
-};
-
-bookBEl.on("click", () => {
-    booksEl.el.showModal();
-});
-
-const coverCache = localForage.createInstance<Blob>({ name: "cache", storeName: "cover" });
-
-async function getBookCover(url: string) {
-    const src = `${await getOnlineBooksUrl()}/source/${url}`;
-    return src;
-}
-
-async function getOnlineBooksUrl() {
-    return (
-        ((await setting.getItem("onlineBooks.url")) as string) ||
-        "https://raw.githubusercontent.com/xushengfeng/rmbw-book/master"
-    ).replace(/\/$/, "");
 }
 
 async function getOnlineBooks() {
@@ -963,78 +2172,6 @@ function selectBook<BOOK extends Pick<Book, "type" | "language">>(books: BOOK[],
 
     return view().add([typeEl, lanEl]);
 }
-
-async function saveLanguagePackage(lan: string, section: { id: string; path: string }[]) {
-    const fetchPromises = section.map(async (item) => {
-        const { id, path } = item;
-        const response = await fetch(`${await getOnlineBooksUrl()}/source/${path}`);
-        const content = await response.json();
-        return { id, content };
-    });
-    Promise.all(fetchPromises).then(async (results) => {
-        console.log(results);
-        for (const i of results) {
-            const map = new Map();
-            for (const x in i.content) {
-                map.set(x, i.content[x]);
-            }
-            if (i.id === "ipa") {
-                ipaStore.setItem(lan, map);
-            }
-            if (i.id === "variant") {
-                variantStore.setItem(lan, map);
-            }
-            if (i.id === "map") {
-                wordMapStore.setItem(lan, i.content);
-                usSpell = i.content;
-            }
-        }
-    });
-}
-
-addBookEl.on("click", async () => {
-    const b = await newBook();
-    nowBook = b;
-    const book = (await getBooksById(nowBook.book)) as Book;
-    showBook(book);
-    changeEdit(true);
-    booksElclose();
-});
-
-addSectionEL.on("click", async () => {
-    if (nowBook.book === coreWordBook.id) return;
-    if (!nowBook.book) nowBook = await newBook();
-    const book = await getBooksById(nowBook.book);
-    if (!book) {
-        console.log(`找不到书籍${nowBook.book}`);
-        return;
-    }
-    const sid = uuid();
-    book.sections.push(sid);
-    book.lastPosi = book.sections.length - 1;
-    const s = newSection();
-    await sectionsStore.setItem(sid, s);
-    await bookshelfStore.setItem(nowBook.book, book);
-    nowBook.sections = book.sections.at(-1) as string;
-    showBook(book);
-    changeEdit(true);
-});
-
-bookSectionsB.on("click", () => {
-    bookNavEl.el.classList.toggle("book_nav_show");
-});
-
-let nowBook = {
-    book: "",
-    sections: "", //!!! 现在假定一定有section
-};
-
-let reflashSectionEl = (words: Section["words"]) => {};
-
-let isWordBook = false;
-
-showLocalBooks();
-setBookS();
 
 async function setSectionTitle(sid: string) {
     const title = (await getSection(sid))?.title;
@@ -1313,7 +2450,7 @@ async function showBookSections(book: Book) {
     };
 }
 
-let contentP: string[] = [];
+let reflashSectionEl = (words: Section["words"]) => {};
 
 async function showBookContent(book: Book, id: string) {
     const s = await getSection(id);
@@ -1650,58 +2787,6 @@ async function showWordBook(book: Book, s: Section) {
     bookContentContainerEl.attr({ lang: book.language });
 }
 
-const WordSortPath = "words.sort";
-
-function sortWordList(list: WordBookList, type: WordSortType) {
-    if (type === "raw") return list;
-    if (type === "az")
-        return list.toSorted((a, b) => {
-            return a.text.localeCompare(b.text, studyLan);
-        });
-    if (type === "za")
-        return list.toSorted((a, b) => {
-            return b.text.localeCompare(a.text, studyLan);
-        });
-
-    function m(l: typeof list) {
-        const ig: typeof list = [];
-        const ul: typeof list = [];
-        const learnt: typeof list = [];
-        for (const i of l) {
-            if (i.type) {
-                if (i.type === "ignore") ig.push(i);
-                else learnt.push(i);
-            } else ul.push(i);
-        }
-        return {
-            ig,
-            ul,
-            l: learnt.toSorted((a, b) => (a.means ?? 0) - (b.means ?? 0)),
-        };
-    }
-    if (type === "01") {
-        const x = m(list);
-        return x.ul.concat(x.l).concat(x.ig);
-    }
-    if (type === "10") {
-        const x = m(list);
-        return x.ig.concat(x.l.toReversed()).concat(x.ul);
-    }
-    return randomList(list, true);
-}
-
-function randomList<i>(list: i[], to?: boolean) {
-    let rn = list.length;
-    const nList = to ? structuredClone(list) : list;
-    while (rn) {
-        const r = Math.floor(Math.random() * rn--);
-        const a = structuredClone(nList[rn]);
-        nList[rn] = nList[r];
-        nList[r] = a;
-    }
-    return nList;
-}
-
 async function showWordBookMore(wordList: WordBookList, fromEl: ElType<HTMLElement>) {
     const d = ele("dialog");
     dialogX(d, fromEl);
@@ -1795,16 +2880,6 @@ async function ignoredWordSpell(list: string[]) {
     }
     putToast(txt("已添加"));
 }
-
-async function textTransformer(text: string) {
-    if (await setting.getItem(readerSettingPath.apostrophe)) {
-        return text.replace(/’(\w)/g, "'$1");
-    }
-    return text;
-}
-
-let wordFreq: { [word: string]: number } = {};
-let properN: string[] = [];
 
 async function showNormalBook(book: Book, s: Section) {
     console.log(s);
@@ -2017,7 +3092,6 @@ async function showNormalBook(book: Book, s: Section) {
     bookContentContainerEl.attr({ lang: book.language });
 }
 
-let contentScrollPosi = 0;
 function setScrollPosi(eel: ElType<HTMLElement>, posi: number) {
     const el = eel.el;
     el.scrollTop = posi * (el.scrollHeight - el.offsetHeight);
@@ -2309,39 +3383,6 @@ async function showRecord(text: string, fromEl: ElType<HTMLElement>) {
             }),
         ]),
     );
-}
-
-function findPitch(peaks: Float32Array, sampleRate: number) {
-    const algo = "AMDF";
-    const detectPitch = Pitchfinder[algo]({ sampleRate });
-    const duration = peaks.length / sampleRate;
-    const bpm = peaks.length / duration / 60;
-
-    const frequencies = Pitchfinder.frequencies(detectPitch, peaks, {
-        tempo: bpm,
-        quantization: bpm,
-    });
-
-    // Find the baseline frequency (the value that appears most often)
-    const frequencyMap: Record<number, number> = {};
-    let maxAmount = 0;
-    let baseFrequency = 0;
-    for (let frequency of frequencies) {
-        if (!frequency) continue;
-        const tolerance = 10;
-        frequency = Math.round(frequency * tolerance) / tolerance;
-        if (!frequencyMap[frequency]) frequencyMap[frequency] = 0;
-        frequencyMap[frequency] += 1;
-        if (frequencyMap[frequency] > maxAmount) {
-            maxAmount = frequencyMap[frequency];
-            baseFrequency = frequency;
-        }
-    }
-
-    return {
-        frequencies,
-        baseFrequency,
-    };
 }
 
 async function translateContext(p: HTMLElement) {
@@ -2651,142 +3692,6 @@ async function exTrans(pEl: HTMLElement, i: number, book: Book) {
     f.els.tips.add(tipEl);
 }
 
-const bookStyleList = {
-    fontSize: [] as number[],
-    lineHeight: [] as number[],
-    contentWidth: [] as number[],
-};
-
-const defaultBookStyle = {
-    fontSize: 6,
-    lineHeight: 3,
-    contentWidth: 4,
-    fontFamily: "serif",
-    fontWeight: 400,
-    theme: "auto",
-    paper: true,
-};
-
-const bookStyle = ((await setting.getItem("style.default")) as typeof defaultBookStyle) || defaultBookStyle;
-
-for (let i = 12; i <= 28; i += 2) {
-    bookStyleList.fontSize.push(i);
-}
-bookStyleList.fontSize.push(32, 40, 56, 72, 96, 128);
-for (let i = 20; i <= 60; i += 5) {
-    bookStyleList.contentWidth.push(i);
-}
-for (let i = 10; i <= 26; i += 2) {
-    bookStyleList.lineHeight.push(i / 10);
-}
-
-changeStyleEl.on("click", () => {
-    popoverX(changeStyleBar, changeStyleEl);
-});
-
-const fontListEl = view().attr({ popover: "auto" }).class("font_list").addInto();
-
-{
-    const fontEl = view().add("serif");
-    setFontElF(bookStyle.fontFamily);
-    fontEl.on("click", async () => {
-        fontListEl.el.showPopover();
-        let availableFonts: { postscriptName: string; family: string; fullName: string }[] = [];
-        try {
-            // @ts-ignore
-            availableFonts = await window.queryLocalFonts();
-        } catch (error) {}
-        let fonts = availableFonts.map((i) => i.family);
-        fonts = Array.from(new Set(fonts));
-        fonts = fonts.filter((i) => i !== "sans" && i !== "serif").toSorted();
-        fonts.unshift("serif", "sans");
-        vlist(fontListEl, fonts, { iHeight: 24, paddingLeft: 4, paddingRight: 4 }, (i) => {
-            const fontName = fonts[i];
-            return view()
-                .add(fontName)
-                .style({ "font-family": fontName, "line-height": "24px" })
-                .on("click", () => {
-                    setFontElF(fontName);
-                    bookStyle.fontFamily = fontName;
-                    setBookStyle();
-                });
-        });
-    });
-    function setFontElF(name: string) {
-        fontEl.el.innerText = name;
-        fontEl.el.style.fontFamily = name;
-    }
-    const fontWeight = input("range")
-        .attr({ min: "100", max: "900", step: "10" })
-        .on("input", (e, el) => {
-            bookStyle.fontWeight = Number(el.gv);
-            console.log(bookStyle);
-
-            setBookStyle();
-        })
-        .sv(String(bookStyle.fontWeight));
-    const fontSize = createRangeSetEl(
-        bookStyle.fontSize,
-        bookStyleList.fontSize.length - 1,
-        (i) => {
-            bookStyle.fontSize = i;
-            setBookStyle();
-        },
-        "font_small",
-        "font_large",
-    );
-    const lineHeight = createRangeSetEl(
-        bookStyle.lineHeight,
-        bookStyleList.lineHeight.length - 1,
-        (i) => {
-            bookStyle.lineHeight = i;
-            setBookStyle();
-        },
-        "line_height_small",
-        "line_height_large",
-    );
-    const contentWidth = createRangeSetEl(
-        bookStyle.contentWidth,
-        bookStyleList.contentWidth.length - 1,
-        (i) => {
-            bookStyle.contentWidth = i;
-            setBookStyle();
-        },
-        "content_width_small",
-        "content_width_large",
-    );
-    const themei = radioGroup("theme");
-    const themeSelect = view()
-        .class("theme_select")
-        .add([
-            themeI("auto", "自动", "#fff", "#000"),
-            themeI("light", "亮色", "#fff", "#000"),
-            themeI("classical", "古典", "#eceae6", "#000"),
-            themeI("dark", "暗色", "#000", "#cacaca"),
-        ]);
-    function themeI(value: string, name: string, bg: string, color: string) {
-        return themei.new(value, name).style({
-            background: bg,
-            color,
-        });
-    }
-    themei.set(bookStyle.theme);
-    themei.on(() => {
-        bookStyle.theme = themei.get();
-        setBookStyle();
-    });
-    const paperI = check("paper")
-        .on("change", () => {
-            bookStyle.paper = paperI.gv;
-            setBookStyle();
-        })
-        .sv(bookStyle.paper);
-    const paperEl = label([paperI, "纸质背景"]);
-    changeStyleBar.add([fontEl, fontWeight, fontSize, lineHeight, contentWidth, themeSelect, paperEl]);
-}
-
-setBookStyle();
-
 function setBookStyle() {
     document.documentElement.setAttribute("data-theme", bookStyle.theme);
     setProperties({
@@ -2833,9 +3738,6 @@ function createRangeSetEl(value: number, maxV: number, f: (i: number) => void, m
     return div;
 }
 
-let isEdit = false;
-let editText = "";
-
 async function changeEdit(b: boolean) {
     isEdit = b;
     if (isEdit) {
@@ -2863,86 +3765,6 @@ async function changeEdit(b: boolean) {
     }
     changeEditEl.clear().add(iconEl("pen"));
 }
-changeEditEl.on("click", () => {
-    isEdit = !isEdit;
-    changeEdit(isEdit);
-});
-
-function cleanWordBook(text: string) {
-    return Array.from(new Set(text.split("\n")))
-        .map((w) => w.trim())
-        .filter((i) => i)
-        .join("\n");
-}
-
-function diffPosi(oldText: string, text: string) {
-    const diff = dmp.diff_main(oldText, text);
-    console.log(diff);
-    const source: number[] = [0];
-    const map: number[] = [0];
-    if (diff.at(-1)?.[0] === 1) diff.push([0, ""]);
-    let p0 = 0;
-    let p1 = 0;
-    for (let i = 0; i < diff.length; i++) {
-        const d = diff[i];
-        const dn = diff[i + 1];
-        if (d[0] === -1 && dn && dn[0] === 1) {
-            p0 += d[1].length;
-            p1 += dn[1].length;
-            source.push(p0);
-            map.push(p1);
-            i++;
-        } else {
-            if (d[0] === 0) {
-                p0 += d[1].length;
-                p1 += d[1].length;
-                source.push(p0);
-                map.push(p1);
-            } else if (d[0] === 1) {
-                p1 += d[1].length;
-                source.push(p0);
-                map.push(p1);
-            } else if (d[0] === -1) {
-                p0 += d[1].length;
-                source.push(p0);
-                map.push(p1);
-            }
-        }
-    }
-    source.push(oldText.length);
-    map.push(text.length);
-    console.log(source, map);
-    return { source, map };
-}
-
-function changePosi(section: Section, text: string) {
-    const { source, map } = diffPosi(section.text, text);
-    for (const w in section.words) {
-        section.words[w].index = patchPosi(source, map, section.words[w].index);
-        section.words[w].cIndex = patchPosi(source, map, section.words[w].cIndex);
-    }
-    return section;
-}
-
-function patchPosi<i extends [number, number]>(source: number[], map: number[], index: i) {
-    const start = index[0];
-    const end = index[1];
-    let Start = 0;
-    let End = 0;
-    for (let i = 0; i < source.length; i++) {
-        if (source[i] <= start && start <= source[i + 1]) {
-            Start = Math.min(map[i] + (start - source[i]), map[i + 1]);
-        }
-        if (source[i] <= end && end <= source[i + 1]) {
-            End = Math.min(map[i] + (end - source[i]), map[i + 1]);
-        }
-    }
-    return [Start, End] as i;
-}
-
-const dmp = new diff_match_patch();
-
-changeEdit(false);
 
 async function setEdit() {
     const book = await getBooksById(nowBook.book);
@@ -3046,51 +3868,6 @@ async function setEdit() {
     return text;
 }
 
-function textAi(text: string) {
-    const l = text.split("\n");
-    let index = 0;
-    const ignoreMark = "//";
-    const userMark = ">";
-    const aiMark = "ai:";
-    const aiM: AIm = [];
-    for (const i of l) {
-        if (i.startsWith(aiMark)) {
-            aiM.push({ role: "assistant", content: i.replace(aiMark, "").trim() });
-        } else if (i.startsWith(userMark)) {
-            aiM.push({ role: "user", content: i.replace(userMark, "").trim() });
-        } else if (i.startsWith(ignoreMark)) {
-            index += i.length + 1;
-            continue;
-        } else {
-            const last = aiM.at(-1);
-            if (last) last.content += `\n${i}`;
-        }
-        index += i.length + 1;
-    }
-    return aiM;
-}
-
-let canRecordScroll = true;
-
-bookContentContainerEl.on("scroll", async () => {
-    if (!canRecordScroll) return;
-    const n = getScrollPosi(bookContentContainerEl);
-    contentScrollPosi = n;
-    const sectionId = nowBook.sections;
-    const section = await getSection(sectionId);
-    if (!section) return;
-    section.lastPosi = n;
-    sectionsStore.setItem(sectionId, section);
-});
-
-const SHOWMARKLIST = "show_mark_word_list";
-bookdicEl.on("click", async () => {
-    markListBarEl.el.classList.toggle(SHOWMARKLIST);
-    if (markListBarEl.el.classList.contains(SHOWMARKLIST)) {
-        showMarkList();
-    }
-});
-
 async function sectionSelect(menuEl: ElType<HTMLElement>) {
     const bookList: Book[] = [];
     await bookshelfStore.iterate((book) => {
@@ -3131,118 +3908,6 @@ function getSelectBooks(el: ElType<HTMLElement>) {
             .filter((v) => v),
     };
 }
-
-async function wordBooksByWord(word: string) {
-    const l: { book: string; section: string }[] = [];
-    const words = mutiSpell(word);
-    let bookList: Book[] = [];
-    await bookshelfStore.iterate((book) => {
-        bookList.push(book);
-    });
-    bookList = bookList.filter((b) => b.type === "word");
-    for (const i of bookList) {
-        for (const s of i.sections) {
-            const section = await getSection(s);
-            if (!section) continue;
-            const wl = section.text.split("\n");
-            for (const w of words) {
-                if (wl.includes(w)) {
-                    if (!l.some((x) => x.section === s)) l.push({ book: i.id, section: s });
-                }
-            }
-        }
-    }
-
-    return l;
-}
-
-const ipaStore = localForage.createInstance<Map<string, string | string[]>>({ name: "langPack", storeName: "ipa" });
-const variantStore = localForage.createInstance<Map<string, string>>({ name: "langPack", storeName: "variant" });
-const wordMapStore = localForage.createInstance<string[][]>({ name: "langPack", storeName: "map" });
-
-const dics: Record<string, Omit<dic, "dic">> = {};
-const dicStore = localForage.createInstance<dicMap>({ name: "dic" });
-setting.getItem("dics").then(async (l: string[]) => {
-    for (const i of l || []) {
-        const x = await dicStore.getItem(i);
-        if (!x) continue;
-        // @ts-ignore
-        x.dic = undefined;
-        dics[i] = x;
-    }
-});
-dicStore.iterate((v, k) => {
-    // @ts-ignore
-    v.dic = undefined;
-    dics[k] = v;
-});
-
-let ipa: Map<string, string | string[]>;
-
-const variant = await variantStore.getItem("en");
-
-function lemmatizer(word: string) {
-    return variant?.get(word) || word;
-}
-
-let usSpell = (await wordMapStore.getItem("en")) || [];
-
-function tag(tags: tagMap) {
-    const x = {
-        get: (id: string) => tags[id],
-        getCid: (c: string) => {
-            for (const i in tags) {
-                if (tags[i].c === c) {
-                    return i;
-                }
-            }
-            return null;
-        },
-        getAll: (b: bOp2) => {
-            function w(b: bOp) {
-                const l: bOp = [b[0]];
-                const ids = b.slice(1) as string[];
-                for (const id of ids) {
-                    const t = x.get(id);
-                    if (t.b) {
-                        l.push(w(t.b));
-                    } else {
-                        l.push(id);
-                    }
-                }
-                return l as bOp2;
-            }
-            return w(b);
-        },
-        simplily: (b: bOp) => {
-            return b;
-        },
-        new: (c: string, b?: bOp) => {
-            const id = uuid();
-            const t = time();
-            tags[id] = { c, t, n: 1 };
-            if (b) tags[id].b = b;
-            return tags;
-        },
-        getList: () => {
-            const l: [string, TAG][] = [];
-            for (const i in tags) {
-                l.push([i, tags[i]]);
-            }
-            l.sort((a, b) => a[1].t - b[1].t);
-            return l;
-        },
-    };
-    return x;
-}
-
-const markListEl = view();
-const autoNewWordEl = view().add([
-    button("生词忽略与标记").on("click", (_, el) => {
-        autoIgnore(el);
-    }),
-]);
-markListBarEl.add([autoNewWordEl, markListEl]);
 
 function wordMarkChanged(w: Section["words"] = {}, init?: boolean) {
     console.log(w, Object.values(w).length);
@@ -3302,37 +3967,6 @@ async function showMarkList() {
     });
 }
 
-async function getAllMarks() {
-    const sectionId = nowBook.sections;
-    const section = await getSection(sectionId);
-    let list: { id: string; s: Section["words"][0] }[] = [];
-    if (!section) return list;
-    for (const i in section.words) {
-        list.push({ id: i, s: section.words[i] });
-    }
-    list = list.toSorted((a, b) => a.s.index[0] - b.s.index[0]);
-    return list;
-}
-lastMarkEl.on("click", async () => {
-    if (!nowDicId) return;
-    const list = await getAllMarks();
-    let index = list.findIndex((i) => i.id === nowDicId);
-    index--;
-    index = index < 0 ? 0 : index;
-    const id = list[index].id;
-    jumpToMark(list[index].s.cIndex);
-    showDic(id);
-});
-nextMarkEl.on("click", async () => {
-    if (!nowDicId) return;
-    const list = await getAllMarks();
-    let index = list.findIndex((i) => i.id === nowDicId);
-    index++;
-    index = index >= list.length ? list.length - 1 : index;
-    const id = list[index].id;
-    jumpToMark(list[index].s.cIndex);
-    showDic(id);
-});
 function jumpToMark([start, end]: [number, number]) {
     bookContentContainerEl.style({ "scroll-behavior": "smooth" });
     const span = bookContentEl.query(`span[data-s="${start}"]`);
@@ -3358,10 +3992,6 @@ function jumpToMark([start, end]: [number, number]) {
     };
 }
 
-dicMinEl.on("click", () => {
-    dicDetailsEl.el.classList.toggle(HIDEMEANS);
-});
-
 function setDicPosi(el: HTMLElement) {
     dicEl.style({
         top: `${el.getBoundingClientRect().bottom - (bookContentEl.el.getBoundingClientRect().top - bookContentEl.el.scrollTop) + 24}px`,
@@ -3384,60 +4014,6 @@ function igBlankEl(el: HTMLElement, left: boolean) {
         }
     }
     return tel;
-}
-
-let dicTransAi: AbortController | null;
-
-let nowDicId = "";
-
-// @ts-ignore
-function states<t extends Record<string, (v, oldV) => void>>(states: t) {
-    const s = new Map<keyof t, t[keyof t]>();
-    // @ts-ignore
-    const x = {};
-    for (const [k, v] of Object.entries(states)) {
-        // @ts-ignore
-        const setK = (newV) => {
-            const oldV = s.get(k);
-            s.set(k, newV);
-            return oldV;
-        };
-        // @ts-ignore
-        x[k] = {
-            get: () => structuredClone(s.get(k)),
-            // @ts-ignore
-            set: (newV) => {
-                const oldV = setK(newV);
-                // @ts-ignore
-                if (oldV !== newV) v(newV, oldV);
-                // todo obj diff
-                console.log(`set ${k}:`, structuredClone(newV));
-                return newV;
-            },
-            // @ts-ignore
-            setV: (newV) => {
-                setK(newV);
-                return newV;
-            },
-            // @ts-ignore
-            setAsync: async (newV) => {
-                const oldV = setK(newV);
-                console.trace();
-                // @ts-ignore
-                if (oldV !== newV) await v(newV, oldV);
-                console.log(`${k}:`, structuredClone(newV));
-                return newV;
-            },
-        };
-    }
-    return x as {
-        [k in keyof t]: {
-            get: () => Parameters<t[k]>["0"];
-            set: (v: Parameters<t[k]>["0"]) => Parameters<t[k]>["0"];
-            setV: (v: Parameters<t[k]>["0"]) => Parameters<t[k]>["0"];
-            setAsync: (v: Parameters<t[k]>["0"]) => Promise<Parameters<t[k]>["0"]>;
-        };
-    };
 }
 
 async function showDic(id: string) {
@@ -4060,11 +4636,6 @@ async function showDic(id: string) {
     }
 }
 
-async function getWordFromDic(word: string, id: string) {
-    const d = dicParse(await dicStore.getItem(id));
-    return d.getContent(word);
-}
-
 async function showDicEl(mainTextEl: ReturnType<typeof textarea>, word: string, fromEl: ElType<HTMLElement>) {
     const { x, y } = fromEl.el.getBoundingClientRect();
     const lan = studyLan;
@@ -4160,76 +4731,6 @@ async function dicSentences(contexts: record["means"][0]["contexts"]) {
     return sen;
 }
 
-async function saveCard(v: {
-    key: string;
-    index: TxtSlice;
-    cindex: TxtSlice;
-}) {
-    const sectionId = nowBook.sections;
-    const section = await getSection(sectionId);
-    if (!section) return;
-    for (const i in section.words) {
-        const index = section.words[i].index;
-        if (index[0] <= v.index[0] && v.index[1] <= index[1] && section.words[i].type === "word") {
-            return i;
-        }
-    }
-    const id = uuid();
-    section.words[id] = {
-        id: v.key,
-        index: v.index,
-        cIndex: v.cindex,
-        visit: false,
-        type: "word",
-    };
-    section.words = Object.fromEntries(Object.entries(section.words).toSorted((a, b) => a[1].index[0] - b[1].index[0]));
-
-    sectionsStore.setItem(sectionId, section);
-    wordMarkChanged(section?.words);
-    return id;
-}
-
-function source2context(source: Section["words"][0], sourceId: string) {
-    return {
-        text: editText.slice(...source.cIndex),
-        index: [source.index[0] - source.cIndex[0], source.index[1] - source.cIndex[0]] as [number, number],
-        source: { ...nowBook, id: sourceId },
-    };
-}
-
-function rmWord(record: record | null, sourceId: string) {
-    const Word = flatWordCard(record, sourceId);
-    const i = Word.index;
-    if (i === -1 || !record) return record;
-    for (const index in record.means) {
-        const m = record.means[index];
-        if (Number(index) === i) {
-            m.contexts = m.contexts.filter((c) => c.source.id !== sourceId);
-            break;
-        }
-    }
-    return record;
-}
-async function clearWordMean(record: record | null) {
-    if (!record) return;
-    const means: record["means"] = [];
-    for (const m of record.means) {
-        if (m.contexts.length === 0) {
-            await card2word.removeItem(m.card_id);
-            await cardsStore.removeItem(m.card_id);
-        } else {
-            means.push(m);
-        }
-    }
-    if (means.length === 0) {
-        await wordsStore.removeItem(record.word);
-        await spellStore.removeItem(record.word);
-    } else {
-        record.means = means;
-        await wordsStore.setItem(record.word, record);
-    }
-}
-
 function addStyle(x: [number, number]) {
     for (let i = x[0]; i < x[1]; i++) {
         bookContentEl.query(`span[data-s="${i}"]`)?.el?.classList?.add(MARKWORD);
@@ -4287,33 +4788,6 @@ async function tagsEl(b: bOp) {
     }
     const l = oEl(b);
     return l;
-}
-
-async function translate(st: string, f?: boolean) {
-    const tst = st.trim();
-    if (!f) {
-        const text = (await transCache.getItem(tst)) as string;
-        if (text) return { text, stop: new AbortController() };
-    }
-
-    const output = ai(
-        [
-            {
-                role: "system",
-                content:
-                    "You are a professional, authentic translation engine. You only return the translated text, without any explanations.",
-            },
-            {
-                role: "user",
-                content: `Please translate into ${navigator.language} (avoid explaining the original text):\n\n${tst}`,
-            },
-        ],
-        "翻译",
-    );
-    output.text.then((text) => {
-        if (text) transCache.setItem(tst, text);
-    });
-    return output;
 }
 
 function addP(
@@ -4442,18 +4916,6 @@ function aiButtons1(textEl: ReturnType<typeof textarea>, word: string) {
     ];
 }
 
-function wordFix2str(f: { type: "prefix" | "root" | "suffix"; t: string; dis: string }[]) {
-    const text = [];
-    for (const ff of f) {
-        let t = ff.t;
-        if (ff.type === "prefix") t = `${t}-`;
-        if (ff.type === "suffix") t = `-${t}`;
-        if (ff.dis) t += ` (${ff.dis})`;
-        text.push(t);
-    }
-    return text;
-}
-
 function aiButtons2(textEl: ReturnType<typeof textarea>, sentence: string) {
     function setText(text: string) {
         textEl.el.setRangeText(text);
@@ -4469,188 +4931,6 @@ function aiButtons2(textEl: ReturnType<typeof textarea>, sentence: string) {
         tmpAiB(textEl, `$这里有个句子${sentence}`),
     ];
 }
-
-function sentenceGm(t: senNode) {
-    function get(T: senNode) {
-        let text = "";
-        for (const t of T) {
-            if (typeof t === "string") {
-                text += t;
-            } else {
-                let tx = get(t.text);
-                if (t.isPost) tx = `<(${tx})`;
-                else tx = `(${tx})>`;
-                text += tx;
-            }
-        }
-        return text;
-    }
-    return get(t);
-}
-
-autoFun.config({
-    type: "chatgpt",
-    url: (await setting.getItem("ai.url")) as string,
-    key: await setting.getItem("ai.key"),
-    option: {
-        model: "gpt-4o-mini",
-        ...JSON.parse(await setting.getItem("ai.config")),
-    },
-});
-
-const wordAi = {
-    mean: (sourceLan: string, userLan: string) => {
-        const f = new autoFun.def({
-            input: { word: "string 单词", context: "string 单词所在的语境" },
-            output: {
-                mean1: `string ${sourceLan}释义`,
-                mean2: `string ${userLan}释义`,
-            },
-            script: [
-                "翻译$context",
-                "分析$word在$context这个上下文语境中的具体意思",
-                `根据意思，返回用${sourceLan}解释的$mean1和用${userLan}解释的$mean2`,
-            ],
-        });
-        return f;
-    },
-    meanEmoji: () => {
-        const f = new autoFun.def({
-            input: { word: "string 单词" },
-            output: { mean: "string 用emoji表示的意思" },
-            script: ["根据context中word的意思，返回emoji"],
-        });
-        return f;
-    },
-    synOpp: () => {
-        const f = new autoFun.def({
-            input: { word: "string 单词", context: "string 单词所在的语境" },
-            output: { list0: "string[] 同义词", list1: "string[] 近义词", list2: "string[] 近义词" },
-            script: [
-                "判断context中word的意思",
-                "若存在该语境下能进行同义替换的词，添加到list0同义词表，同义词应比word更简单",
-                "克制地添加若干近义词到list1",
-                "克制地添加若干反义词到list2",
-            ],
-        });
-        return f;
-    },
-    fix: () => {
-        const f = new autoFun.def({
-            input: { word: "string 单词" },
-            output: { list: `{ type: "prefix" | "root" | "suffix"; t: string; dis: string }[]词根词缀列表` },
-            script: ["分析word词根词缀", "根据测试例,依次将词根词缀添加到list"],
-            test: {
-                input: "unbelievably",
-                output: {
-                    list: [
-                        { type: "prefix", t: "un", dis: "否定" },
-                        { type: "root", t: "believe", dis: "相信" },
-                        { type: "suffix", t: "able", dis: "能" },
-                        { type: "suffix", t: "ly", dis: "副词" },
-                    ],
-                },
-            },
-        });
-        return f;
-    },
-    etymology: () => {
-        const f = new autoFun.def({
-            input: { word: "string 单词" },
-            output: { list: "string[]词源" },
-            script: ["分析word词源并返回他们"],
-        });
-        return f;
-    },
-};
-
-const wordAiText = {
-    mean: (x: { mean1: string; mean2: string }) => {
-        return `${x.mean1}\n${x.mean2}`;
-    },
-    meanEmoji: (x: { mean: string }) => {
-        return x.mean;
-    },
-    synOpp: (x: { list0: string[]; list1: string[]; list2: string[] }) => {
-        const text = [];
-        if (x.list0?.length) text.push(`= ${x.list0.join(", ")}`);
-        if (x.list1?.length) text.push(`≈ ${x.list1.join(", ")}`);
-        if (x.list2?.length) text.push(`- ${x.list2.join(", ")}`);
-        return text.join("\n");
-    },
-    fix: (f: { list: { type: "prefix" | "root" | "suffix"; t: string; dis: string }[] }) => {
-        const text = wordFix2str(f.list);
-        return text.join(" + ");
-    },
-    etymology: (x: { list: string[] }) => {
-        return x.list.join(", ");
-    },
-};
-
-const sentenceAi = {
-    gm: async (sentence: string) => {
-        type splitS = ({ text: string; isPost: boolean } | string)[];
-        const f = new autoFun.def({
-            input: { sentence: "string 句子" },
-            output: { split: "({ text: string; isPost: boolean } | string)[]" },
-            script: [
-                "分析sentence修饰成分和被修饰成分",
-                "被修饰成分包括主谓宾核心词或词组，修饰成分包括具有限定或修饰的词、词组或从句",
-                "将他们按顺序添加到split",
-                "被修饰成分直接以string形式添加到split",
-                "修饰成分以{ text: string 修饰成分; isPost: boolean }形式添加到split",
-                "对于修饰成分，如果修饰成分在被修饰成分之后，isPost 为 true，反之为false",
-                "如果这个句子不是一个完整句，只有修饰成分，直接返回split:[该句子]",
-            ],
-            test: [
-                {
-                    input: "The yong",
-                    output: {
-                        split: ["The yong"] as splitS,
-                    },
-                },
-                {
-                    input: "The yong man who walled to us is our teacher",
-                    output: {
-                        split: [
-                            { text: "The yong", isPost: false },
-                            "man",
-                            { text: "who walled to us", isPost: true },
-                            "is",
-                            { text: "our", isPost: false },
-                            "teacher",
-                        ] as splitS,
-                    },
-                },
-            ],
-        });
-        async function splitSen(sentence: string) {
-            const t: senNode = [];
-            // @ts-ignore
-            const l = (await f.run(`sentence:${sentence}`).result).split as splitS;
-            for (const i of l) {
-                if (typeof i === "string") {
-                    t.push(i);
-                } else {
-                    const x: senNode[0] = { text: [i.text], isPost: i.isPost };
-                    x.text = await splitSen(i.text);
-                }
-            }
-            return t;
-        }
-        const x = await splitSen(sentence);
-        console.log(x);
-        return x;
-    },
-    split: (sentence: string) => {
-        const f = new autoFun.def({
-            input: { sentence: "string 长句子" },
-            output: { shortSentences: "string[] 短句子" },
-            script: ["将sentence改写成几个短句，输出到shortSentences"],
-        });
-        return f.run(`sentence:${sentence}`).result as Promise<{ shortSentences: string[] }>;
-    },
-};
 
 function tmpAiB(mainTextEl: ReturnType<typeof textarea>, info: string) {
     const aiB = button("AI").on("click", () => {
@@ -4824,11 +5104,6 @@ function ai(m: AIm, text?: string) {
     };
 }
 
-const checkVisit = {
-    section: "",
-    time: 0,
-};
-
 function checkVisitAll(words: Section["words"]) {
     const l = Object.values(words);
     const visitAll = l.every((i) => i.visit);
@@ -4843,91 +5118,6 @@ function checkVisitAll(words: Section["words"]) {
     }
 }
 
-const fsrsWordW = JSON.parse(await setting.getItem("fsrs.word.w")) as number[];
-const fsrsSpellW = JSON.parse(await setting.getItem("fsrs.spell.w")) as number[];
-const fsrsSenW = JSON.parse(await setting.getItem("fsrs.sen.w")) as number[];
-
-const fsrs = new FSRS(generatorParameters(fsrsWordW?.length === 17 ? { w: fsrsWordW } : {}));
-const fsrsSpell = new FSRS(generatorParameters(fsrsSpellW?.length === 17 ? { w: fsrsSpellW } : {}));
-const fsrsSen = new FSRS(generatorParameters(fsrsSenW?.length === 17 ? { w: fsrsSenW } : {}));
-
-const cardsStore = localForage.createInstance<Card>({ name: "word", storeName: "cards" });
-const wordsStore = localForage.createInstance<record>({ name: "word", storeName: "words" });
-const tagsStore = localForage.createInstance({ name: "word", storeName: "tags" });
-const card2word = localForage.createInstance<string>({ name: "word", storeName: "card2word" });
-const spellStore = localForage.createInstance<Card>({ name: "word", storeName: "spell" });
-const card2sentence = localForage.createInstance<record2>({ name: "word", storeName: "card2sentence" });
-
-const cardActionsStore = localForage.createInstance<[string] | [string, Rating, State, number]>({
-    name: "word",
-    storeName: "actions",
-});
-function setCardAction(cardId: string, time: Date, rating: Rating, state: State, duration: number) {
-    const o: [string, Rating, State, number] = [cardId, rating, state, duration];
-    cardActionsStore.setItem(String(time.getTime()), o);
-}
-function setCardAction2(cardId: string, time: Date) {
-    const o: [string] = [cardId];
-    cardActionsStore.setItem(String(time.getTime()), o);
-}
-function newCardAction(id: string) {
-    setCardAction2(id, new Date());
-}
-
-const transCache = localForage.createInstance<string>({ name: "aiCache", storeName: "trans" });
-const ttsCache = localForage.createInstance<{ blob: Blob; data: D }>({ name: "aiCache", storeName: "tts" });
-const lijuCache = localForage.createInstance<string[]>({ name: "aiCache", storeName: "liju" });
-
-async function tryInitWord(word: string) {
-    const w = await wordsStore.getItem(word);
-    if (!w) {
-        const w = {
-            word: word,
-            means: [],
-        };
-        const card2 = createEmptyCard();
-        newCardAction(word);
-        if (!(await spellStore.getItem(word))) await spellStore.setItem(word, card2);
-        await wordsStore.setItem(word, w);
-        return w;
-    }
-    return w;
-}
-
-async function newWordCard_Mean(word: string) {
-    const cardId = uuid();
-    const card = createEmptyCard();
-    newCardAction(cardId);
-    await cardsStore.setItem(cardId, card);
-    await card2word.setItem(cardId, word);
-    return cardId;
-}
-
-function flatWordCard(record: record | null, id: string) {
-    const Word: FlatWord = {
-        index: -1,
-        card_id: "",
-        text: "",
-        context: { index: [Number.NaN, Number.NaN] as ReSlice, source: { book: "", sections: "", id: "" }, text: "" },
-        tag: [tOp.and],
-    };
-    if (!record) return Word;
-    for (const n in record.means) {
-        const i = record.means[n];
-        for (const j of i.contexts) {
-            if (j.source.id === id) {
-                Word.index = Number(n);
-                Word.card_id = i.card_id;
-                Word.text = i.text;
-                Word.context = j;
-                if (i.tags) Word.tag = i.tags;
-                return Word;
-            }
-        }
-    }
-    return Word;
-}
-
 function selectWord(words: string[]) {
     for (const el of bookContentEl.queryAll(`.${TMPMARKWORD}`)) {
         el.el.classList.remove(TMPMARKWORD);
@@ -4937,40 +5127,6 @@ function selectWord(words: string[]) {
             el.class(TMPMARKWORD);
         }
     }
-}
-
-function fillMutiSpell(rl: string[]) {
-    const l: string[] = [];
-    const m: { [key: string]: string[] } = {};
-    for (const i of usSpell) {
-        for (const j of i) {
-            m[j] = i;
-        }
-    }
-    for (const w of rl) {
-        if (m[w]) {
-            l.push(...m[w]);
-        } else {
-            l.push(w);
-        }
-    }
-    return l;
-}
-
-function mutiSpell(word: string) {
-    return usSpell.find((m) => m.includes(word)) || [word];
-}
-
-async function getLearntWords() {
-    const learnt = await wordsStore.keys();
-    return fillMutiSpell(learnt);
-}
-
-async function getIgnoreWords() {
-    const section = await getSection(ignoreWordSection);
-    if (!section) return [];
-    const rl = section.text.trim().split("\n");
-    return fillMutiSpell(rl);
 }
 
 async function getNewWords() {
@@ -5038,102 +5194,6 @@ async function autoIgnore(fromEl: ElType<HTMLElement>) {
     ]);
     dialogX(dialog, fromEl);
 }
-
-async function addIgnore(word: string | string[]) {
-    const words = Array.isArray(word) ? word : [word];
-    const section = await getSection(ignoreWordSection);
-    if (!section) return;
-    const oldWords = section.text.trim().split("\n");
-    for (const word of words) {
-        if (!oldWords.includes(word)) {
-            oldWords.push(word);
-        }
-    }
-    section.text = oldWords.join("\n");
-    await sectionsStore.setItem(ignoreWordSection, section);
-}
-async function removeIgnore(word: string) {
-    const section = await getSection(ignoreWordSection);
-    if (!section) return;
-    const oldWords = section.text.trim().split("\n");
-    if (!oldWords.includes(word)) return;
-    section.text = oldWords.filter((w) => w !== word).join("\n");
-    await sectionsStore.setItem(ignoreWordSection, section);
-    if (!(await wordsStore.getItem(word))) {
-        // 移除添加的拼写
-        spellStore.removeItem(word);
-    }
-}
-
-setTimeout(async () => {
-    const d = await getFutureReviewDue(0.1, "word", "spell", "sentence");
-    let c = 0;
-    c += Object.keys(d.word).length + Object.keys(d.spell).length;
-    if (c > 0) reviewBEl.class(TODOMARK);
-}, 10);
-
-reviewBEl.on("click", () => {
-    reviewEl.el.classList.toggle("review_show");
-    reviewBEl.el.classList.remove(TODOMARK);
-
-    reviewCount = 0;
-});
-
-const reviewAi = input("checkbox");
-reviewButtonsEl.add(label([reviewAi, "ai"]));
-
-const reviewScope = view();
-const spellIgnore = select([
-    { name: "全部", value: "all" },
-    { name: "排除忽略词", value: "exIgnore" },
-    { name: "仅忽略词", value: "ignore" },
-]);
-
-let reviewSortType: "正常" | "学习" | "学习1" | "紧急" | "随机" = "正常";
-const reviewSortEl = select([
-    { name: "正常", value: "正常" },
-    { name: "学习 从旧开始", value: "学习" },
-    { name: "学习 趁热打铁", value: "学习1" },
-    { name: "紧急", value: "紧急" },
-    { name: "随机", value: "随机" },
-]).on("change", () => {
-    reviewSortType = reviewSortEl.el.value as typeof reviewSortType;
-});
-
-const reviewMoreEl = view()
-    .attr({ popover: "auto" })
-    .add([
-        txt("过滤与排序"),
-        view("y").add([reviewScope.style({ "max-height": "400px", overflow: "auto" }), spellIgnore, reviewSortEl]),
-    ])
-    .style({ "max-width": "80dvw", overflow: "auto" });
-sectionSelect(reviewScope);
-reviewMoreEl.addInto();
-reviewButtonsEl.add(
-    iconEl("filter").on("click", (_, el) => {
-        popoverX(reviewMoreEl, el);
-    }),
-);
-
-reviewButtonsEl.add(
-    iconEl("chart").on("click", (_, el) => {
-        popoverX(plotEl, el);
-    }),
-);
-
-const KEYBOARDDISPLAYPATH = "spell.keyboard.display";
-const KEYBOARDHEIGHTPATH = "spell.keyboard.height";
-
-const keyboardEl = view("y").class("simple-keyboard");
-if (getSetting(KEYBOARDDISPLAYPATH) === "default")
-    keyboardEl.style({ height: `${await setting.getItem(KEYBOARDHEIGHTPATH)}px` });
-const handwriterCanvas = ele("canvas").el;
-const handwriterCheck = iconEl("ok")
-    .style({ display: "none" })
-    .on("click", () => ocrSpell);
-const handwriterEl = view().class("spell_write").add([handwriterCanvas, handwriterCheck]);
-const spellInputEl = view().style({ display: "none" }).add([keyboardEl.el, handwriterEl]);
-reviewEl.add(spellInputEl);
 
 function trackKeyboard(el: ElType<HTMLElement>) {
     el.style({ "touch-action": "none" });
@@ -5227,79 +5287,6 @@ function keyB<t extends string>(c: { [k in t]: string[] }, display: Record<strin
     };
 }
 
-const keyboard = keyB(
-    {
-        default: [
-            "q w e r t y u i o p",
-            "a s d f g h j k l",
-            "{shift} z x c v b n m {bksp}",
-            "{h} {tip} {space} {audio} {switch}",
-        ],
-        handwrite: ["{h} {tip} {space} {audio} {switch}"],
-    },
-    {
-        "{space}": "␣",
-        "{shift}": "⇧",
-        "{bksp}": "⌫",
-        "{tip}": "🫣",
-        "{audio}": "📣",
-        "{switch}": "^",
-        "{h}": "=",
-    },
-);
-
-keyboard.setLayout(await setting.getItem(KEYBOARDDISPLAYPATH));
-
-window.addEventListener("keydown", (e) => {
-    if (!(reviewType === "spell" && reviewEl.el.classList.contains("review_show"))) return;
-    if (!reviewEl.el.contains(document.elementFromPoint(window.innerWidth / 2, window.innerHeight / 2))) return; // 用于note
-    const oldInput = keyboard.getInput();
-    if (e.key !== "Backspace") {
-        if (e.key === ">") {
-            spellF("{audio}");
-            return;
-        }
-        if (e.key === "?") {
-            spellF("{tip}");
-            return;
-        }
-        if (e.key.length === 1) keyboard.setInput(oldInput + e.key);
-    } else {
-        keyboard.setInput(oldInput.slice(0, -1));
-    }
-});
-
-let spellWriteE: PointerEvent | null;
-let spellWriteCtx: CanvasRenderingContext2D | null;
-reviewEl.on("pointerdown", (e) => {
-    if (!(reviewType === "spell" && reviewEl.el.classList.contains("review_show"))) return;
-    const sEl = document.querySelector(".spell_input");
-    if (!sEl) return;
-    if (e.clientY > sEl.getBoundingClientRect().bottom) return;
-    if (e.clientY < sEl.getBoundingClientRect().top) return;
-    console.log(e);
-    e.preventDefault();
-    spellWriteE = e;
-    if (!spellWriteCtx) {
-        spellWriteCtx = handwriterCanvas.getContext("2d") as CanvasRenderingContext2D;
-        handwriterCanvas.width = window.innerWidth;
-        handwriterCanvas.height = window.innerHeight - 32;
-        handwriterCheck.style({ display: "" });
-    }
-    spellWriteCtx.moveTo(e.clientX, e.clientY - 32 * 2);
-});
-
-reviewEl.on("pointermove", (e) => {
-    if (!spellWriteE || !spellWriteCtx) return;
-    const ctx = spellWriteCtx;
-    ctx.lineTo(e.clientX, e.clientY - 32 * 2);
-    ctx.stroke();
-});
-
-window.addEventListener("pointerup", (e) => {
-    spellWriteE = null;
-});
-
 function ocrSpell() {
     // check
     // clean
@@ -5308,183 +5295,12 @@ function ocrSpell() {
     spellWriteCtx = null;
 }
 
-async function getWordsScope() {
-    const books = getSelectBooks(reviewScope);
-    const ignore = await getIgnoreWords();
-    const b = books.book;
-    if (books.word.length === 0) return { words: null, ignore, books: b };
-    const words: string[] = [];
-    for (const book of books.word) {
-        const w = (await getSection(book))?.text.trim().split("\n") ?? [];
-        words.push(...w);
-    }
-    return { words, ignore: words.filter((i) => ignore.includes(i)), books: b };
-}
-
-function filterWithScope(word: string, scope: string[] | null, exScope?: string[]) {
-    if (exScope?.includes(word)) return false;
-    return !scope || scope.includes(word);
-}
-
-async function getFutureReviewDue(days: number, ...types: Review[]) {
-    let now = new Date().getTime();
-    now += timeD.d(days);
-    now = Math.round(now);
-    const ws = await getWordsScope();
-    const wordsScope = ws.words;
-    const wordList: { id: string; card: Card }[] = [];
-    const spellList: { id: string; card: Card }[] = [];
-    const sentenceList: { id: string; card: Card }[] = [];
-
-    const dueL: Map<string, Card> = new Map();
-    await cardsStore.iterate((card, k) => {
-        if (card.due.getTime() < now) {
-            dueL.set(k, card);
-        }
-    });
-
-    if (types.includes("word"))
-        await wordsStore.iterate((v, k) => {
-            if (filterWithScope(k, wordsScope)) {
-                for (const m of v.means) {
-                    if (
-                        dueL.has(m.card_id) &&
-                        (ws.books.length === 0 || m.contexts.find((b) => ws.books.includes(b.source.book)))
-                    )
-                        wordList.push({ id: m.card_id, card: dueL.get(m.card_id) as Card });
-                }
-            }
-        });
-    if (types.includes("spell")) {
-        await spellStore.iterate((value, key) => {
-            if (value.due.getTime() < now) {
-                if (spellIgnore.el.value === "all")
-                    if (filterWithScope(key, wordsScope)) spellList.push({ id: key, card: value });
-                if (spellIgnore.el.value === "exIgnore")
-                    if (filterWithScope(key, wordsScope, ws.ignore)) spellList.push({ id: key, card: value });
-                if (spellIgnore.el.value === "ignore")
-                    if (filterWithScope(key, ws.ignore)) spellList.push({ id: key, card: value });
-            }
-        });
-    }
-
-    if (types.includes("sentence"))
-        for (const key of await card2sentence.keys()) {
-            if (dueL.has(key)) {
-                sentenceList.push({ id: key, card: dueL.get(key) as Card });
-            }
-        }
-    return { word: wordList, spell: spellList, sentence: sentenceList };
-}
-async function getReviewDue(type: Review) {
-    const now = new Date().getTime();
-    const wordList: { id: string; card: Card }[] = [];
-    const spellList: { id: string; card: Card }[] = [];
-    const sentenceList: { id: string; card: Card }[] = [];
-    for (const i of due.word) {
-        if (i.card.due.getTime() < now) {
-            wordList.push(i);
-        }
-    }
-    for (const i of due.spell) {
-        if (i.card.due.getTime() < now) {
-            spellList.push(i);
-        }
-    }
-    for (const i of due.sentence) {
-        if (i.card.due.getTime() < now) {
-            sentenceList.push(i);
-        }
-    }
-    for (const x of [wordList, spellList, sentenceList]) x.sort((a, b) => a.card.due.getTime() - b.card.due.getTime());
-    if (reviewSortType === "学习")
-        for (const x of [wordList, spellList, sentenceList])
-            x.reverse().sort((a, b) => (a.card.state === State.New ? -1 : 1));
-    if (reviewSortType === "学习1")
-        for (const x of [wordList, spellList, sentenceList]) x.sort((a, b) => (a.card.state === State.New ? -1 : 1));
-    if (reviewSortType === "紧急") {
-        function gRe(fsrs: FSRS, c: Card) {
-            return fsrs.get_retrievability(c, now, false) ?? 0;
-        }
-        wordList.sort((a, b) => gRe(fsrs, a.card) - gRe(fsrs, b.card));
-        spellList.sort((a, b) => gRe(fsrsSpell, a.card) - gRe(fsrsSpell, b.card));
-        sentenceList.sort((a, b) => gRe(fsrsSen, a.card) - gRe(fsrsSen, b.card));
-    }
-    if (reviewSortType === "随机") for (const x of [wordList, spellList, sentenceList]) randomList(x);
-    if (type === "word") {
-        return wordList[0];
-    }
-    if (type === "spell") {
-        return spellList[0];
-    }
-    return sentenceList[0];
-}
-
-let due: {
-    word: {
-        id: string;
-        card: Card;
-    }[];
-    spell: {
-        id: string;
-        card: Card;
-    }[];
-    sentence: {
-        id: string;
-        card: Card;
-    }[];
-} = {
-    word: [],
-    spell: [],
-    sentence: [],
-};
-
-let reviewType: Review = "word";
-const reviewModeRadio = radioGroup<Review>("review_mode");
-reviewModeEl.add([
-    reviewModeRadio.new("word", "单词"),
-    reviewModeRadio.new("spell", "拼写"),
-    reviewModeRadio.new("sentence", "句子"),
-]);
-
-spellIgnore.style({ display: "none" });
-reviewModeRadio.on(() => {
-    reviewType = reviewModeRadio.get();
-    if (reviewType === "spell") {
-        spellInputEl.style({ display: "" });
-        spellIgnore.style({ display: "" });
-    } else {
-        spellInputEl.style({ display: "none" });
-        spellIgnore.style({ display: "none" });
-    }
-    reviewReflashEl.el.click();
-});
-
-let reviewCount = 0;
-const maxReviewCount = Number((await setting.getItem("review.maxCount")) || "30");
-
-async function nextDue(type: Review) {
-    const x = await getReviewDue(type);
-    reviewCount++;
-    return x;
-}
-
-reviewReflashEl.on("click", async () => {
-    due = await getFutureReviewDue(0.1, reviewType);
-    const l = await getReviewDue(reviewType);
-    console.log(l);
-    if (reviewAi.el.checked && reviewType === "word") await getWordAiContext();
-    reviewCount = 0;
-    showReview(l, reviewType);
-});
-
 let spellCheckF: (text: string) => void = (text) => console.log(text);
 let spellF: (text: string) => void = (text) => console.log(text);
 function clearKeyboard() {
     keyboard.clearInput();
 }
 
-let aiContexts: Record<string, { text: string }> = {};
 async function getWordAiContext() {
     aiContexts = {};
     const l: { id: string; word: string; mean: string }[] = [];
@@ -5663,22 +5479,6 @@ async function showWordReview(x: { id: string; card: Card }, isAi: boolean) {
     reviewViewEl.add(div);
 }
 
-const reviewHotkey: { [key: string]: { f: () => void; key: string } } = {
-    1: { key: "1", f: () => {} },
-    2: { key: "2", f: () => {} },
-    3: { key: "3", f: () => {} },
-    show: { key: " ", f: () => {} },
-};
-
-document.addEventListener("keydown", (e) => {
-    if (!reviewEl.el.classList.contains("review_show") && reviewType !== "spell") return;
-    for (const i in reviewHotkey) {
-        if (e.key === reviewHotkey[i].key) {
-            reviewHotkey[i].f();
-        }
-    }
-});
-
 function getReviewCardButtons(id: string, card: Card, readText: string, f?: (rating: number) => void) {
     const showTime = new Date().getTime();
     let hasClick = false;
@@ -5713,13 +5513,6 @@ function getReviewCardButtons(id: string, card: Card, readText: string, f?: (rat
         buttons,
         finish: () => firstClick(),
     };
-}
-
-async function getReadTime(text: string) {
-    const segmenter = new Segmenter(studyLan, { granularity: "word" });
-    const segments = segmenter.segment(text);
-    const wordsCount = Array.from(segments).filter((i) => i.isWordLike).length;
-    return Math.max(wordsCount, 16) * (Number(await setting.getItem("user.readSpeed")) || 150);
 }
 
 async function showSpellReview(x: { id: string; card: Card }) {
@@ -5991,64 +5784,9 @@ async function showSentenceReview(x: { id: string; card: Card }) {
     reviewViewEl.add(div);
 }
 
-const audioEl = ele("audio").addInto();
-const pTTSEl = ele("audio").attr({ controls: true });
-
 function play(word: string) {
     audioEl.el.src = `https://dict.youdao.com/dictvoice?le=eng&type=1&audio=${word}`;
     audioEl.el.play();
-}
-
-const tts = new MsEdgeTTS();
-const ttsVoiceConfig = "tts.voice";
-const ttsEngineConfig = "tts.engine";
-
-const synth = window.speechSynthesis;
-
-async function getTtsEngine() {
-    return ((await setting.getItem(ttsEngineConfig)) || "browser") as "browser" | "ms";
-}
-
-async function ttsNormalize(text: string) {
-    const posi = (((await setting.getItem(ttsVoiceConfig)) as string) || "en-GB-LibbyNeural").slice(0, 2);
-    if (posi === "zh" || posi === "ja" || posi === "ko") return text;
-    return text.normalize("NFKC");
-}
-
-async function getTTS(text: string) {
-    await tts.setMetadata(
-        (await setting.getItem(ttsVoiceConfig)) || "en-GB-LibbyNeural",
-        OUTPUT_FORMAT.WEBM_24KHZ_16BIT_MONO_OPUS,
-    );
-    const nText = await ttsNormalize(text);
-    const b = await ttsCache.getItem(nText);
-    if (b) {
-        return { url: URL.createObjectURL(b.blob), metadata: b.data };
-    }
-
-    const readable = tts.toStream(nText);
-    let base = new Uint8Array();
-    readable.onData((data) => {
-        console.log("DATA RECEIVED");
-        // raw audio file data
-        base = concat(base, data);
-    });
-    function concat(array1: Uint8Array, array2: Uint8Array) {
-        const mergedArray = new Uint8Array(array1.length + array2.length);
-        mergedArray.set(array1);
-        mergedArray.set(array2, array1.length);
-        return mergedArray;
-    }
-
-    return new Promise((re: (x: { metadata: D; url: string }) => void, rj) => {
-        readable.onEnd(async (data) => {
-            console.log("STREAM end");
-            let blob = new Blob([base], { type: "audio/webm" });
-            blob = await fixWebmDuration(blob);
-            if (blob.size > 0) ttsCache.setItem(text, { blob, data });
-            re({ url: URL.createObjectURL(blob), metadata: data });
-        });
-    });
 }
 
 async function runTTS(text: string): Promise<{ cancel: () => void }> {
@@ -6080,15 +5818,6 @@ async function localTTS(text: string) {
     return { utterThis, synth };
 }
 
-const pttsEl = view().attr({ id: "pTTSp" }).addInto();
-const SHOWPTTS = "pTTS_show";
-const autoPlayTTSEl = input("checkbox").on("change", () => {
-    autoPlay = autoPlayTTSEl.el.checked;
-});
-pttsEl.add([autoPlayTTSEl, pTTSEl]);
-
-let autoPlay = false;
-
 async function pTTS(index: number) {
     const text = contentP.at(index);
     const nextplay = () => {
@@ -6116,58 +5845,6 @@ async function pTTS(index: number) {
         pTTSEl.el.onended = nextplay;
     }
 }
-
-async function setReviewCard(id: string, card: Card, rating: Rating, duration: number) {
-    const now = new Date();
-    setCardAction(id, now, rating, card.state, duration);
-    const sCards = fsrs.repeat(card, now);
-    // @ts-ignore
-    const nCard = sCards[rating].card;
-    await cardsStore.setItem(id, nCard);
-
-    for (const i of due.word)
-        if (i.id === id) {
-            i.card = structuredClone(nCard);
-            return;
-        }
-    for (const i of due.sentence)
-        if (i.id === id) {
-            i.card = structuredClone(nCard);
-            break;
-        }
-}
-function setSpellCard(id: string, card: Card, rating: Rating, duration: number) {
-    const now = new Date();
-    setCardAction(id, now, rating, card.state, duration);
-    const sCards = fsrsSpell.repeat(card, now);
-    // @ts-ignore
-    const nCard = sCards[rating].card;
-    spellStore.setItem(id, nCard);
-
-    for (const i of due.spell)
-        if (i.id === id) {
-            i.card = structuredClone(nCard);
-            break;
-        }
-
-    return String(now.getTime());
-}
-
-const plotEl = view().attr({ popover: "auto" }).class("plot");
-const cardDue = view();
-const cal1 = newCal();
-const cal2 = newCal();
-plotEl
-    .add([
-        cardDue,
-        view().add([
-            ele("h2").attr({ innerText: "新卡片" }),
-            cal1.el,
-            ele("h2").attr({ innerText: "已复习" }),
-            cal2.el,
-        ]),
-    ])
-    .addInto();
 
 async function renderCardDueAll() {
     const wordsScope = await getWordsScope();
@@ -6338,39 +6015,6 @@ function renderCal(year: number, data: Date[], el: typeof cal1) {
 }
 
 //###### setting
-const settingEl = view().attr({ id: "setting", popover: "manual" }).addInto();
-settingBEl.on("click", () => {
-    settingEl.el.togglePopover();
-});
-
-settingEl.add([ele("h2").add("书"), "远程地址：", input().data({ path: "onlineBooks.url" })]);
-
-const uploadDicEl = input("file").attr({ id: "upload_dic" });
-
-settingEl.add([ele("h2").add("词典"), uploadDicEl]);
-
-settingEl.add([
-    ele("h2").add("AI"),
-    input().attr({ placeholder: "ai url" }).data({ path: "ai.url" }),
-    input().attr({ placeholder: "ai key" }).data({ path: "ai.key" }),
-    textarea("ai config").data({ path: "ai.config" }).style({
-        // @ts-ignore
-        "field-sizing": "content",
-        minHeight: "2lh",
-    }),
-]);
-
-const readerSettingPath = { apostrophe: "reader.apostrophe" };
-
-settingEl.add(
-    view().add([
-        ele("h2").add("阅读器"),
-        label([input("checkbox").data({ path: readerSettingPath.apostrophe }), "把’转为'"]),
-    ]),
-);
-
-const onlineDicsEl = ele("ul").style({ "list-style-type": "none" });
-const onlineDicsPath = "dics.online";
 
 function onlineDicItem(name: string, url: string, lan: string) {
     const li = ele("li").add([
@@ -6400,61 +6044,6 @@ async function showOnlineDics() {
     });
 }
 
-const addOnlineDic1El = input();
-const addOnlineDic2El = input();
-const addOnlineDic3El = input();
-
-const defaultOnlineDic: OnlineDicsType = [
-    { name: "必应", url: "https://cn.bing.com/search?q=%s", lan: "" },
-    { name: "汉典", url: "https://www.zdic.net/hans/%s", lan: "cn" },
-    {
-        name: "剑桥",
-        url: "https://dictionary.cambridge.org/zhs/%E8%AF%8D%E5%85%B8/%E8%8B%B1%E8%AF%AD-%E6%B1%89%E8%AF%AD-%E7%AE%80%E4%BD%93/%s",
-        lan: "en",
-    },
-    { name: "牛津", url: "https://www.oed.com/search/dictionary/?scope=Entries&q=%s", lan: "en" },
-    { name: "柯林斯", url: "https://www.collinsdictionary.com/zh/dictionary/english-chinese/%s", lan: "en" },
-    { name: "韦氏", url: "https://www.merriam-webster.com/dictionary/%s", lan: "en" },
-    { name: "词源在线", url: "https://www.etymonline.com/cn/word/%s", lan: "en" },
-];
-
-if (!(await setting.getItem(onlineDicsPath))) {
-    await setting.setItem(onlineDicsPath, defaultOnlineDic);
-}
-
-const moreOnlineDicEl = select(
-    [{ name: "更多", value: "" }].concat(defaultOnlineDic.map((i) => ({ name: i.name, value: i.name }))),
-).on("change", () => {
-    const i = defaultOnlineDic.find((i) => i.name === moreOnlineDicEl.el.value);
-    if (!i) return;
-    onlineDicsEl.add(onlineDicItem(i.name, i.url, i.lan));
-    saveSortOnlineDics();
-});
-
-settingEl.add(
-    view()
-        .class("setting_dic")
-        .add([
-            ele("h3").add("在线词典"),
-            onlineDicsEl,
-            view().add([
-                addOnlineDic1El,
-                addOnlineDic2El,
-                addOnlineDic3El,
-                iconEl("add").on("click", () => {
-                    onlineDicsEl.add(onlineDicItem(addOnlineDic1El.gv, addOnlineDic2El.gv, addOnlineDic3El.gv));
-                    addOnlineDic1El.sv("");
-                    addOnlineDic2El.sv("");
-                    addOnlineDic3El.sv("");
-                    saveSortOnlineDics();
-                }),
-                moreOnlineDicEl,
-            ]),
-        ]),
-);
-
-showOnlineDics();
-
 async function saveSortOnlineDics() {
     const l = Array.from(onlineDicsEl.queryAll("li"));
     const dl: OnlineDicsType = [];
@@ -6467,171 +6056,6 @@ async function saveSortOnlineDics() {
     }
     await setting.setItem(onlineDicsPath, dl);
 }
-
-uploadDicEl.on("change", () => {
-    const file = uploadDicEl.el.files?.[0];
-    if (file) {
-        const reader = new FileReader();
-        reader.readAsText(file);
-        reader.onload = () => {
-            const dic = JSON.parse(reader.result as string);
-            console.log(dic);
-            saveDic(dic);
-        };
-    }
-});
-
-async function saveDic(dic: object) {
-    const ndic = dicParse(dic);
-    const id = ndic.meta.id;
-    await dicStore.setItem(id, ndic.map);
-    dics[id] = ndic.meta;
-}
-
-async function getIPA(word: string) {
-    if (!ipa) {
-        const lan = studyLan || "en";
-        const i = await ipaStore.getItem(lan);
-        if (!i) return "";
-        ipa = i;
-    }
-
-    const r = ipa.get(word.toLowerCase());
-    if (!r) return "";
-    if (Array.isArray(r)) {
-        let l: string[] = [];
-        for (const i of r) {
-            l = l.concat(i.split(",").map((w) => w.trim()));
-        }
-        return l.join(",");
-    }
-    return r
-        .split(",")
-        .map((w) => w.trim())
-        .join(",");
-}
-
-settingEl.add(label([input().data({ path: "lan.learn" }), "学习语言"], 1));
-
-const textCacheIdPath = "file.text.id";
-const textCacheId = () => setting.getItem(textCacheIdPath);
-const updataTextId = (id: string) => setting.setItem(textCacheIdPath, id);
-
-const rmbwJsonName = "rmbw.json";
-const rmbwZipName = "rmbw.zip";
-
-const rmbwGithub1 = "data.json";
-const rmbwGithub2 = "text.json";
-
-const allData2Store: { [key: string]: LocalForage } = {
-    bookshelf: bookshelfStore,
-    sections: sectionsStore,
-    cards: cardsStore,
-    words: wordsStore,
-    spell: spellStore,
-    card2word: card2word,
-    card2sentence: card2sentence,
-    actions: cardActionsStore,
-    logExTrans: exTransLog,
-} as { [key in keyof AllData]: LocalForage };
-
-async function toAllData() {
-    const l: AllData = {
-        bookshelf: {},
-        sections: {},
-        cards: {},
-        words: {},
-        spell: {},
-        card2word: {},
-        card2sentence: {},
-        actions: {},
-        logExTrans: {},
-    };
-    for (const storeName in allData2Store) {
-        await allData2Store[storeName].iterate((v, k) => {
-            // @ts-ignore
-            l[storeName][k] = v;
-        });
-    }
-
-    for (const key of ["cards", "spell"] as const) {
-        for (const i in l[key]) {
-            // @ts-ignore
-            const r = l[key][i] as Card;
-            const nr = structuredClone(r) as any;
-            nr.due = r.due?.getTime() || 0;
-            nr.last_review = r.last_review?.getTime?.() || 0;
-            // @ts-ignore
-            l[key][i] = nr;
-        }
-    }
-    return l;
-}
-function formatAllData(l: AllData) {
-    return jsonStringify(l, (path) => {
-        if (path.length === 2 && (path[0] === "cards" || path[0] === "spell")) {
-            return true;
-        }
-        if (path.length === 4 && path[0] === "sections" && path[2] === "words") {
-            return true;
-        }
-        if (path.length === 3 && !(path[0] === "sections" && path[2] === "words")) {
-            return true;
-        }
-        if (path[0] === "actions" && path.length === 2) {
-            return true;
-        }
-        return false;
-    });
-}
-async function getAllData() {
-    const l = await toAllData();
-    return formatAllData(l);
-}
-
-function splitAllData(dl: AllData) {
-    const l = structuredClone(dl);
-    const text: { [id: string]: string } = {};
-    for (const i in l.sections) {
-        if (i === ignoreWordSection) continue;
-        if (!l.sections[i]) continue;
-        const t = l.sections[i].text;
-        // @ts-ignore
-        l.sections[i].text = undefined;
-        text[i] = t;
-    }
-    const hash = spark.hash(JSON.stringify(text));
-    l.sections[0] = { lastPosi: 0, text: hash, title: "", words: {} };
-    return { data: l, text, hash: hash };
-}
-
-function jsonStringify(value: unknown, unBr: (path: string[]) => boolean) {
-    const l: string[] = [];
-
-    function w(value: object, l: string[]) {
-        const str: string[] = [];
-        for (const [i, v] of Object.entries(value)) {
-            const path = l.concat(i);
-            if (typeof v === "object" && v?.constructor === Object) {
-                const isBr = !unBr(path);
-                if (isBr) {
-                    str.push(`"${i}":${w(v, path)}`);
-                } else {
-                    str.push(`"${i}":${JSON.stringify(v)}`);
-                }
-            } else {
-                let _v = v;
-                if (typeof _v === "undefined") _v = null;
-                str.push(`"${i}":${JSON.stringify(_v)}`);
-            }
-        }
-        if (str.length === 0) return "{}";
-        return `{\n${str.join(",\n")}\n}`;
-    }
-    return w(value as object, l);
-}
-
-let isSetData = false;
 
 async function setAllData(json: AllData, textId?: string) {
     if (isSetData) return;
@@ -6690,95 +6114,484 @@ async function setAllData(json: AllData, textId?: string) {
     });
 }
 
-async function xUnGzip(file: Blob) {
-    const stream = file.stream().pipeThrough(new DecompressionStream("gzip"));
-    const blob = await new Response(stream).blob();
-    return blob.text();
+function download(text: string, name: string, type?: string) {
+    const blob = new Blob([text], { type: type || "text/plain;charset=utf-8" });
+    a(URL.createObjectURL(blob)).attr({ download: name }).el.click();
 }
 
-async function xGzip(data: string) {
-    const file = new File([data], rmbwJsonName, { type: "text/json;charset=utf-8" });
-    const stream = file.stream().pipeThrough(new CompressionStream("gzip"));
-    const blob = new Response(stream).blob();
-    return blob;
-}
+// run
+// const data
 
-function basicAuth(username: string, passwd: string) {
-    return `Basic ${username}:${passwd}`;
-}
+const setting = localForage.createInstance({
+    name: "setting",
+    driver: localforage.LOCALSTORAGE,
+});
 
-function joinFilePath(baseurl: string, name: string) {
-    let url = baseurl;
-    if (url.at(-1) !== "/") url += "/";
-    url += rmbwZipName;
-    return url;
-}
+const exTransLog = localForage.createInstance<{ count: number; section: string }>({
+    name: "log",
+    storeName: "exTrans",
+});
 
-const DAVConfigPath = { url: "webStore.dav.url", user: "webStore.dav.user", passwd: "webStore.dav.passwd" };
+const bookshelfStore = localForage.createInstance<Book>({ name: "bookshelf" });
+const sectionsStore = localForage.createInstance<Section>({ name: "sections" });
 
-async function getDAV() {
-    const baseurl = (await setting.getItem(DAVConfigPath.url)) as string;
-    const username = (await setting.getItem(DAVConfigPath.user)) as string;
-    const passwd = (await setting.getItem(DAVConfigPath.passwd)) as string;
-    const url = joinFilePath(baseurl, rmbwZipName);
-    const data = (
-        await fetch(url, {
-            method: "get",
-            headers: { Authorization: basicAuth(username, passwd) },
-        })
-    ).blob();
-    return data;
-}
+const coverCache = localForage.createInstance<Blob>({ name: "cache", storeName: "cover" });
 
-async function setDAV(data: Blob) {
-    const baseurl = (await setting.getItem(DAVConfigPath.url)) as string;
-    const username = (await setting.getItem(DAVConfigPath.user)) as string;
-    const passwd = (await setting.getItem(DAVConfigPath.passwd)) as string;
-    const url = joinFilePath(baseurl, rmbwZipName);
-    fetch(url, {
-        method: "put",
-        headers: { Authorization: basicAuth(username, passwd) },
-        body: data,
+const ipaStore = localForage.createInstance<Map<string, string | string[]>>({ name: "langPack", storeName: "ipa" });
+const variantStore = localForage.createInstance<Map<string, string>>({ name: "langPack", storeName: "variant" });
+const wordMapStore = localForage.createInstance<string[][]>({ name: "langPack", storeName: "map" });
+
+const dicStore = localForage.createInstance<dicMap>({ name: "dic" });
+
+const cardsStore = localForage.createInstance<Card>({ name: "word", storeName: "cards" });
+const wordsStore = localForage.createInstance<record>({ name: "word", storeName: "words" });
+const tagsStore = localForage.createInstance({ name: "word", storeName: "tags" });
+const card2word = localForage.createInstance<string>({ name: "word", storeName: "card2word" });
+const spellStore = localForage.createInstance<Card>({ name: "word", storeName: "spell" });
+const card2sentence = localForage.createInstance<record2>({ name: "word", storeName: "card2sentence" });
+
+const cardActionsStore = localForage.createInstance<[string] | [string, Rating, State, number]>({
+    name: "word",
+    storeName: "actions",
+});
+
+const transCache = localForage.createInstance<string>({ name: "aiCache", storeName: "trans" });
+const ttsCache = localForage.createInstance<{ blob: Blob; data: D }>({ name: "aiCache", storeName: "tts" });
+const lijuCache = localForage.createInstance<string[]>({ name: "aiCache", storeName: "liju" });
+
+const allData2Store: { [key: string]: LocalForage } = {
+    bookshelf: bookshelfStore,
+    sections: sectionsStore,
+    cards: cardsStore,
+    words: wordsStore,
+    spell: spellStore,
+    card2word: card2word,
+    card2sentence: card2sentence,
+    actions: cardActionsStore,
+    logExTrans: exTransLog,
+} as { [key in keyof AllData]: LocalForage };
+
+const studyLan = ((await setting.getItem("lan.learn")) as string) || "en";
+
+const variant = await variantStore.getItem("en");
+
+let usSpell = (await wordMapStore.getItem("en")) || [];
+
+const fsrsWordW = JSON.parse(await setting.getItem("fsrs.word.w")) as number[];
+const fsrsSpellW = JSON.parse(await setting.getItem("fsrs.spell.w")) as number[];
+const fsrsSenW = JSON.parse(await setting.getItem("fsrs.sen.w")) as number[];
+
+const fsrs = new FSRS(generatorParameters(fsrsWordW?.length === 17 ? { w: fsrsWordW } : {}));
+const fsrsSpell = new FSRS(generatorParameters(fsrsSpellW?.length === 17 ? { w: fsrsSpellW } : {}));
+const fsrsSen = new FSRS(generatorParameters(fsrsSenW?.length === 17 ? { w: fsrsSenW } : {}));
+
+const maxReviewCount = Number((await setting.getItem("review.maxCount")) || "30");
+
+// ui
+
+if (import.meta.env.DEV) initDev();
+
+const bookStyle = ((await setting.getItem("style.default")) as typeof defaultBookStyle) || defaultBookStyle;
+
+document.body.translate = false;
+
+const menuEl = view().attr({ id: "menu", popover: "auto" }).addInto();
+
+const booksEl = ele("dialog").addInto().attr({ id: "books" });
+const localBookEl = view();
+const onlineBookEl = view().style({ display: "none" });
+
+booksEl.add([
+    view("x").add([
+        view()
+            .add("本地书籍")
+            .on("click", () => {
+                showLocalBooks();
+                booksEl.el.classList.remove("show_online_book");
+            }),
+        view()
+            .add("在线书籍")
+            .on("click", () => {
+                getOnlineBooks();
+                booksEl.el.classList.add("show_online_book");
+            }),
+        view()
+            .add("我的词典")
+            .on("click", () => {
+                showBook(coreWordBook);
+                booksElclose();
+            }),
+        iconEl("close")
+            .style({ "margin-left": "auto" })
+            .on("click", () => {
+                booksElclose();
+            }),
+    ]),
+    localBookEl,
+    onlineBookEl,
+]);
+const bookSectionsEl = view().style({
+    overflow: "scroll",
+    position: "relative",
+    "flex-grow": "1",
+});
+const mainEl = view().style({ backgroundColor: "var(--bg)" }).addInto();
+const addBookEl = iconEl("add");
+const addSectionEL = iconEl("add");
+const bookNameEl = view();
+const bookNavEl = view().attr({ id: "book_nav" }).add([bookNameEl, addSectionEL, bookSectionsEl]).addInto(mainEl);
+const xbookEl = view().attr({ id: "book" }).addInto(mainEl);
+const bookButtons = view().attr({ id: "book_buttons" }).addInto(xbookEl);
+const bookBEl = iconEl("books").attr({ id: "books_b" }).style({ "view-transition-name": "dialog" });
+const bookSectionsB = iconEl("side_panel").attr({ id: "book_sections" });
+const reviewBEl = iconEl("review").attr({ id: "reviewb" });
+const settingBEl = iconEl("setting").attr({ id: "settingb" });
+const articleAi = iconEl("ai").on("click", () => {
+    showArticelAI();
+});
+const changeStyleEl = iconEl("style");
+const changeEditEl = button();
+const bookdicEl = iconEl("search").attr({ accessKey: "/" });
+
+bookButtons.add([
+    bookBEl,
+    bookSectionsB,
+    reviewBEl,
+    settingBEl,
+    spacer().attr({ id: "book_name" }),
+    iconEl("more").on("click", () => {
+        bookContentEl.el.classList.toggle("show_p_more");
+    }),
+    articleAi,
+    changeStyleEl,
+    changeEditEl,
+    bookdicEl,
+]);
+
+let bookContentEl = view().attr({ id: "book_content" }) as ElType<HTMLElement>;
+const bookContentContainerEl = view()
+    .attr({ id: "book_content_container" })
+    .style({ "--paper-bg": `url("${await nosieBg()}") repeat` })
+    .addInto(bookContentEl)
+    .addInto(xbookEl);
+
+const changeStyleBar = view().attr({ popover: "auto" }).class("change_style_bar").addInto();
+
+const dicEl = view().attr({ id: "dic" }).addInto(mainEl);
+
+const lastMarkEl = iconEl("left");
+const nextMarkEl = iconEl("right");
+const toSentenceEl = iconEl("sentence");
+const feedbackEl = iconEl("help");
+const hideDicEl = iconEl("close");
+const dicWordEl = input();
+const lessWordEl = txt("-");
+const moreWordEl = txt("+");
+const moreWordsEl = view().class("more_words");
+const ttsWordEl = button().style({ width: "auto", height: "auto", "font-size": "inherit" });
+const ttsContextEl = iconEl("recume");
+const dicTransB = iconEl("translate");
+const dicTransContent = input().class(TRANSLATE).style({ border: "none", width: "100%", "font-size": "1rem" });
+const dicMinEl = iconEl("more").style({ "min-height": "24px" });
+const addMeanEl = iconEl("add").style({ "min-height": "24px" });
+const editMeanEl = iconEl("pen").style({ "min-height": "24px" });
+const noteEl = iconEl("pen").style({ "min-height": "24px" });
+const dicDetailsEl = view().class("dic_details");
+
+dicEl.add([
+    view("x").add([lastMarkEl, nextMarkEl, toSentenceEl, ttsContextEl, noteEl, spacer(), feedbackEl, hideDicEl]),
+    view("x")
+        .style({ "flex-wrap": "wrap", "align-items": "center" })
+        .add([dicWordEl, view().add([lessWordEl, moreWordEl]), ttsWordEl, moreWordsEl]),
+    view("x").add([dicTransB, dicTransContent]),
+    view("x").add([dicMinEl, addMeanEl, editMeanEl]),
+    dicDetailsEl,
+]);
+
+const markListBarEl = view().attr({ id: "mark_word_list" }).addInto(mainEl);
+
+const reviewButtonsEl = view().attr({ id: "review_buttons" });
+const reviewViewEl = view().attr({ id: "review_view", lang: studyLan });
+
+const reviewEl = view()
+    .attr({ id: "review" })
+    .addInto(mainEl)
+    .add(view().attr({ id: "review_list" }).add([reviewButtonsEl, reviewViewEl]));
+
+const reviewReflashEl = iconEl("reload").addInto(reviewButtonsEl);
+const reviewModeEl = view().attr({ id: "review_mode" }).addInto(reviewButtonsEl);
+
+const tmpDicEl = view().attr({ popover: "auto" }).class("tmp_dic").addInto();
+
+const fontListEl = view().attr({ popover: "auto" }).class("font_list").addInto();
+
+const fontEl = view().add("serif");
+fontEl.on("click", async () => {
+    fontListEl.el.showPopover();
+    let availableFonts: { postscriptName: string; family: string; fullName: string }[] = [];
+    try {
+        // @ts-ignore
+        availableFonts = await window.queryLocalFonts();
+    } catch (error) {}
+    let fonts = availableFonts.map((i) => i.family);
+    fonts = Array.from(new Set(fonts));
+    fonts = fonts.filter((i) => i !== "sans" && i !== "serif").toSorted();
+    fonts.unshift("serif", "sans");
+    vlist(fontListEl, fonts, { iHeight: 24, paddingLeft: 4, paddingRight: 4 }, (i) => {
+        const fontName = fonts[i];
+        return view()
+            .add(fontName)
+            .style({ "font-family": fontName, "line-height": "24px" })
+            .on("click", () => {
+                setFontElF(fontName);
+                bookStyle.fontFamily = fontName;
+                setBookStyle();
+            });
+    });
+});
+const fontWeight = input("range")
+    .attr({ min: "100", max: "900", step: "10" })
+    .on("input", (e, el) => {
+        bookStyle.fontWeight = Number(el.gv);
+        console.log(bookStyle);
+
+        setBookStyle();
     })
-        .then(() => {
-            putToast(txt("上传成功"));
-        })
-        .catch(() => {
-            putToast(txt("上传失败"), 6000);
-        });
-}
+    .sv(String(bookStyle.fontWeight));
+const fontSize = createRangeSetEl(
+    bookStyle.fontSize,
+    bookStyleList.fontSize.length - 1,
+    (i) => {
+        bookStyle.fontSize = i;
+        setBookStyle();
+    },
+    "font_small",
+    "font_large",
+);
+const lineHeight = createRangeSetEl(
+    bookStyle.lineHeight,
+    bookStyleList.lineHeight.length - 1,
+    (i) => {
+        bookStyle.lineHeight = i;
+        setBookStyle();
+    },
+    "line_height_small",
+    "line_height_large",
+);
+const contentWidth = createRangeSetEl(
+    bookStyle.contentWidth,
+    bookStyleList.contentWidth.length - 1,
+    (i) => {
+        bookStyle.contentWidth = i;
+        setBookStyle();
+    },
+    "content_width_small",
+    "content_width_large",
+);
+const themei = radioGroup("theme");
+const themeSelect = view()
+    .class("theme_select")
+    .add([
+        themeI("auto", "自动", "#fff", "#000"),
+        themeI("light", "亮色", "#fff", "#000"),
+        themeI("classical", "古典", "#eceae6", "#000"),
+        themeI("dark", "暗色", "#000", "#cacaca"),
+    ]);
+themei.set(bookStyle.theme);
+themei.on(() => {
+    bookStyle.theme = themei.get();
+    setBookStyle();
+});
+const paperI = check("paper")
+    .on("change", () => {
+        bookStyle.paper = paperI.gv;
+        setBookStyle();
+    })
+    .sv(bookStyle.paper);
+const paperEl = label([paperI, "纸质背景"]);
+changeStyleBar.add([fontEl, fontWeight, fontSize, lineHeight, contentWidth, themeSelect, paperEl]);
 
-const GitHubConfigPath = {
-    user: "webStore.github.user",
-    repo: "webStore.github.repo",
-    token: "webStore.github.token",
-    path: "webStore.github.path",
-    download: "webStore.github.download",
-};
+const markListEl = view();
+const autoNewWordEl = view().add([
+    button("生词忽略与标记").on("click", (_, el) => {
+        autoIgnore(el);
+    }),
+]);
+markListBarEl.add([autoNewWordEl, markListEl]);
 
-async function getGitHub(fileName: string) {
-    const user = (await setting.getItem(GitHubConfigPath.user)) as string;
-    const repo = (await setting.getItem(GitHubConfigPath.repo)) as string;
-    const token = (await setting.getItem(GitHubConfigPath.token)) as string;
-    const path = ((await setting.getItem(GitHubConfigPath.path)) as string) || "";
-    const downloadPath = `${
-        ((await setting.getItem(GitHubConfigPath.download)) as string) ||
-        (`https://raw.githubusercontent.com/${user}/${repo}/main/${path}` as string)
-    }/${fileName}`;
-    return {
-        url: `https://api.github.com/repos/${user}/${repo}/contents/${path}/${fileName}`.replace(
-            "contents//",
-            "contents/",
-        ),
-        auth: {
-            Authorization: `Bearer ${token}`,
-        },
-        fileDownload: downloadPath,
-        user,
-        repo,
-        path,
-    };
-}
+const reviewAi = input("checkbox");
+reviewButtonsEl.add(label([reviewAi, "ai"]));
+
+const reviewScope = view();
+const spellIgnore = select([
+    { name: "全部", value: "all" },
+    { name: "排除忽略词", value: "exIgnore" },
+    { name: "仅忽略词", value: "ignore" },
+]).style({ display: "none" });
+
+const reviewSortEl = select([
+    { name: "正常", value: "正常" },
+    { name: "学习 从旧开始", value: "学习" },
+    { name: "学习 趁热打铁", value: "学习1" },
+    { name: "紧急", value: "紧急" },
+    { name: "随机", value: "随机" },
+]).on("change", () => {
+    reviewSortType = reviewSortEl.el.value as typeof reviewSortType;
+});
+
+const reviewMoreEl = view()
+    .attr({ popover: "auto" })
+    .add([
+        txt("过滤与排序"),
+        view("y").add([reviewScope.style({ "max-height": "400px", overflow: "auto" }), spellIgnore, reviewSortEl]),
+    ])
+    .style({ "max-width": "80dvw", overflow: "auto" });
+reviewMoreEl.addInto();
+reviewButtonsEl.add(
+    iconEl("filter").on("click", (_, el) => {
+        popoverX(reviewMoreEl, el);
+    }),
+);
+
+reviewButtonsEl.add(
+    iconEl("chart").on("click", (_, el) => {
+        popoverX(plotEl, el);
+    }),
+);
+
+const keyboardEl = view("y").class("simple-keyboard");
+if (getSetting(KEYBOARDDISPLAYPATH) === "default")
+    keyboardEl.style({ height: `${await setting.getItem(KEYBOARDHEIGHTPATH)}px` });
+
+const keyboard = keyB(
+    {
+        default: [
+            "q w e r t y u i o p",
+            "a s d f g h j k l",
+            "{shift} z x c v b n m {bksp}",
+            "{h} {tip} {space} {audio} {switch}",
+        ],
+        handwrite: ["{h} {tip} {space} {audio} {switch}"],
+    },
+    {
+        "{space}": "␣",
+        "{shift}": "⇧",
+        "{bksp}": "⌫",
+        "{tip}": "🫣",
+        "{audio}": "📣",
+        "{switch}": "^",
+        "{h}": "=",
+    },
+);
+
+const handwriterCanvas = ele("canvas").el;
+const handwriterCheck = iconEl("ok")
+    .style({ display: "none" })
+    .on("click", () => ocrSpell);
+const handwriterEl = view().class("spell_write").add([handwriterCanvas, handwriterCheck]);
+const spellInputEl = view().style({ display: "none" }).add([keyboardEl.el, handwriterEl]);
+reviewEl.add(spellInputEl);
+
+const reviewModeRadio = radioGroup<Review>("review_mode");
+reviewModeEl.add([
+    reviewModeRadio.new("word", "单词"),
+    reviewModeRadio.new("spell", "拼写"),
+    reviewModeRadio.new("sentence", "句子"),
+]);
+
+const audioEl = ele("audio").addInto();
+const pTTSEl = ele("audio").attr({ controls: true });
+
+const pttsEl = view().attr({ id: "pTTSp" }).addInto();
+
+const autoPlayTTSEl = input("checkbox").on("change", () => {
+    autoPlay = autoPlayTTSEl.el.checked;
+});
+pttsEl.add([autoPlayTTSEl, pTTSEl]);
+
+const plotEl = view().attr({ popover: "auto" }).class("plot");
+const cardDue = view();
+const cal1 = newCal();
+const cal2 = newCal();
+plotEl
+    .add([
+        cardDue,
+        view().add([
+            ele("h2").attr({ innerText: "新卡片" }),
+            cal1.el,
+            ele("h2").attr({ innerText: "已复习" }),
+            cal2.el,
+        ]),
+    ])
+    .addInto();
+
+const settingEl = view().attr({ id: "setting", popover: "manual" }).addInto();
+settingBEl.on("click", () => {
+    settingEl.el.togglePopover();
+});
+
+settingEl.add(label([input().data({ path: "lan.learn" }), "学习语言"], 1));
+
+settingEl.add([ele("h2").add("书"), "远程地址：", input().data({ path: "onlineBooks.url" })]);
+
+const uploadDicEl = input("file").attr({ id: "upload_dic" });
+
+settingEl.add([ele("h2").add("词典"), uploadDicEl]);
+
+settingEl.add([
+    ele("h2").add("AI"),
+    input().attr({ placeholder: "ai url" }).data({ path: "ai.url" }),
+    input().attr({ placeholder: "ai key" }).data({ path: "ai.key" }),
+    textarea("ai config").data({ path: "ai.config" }).style({
+        // @ts-ignore
+        "field-sizing": "content",
+        minHeight: "2lh",
+    }),
+]);
+
+settingEl.add(
+    view().add([
+        ele("h2").add("阅读器"),
+        label([input("checkbox").data({ path: readerSettingPath.apostrophe }), "把’转为'"]),
+    ]),
+);
+
+const onlineDicsEl = ele("ul").style({ "list-style-type": "none" });
+
+const addOnlineDic1El = input();
+const addOnlineDic2El = input();
+const addOnlineDic3El = input();
+
+const moreOnlineDicEl = select(
+    [{ name: "更多", value: "" }].concat(defaultOnlineDic.map((i) => ({ name: i.name, value: i.name }))),
+).on("change", () => {
+    const i = defaultOnlineDic.find((i) => i.name === moreOnlineDicEl.el.value);
+    if (!i) return;
+    onlineDicsEl.add(onlineDicItem(i.name, i.url, i.lan));
+    saveSortOnlineDics();
+});
+
+settingEl.add(
+    view()
+        .class("setting_dic")
+        .add([
+            ele("h3").add("在线词典"),
+            onlineDicsEl,
+            view().add([
+                addOnlineDic1El,
+                addOnlineDic2El,
+                addOnlineDic3El,
+                iconEl("add").on("click", () => {
+                    onlineDicsEl.add(onlineDicItem(addOnlineDic1El.gv, addOnlineDic2El.gv, addOnlineDic3El.gv));
+                    addOnlineDic1El.sv("");
+                    addOnlineDic2El.sv("");
+                    addOnlineDic3El.sv("");
+                    saveSortOnlineDics();
+                }),
+                moreOnlineDicEl,
+            ]),
+        ]),
+);
 
 const uploadDataEl = input("file")
     .add("上传数据")
@@ -6791,38 +6604,6 @@ const uploadDataEl = input("file")
             setAllData(JSON.parse(reader.result as string));
         };
     });
-
-function download(text: string, name: string, type?: string) {
-    const blob = new Blob([text], { type: type || "text/plain;charset=utf-8" });
-    a(URL.createObjectURL(blob)).attr({ download: name }).el.click();
-}
-
-async function uploadGithub(data: string, fileName: string, m: string) {
-    const base64 = encode(data);
-    const config = await getGitHub(fileName);
-    let sha = "";
-    sha = (await (await fetch(config.url, { headers: { ...config.auth } })).json()).sha;
-    const x = {
-        message: m,
-        content: base64,
-        sha,
-    };
-    // @ts-ignore
-    if (!sha) x.sha = undefined;
-    fetch(config.url, {
-        method: "PUT",
-        headers: {
-            ...config.auth,
-        },
-        body: JSON.stringify(x),
-    });
-}
-
-async function downloadGithub(fileName: string) {
-    const config = await getGitHub(fileName);
-    const data = await (await fetch(config.fileDownload)).json();
-    return data;
-}
 
 const p2pIdShowEl = txt();
 const p2pIdInputEl = input().style({ display: "none" });
@@ -6992,37 +6773,6 @@ const asyncEl = view().add([
 
 settingEl.add(asyncEl);
 
-async function getCSV(type: "word" | "spell" | "sen") {
-    const l: string[] = [];
-    if (type === "word" || type === "sen") {
-        // todo 区分sen
-        await cardsStore.iterate((v, k) => {
-            l.push(k);
-        });
-    } else {
-        await spellStore.iterate((_, k) => {
-            l.push(k);
-        });
-    }
-    const spChar = ",";
-    const text: string[] = [
-        ["card_id", "review_time", "review_rating", "review_state", "review_duration"].join(spChar),
-    ];
-    await cardActionsStore.iterate((v, k) => {
-        if (!v[1]) return;
-        const card_id = v[0];
-        if (!l.includes(card_id)) return;
-        const review_time = Number(k);
-        const review_rating = v[1];
-        const review_state = v[2];
-        const review_duration = v[3];
-        const row = [card_id, review_time, review_rating, review_state, review_duration].join(spChar);
-        text.push(row);
-    });
-    const csv = text.join("\n");
-    return csv;
-}
-
 const testSpeedLanEl = input();
 const testSpeedContentEl = p();
 const readSpeedEl = input("number").data({ path: "user.readSpeed" });
@@ -7161,6 +6911,279 @@ settingEl.add(
         ]),
 );
 
+document.body.addEventListener("pointerup", (e) => {
+    if (willShowMenu) {
+        menuEl.el.showPopover();
+        willShowMenu = false;
+    }
+});
+
+if (!(await sectionsStore.getItem(ignoreWordSection))) {
+    await sectionsStore.setItem(ignoreWordSection, {
+        title: "ignore",
+        lastPosi: 0,
+        text: "",
+        words: {},
+    } as Section);
+}
+
+if (!(await sectionsStore.getItem(wordSection))) {
+    await sectionsStore.setItem(wordSection, {
+        title: "words",
+        lastPosi: 0,
+        text: "",
+        words: {},
+    } as Section);
+}
+
+bookBEl.on("click", () => {
+    booksEl.el.showModal();
+});
+addBookEl.on("click", async () => {
+    const b = await newBook();
+    nowBook = b;
+    const book = (await getBooksById(nowBook.book)) as Book;
+    showBook(book);
+    changeEdit(true);
+    booksElclose();
+});
+
+addSectionEL.on("click", async () => {
+    if (nowBook.book === coreWordBook.id) return;
+    if (!nowBook.book) nowBook = await newBook();
+    const book = await getBooksById(nowBook.book);
+    if (!book) {
+        console.log(`找不到书籍${nowBook.book}`);
+        return;
+    }
+    const sid = uuid();
+    book.sections.push(sid);
+    book.lastPosi = book.sections.length - 1;
+    const s = newSection();
+    await sectionsStore.setItem(sid, s);
+    await bookshelfStore.setItem(nowBook.book, book);
+    nowBook.sections = book.sections.at(-1) as string;
+    showBook(book);
+    changeEdit(true);
+});
+
+bookSectionsB.on("click", () => {
+    bookNavEl.el.classList.toggle("book_nav_show");
+});
+
+showLocalBooks();
+setBookS();
+
+for (let i = 12; i <= 28; i += 2) {
+    bookStyleList.fontSize.push(i);
+}
+bookStyleList.fontSize.push(32, 40, 56, 72, 96, 128);
+for (let i = 20; i <= 60; i += 5) {
+    bookStyleList.contentWidth.push(i);
+}
+for (let i = 10; i <= 26; i += 2) {
+    bookStyleList.lineHeight.push(i / 10);
+}
+
+changeStyleEl.on("click", () => {
+    popoverX(changeStyleBar, changeStyleEl);
+});
+
+setBookStyle();
+
+changeEditEl.on("click", () => {
+    isEdit = !isEdit;
+    changeEdit(isEdit);
+});
+
+changeEdit(false);
+
+bookContentContainerEl.on("scroll", async () => {
+    if (!canRecordScroll) return;
+    const n = getScrollPosi(bookContentContainerEl);
+    contentScrollPosi = n;
+    const sectionId = nowBook.sections;
+    const section = await getSection(sectionId);
+    if (!section) return;
+    section.lastPosi = n;
+    sectionsStore.setItem(sectionId, section);
+});
+
+bookdicEl.on("click", async () => {
+    markListBarEl.el.classList.toggle(SHOWMARKLIST);
+    if (markListBarEl.el.classList.contains(SHOWMARKLIST)) {
+        showMarkList();
+    }
+});
+
+setting.getItem("dics").then(async (l: string[]) => {
+    for (const i of l || []) {
+        const x = await dicStore.getItem(i);
+        if (!x) continue;
+        // @ts-ignore
+        x.dic = undefined;
+        dics[i] = x;
+    }
+});
+
+dicStore.iterate((v, k) => {
+    // @ts-ignore
+    v.dic = undefined;
+    dics[k] = v;
+});
+
+lastMarkEl.on("click", async () => {
+    if (!nowDicId) return;
+    const list = await getAllMarks();
+    let index = list.findIndex((i) => i.id === nowDicId);
+    index--;
+    index = index < 0 ? 0 : index;
+    const id = list[index].id;
+    jumpToMark(list[index].s.cIndex);
+    showDic(id);
+});
+nextMarkEl.on("click", async () => {
+    if (!nowDicId) return;
+    const list = await getAllMarks();
+    let index = list.findIndex((i) => i.id === nowDicId);
+    index++;
+    index = index >= list.length ? list.length - 1 : index;
+    const id = list[index].id;
+    jumpToMark(list[index].s.cIndex);
+    showDic(id);
+});
+
+dicMinEl.on("click", () => {
+    dicDetailsEl.el.classList.toggle(HIDEMEANS);
+});
+
+autoFun.config({
+    type: "chatgpt",
+    url: (await setting.getItem("ai.url")) as string,
+    key: await setting.getItem("ai.key"),
+    option: {
+        model: "gpt-4o-mini",
+        ...JSON.parse(await setting.getItem("ai.config")),
+    },
+});
+
+reviewBEl.on("click", () => {
+    reviewEl.el.classList.toggle("review_show");
+    reviewBEl.el.classList.remove(TODOMARK);
+
+    reviewCount = 0;
+});
+
+sectionSelect(reviewScope);
+
+keyboard.setLayout(await setting.getItem(KEYBOARDDISPLAYPATH));
+
+window.addEventListener("keydown", (e) => {
+    if (!(reviewType === "spell" && reviewEl.el.classList.contains("review_show"))) return;
+    if (!reviewEl.el.contains(document.elementFromPoint(window.innerWidth / 2, window.innerHeight / 2))) return; // 用于note
+    const oldInput = keyboard.getInput();
+    if (e.key !== "Backspace") {
+        if (e.key === ">") {
+            spellF("{audio}");
+            return;
+        }
+        if (e.key === "?") {
+            spellF("{tip}");
+            return;
+        }
+        if (e.key.length === 1) keyboard.setInput(oldInput + e.key);
+    } else {
+        keyboard.setInput(oldInput.slice(0, -1));
+    }
+});
+
+setTimeout(async () => {
+    const d = await getFutureReviewDue(0.1, "word", "spell", "sentence");
+    let c = 0;
+    c += Object.keys(d.word).length + Object.keys(d.spell).length;
+    if (c > 0) reviewBEl.class(TODOMARK);
+}, 10);
+
+reviewEl.on("pointerdown", (e) => {
+    if (!(reviewType === "spell" && reviewEl.el.classList.contains("review_show"))) return;
+    const sEl = document.querySelector(".spell_input");
+    if (!sEl) return;
+    if (e.clientY > sEl.getBoundingClientRect().bottom) return;
+    if (e.clientY < sEl.getBoundingClientRect().top) return;
+    console.log(e);
+    e.preventDefault();
+    spellWriteE = e;
+    if (!spellWriteCtx) {
+        spellWriteCtx = handwriterCanvas.getContext("2d") as CanvasRenderingContext2D;
+        handwriterCanvas.width = window.innerWidth;
+        handwriterCanvas.height = window.innerHeight - 32;
+        handwriterCheck.style({ display: "" });
+    }
+    spellWriteCtx.moveTo(e.clientX, e.clientY - 32 * 2);
+});
+
+reviewEl.on("pointermove", (e) => {
+    if (!spellWriteE || !spellWriteCtx) return;
+    const ctx = spellWriteCtx;
+    ctx.lineTo(e.clientX, e.clientY - 32 * 2);
+    ctx.stroke();
+});
+
+window.addEventListener("pointerup", (e) => {
+    spellWriteE = null;
+});
+
+reviewModeRadio.on(() => {
+    reviewType = reviewModeRadio.get();
+    if (reviewType === "spell") {
+        spellInputEl.style({ display: "" });
+        spellIgnore.style({ display: "" });
+    } else {
+        spellInputEl.style({ display: "none" });
+        spellIgnore.style({ display: "none" });
+    }
+    reviewReflashEl.el.click();
+});
+
+reviewReflashEl.on("click", async () => {
+    due = await getFutureReviewDue(0.1, reviewType);
+    const l = await getReviewDue(reviewType);
+    console.log(l);
+    if (reviewAi.el.checked && reviewType === "word") await getWordAiContext();
+    reviewCount = 0;
+    showReview(l, reviewType);
+});
+
+document.addEventListener("keydown", (e) => {
+    if (!reviewEl.el.classList.contains("review_show") && reviewType !== "spell") return;
+    for (const i in reviewHotkey) {
+        if (e.key === reviewHotkey[i].key) {
+            reviewHotkey[i].f();
+        }
+    }
+});
+
+if (!(await setting.getItem(onlineDicsPath))) {
+    await setting.setItem(onlineDicsPath, defaultOnlineDic);
+}
+
+showOnlineDics();
+
+uploadDicEl.on("change", () => {
+    const file = uploadDicEl.el.files?.[0];
+    if (file) {
+        const reader = new FileReader();
+        reader.readAsText(file);
+        reader.onload = () => {
+            const dic = JSON.parse(reader.result as string);
+            console.log(dic);
+            saveDic(dic);
+        };
+    }
+});
+
+setFontElF(bookStyle.fontFamily);
+
 for (const el of settingEl.queryAll("[data-path]")) {
     const path = el.el.getAttribute("data-path");
     if (!path) continue;
@@ -7190,3 +7213,11 @@ for (const el of settingEl.queryAll("[data-path]")) {
         };
     }
 }
+
+if ("serviceWorker" in navigator) {
+    if (import.meta.env.PROD) {
+        navigator.serviceWorker.register("/sw.js");
+    }
+}
+
+navigator?.storage?.persist(); // 下次再说，所以不用await
