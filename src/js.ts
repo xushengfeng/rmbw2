@@ -23,11 +23,32 @@ import {
     setProperties,
 } from "dkh-ui";
 
-if (import.meta.env.DEV) initDev();
-
 import localforage from "localforage";
 import { extendPrototype } from "localforage-setitems";
 extendPrototype(localforage);
+import { dicParse, dic, type dicMap } from "../dic/src/main";
+import { hyphenate } from "hyphen/en";
+import { MsEdgeTTS, OUTPUT_FORMAT } from "msedge-tts-browserify";
+import { type Card, createEmptyCard, generatorParameters, FSRS, Rating, State } from "ts-fsrs";
+import spark from "spark-md5";
+import WaveSurfer from "wavesurfer.js";
+import RegionsPlugin, { type Region } from "wavesurfer.js/dist/plugins/regions";
+import RecordPlugin from "wavesurfer.js/dist/plugins/record";
+import Pitchfinder from "pitchfinder";
+import Peer, { type DataConnection } from "peerjs";
+import Fuse from "fuse.js";
+import diff_match_patch, { type Diff } from "diff-match-patch";
+import "diff-match-patch-line-and-word";
+import autoFun from "auto-fun";
+import fixWebmDuration from "webm-duration-fix";
+import Sortable from "sortablejs";
+import { encode } from "js-base64";
+
+import very_ok_svg from "../assets/icons/very_ok.svg";
+import githubIcon from "../assets/other/Github.svg";
+
+if (import.meta.env.DEV) initDev();
+
 const localForage = {
     createInstance: <data = any>(
         p: Parameters<LocalForage["createInstance"]>[0],
@@ -44,29 +65,9 @@ const localForage = {
     } => localforage.createInstance(p),
 };
 
-import { dicParse, dic, type dicMap } from "../dic/src/main";
-
-import { hyphenate } from "hyphen/en";
 const hyphenChar = "·";
 
 const Segmenter = Intl.Segmenter;
-
-import { MsEdgeTTS, OUTPUT_FORMAT } from "msedge-tts-browserify";
-
-import { type Card, createEmptyCard, generatorParameters, FSRS, Rating, State } from "ts-fsrs";
-
-import spark from "spark-md5";
-
-import WaveSurfer from "wavesurfer.js";
-import RegionsPlugin, { type Region } from "wavesurfer.js/dist/plugins/regions";
-import RecordPlugin from "wavesurfer.js/dist/plugins/record";
-
-import Pitchfinder from "pitchfinder";
-
-import Peer, { type DataConnection } from "peerjs";
-
-import very_ok_svg from "../assets/icons/very_ok.svg";
-import githubIcon from "../assets/other/Github.svg";
 
 // @auto-path:../assets/icons/$.svg
 function iconEl(name: string) {
@@ -1238,8 +1239,6 @@ async function showBookSections(book: book) {
 }
 
 let contentP: string[] = [];
-
-import Fuse from "fuse.js";
 
 async function showBookContent(book: book, id: string) {
     const s = await getSection(id);
@@ -2874,8 +2873,6 @@ function patchPosi<i extends [number, number]>(source: number[], map: number[], 
     return [Start, End] as i;
 }
 
-import diff_match_patch, { type Diff } from "diff-match-patch";
-import "diff-match-patch-line-and-word";
 const dmp = new diff_match_patch();
 
 changeEdit(false);
@@ -4459,8 +4456,6 @@ function sentenceGm(t: senNode) {
     return get(t);
 }
 
-import autoFun from "auto-fun";
-
 autoFun.config({
     type: "chatgpt",
     url: (await setting.getItem("ai.url")) as string,
@@ -5990,8 +5985,6 @@ const tts = new MsEdgeTTS();
 const ttsVoiceConfig = "tts.voice";
 const ttsEngineConfig = "tts.engine";
 
-import fixWebmDuration from "webm-duration-fix";
-
 const synth = window.speechSynthesis;
 
 async function getTtsEngine() {
@@ -6359,8 +6352,6 @@ settingEl.add(
         label([input("checkbox").data({ path: readerSettingPath.apostrophe }), "把’转为'"]),
     ]),
 );
-
-import Sortable from "sortablejs";
 
 const onlineDicsEl = ele("ul").style({ "list-style-type": "none" });
 const onlineDicsPath = "dics.online";
@@ -6797,8 +6788,6 @@ const uploadDataEl = input("file")
             setAllData(JSON.parse(reader.result as string));
         };
     });
-
-import { encode } from "js-base64";
 
 function download(text: string, name: string, type?: string) {
     const blob = new Blob([text], { type: type || "text/plain;charset=utf-8" });
