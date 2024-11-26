@@ -115,7 +115,7 @@ button {
     margin: 0px;
     padding: 0;
     transition: var(--transition);
-    width: var(--b-button);
+    min-width: var(--b-button);
     height: var(--b-button);
     position: relative;
 }

@@ -557,10 +557,62 @@ async function getSection(id: string) {
     return await sectionsStore.getItem(id);
 }
 
+async function getSectionBook(id: string) {
+    let bookId = "";
+    let book: Book | null = null;
+    await bookshelfStore.iterate((v, k) => {
+        if (v.sections.includes(id)) {
+            bookId = k;
+            book = v;
+        }
+    });
+    return { book, bookId };
+}
+
 async function sectionWords(id: string) {
     const section = await getSection(id);
     if (!section) return Object.entries({}) as [];
     return Object.entries(section.words);
+}
+
+async function sectionRemenber(section: Section) {
+    const data: { id: string; r: number }[] = [];
+    if (!section) return data;
+    const now = Date.now();
+    for (const [k, v] of Object.entries(section.words)) {
+        if (v.visit) {
+            if (v.type === "word") {
+                const word = await wordsStore.getItem(v.id);
+                if (!word) continue;
+                const cardId = word.means.find((i) => i.contexts.find((c) => c.source.id === k))?.card_id;
+                if (!cardId) continue;
+                const card = await cardsStore.getItem(cardId);
+                if (!card) continue;
+                const r = fsrs.get_retrievability(card, now, false);
+                if (r !== undefined) {
+                    data.push({ id: v.id, r: r });
+                }
+            }
+        }
+    }
+    return data;
+}
+
+async function sectionWordsSort() {
+    const sectionIds = new Map<string, Section>();
+    const sectionData = new Map<string, number>();
+
+    await sectionsStore.iterate((value, key) => {
+        sectionIds.set(key, value);
+    });
+    for (const [k, v] of sectionIds) {
+        const data = await sectionRemenber(v);
+        if (data.length === 0) continue;
+        const allR = data.map((i) => i.r).reduce((a, b) => a + b, 0) / data.length;
+        sectionData.set(k, allR);
+    }
+    const sortMap = Array.from(sectionData.entries()).sort((a, b) => a[1] - b[1]);
+    return sortMap;
 }
 
 async function checkEmptyBook(book: Book) {
@@ -6443,7 +6495,23 @@ const reviewMoreEl = view()
     .attr({ popover: "auto" })
     .add([
         txt("过滤与排序"),
-        view("y").add([reviewScope.style({ "max-height": "400px", overflow: "auto" }), spellIgnore, reviewSortEl]),
+        view("y").add([
+            reviewScope.style({ "max-height": "400px", overflow: "auto" }),
+            spellIgnore,
+            reviewSortEl,
+            button("🎲跳转到陌生文章").on("click", async () => {
+                const data = await sectionWordsSort();
+                const fData = data.filter((i) => i[1] < 0.8);
+                if (fData.length === 0) {
+                    putToast(txt("文章掌握得不错，请直接复习"));
+                    return;
+                }
+                const section = fData[Math.floor(Math.random() * fData.length)];
+                const sectionId = section[0];
+                const { book } = await getSectionBook(sectionId);
+                if (book) showBook(book, sectionId);
+            }),
+        ]),
     ])
     .style({ "max-width": "80dvw", overflow: "auto" });
 reviewMoreEl.addInto();
