@@ -4159,35 +4159,36 @@ async function showDic(id: string) {
 
             editMeanEl.style({ display: s.wordMeansI.get() === -1 ? "none" : "" });
 
-            if (v.length) dicDetailsEl.clear();
-            else {
+            if (v.length) {
+                dicDetailsEl.clear();
+
+                const means = v;
+                for (const i in means) {
+                    const m = means[i];
+                    const div = view();
+                    const radio = input("radio")
+                        .attr({ name: "dic_means" })
+                        .on("click", async () => {
+                            if (radio.el.checked) {
+                                s.wordMeansI.set(Number(i));
+
+                                visit(true);
+                            }
+                            editMeanEl.style({ display: "" });
+                        });
+                    if (Number(i) === s.wordMeansI.get()) radio.el.checked = true;
+                    div.on("click", () => radio.el.click()).add([radio, ...(await disCard2(m)).map((i) => i.el)]);
+                    dicDetailsEl.add(div);
+                }
+                if (s.wordMeansI.get() !== -1) dicDetailsEl.class(HIDEMEANS);
+                else dicDetailsEl.el.classList.remove(HIDEMEANS);
+            } else {
                 dicDetailsEl.el.innerText = "请添加义项";
-                return;
             }
-            const means = v;
-            for (const i in means) {
-                const m = means[i];
-                const div = view();
-                const radio = input("radio")
-                    .attr({ name: "dic_means" })
-                    .on("click", async () => {
-                        if (radio.el.checked) {
-                            s.wordMeansI.set(Number(i));
 
-                            visit(true);
-                        }
-                        editMeanEl.style({ display: "" });
-                    });
-                if (Number(i) === s.wordMeansI.get()) radio.el.checked = true;
-                div.on("click", () => radio.el.click()).add([radio, ...(await disCard2(m)).map((i) => i.el)]);
-                dicDetailsEl.add(div);
-            }
-            if (s.wordMeansI.get() !== -1) dicDetailsEl.class(HIDEMEANS);
-            else dicDetailsEl.el.classList.remove(HIDEMEANS);
-
+            reviewMeanEl.clear();
             if (s.wordMeansI.get() !== -1) {
-                reviewMeanEl.clear();
-                const cardId = s.wordMeans.get().at(s.wordMeansI.get())?.card_id;
+                const cardId = s.wordMeans.get()[s.wordMeansI.get()]?.card_id;
                 if (cardId) {
                     const card = await cardsStore.getItem(cardId);
                     if (!card) return;
