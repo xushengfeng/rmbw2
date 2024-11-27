@@ -4187,6 +4187,24 @@ async function showDic(id: string) {
             }
             if (s.wordMeansI.get() !== -1) dicDetailsEl.class(HIDEMEANS);
             else dicDetailsEl.el.classList.remove(HIDEMEANS);
+
+            if (s.wordMeansI.get() !== -1) {
+                reviewMeanEl.clear();
+                const cardId = s.wordMeans.get().at(s.wordMeansI.get())?.card_id;
+                if (cardId) {
+                    const card = await cardsStore.getItem(cardId);
+                    if (!card) return;
+                    let hasClick = false;
+                    const buttons = getReviewCardButtons(cardId, card, "", () => {
+                        if (hasClick) {
+                            reviewMeanEl.clear();
+                        } else {
+                            hasClick = true;
+                        }
+                    });
+                    reviewMeanEl.add(buttons.buttons);
+                }
+            }
         },
         wordCardId: (v: string, oldV) => {},
         wordRecord: async (v: record | null, oldV) => {
@@ -6347,6 +6365,7 @@ const dicTransContent = input().class(TRANSLATE).style({ border: "none", width: 
 const dicMinEl = iconEl("more").style({ "min-height": "24px" });
 const addMeanEl = iconEl("add").style({ "min-height": "24px" });
 const editMeanEl = iconEl("pen").style({ "min-height": "24px" });
+const reviewMeanEl = view();
 const noteEl = iconEl("pen").style({ "min-height": "24px" });
 const dicDetailsEl = view().class("dic_details");
 
@@ -6356,7 +6375,7 @@ dicEl.add([
         .style({ "flex-wrap": "wrap", "align-items": "center" })
         .add([dicWordEl, view().add([lessWordEl, moreWordEl]), ttsWordEl, moreWordsEl]),
     view("x").add([dicTransB, dicTransContent]),
-    view("x").add([dicMinEl, addMeanEl, editMeanEl]),
+    view("x").add([dicMinEl, addMeanEl, editMeanEl, spacer(), reviewMeanEl]),
     dicDetailsEl,
 ]);
 
