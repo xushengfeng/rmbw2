@@ -2814,17 +2814,14 @@ async function showWordBook(book: Book, s: Section) {
                             const stateEl = txt(map[card.state]);
                             reviewEl.add(stateEl);
                             if (card.due.getTime() < time()) stateEl.class(TODOMARK);
-                            let hasClick = false;
                             const buttons = getReviewCardButtons(
                                 i.card_id,
                                 card,
                                 i.text + i.contexts.map((x) => x.text).join(""),
-                                () => {
-                                    if (hasClick) {
+                                (_, first) => {
+                                    if (!first) {
                                         buttons.buttons.el.remove();
                                         stateEl.el.classList.remove(TODOMARK);
-                                    } else {
-                                        hasClick = true;
                                     }
                                 },
                             );
@@ -4194,12 +4191,9 @@ async function showDic(id: string) {
                 if (cardId) {
                     const card = await cardsStore.getItem(cardId);
                     if (!card) return;
-                    let hasClick = false;
-                    const buttons = getReviewCardButtons(cardId, card, "", () => {
-                        if (hasClick) {
+                    const buttons = getReviewCardButtons(cardId, card, "", (_, first) => {
+                        if (!first) {
                             reviewMeanEl.clear();
-                        } else {
-                            hasClick = true;
                         }
                     });
                     reviewMeanEl.add(buttons.buttons);
@@ -5501,9 +5495,7 @@ async function showWordReview(x: { id: string; card: Card }, isAi: boolean) {
     play(wordRecord.word);
     const div = view();
     const context = await crContext(wordRecord, x.id, isAi);
-    let hasShowAnswer = false;
     async function showAnswer() {
-        hasShowAnswer = true;
         const word = await card2word.getItem(x.id);
         if (word) {
             const d = await wordsStore.getItem(word);
@@ -5529,13 +5521,13 @@ async function showWordReview(x: { id: string; card: Card }, isAi: boolean) {
         x.id,
         x.card,
         context.el.children[0].textContent || context.el.children[1].textContent || "", // ai例句优先
-        async (rating) => {
-            if (hasShowAnswer) {
+        async (_, first) => {
+            if (first) {
+                showAnswer();
+            } else {
                 lijuCache.removeItem(x.id);
                 const next = await nextDue(reviewType);
                 showReview(next, reviewType);
-            } else {
-                showAnswer();
             }
         },
     );
@@ -5549,7 +5541,7 @@ async function showWordReview(x: { id: string; card: Card }, isAi: boolean) {
     reviewViewEl.add(div);
 }
 
-function getReviewCardButtons(id: string, card: Card, readText: string, f?: (rating: number) => void) {
+function getReviewCardButtons(id: string, card: Card, readText: string, f?: (rating: number, first: boolean) => void) {
     const showTime = new Date().getTime();
     let hasClick = false;
     let finishTime = showTime;
@@ -5560,11 +5552,11 @@ function getReviewCardButtons(id: string, card: Card, readText: string, f?: (rat
                 let r = rating;
                 if (rating === Rating.Good && quickly) r = Rating.Easy;
                 await setReviewCard(id, card, r, finishTime - showTime);
-                if (f) f(r);
+                if (f) f(r, false);
                 return;
             }
             await firstClick();
-            if (f) f(rating);
+            if (f) f(rating, true);
         };
         const b = icon.on("click", reviewHotkey[rating].f);
         return b;
@@ -5839,12 +5831,10 @@ async function showSentenceReview(x: { id: string; card: Card }) {
         buttons.finish();
     };
     const dic = view().on("click", reviewHotkey.show.f);
-    const buttons = getReviewCardButtons(x.id, x.card, context.el.innerText, async (rating) => {
-        if (hasShowAnswer) {
+    const buttons = getReviewCardButtons(x.id, x.card, context.el.innerText, async (_, first) => {
+        if (!first) {
             const next = await nextDue(reviewType);
             showReview(next, reviewType);
-        } else {
-            showAnswer();
         }
     });
 
