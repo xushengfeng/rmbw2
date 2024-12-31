@@ -6020,13 +6020,12 @@ function newCal() {
     return div;
 }
 function renderCal(year: number, data: Date[], el: typeof cal1) {
-    const count: { [key: string]: number } = {};
+    const count = new Map<string, number>();
     for (const d of data) {
         const id = d.toDateString();
-        if (count[id]) count[id]++;
-        else count[id] = 1;
+        count.set(id, (count.get(id) ?? 0) + 1);
     }
-    const rl = Object.values(count).toSorted((a, b) => a - b);
+    const rl = Array.from(count.values()).toSorted((a, b) => a - b);
     const l: number[] = [];
     const c = 6;
     const width = Math.floor(rl.length / (c - 1)) || 1;
@@ -6043,7 +6042,7 @@ function renderCal(year: number, data: Date[], el: typeof cal1) {
 
     function renderDay(offsetDay: number) {
         const date = new Date(s_date.getTime() + timeD.d(offsetDay));
-        const v = count[date.toDateString()] ?? 0;
+        const v = count.get(date.toDateString()) ?? 0;
         const item = pack(els[offsetDay]).attr({
             title: `${date.toLocaleDateString()}  ${v}`,
         });
