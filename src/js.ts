@@ -1879,7 +1879,7 @@ function trackAnimate(el: ElType<HTMLElement>, from: ElType<HTMLElement>, to = e
 function popoverX(el: ElType<HTMLElement>, fromEl: ElType<HTMLElement>) {
     el.el.showPopover();
     trackAnimate(el, fromEl);
-    renderCharts();
+    renderCharts(new Date().getFullYear());
     el.on(
         "beforetoggle",
         () => {
@@ -5959,7 +5959,7 @@ async function renderCardDueAll() {
     cardDue.add(renderCardPercent(sentenceP));
 }
 
-async function renderCharts() {
+async function renderCharts(y: number) {
     renderCardDueAll();
     cal1.els.title.svc = cal2.els.title.svc = "加载中……";
 
@@ -5973,8 +5973,8 @@ async function renderCharts() {
             reviewCard.push(date);
         }
     });
-    renderCal(2024, newCard, cal1);
-    renderCal(2024, reviewCard, cal2);
+    renderCal(y, newCard, cal1);
+    renderCal(y, reviewCard, cal2);
 }
 
 function renderCardDue(text: string, data: number[]) {
@@ -6052,7 +6052,7 @@ function renderCal(year: number, data: Date[], el: typeof cal1) {
             const nv = (100 / c) * nvi + (100 / c) * ((v - l[nvi]) / (l[nvi + 1] - l[nvi])); // 赋分算法，但平均分割区间
             item.style({ "background-color": `color-mix(in srgb-linear, #9be9a8, #216e39 ${nv}%)` });
         } else {
-            item.style({ "background-color": "none" });
+            item.style({ "background-color": "" });
         }
 
         if (date.toDateString() === new Date().toDateString()) {
@@ -6064,7 +6064,7 @@ function renderCal(year: number, data: Date[], el: typeof cal1) {
         }
     }
 
-    if (isToday) {
+    if (isToday && el.els.plot.el.getAttribute("data-y") === String(year)) {
         renderDay(Math.floor((new Date().getTime() - s_date.getTime()) / timeD.d(1)));
     } else
         for (let x = 1; x <= 53; x++) {
@@ -6073,6 +6073,8 @@ function renderCal(year: number, data: Date[], el: typeof cal1) {
                 renderDay(offsetDay);
             }
         }
+
+    el.els.plot.data({ y: String(year) });
 }
 
 //###### setting
@@ -6599,6 +6601,13 @@ plotEl
             cal1.el,
             ele("h2").attr({ innerText: "已复习" }),
             cal2.el,
+            view("x").add(
+                Array.from({ length: new Date().getFullYear() - 2024 + 1 }, (_, i) => i + 2024).map((i) =>
+                    button(String(i)).on("click", () => {
+                        renderCharts(i);
+                    }),
+                ),
+            ),
         ]),
     ])
     .addInto();
