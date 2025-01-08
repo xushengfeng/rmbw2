@@ -511,31 +511,17 @@ body {
 .context_start,
 .context_end {
     position: absolute;
-    width: 16px;
-    height: 16px;
-    background-color: #fff;
-    border-radius: 50%;
-    border: #000 1px solid;
-    transform: translate(-50%, -50%);
+    width: max(2ch, 16px);
+    height: 1lh;
+    border: var(--color) 2px solid;
     touch-action: none;
 }
-.context_start::after {
-    content: "";
-    position: absolute;
-    top: 16px;
-    left: 7px;
-    width: 2px;
-    height: 1em;
-    background-color: var(--color);
+.context_start {
+    border-radius: 8px 2px 2px 8px;
 }
-.context_end::after {
-    content: "";
-    position: absolute;
-    top: -1em;
-    left: 7px;
-    width: 2px;
-    height: 1em;
-    background-color: var(--color);
+.context_end {
+    border-radius: 2px 8px 8px 2px;
+    transform: translate(-100%, 0%);
 }
 
 #book_content .words_sum {

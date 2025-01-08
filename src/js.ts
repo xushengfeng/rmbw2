@@ -4615,7 +4615,7 @@ async function showDic(id: string) {
             nel = igBlankEl(nel, false);
             endEl.style({
                 left: `${getOffset(nel).left + nel.offsetWidth}px`,
-                top: `${getOffset(nel).top + nel.offsetHeight}px`,
+                top: `${getOffset(nel).top}px`,
             });
             return Number(nel.getAttribute("data-e"));
         }
