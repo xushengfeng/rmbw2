@@ -518,10 +518,12 @@ body {
 }
 .context_start {
     border-radius: 8px 2px 2px 8px;
+    border-right: none;
 }
 .context_end {
     border-radius: 2px 8px 8px 2px;
     transform: translate(-100%, 0%);
+    border-left: none;
 }
 
 #book_content .words_sum {
@@ -1238,7 +1240,7 @@ div:has(> .translate) > :not(.translate) {
     width: 100%;
     min-height: 160px;
     box-sizing: border-box;
-    font-family: "Noto Color Emoji";
+    font-family: "Noto Color Emoji", serif;
 
     & > div > div {
         border-radius: 8px;
