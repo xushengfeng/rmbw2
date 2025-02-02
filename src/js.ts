@@ -228,6 +228,11 @@ let nowDicId = "";
 
 const dics: Record<string, Omit<dic, "dic">> = {};
 
+let dicFun: { changeContext: () => void; trackDic: () => void } = {
+    changeContext: () => {},
+    trackDic: () => {},
+};
+
 let ipa: Map<string, string | string[]>;
 
 const checkVisit = {
@@ -3132,6 +3137,9 @@ async function showNormalBook(book: Book, s: Section) {
         if (wordFreq[i] >= 3) highFreq.push(i);
     }
 
+    contextChangeObserver.disconnect();
+    contextChangeObserver.observe(bookContentEl.el);
+
     bookContentContainerEl.attr({ lang: book.language });
 }
 
@@ -4692,6 +4700,11 @@ async function showDic(id: string) {
         section.words[id] = wordX;
         await sectionsStore.setItem(sectionId, section);
     }
+
+    dicFun = {
+        changeContext,
+        trackDic,
+    };
 }
 
 async function showDicEl(mainTextEl: ReturnType<typeof textarea>, word: string, fromEl: ElType<HTMLElement>) {
@@ -6345,6 +6358,11 @@ const bookContentContainerEl = view()
     .style({ "--paper-bg": `url("${await nosieBg()}") repeat` })
     .addInto(bookContentEl)
     .addInto(xbookEl);
+
+const contextChangeObserver = new ResizeObserver(() => {
+    dicFun.changeContext();
+    dicFun.trackDic();
+});
 
 const changeStyleBar = view().attr({ popover: "auto" }).class("change_style_bar").addInto();
 
