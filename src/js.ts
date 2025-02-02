@@ -196,6 +196,8 @@ let contentP: string[] = [];
 let wordFreq: { [word: string]: number } = {};
 let properN: string[] = [];
 
+const t推荐mark = new Set<string>();
+
 const WordSortPath = "words.sort";
 
 const bookStyleList = {
@@ -3038,15 +3040,6 @@ async function showNormalBook(book: Book, s: Section) {
                 const word = sen[i];
                 if (si === "0" && Number(i) < t) continue;
                 const span = txt(await textTransformer(word.text));
-                for (const i in s.words) {
-                    const index = s.words[i].index;
-                    if (index[0] <= word.start && word.end <= index[1] && s.words[i].type === "word") {
-                        span.el.classList.add(MARKWORD);
-                        if (s.words[i].visit) {
-                            span.el.classList.add(VISITMARKWORD);
-                        }
-                    }
-                }
                 span.data({ s: String(word.start), e: String(word.end), w: String(word.isWord), t: word.text });
                 senEl.add(span);
 
@@ -3086,13 +3079,12 @@ async function showNormalBook(book: Book, s: Section) {
                     if (id)
                         if (
                             span.classList.contains(MARKWORD) ||
+                            span.classList.contains(VISITMARKWORD) ||
                             highFreq.includes(lemmatizer(span.innerText.toLocaleLowerCase())) ||
                             dicEl.el.classList.contains(DICSHOW)
                         ) {
                             showDic(id);
                         }
-
-                    span.classList.add(MARKWORD);
                 })
                 .on("contextmenu", async (ev) => {
                     ev.preventDefault();
@@ -3133,6 +3125,8 @@ async function showNormalBook(book: Book, s: Section) {
 
         bookContentEl.add(pel);
     }
+
+    updateMark(s.words);
 
     for (const i in wordFreq) {
         if (wordFreq[i] >= 3) highFreq.push(i);
@@ -3964,6 +3958,7 @@ function wordMarkChanged(w: Section["words"] = {}, init?: boolean) {
         checkVisitAll(w);
     }
     reflashSectionEl(w);
+    updateMark(w);
 }
 
 async function showMarkList() {
@@ -3998,7 +3993,6 @@ async function showMarkList() {
                                     record = rmWord(record, i.id);
                                     await clearWordMean(record);
                                 }
-                                rmStyle(i.s.index);
                             }
                             delete section?.words[i.id];
                             if (section) {
@@ -4304,7 +4298,6 @@ async function showDic(id: string) {
 
     async function change2Sentence() {
         if (!section) return;
-        rmStyle(wordx.index);
         const sentenceCardId = uuid();
         const contextStart = s.contextIndex.get()[0];
         const contextEnd = s.contextIndex.get()[1];
@@ -4319,6 +4312,8 @@ async function showDic(id: string) {
             wordx.visit = false;
         }
         await saveWordX(wordx);
+
+        updateMark((await getSection(sectionId))?.words);
 
         const r: record2 = {
             text: s.context.get(),
@@ -4415,14 +4410,12 @@ async function showDic(id: string) {
                 }
             }
 
-            rmStyle(wordx.index);
-            addStyle([wordx.index[0], e]);
-
             const word = editText.slice(wordx.index[0], e);
             wordx.id = word;
             wordx.index[1] = e;
             await saveWordX(wordx);
             showDic(id);
+            updateMark((await getSection(sectionId))?.words);
         }
 
         play(s.word.get());
@@ -4794,18 +4787,6 @@ async function dicSentences(contexts: record["means"][0]["contexts"]) {
         );
     }
     return sen;
-}
-
-function addStyle(x: [number, number]) {
-    for (let i = x[0]; i < x[1]; i++) {
-        bookContentEl.query(`span[data-s="${i}"]`)?.el?.classList?.add(MARKWORD);
-    }
-}
-function rmStyle(x: [number, number]) {
-    for (let i = x[0]; i < x[1]; i++) {
-        bookContentEl.query(`span[data-s="${i}"]`)?.el?.classList?.remove(MARKWORD);
-        bookContentEl.query(`span[data-s="${i}"]`)?.el?.classList?.remove(VISITMARKWORD);
-    }
 }
 
 async function tagsEl(b: bOp) {
@@ -5183,14 +5164,42 @@ function checkVisitAll(words: Section["words"]) {
     }
 }
 
-function selectWord(words: string[]) {
+function updateMark(words: Section["words"] | undefined) {
+    if (!words) return;
+    // todo diff
     for (const el of bookContentEl.queryAll(`.${TMPMARKWORD}`)) {
         el.el.classList.remove(TMPMARKWORD);
     }
+    for (const el of bookContentEl.queryAll(`.${MARKWORD}`)) {
+        el.el.classList.remove(MARKWORD);
+    }
+    for (const el of bookContentEl.queryAll(`.${VISITMARKWORD}`)) {
+        el.el.classList.remove(VISITMARKWORD);
+    }
+
+    for (const i of Object.values(words)) {
+        if (i.type !== "word") continue;
+        for (let x = i.index[0]; x < i.index[1]; x++) {
+            const el = bookContentEl.query(`[data-s="${x}"]`);
+            if (!el) continue;
+            if (i.visit) {
+                el.class(VISITMARKWORD);
+            } else {
+                el.class(MARKWORD);
+            }
+        }
+    }
     for (const el of bookContentEl.queryAll("span[data-t]")) {
-        if (words.includes(el.el.innerText.toLocaleLowerCase())) {
+        if (t推荐mark.has(el.el.innerText.toLocaleLowerCase())) {
             el.class(TMPMARKWORD);
         }
+    }
+}
+
+function selectWord(words: string[]) {
+    t推荐mark.clear();
+    for (const w of words) {
+        t推荐mark.add(w.toLocaleLowerCase());
     }
 }
 
