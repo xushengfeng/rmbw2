@@ -8,6 +8,7 @@ import {
     a,
     txt,
     p,
+    pText,
     trackPoint,
     textarea,
     button,
@@ -4766,7 +4767,7 @@ async function disCard2(m: record["means"][0], filterWords: string[] = []) {
         t = t.replaceAll(i, "**");
     }
     const sen = (await dicSentences(m.contexts)).style({ "padding-left": "1em" });
-    return [view().add(p(t)), sen];
+    return [view().add(pText(t)), sen];
 }
 
 async function dicSentences(contexts: record["means"][0]["contexts"]) {
