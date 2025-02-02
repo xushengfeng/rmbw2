@@ -1831,17 +1831,17 @@ function interModal<el extends ElType<HTMLElement>, v>(
 }
 
 async function alert(message: string) {
-    return (await interModal(txt(message), [[button("确定"), "ok"]])).ok;
+    return (await interModal(pText(message), [[button("确定"), "ok"]])).ok;
 }
 
 async function confirm(message: string) {
-    return (await interModal(txt(message))).ok;
+    return (await interModal(pText(message))).ok;
 }
 
 async function prompt(message?: string, defaultValue?: string) {
     return (
         await interModal(
-            view("y").add([txt(message), ele("input").attr({ value: defaultValue || "" })]),
+            view("y").add([pText(message), ele("input").attr({ value: defaultValue || "" })]),
             undefined,
             (el) => {
                 return el.el.querySelector("input")?.value;
