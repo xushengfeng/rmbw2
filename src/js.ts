@@ -228,10 +228,7 @@ let nowDicId = "";
 
 const dics: Record<string, Omit<dic, "dic">> = {};
 
-let dicFun: { changeContext: () => void; trackDic: () => void } = {
-    changeContext: () => {},
-    trackDic: () => {},
-};
+let dicFun: { changeContext: () => void; trackDic: () => void } | null = null;
 
 let ipa: Map<string, string | string[]>;
 
@@ -2546,12 +2543,12 @@ async function showBookContent(book: Book, id: string) {
 
     contentP = [];
 
+    dicEl.el.classList.remove(DICSHOW);
+
     if (isWordBook) await showWordBook(book, s);
     else await showNormalBook(book, s);
 
     setScrollPosi(bookContentContainerEl, contentScrollPosi);
-
-    if (!isWordBook) bookContentEl.add(dicEl);
 }
 
 async function showWordBook(book: Book, s: Section) {
@@ -3138,6 +3135,10 @@ async function showNormalBook(book: Book, s: Section) {
     }
 
     contextChangeObserver.disconnect();
+
+    dicFun = null;
+    bookContentEl.add(dicEl);
+
     contextChangeObserver.observe(bookContentEl.el);
 
     bookContentContainerEl.attr({ lang: book.language });
@@ -6360,8 +6361,8 @@ const bookContentContainerEl = view()
     .addInto(xbookEl);
 
 const contextChangeObserver = new ResizeObserver(() => {
-    dicFun.changeContext();
-    dicFun.trackDic();
+    dicFun?.changeContext();
+    dicFun?.trackDic();
 });
 
 const changeStyleBar = view().attr({ popover: "auto" }).class("change_style_bar").addInto();
