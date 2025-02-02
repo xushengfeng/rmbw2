@@ -3078,7 +3078,7 @@ async function showNormalBook(book: Book, s: Section) {
                     // 故句子一定有至少一个元素，且不全是空格，至少能匹配到此单词
 
                     const id = await saveCard({
-                        key: span.getAttribute("data-t") as string,
+                        key: (span.getAttribute("data-t") as string).toLowerCase(),
                         index: [Number(span.getAttribute("data-s")), Number(span.getAttribute("data-e"))] as TxtSlice,
                         cindex: [s, e] as TxtSlice,
                     });
