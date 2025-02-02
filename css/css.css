@@ -423,7 +423,7 @@ body {
     }
     & > .show_p_more {
         & .p_more {
-            display: inline-block;
+            display: block;
         }
     }
     & > textarea {

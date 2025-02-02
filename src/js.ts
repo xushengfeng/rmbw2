@@ -3027,6 +3027,9 @@ async function showNormalBook(book: Book, s: Section) {
             t = paragraph[0].findIndex((i) => i.text !== ">" && i.text[0] !== " ");
         }
 
+        const moreEl = view().class("p_more");
+        pel.add(moreEl);
+
         for (const si in paragraph) {
             const sen = paragraph[si];
             const senEl = txt();
@@ -3106,8 +3109,6 @@ async function showNormalBook(book: Book, s: Section) {
             pel.add(senEl);
         }
 
-        const moreEl = view().class("p_more");
-
         const pText = editText.slice(paragraph[0]?.[0]?.start ?? null, paragraph.at(-1)?.at(-1)?.end ?? 0);
         if (pText) {
             const i = contentP.length;
@@ -3128,8 +3129,6 @@ async function showNormalBook(book: Book, s: Section) {
                 exTrans(pel.el, 0, book);
             }),
         ]);
-
-        pel.add(moreEl);
 
         bookContentEl.add(pel);
     }
