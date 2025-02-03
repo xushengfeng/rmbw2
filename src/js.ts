@@ -3033,9 +3033,7 @@ async function showNormalBook(book: Book, s: Section) {
     const stopTime = txt("");
     const stopTimeEl = iconEl("ok").on("click", () => {
         const dt = (new Date().getTime() - readTime) / timeD.m(1);
-        stopTime.sv(
-            `${Math.round(Array.from(segmenter.segment(s.text)).filter((w) => w.isWordLike).length / dt)}词/分钟`,
-        );
+        stopTime.sv(`${Math.round(wordCount / dt)}词/分钟`);
     });
 
     bookContentEl.add(
@@ -3045,6 +3043,7 @@ async function showNormalBook(book: Book, s: Section) {
     );
 
     const segmenter = new Segmenter(book.language, { granularity: book.wordSplit || "word" });
+    const wordCount = Array.from(segmenter.segment(s.text)).filter((w) => w.isWordLike).length;
     const osL = Array.from(new Segmenter(book.language, { granularity: "sentence" }).segment(s.text));
     const sL: Intl.SegmentData[] = [];
     const sx = ["Mr.", "Mrs.", "Ms.", "Miss.", "Dr.", "Prof.", "Capt.", "Lt.", "Sgt.", "Rev.", "Sr.", "Jr.", "St."].map(
@@ -3094,6 +3093,8 @@ async function showNormalBook(book: Book, s: Section) {
     }
 
     console.log(plist);
+
+    bookContentEl.add(p(`${wordCount}词`).style({ fontSize: "1rem" }));
 
     bookContentEl.add(
         ele("h1")
