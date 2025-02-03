@@ -2674,7 +2674,7 @@ async function showWordBook(book: Book, s: Section) {
             spellC,
         ])
         .on("click", () => {
-            showWordBookMore(wordList, chartEl);
+            showWordBookMore(wordList, cards, chartEl);
         });
     bookContentContainerEl.add(
         view().class("words_book_top").add([chartEl, search, sortEl]).attr({ lang: navigator.language }),
@@ -2852,7 +2852,7 @@ async function showWordBook(book: Book, s: Section) {
     bookContentContainerEl.attr({ lang: book.language });
 }
 
-async function showWordBookMore(wordList: WordBookList, fromEl: ElType<HTMLElement>) {
+async function showWordBookMore(wordList: WordBookList, cards: Map<string, Card>, fromEl: ElType<HTMLElement>) {
     const d = ele("dialog");
     dialogX(d, fromEl);
     const unlearnL = wordList.filter((w) => w.means === undefined);
@@ -2900,6 +2900,86 @@ async function showWordBookMore(wordList: WordBookList, fromEl: ElType<HTMLEleme
     }
     pEl.add([txt("忽略"), txt(ignore.toString()), view().style({ width: `${(ignore / max) * 100}%` })]);
     d.add([p("单词来源"), pEl]);
+
+    function allMeans(now: Date) {
+        let means1 = 0;
+        for (const i of wordList) {
+            if (i.type === "ignore") {
+                means1 += 1;
+            } else if (i.type === "learn") {
+                let r = 0;
+                for (const j of i.c.means) {
+                    const x = cards.get(j.card_id) as Card;
+                    r += fsrs.get_retrievability(x, now, false) || 0;
+                }
+                means1 += r / i.c.means.length;
+            }
+        }
+        return means1;
+    }
+
+    const maxMeans = allMeans(new Date());
+    const canvas = ele("canvas").el;
+    for (let i = 0; i < 36; i++) {}
+    const meansList = Array.from(
+        { length: 36 },
+        (_v, i) => maxMeans - allMeans(new Date(new Date().getTime() + timeD.d(i * 30.5))),
+    );
+    const pxPm = 10;
+    const pxPw = 0.5;
+    const maxV = Math.ceil(meansList.at(-1) ?? 1);
+    canvas.width = meansList.length * pxPm * devicePixelRatio;
+    canvas.height = maxV * pxPw * devicePixelRatio;
+    canvas.style.width = `${meansList.length * pxPm}px`;
+    const ctx = canvas.getContext("2d") as CanvasRenderingContext2D;
+    ctx.scale(devicePixelRatio, devicePixelRatio);
+    // x
+    for (let i = 0; i < maxV; i += 25) {
+        if (i % 100 === 0) ctx.strokeStyle = "#0f0";
+        else ctx.strokeStyle = "#0f02";
+        ctx.beginPath();
+        ctx.moveTo(0, i * pxPw);
+        ctx.lineTo(canvas.width, i * pxPw);
+        ctx.stroke();
+        ctx.closePath();
+    }
+    // y
+    for (const [i, _v] of meansList.entries()) {
+        if (i % 12 === 0) {
+            ctx.strokeStyle = "#00f";
+        } else {
+            ctx.strokeStyle = "#00f2";
+        }
+        ctx.beginPath();
+        ctx.moveTo(pxPm * i, 0);
+        ctx.lineTo(i * pxPm, canvas.height);
+        ctx.stroke();
+        ctx.closePath();
+    }
+    ctx.strokeStyle = "#000";
+    ctx.beginPath();
+    ctx.moveTo(0, 0);
+    for (const [i, v] of meansList.entries()) {
+        ctx.lineTo(i * pxPm, v * pxPw);
+    }
+    ctx.stroke();
+    const kl: number[] = [];
+    let t = 100;
+    for (const [i, k] of meansList.entries()) {
+        if (k > t) {
+            kl.push(i);
+            t += 100;
+        }
+    }
+
+    d.add([
+        p("预测"),
+        txt(
+            `${"(1y, 100词)"} ${kl.map((i) => `${i}m`).join(" ")} 一年保持：${(1 - meansList[12] / wordList.filter((i) => i.type).length).toFixed(2)}`,
+        ),
+        view().add(canvas),
+    ]);
+
     const familyList = Array.from(wordFamilyMap.values());
     d.add([
         p("部分词族"), // todo 需要真正的word family
