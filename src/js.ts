@@ -4702,6 +4702,8 @@ async function showDic(id: string) {
 
             dicEl.el.classList.remove(DICSHOW);
 
+            dicFun = null;
+
             dicTransAi?.abort();
             dicTransAi = null;
         };
