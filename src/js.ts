@@ -5222,11 +5222,13 @@ function updateMark(words: Section["words"] | undefined) {
     }
 }
 
-function selectWord(words: string[]) {
+async function selectWord(words: string[]) {
     t推荐mark.clear();
     for (const w of words) {
         t推荐mark.add(w.toLocaleLowerCase());
     }
+    const sectionId = nowBook.sections;
+    updateMark((await getSection(sectionId))?.words);
 }
 
 async function getNewWords() {
