@@ -206,6 +206,17 @@ const bookStyleList = {
     contentWidth: [] as number[],
 };
 
+for (let i = 12; i <= 28; i += 2) {
+    bookStyleList.fontSize.push(i);
+}
+bookStyleList.fontSize.push(32, 40, 56, 72, 96, 128);
+for (let i = 20; i <= 60; i += 5) {
+    bookStyleList.contentWidth.push(i);
+}
+for (let i = 10; i <= 26; i += 2) {
+    bookStyleList.lineHeight.push(i / 10);
+}
+
 const defaultBookStyle = {
     fontSize: 6,
     lineHeight: 3,
@@ -7088,17 +7099,6 @@ bookSectionsB.on("click", () => {
 
 showLocalBooks();
 setBookS();
-
-for (let i = 12; i <= 28; i += 2) {
-    bookStyleList.fontSize.push(i);
-}
-bookStyleList.fontSize.push(32, 40, 56, 72, 96, 128);
-for (let i = 20; i <= 60; i += 5) {
-    bookStyleList.contentWidth.push(i);
-}
-for (let i = 10; i <= 26; i += 2) {
-    bookStyleList.lineHeight.push(i / 10);
-}
 
 changeStyleEl.on("click", () => {
     popoverX(changeStyleBar, changeStyleEl);
