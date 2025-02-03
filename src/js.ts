@@ -2509,6 +2509,8 @@ async function showBookSections(book: Book) {
             });
             bookSectionsEl.add(sEl);
         }
+        bookSectionsEl.el.scrollTop =
+            (bookSectionsEl.query(`.${SELECTEDITEM}`)?.el.offsetTop ?? 0) - bookSectionsEl.el.offsetHeight * 0.4;
     }
     show();
     reflashSectionEl = (words: Section["words"]) => {
