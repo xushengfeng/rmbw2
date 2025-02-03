@@ -5271,7 +5271,13 @@ async function autoIgnore(fromEl: ElType<HTMLElement>) {
     const f = view();
     const wordsWithRoot = await getNewWords();
     for (const w of wordsWithRoot) {
-        const item = label([input("checkbox").class("ignore_word").sv(w.show), w.show, input("checkbox").sv(w.src)]);
+        const item = label([
+            input("checkbox").class("ignore_word").sv(w.show),
+            w.show,
+            input("checkbox")
+                .sv(w.src)
+                .attr({ checked: t推荐mark.has(w.src.toLocaleLowerCase()) }),
+        ]);
         f.add(item);
     }
     dialog.add([
