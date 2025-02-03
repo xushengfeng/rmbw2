@@ -6500,7 +6500,7 @@ const themeSelect = view()
         themeI("classical", "古典", "#eceae6", "#000"),
         themeI("dark", "暗色", "#000", "#cacaca"),
     ]);
-themei.set(bookStyle.theme);
+
 themei.on(() => {
     bookStyle.theme = themei.get();
     setBookStyle();
@@ -6513,6 +6513,8 @@ const paperI = check("paper")
     .sv(bookStyle.paper);
 const paperEl = label([paperI, "纸质背景"]);
 changeStyleBar.add([fontEl, fontWeight, fontSize, lineHeight, contentWidth, themeSelect, paperEl]);
+
+themei.set(bookStyle.theme);
 
 const markListEl = view();
 const autoNewWordEl = view().add([
