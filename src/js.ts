@@ -2659,6 +2659,7 @@ async function showWordBook(book: Book, s: Section) {
             }),
         ),
     );
+    const spellC = view().add(["拼写 加载中", view().class(LITLEPROGRESS)]);
     const chartEl = view()
         .add([
             view().add([
@@ -2670,7 +2671,7 @@ async function showWordBook(book: Book, s: Section) {
                         view().style({ "--w": `${(means1 / l.length) * 100}%`, background: "#0f0" }),
                     ]),
             ]),
-            view().add(["拼写 加载中", view().class(LITLEPROGRESS)]),
+            spellC,
         ])
         .on("click", () => {
             showWordBookMore(wordList, chartEl);
@@ -2689,15 +2690,12 @@ async function showWordBook(book: Book, s: Section) {
             }
         });
         for (const i of nl) if (i && ignoreWords.includes(i)) spell += 1;
-        chartEl.el.lastElementChild?.remove();
-        chartEl.add(
-            view().add([
-                `拼写 ${spell.toFixed(1)}`,
-                view()
-                    .class(LITLEPROGRESS)
-                    .add(view().style({ "--w": `${(spell / l.length) * 100}%`, background: "#00f" })),
-            ]),
-        );
+        spellC.clear().add([
+            `拼写 ${spell.toFixed(1)}`,
+            view()
+                .class(LITLEPROGRESS)
+                .add(view().style({ "--w": `${(spell / l.length) * 100}%`, background: "#00f" })),
+        ]);
     });
 
     const show = vlist(
