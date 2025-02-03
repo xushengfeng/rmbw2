@@ -6173,7 +6173,7 @@ function renderCal(year: number, data: Date[], el: typeof cal1) {
     const c = 6;
     const width = Math.floor(rl.length / (c - 1)) || 1;
     for (let i = 0; i < rl.length; i += width) l.push(rl[i]);
-    l.push(rl.at(-1) ?? 0 + 1);
+    l.push((rl.at(-1) ?? 0) + 1);
     const firstDate = new Date(year, 0, 1);
     const zero2first = (firstDate.getDay() + 1) * timeD.d(1);
     const s_date = new Date(firstDate.getTime() - zero2first + timeD.d(1));
@@ -6192,7 +6192,7 @@ function renderCal(year: number, data: Date[], el: typeof cal1) {
         if (v) {
             const nvi = l.findIndex((i) => i > v) - 1;
             const nv = (100 / c) * nvi + (100 / c) * ((v - l[nvi]) / (l[nvi + 1] - l[nvi])); // 赋分算法，但平均分割区间
-            item.style({ "background-color": `color-mix(in srgb-linear, #9be9a8, #216e39 ${nv}%)` });
+            item.style({ "background-color": `color-mix(in oklch,rgb(172, 245, 185),rgb(5, 75, 27) ${nv}%)` });
         } else {
             item.style({ "background-color": "" });
         }
