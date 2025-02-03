@@ -241,6 +241,8 @@ const dics: Record<string, Omit<dic, "dic">> = {};
 
 let dicFun: { changeContext: () => void; trackDic: () => void } | null = null;
 
+let readTime = Number.NaN;
+
 let ipa: Map<string, string | string[]>;
 
 const checkVisit = {
@@ -2541,19 +2543,6 @@ async function showBookContent(book: Book, id: string) {
 
     contentScrollPosi = s.lastPosi;
 
-    if (!isWordBook)
-        bookContentEl.add(
-            iconEl("recume").on("click", async () => {
-                autoPlay = true;
-                autoPlayTTSEl.el.checked = true;
-                await pTTS(0);
-                if ((await getTtsEngine()) === "ms")
-                    for (let i = 1; i < contentP.length; i++) {
-                        await getTTS(contentP[i]);
-                    }
-            }),
-        );
-
     contentP = [];
 
     dicEl.el.classList.remove(DICSHOW);
@@ -3029,6 +3018,32 @@ async function ignoredWordSpell(list: string[]) {
 async function showNormalBook(book: Book, s: Section) {
     console.log(s);
 
+    bookContentEl.add(
+        iconEl("recume").on("click", async () => {
+            autoPlay = true;
+            autoPlayTTSEl.el.checked = true;
+            await pTTS(0);
+            if ((await getTtsEngine()) === "ms")
+                for (let i = 1; i < contentP.length; i++) {
+                    await getTTS(contentP[i]);
+                }
+        }),
+    );
+
+    const stopTime = txt("");
+    const stopTimeEl = iconEl("ok").on("click", () => {
+        const dt = (new Date().getTime() - readTime) / timeD.m(1);
+        stopTime.sv(
+            `${Math.round(Array.from(segmenter.segment(s.text)).filter((w) => w.isWordLike).length / dt)}词/分钟`,
+        );
+    });
+
+    bookContentEl.add(
+        iconEl("recume").on("click", () => {
+            readTime = new Date().getTime();
+        }),
+    );
+
     const segmenter = new Segmenter(book.language, { granularity: book.wordSplit || "word" });
     const osL = Array.from(new Segmenter(book.language, { granularity: "sentence" }).segment(s.text));
     const sL: Intl.SegmentData[] = [];
@@ -3230,6 +3245,8 @@ async function showNormalBook(book: Book, s: Section) {
 
     dicFun = null;
     bookContentEl.add(dicEl);
+
+    bookContentEl.add(view("x").add([stopTimeEl, stopTime]));
 
     contextChangeObserver.observe(bookContentEl.el);
 
