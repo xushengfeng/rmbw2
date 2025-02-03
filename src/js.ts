@@ -2934,7 +2934,7 @@ async function ignoredWordSpell(list: string[]) {
         return;
     }
     const iel = textarea().sv(flist.sort().join("\n")).style({ height: "200px" });
-    const p = (await interModal(view().add(["确定添加以下单词到拼写吗？", iel]), undefined, () => iel.el.value)).v;
+    const p = (await interModal(view("y").add(["确定添加以下单词到拼写吗？", iel]), undefined, () => iel.el.value)).v;
     if (!p) return;
     const rlist = randomList(p.split("\n"));
     const now = time() - timeD.d(5);
