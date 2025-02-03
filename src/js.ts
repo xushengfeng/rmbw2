@@ -3058,6 +3058,8 @@ async function showNormalBook(book: Book, s: Section) {
                     if (!span.getAttribute("data-s")) return;
                     if (span.getAttribute("data-w") === "false") return;
 
+                    const marked = span.classList.contains(MARKWORD) || span.classList.contains(VISITMARKWORD);
+
                     let startI = si === "0" ? t : 0;
                     let endI = -1;
                     while (sen.at(startI + 1) && sen.at(startI)?.text === " ") {
@@ -3080,8 +3082,7 @@ async function showNormalBook(book: Book, s: Section) {
                     });
                     if (id)
                         if (
-                            span.classList.contains(MARKWORD) ||
-                            span.classList.contains(VISITMARKWORD) ||
+                            marked || // saveCard会添加mark，故提取定义marked
                             highFreq.includes(lemmatizer(span.innerText.toLocaleLowerCase())) ||
                             dicEl.el.classList.contains(DICSHOW)
                         ) {
