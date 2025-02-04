@@ -574,7 +574,20 @@ async function getBooksById(id: string) {
     return await bookshelfStore.getItem(id);
 }
 async function getSection(id: string) {
-    return tmpSections.get(id) ?? (await sectionsStore.getItem(id));
+    let s = tmpSections.get(id) ?? (await sectionsStore.getItem(id));
+    if (id === wordSection) {
+        if (!s) {
+            s = newSection();
+        }
+        const l: string[] = [];
+        await wordsStore.iterate((v) => {
+            l.push(v.word);
+        });
+        const text = l.join("\n");
+        s.title = "words";
+        s.text = text;
+    }
+    return s;
 }
 
 async function getSectionBook(id: string) {
@@ -2445,15 +2458,36 @@ async function showLocalBooksL(bookList: Book[]) {
     }
     return grid;
 }
-async function showBook(book: Book, sid?: string) {
+async function showBook(_book: Book, sid?: string) {
+    const book = structuredClone(_book);
     if (book.language !== studyLan) {
         if (!(await confirm(`书籍语言${book.language}与学习语言${studyLan}不符，是否继续显示书籍？`))) return;
     }
+
+    if (book.type === "word") {
+        const sections = structuredClone(book.sections);
+        const sectionsX: Section[] = [];
+        for (const i of sections) {
+            const s = await getSection(i);
+            if (!s) continue;
+            sectionsX.push(s);
+        }
+        const allId = uuid();
+        const allSection: Section = {
+            text: sectionsX.map((i) => i.text).join("\n"),
+            lastPosi: 0,
+            title: "全部",
+            words: {},
+        };
+        tmpSections.set(allId, allSection);
+        sections.push(allId);
+        book.sections = sections;
+    }
+
     const sectionId = sid || book.sections[Math.max(0, Math.min(book.lastPosi, book.sections.length - 1))];
     nowBook.book = book.id;
     nowBook.sections = sectionId;
     isWordBook = book.type === "word";
-    // 这些await都是存储io，数量不大，可以不用promise.all
     await showBookSections(book);
     await showBookContent(book, sectionId);
     await setBookS();
@@ -2470,19 +2504,6 @@ async function showBookSections(book: Book) {
         sectionsX.push(s);
     }
 
-    if (book.type === "word") {
-        const allId = uuid();
-        const allSection: Section = {
-            text: sectionsX.map((i) => i.text).join("\n"),
-            lastPosi: 0,
-            title: "全部",
-            words: {},
-        };
-        tmpSections.set(allId, allSection);
-        sections.push(allId);
-        sectionsX.push(allSection);
-    }
-
     function show() {
         bookSectionsEl.clear();
         for (const i in sectionsX) {
@@ -2496,6 +2517,9 @@ async function showBookSections(book: Book) {
             sEl.on("click", async () => {
                 bookSectionsEl.query(`.${SELECTEDITEM}`)?.el.classList.remove(SELECTEDITEM);
                 sEl.class(SELECTEDITEM);
+
+                const book = await getBooksById(nowBook.book);
+                if (!book) return;
 
                 nowBook.sections = sections[i];
                 showBookContent(book, sections[i]);
@@ -2544,14 +2568,6 @@ let reflashSectionEl = (words: Section["words"]) => {};
 async function showBookContent(book: Book, id: string) {
     const s = await getSection(id);
     if (!s) return;
-    if (id === wordSection) {
-        const l: string[] = [];
-        await wordsStore.iterate((v) => {
-            l.push(v.word);
-        });
-        const text = l.join("\n");
-        s.text = text;
-    }
     bookContentContainerEl.clear();
     bookContentEl = view();
     bookContentContainerEl.add(bookContentEl);
@@ -7174,15 +7190,6 @@ document.body.addEventListener("pointerup", (e) => {
 if (!(await sectionsStore.getItem(ignoreWordSection))) {
     await sectionsStore.setItem(ignoreWordSection, {
         title: "ignore",
-        lastPosi: 0,
-        text: "",
-        words: {},
-    } as Section);
-}
-
-if (!(await sectionsStore.getItem(wordSection))) {
-    await sectionsStore.setItem(wordSection, {
-        title: "words",
         lastPosi: 0,
         text: "",
         words: {},
