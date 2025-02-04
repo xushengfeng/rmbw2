@@ -2449,12 +2449,13 @@ async function showBook(book: Book, sid?: string) {
     if (book.language !== studyLan) {
         if (!(await confirm(`书籍语言${book.language}与学习语言${studyLan}不符，是否继续显示书籍？`))) return;
     }
+    const sectionId = sid || book.sections[Math.max(0, Math.min(book.lastPosi, book.sections.length - 1))];
     nowBook.book = book.id;
-    nowBook.sections = sid || book.sections[book.lastPosi];
+    nowBook.sections = sectionId;
     isWordBook = book.type === "word";
     // 这些await都是存储io，数量不大，可以不用promise.all
     await showBookSections(book);
-    await showBookContent(book, sid || book.sections[book.lastPosi]);
+    await showBookContent(book, sectionId);
     await setBookS();
 }
 async function showBookSections(book: Book) {
