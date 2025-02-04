@@ -2572,7 +2572,7 @@ async function showBookContent(book: Book, id: string) {
 async function showWordBook(book: Book, s: Section) {
     const rawWordList: WordBookList = [];
     let wordList: typeof rawWordList = [];
-    const l = s.text.split("\n").filter((i) => i.trim());
+    const l = new Set(s.text.split("\n").filter((i) => i.trim()));
     const cards: Map<string, Card> = new Map();
     await cardsStore.iterate((v, k) => {
         cards.set(k, v);
@@ -2582,10 +2582,10 @@ async function showWordBook(book: Book, s: Section) {
     const usS = usSpell.flat();
     const wordMap: { [r: string]: string } = {};
     await wordsStore.iterate((v, k) => {
-        if (l.includes(k)) words.set(k, v);
+        if (l.has(k)) words.set(k, v);
         if (usS.includes(k)) mayMapWords.set(k, v);
     });
-    for (const i of usS) if (l.includes(i) && !words.has(i)) wordMap[i] = "";
+    for (const i of usS) if (l.has(i) && !words.has(i)) wordMap[i] = "";
     for (const i in wordMap) {
         const list = usSpell.find((w) => w.includes(i));
         wordMap[i] = list?.find((w) => mayMapWords.has(w)) || "";
@@ -2668,12 +2668,12 @@ async function showWordBook(book: Book, s: Section) {
     const chartEl = view()
         .add([
             view().add([
-                `${String(l.length)} ${matchWords} ${means1.toFixed(1)}`,
+                `${String(l.size)} ${matchWords} ${means1.toFixed(1)}`,
                 view()
                     .class(LITLEPROGRESS)
                     .add([
-                        view().style({ "--w": `${(matchWords / l.length) * 100}%`, background: "#00f" }),
-                        view().style({ "--w": `${(means1 / l.length) * 100}%`, background: "#0f0" }),
+                        view().style({ "--w": `${(matchWords / l.size) * 100}%`, background: "#00f" }),
+                        view().style({ "--w": `${(means1 / l.size) * 100}%`, background: "#0f0" }),
                     ]),
             ]),
             spellC,
@@ -2687,7 +2687,7 @@ async function showWordBook(book: Book, s: Section) {
 
     requestIdleCallback(async () => {
         let spell = 0;
-        const nl = structuredClone(l) as (string | null)[];
+        const nl = Array.from(l) as (string | null)[];
         await spellStore.iterate((v, k: string) => {
             if (nl.includes(k)) {
                 spell += fsrsSpell.get_retrievability(v, now, false) || 0;
@@ -2699,7 +2699,7 @@ async function showWordBook(book: Book, s: Section) {
             `拼写 ${spell.toFixed(1)}`,
             view()
                 .class(LITLEPROGRESS)
-                .add(view().style({ "--w": `${(spell / l.length) * 100}%`, background: "#00f" })),
+                .add(view().style({ "--w": `${(spell / l.size) * 100}%`, background: "#00f" })),
         ]);
     });
 
