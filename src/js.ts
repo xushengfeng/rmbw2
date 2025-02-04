@@ -191,6 +191,8 @@ let nowBook = {
 
 let isWordBook = false;
 
+const tmpSections = new Map<string, Section>();
+
 let contentP: string[] = [];
 
 let wordFreq: { [word: string]: number } = {};
@@ -572,7 +574,7 @@ async function getBooksById(id: string) {
     return await bookshelfStore.getItem(id);
 }
 async function getSection(id: string) {
-    return await sectionsStore.getItem(id);
+    return tmpSections.get(id) ?? (await sectionsStore.getItem(id));
 }
 
 async function getSectionBook(id: string) {
@@ -2466,6 +2468,20 @@ async function showBookSections(book: Book) {
         if (!s) continue;
         sectionsX.push(s);
     }
+
+    if (book.type === "word") {
+        const allId = uuid();
+        const allSection: Section = {
+            text: sectionsX.map((i) => i.text).join("\n"),
+            lastPosi: 0,
+            title: "全部",
+            words: {},
+        };
+        tmpSections.set(allId, allSection);
+        sections.push(allId);
+        sectionsX.push(allSection);
+    }
+
     function show() {
         bookSectionsEl.clear();
         for (const i in sectionsX) {
