@@ -684,6 +684,7 @@ body {
 #dic {
     position: absolute;
     top: 0;
+    z-index: 1;
     width: 100%;
     max-height: min(600px, 100dvh - var(--size0));
     display: flex;
