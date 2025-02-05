@@ -890,7 +890,7 @@ div:has(> .translate) > :not(.translate) {
 .online_dic {
     display: flex;
     gap: 4px;
-    overflow-x: scroll;
+    overflow-x: auto;
     & > a {
         color: var(--color);
         flex-shrink: 0;

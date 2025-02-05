@@ -5100,6 +5100,7 @@ function aiButtons(textEl: ReturnType<typeof textarea>, word: string, context: s
         }),
         tmpAiB(textEl, `$这里有个单词${word}，它位于${context}`),
         dicB(textEl, word),
+        view("x").add(onlineDicL(word)).style({ alignItems: "center" }),
     ];
 }
 function aiButtons1(textEl: ReturnType<typeof textarea>, word: string) {
