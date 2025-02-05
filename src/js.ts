@@ -6802,7 +6802,23 @@ settingBEl.on("click", () => {
 
 settingEl.add(label([input().data({ path: "lan.learn" }), "学习语言"], 1));
 
-settingEl.add([ele("h2").add("书"), "远程地址：", input().data({ path: "onlineBooks.url" })]);
+const setOnlineBookEl = input().data({ path: "onlineBooks.url" });
+
+settingEl.add([
+    ele("h2").add("书"),
+    "远程地址：",
+    setOnlineBookEl,
+    view().add([
+        button("github").on("click", () => {
+            setOnlineBookEl.sv("https://raw.githubusercontent.com/xushengfeng/rmbw-book/master");
+            setOnlineBookEl.el.dispatchEvent(new CustomEvent("input"));
+        }),
+        button("kkgithub").on("click", () => {
+            setOnlineBookEl.sv("https://raw.kkgithub.com/xushengfeng/rmbw-book/master");
+            setOnlineBookEl.el.dispatchEvent(new CustomEvent("input"));
+        }),
+    ]),
+]);
 
 const uploadDicEl = input("file").attr({ id: "upload_dic" });
 
