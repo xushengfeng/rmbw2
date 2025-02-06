@@ -4264,6 +4264,7 @@ async function showDic(id: string) {
                     const r = await card2sentence.getItem(wordx.id);
                     if (r) {
                         r.text = context;
+                        s.context.setV(context);
                         card2sentence.setItem(wordx.id, r);
                     }
                 }
