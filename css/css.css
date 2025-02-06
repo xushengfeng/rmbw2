@@ -952,6 +952,7 @@ div:has(> .translate) > :not(.translate) {
     flex-direction: column;
     right: calc(-1 * var(--w) - 16px);
     top: var(--size0);
+    z-index: 1;
     height: calc(100dvh - var(--size0));
     width: var(--w);
     border-radius: var(--br2) 0 0 var(--br2);
