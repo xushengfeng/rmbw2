@@ -4310,8 +4310,7 @@ async function showDic(id: string) {
                 dicDetailsEl.clear();
 
                 const means = v;
-                for (const i in means) {
-                    const m = means[i];
+                for (const [i, m] of means.entries()) {
                     const div = view();
                     const radio = input("radio")
                         .attr({ name: "dic_means" })
@@ -4919,7 +4918,7 @@ async function disCard2(m: record["means"][0], filterWords: string[] = []) {
     for (const i of filterWords) {
         t = t.replaceAll(i, "**");
     }
-    const sen = (await dicSentences(m.contexts)).style({ "padding-left": "1em" });
+    const sen = (await dicSentences(m.contexts.toReversed())).style({ "padding-left": "1em" });
     return [view().add(pText(t)), sen];
 }
 
