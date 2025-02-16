@@ -6460,9 +6460,6 @@ bookButtons.add([
     reviewBEl,
     settingBEl,
     spacer().attr({ id: "book_name" }),
-    iconEl("more").on("click", () => {
-        bookContentEl.el.classList.toggle("show_p_more");
-    }),
     articleAi,
     changeStyleEl,
     changeEditEl,

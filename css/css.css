@@ -414,16 +414,10 @@ body {
         }
 
         & > * > .p_more {
-            display: none;
             & > button {
                 width: var(--font-size);
                 height: var(--font-size);
             }
-        }
-    }
-    & > .show_p_more {
-        & .p_more {
-            display: block;
         }
     }
     & > textarea {
