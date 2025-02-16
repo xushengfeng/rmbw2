@@ -29,7 +29,6 @@ import { extendPrototype } from "localforage-setitems";
 extendPrototype(localforage);
 import { dicParse, dic, type dicMap } from "../dic/src/main";
 import { hyphenate } from "hyphen/en";
-import { MsEdgeTTS, OUTPUT_FORMAT } from "msedge-tts-browserify";
 import { type Card, createEmptyCard, generatorParameters, FSRS, Rating, State } from "ts-fsrs";
 import spark from "spark-md5";
 import WaveSurfer from "wavesurfer.js";
@@ -41,7 +40,6 @@ import Fuse from "fuse.js";
 import diff_match_patch, { type Diff } from "diff-match-patch";
 import "diff-match-patch-line-and-word";
 import autoFun from "auto-fun";
-import fixWebmDuration from "webm-duration-fix";
 import Sortable from "sortablejs";
 import { encode } from "js-base64";
 
@@ -135,8 +133,6 @@ type tagMap = { [key: string]: TAG };
 type senNode = ({ text: senNode; isPost: boolean } | string)[];
 
 type AIm = { role: "system" | "user" | "assistant"; content: string }[];
-
-type D = Parameters<Parameters<ReturnType<typeof tts.toStream>["onEnd"]>[0]>["0"];
 
 type FlatWord = {
     index: number;
@@ -287,6 +283,12 @@ let reviewCount = 0;
 
 const ttsVoiceConfig = "tts.voice";
 const ttsEngineConfig = "tts.engine";
+const ttsConfig = {
+    voice: "tts.voice",
+    engine: "tts.engine",
+    hlgroupid: "tts.hlgroupid",
+    hlapikey: "tts.hlapikey",
+} as const;
 
 const SHOWPTTS = "pTTS_show";
 
@@ -522,8 +524,6 @@ const reviewHotkey: { [key: string]: { f: () => void; key: string } } = {
     3: { key: "3", f: () => {} },
     show: { key: " ", f: () => {} },
 };
-
-const tts = new MsEdgeTTS();
 
 const synth = window.speechSynthesis;
 
@@ -1440,50 +1440,53 @@ async function getReadTime(text: string) {
     return Math.max(wordsCount, 16) * (Number(await setting.getItem("user.readSpeed")) || 150);
 }
 
-async function getTtsEngine() {
-    return ((await setting.getItem(ttsEngineConfig)) || "browser") as "browser" | "ms";
+async function getTtsConfig() {
+    return {
+        engine: ((await setting.getItem(ttsConfig.engine)) || "browser") as "browser" | "ms",
+        voice: (await setting.getItem(ttsConfig.voice)) || "",
+        groupId: (await setting.getItem(ttsConfig.hlgroupid)) || "",
+        apiKey: (await setting.getItem(ttsConfig.hlapikey)) || "",
+    };
 }
 
-async function ttsNormalize(text: string) {
-    const posi = (((await setting.getItem(ttsVoiceConfig)) as string) || "en-GB-LibbyNeural").slice(0, 2);
-    if (posi === "zh" || posi === "ja" || posi === "ko") return text;
-    return text.normalize("NFKC");
-}
-
-async function getTTS(text: string) {
-    await tts.setMetadata(
-        (await setting.getItem(ttsVoiceConfig)) || "en-GB-LibbyNeural",
-        OUTPUT_FORMAT.WEBM_24KHZ_16BIT_MONO_OPUS,
-    );
-    const nText = await ttsNormalize(text);
-    const b = await ttsCache.getItem(nText);
+async function getOnlineTTS(text: string) {
+    const b = await ttsCache.getItem(text);
     if (b) {
-        return { url: URL.createObjectURL(b.blob), metadata: b.data };
+        return { url: URL.createObjectURL(b.blob) };
     }
 
-    const readable = tts.toStream(nText);
-    let base = new Uint8Array();
-    readable.onData((data) => {
-        console.log("DATA RECEIVED");
-        // raw audio file data
-        base = concat(base, data);
-    });
-    function concat(array1: Uint8Array, array2: Uint8Array) {
-        const mergedArray = new Uint8Array(array1.length + array2.length);
-        mergedArray.set(array1);
-        mergedArray.set(array2, array1.length);
-        return mergedArray;
-    }
+    const hexToUint8ArrayFast = (hexStr: string) => {
+        const bytes = new Uint8Array(hexStr.length / 2);
+        for (let i = 0; i < hexStr.length; i += 2) {
+            bytes[i / 2] = Number.parseInt(hexStr.substr(i, 2), 16);
+        }
+        return bytes;
+    };
 
-    return new Promise((re: (x: { metadata: D; url: string }) => void, rj) => {
-        readable.onEnd(async (data) => {
-            console.log("STREAM end");
-            let blob = new Blob([base], { type: "audio/webm" });
-            blob = await fixWebmDuration(blob);
-            if (blob.size > 0) ttsCache.setItem(text, { blob, data });
-            re({ url: URL.createObjectURL(blob), metadata: data });
-        });
-    });
+    const url = `https://api.minimax.chat/v1/t2a_v2?GroupId=${(await getTtsConfig()).groupId}`;
+    const options = {
+        method: "POST",
+        headers: {
+            Authorization: `Bearer ${(await getTtsConfig()).apiKey}`,
+            "content-type": "application/json",
+        },
+        body: JSON.stringify({
+            model: "speech-01-turbo",
+            text: text,
+            stream: false,
+            voice_setting: { voice_id: "Sweet_Girl", speed: 0.9, vol: 1, pitch: 0 },
+            audio_setting: { format: "wav" },
+        }),
+    };
+
+    const response = await fetch(url, options);
+    const r = await response.json();
+    const base64 = r.data.audio;
+
+    const u = hexToUint8ArrayFast(base64);
+    const blob = new Blob([u], { type: "audio/wav" });
+    if (blob.size > 0) ttsCache.setItem(text, { blob });
+    return { url: URL.createObjectURL(blob) };
 }
 
 async function setReviewCard(id: string, card: Card, rating: Rating, duration: number) {
@@ -3056,9 +3059,9 @@ async function showNormalBook(book: Book, s: Section) {
             autoPlay = true;
             autoPlayTTSEl.el.checked = true;
             await pTTS(0);
-            if ((await getTtsEngine()) === "ms")
+            if ((await getTtsConfig()).engine === "ms")
                 for (let i = 1; i < contentP.length; i++) {
-                    await getTTS(contentP[i]);
+                    await getOnlineTTS(contentP[i]);
                 }
         }),
     );
@@ -3394,9 +3397,9 @@ async function showRecord(text: string, fromEl: ElType<HTMLElement>) {
     );
     d.add(recordX);
 
-    const tts = await getTTS(text);
+    const tts = await getOnlineTTS(text);
 
-    function wss(el: HTMLElement, url: string, r?: typeof tts.metadata) {
+    function wss(el: HTMLElement, url: string) {
         const regions = RegionsPlugin.create();
         const ws = WaveSurfer.create({
             container: el,
@@ -3410,29 +3413,6 @@ async function showRecord(text: string, fromEl: ElType<HTMLElement>) {
 
         ws.on("decode", () => {
             const main: { start: number; end: number; t: string }[] = [];
-            const dT = 1000 * 1000 * 10;
-            if (!r) return;
-            const data = r.filter((i) => i.Type === "WordBoundary");
-            let t: typeof tts.metadata = [];
-            for (const d of data) {
-                if (d.Data.Duration / dT < 0.2 && data.indexOf(d) < data.length - 1) {
-                    t.push(d);
-                } else {
-                    if (t.length > 0) {
-                        main.push({
-                            start: (t.at(0)?.Data.Offset ?? 0) / dT,
-                            end: (t.at(-1)?.Data.Offset ?? 0 + (t.at(-1)?.Data.Duration ?? 0)) / dT,
-                            t: t.map((i) => i.Data.text.Text).join(" "),
-                        });
-                        t = [];
-                    }
-                    main.push({
-                        start: d.Data.Offset / dT,
-                        end: (d.Data.Offset + d.Data.Duration) / dT,
-                        t: d.Data.text.Text,
-                    });
-                }
-            }
             console.log(main);
 
             for (const i of main) {
@@ -3514,24 +3494,7 @@ async function showRecord(text: string, fromEl: ElType<HTMLElement>) {
             }
         });
 
-        function setText() {
-            if (!r) return;
-            const x: (typeof tts.metadata)[] = [];
-            const rs = regions.getRegions().toSorted((a, b) => a.start - b.start);
-            const data = r.filter((i) => i.Type === "WordBoundary").toReversed();
-            for (const i of data) {
-                const index =
-                    rs.findLastIndex((x) => x.start < (i.Data.Offset + i.Data.Duration) / (1000 * 1000 * 10)) || 0;
-                if (!x[index]) x[index] = [];
-                x[index].unshift(i);
-            }
-            console.log(x);
-            for (const i of x) {
-                if (!i) continue;
-                const t = i.map((x) => x.Data.text.Text).join(" ");
-                rs[x.indexOf(i)].setContent(t);
-            }
-        }
+        function setText() {}
         ws.on("interaction", (e) => {
             ws.play();
         });
@@ -3542,7 +3505,7 @@ async function showRecord(text: string, fromEl: ElType<HTMLElement>) {
         return { ws, regions };
     }
 
-    const playWs = wss(x.el, tts.url, tts.metadata);
+    const playWs = wss(x.el, tts.url);
 
     const recordWs = wss(recordX.el, "");
 
@@ -6028,11 +5991,11 @@ function play(word: string) {
 }
 
 async function runTTS(text: string): Promise<{ cancel: () => void }> {
-    if ((await getTtsEngine()) === "browser") {
+    if ((await getTtsConfig()).engine === "browser") {
         const x = await localTTS(text);
         return { cancel: () => x.synth.cancel() };
     }
-    audioEl.el.src = (await getTTS(text)).url;
+    audioEl.el.src = (await getOnlineTTS(text)).url;
     audioEl.el.play();
     return {
         cancel: () => {
@@ -6042,8 +6005,7 @@ async function runTTS(text: string): Promise<{ cancel: () => void }> {
 }
 
 async function localTTS(text: string) {
-    const nText = await ttsNormalize(text);
-    const utterThis = new SpeechSynthesisUtterance(nText);
+    const utterThis = new SpeechSynthesisUtterance(text);
     const voices = window.speechSynthesis.getVoices();
     const sv = ((await setting.getItem(ttsVoiceConfig)) as string) || "en-GB-LibbyNeural";
     for (let i = 0; i < voices.length; i++) {
@@ -6073,11 +6035,11 @@ async function pTTS(index: number) {
     }
     pttsEl.el.classList.add(SHOWPTTS);
 
-    if ((await getTtsEngine()) === "browser") {
+    if ((await getTtsConfig()).engine === "browser") {
         const utterThis = (await localTTS(text)).utterThis;
         utterThis.onend = nextplay;
     } else {
-        const url = await getTTS(text);
+        const url = await getOnlineTTS(text);
         pTTSEl.el.src = url.url;
         pTTSEl.el.play();
         pTTSEl.el.onended = nextplay;
@@ -6395,7 +6357,7 @@ const cardActionsStore = localForage.createInstance<[string] | [string, Rating, 
 });
 
 const transCache = localForage.createInstance<string>({ name: "aiCache", storeName: "trans" });
-const ttsCache = localForage.createInstance<{ blob: Blob; data: D }>({ name: "aiCache", storeName: "tts" });
+const ttsCache = localForage.createInstance<{ blob: Blob }>({ name: "aiCache", storeName: "tts" });
 const lijuCache = localForage.createInstance<string[]>({ name: "aiCache", storeName: "liju" });
 
 const allData2Store: { [key: string]: LocalForage } = {
@@ -7113,14 +7075,14 @@ settingEl.add(
 
 const ttsEngineEl = select<"browser" | "ms">([
     { value: "browser", name: "浏览器" },
-    { value: "ms", name: "微软" },
+    { value: "ms", name: "海螺AI" },
 ]).data({ path: ttsEngineConfig });
 
 const loadTTSVoicesEl = button("load");
 const voicesListEl = select([]);
 loadTTSVoicesEl.on("click", async () => {
     voicesListEl.clear();
-    if ((await getTtsEngine()) === "browser") {
+    if ((await getTtsConfig()).engine === "browser") {
         const list = speechSynthesis.getVoices();
         for (const v of list) {
             const text = `${v.name.replace(/Microsoft (\w+) Online \(Natural\)/, "$1")}`;
@@ -7128,22 +7090,24 @@ loadTTSVoicesEl.on("click", async () => {
             voicesListEl.add(op);
         }
     } else {
-        const list = await tts.getVoices();
-        for (const v of list) {
-            const text = `${v.Gender === "Male" ? "♂️" : "♀️"} ${v.FriendlyName.replace(/Microsoft (\w+) Online \(Natural\)/, "$1")}`;
-            const op = ele("option").add(text).attr({ value: v.ShortName });
-            voicesListEl.add(op);
-        }
     }
     voicesListEl.sv(await setting.getItem(ttsVoiceConfig)).on("change", () => {
         const name = voicesListEl.gv;
-        tts.setMetadata(name, OUTPUT_FORMAT.WEBM_24KHZ_16BIT_MONO_OPUS);
         setting.setItem(ttsVoiceConfig, name);
         ttsCache.clear();
     });
 });
 
-settingEl.add(view().add([ele("h2").add("tts"), ttsEngineEl, loadTTSVoicesEl, voicesListEl]));
+settingEl.add(
+    view().add([
+        ele("h2").add("tts"),
+        ttsEngineEl,
+        loadTTSVoicesEl,
+        voicesListEl,
+        label([input().data({ path: ttsConfig.hlgroupid }), "group id"]),
+        label([input().data({ path: ttsConfig.hlapikey }), "api key"]),
+    ]),
+);
 
 settingEl.add(
     view().add([
