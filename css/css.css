@@ -414,7 +414,8 @@ body {
         }
 
         & > * > .p_more {
-            & > button {
+            & button {
+                display: block;
                 width: var(--font-size);
                 height: var(--font-size);
             }
@@ -640,11 +641,6 @@ body {
         & > * > p {
             margin: 0;
             margin-bottom: 16px;
-            filter: blur(calc(var(--size0) / 3));
-            transition: var(--transition);
-            &:hover {
-                filter: none;
-            }
         }
     }
     & > :nth-child(2) {

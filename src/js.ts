@@ -3175,7 +3175,7 @@ async function showNormalBook(book: Book, s: Section) {
             t = paragraph[0].findIndex((i) => i.text !== ">" && i.text[0] !== " ");
         }
 
-        const moreEl = view().class("p_more");
+        const moreEl = view("x").class("p_more");
         pel.add(moreEl);
 
         for (const si in paragraph) {
@@ -3268,6 +3268,67 @@ async function showNormalBook(book: Book, s: Section) {
                 exTrans(pel.el, 0, book);
             }),
         ]);
+
+        const playControl = view("x").style({ alignItems: "center" });
+        const audioEl = ele("audio")
+            .attr({ controls: false })
+            .on("timeupdate", () => {
+                playJdtC.sv(audioEl.currentTime / audioEl.duration);
+            })
+            .on("pause", () => {
+                playB.sv(false);
+            })
+            .on("play", () => {
+                playB.sv(true);
+            }).el;
+        const playB = check("p", [iconEl("pause"), iconEl("recume")]).on("input", async () => {
+            if (playB.gv === true) {
+                if (!audioEl.src) {
+                    audioEl.src =
+                        "https://paddlespeech.bj.bcebos.com/Parakeet/docs/demos/tacotron2_ljspeech_waveflow_samples_0.2/sentence_1.wav";
+                    //  (await getOnlineTTS(pText)).url;
+                    playControl.add(playJdt);
+                }
+                audioEl.play();
+            } else {
+                audioEl.pause();
+            }
+        });
+        const playJdt = view().style({
+            width: "150px",
+            height: "14px",
+            background: "#ccc",
+            borderRadius: "4px",
+            overflow: "hidden",
+        }); // todo keyboard
+        const playJdtC = view()
+            .addInto(playJdt)
+            .style({ width: 0, height: "100%", background: "var(--color)", pointerEvents: "none" })
+            .bindSet((v: number) => playJdtC.style({ width: `${v * 100}%` }));
+        trackPoint(playJdt, {
+            start: () => {
+                audioEl.pause();
+                return { x: 0, y: 0 };
+            },
+            ing: ({ x }) => {
+                const dt = x * 0.1;
+                const nt = Math.max(0, Math.min(audioEl.currentTime + dt, audioEl.duration));
+                playJdtC.sv(nt / audioEl.duration);
+                return nt;
+            },
+            end: (e, { ingData }) => {
+                if (ingData === undefined) {
+                    const nt = (e.offsetX / playJdt.el.offsetWidth) * audioEl.duration;
+                    playJdtC.sv(nt / audioEl.duration);
+                    audioEl.currentTime = nt;
+                } else {
+                    audioEl.currentTime = ingData;
+                }
+                audioEl.play();
+            },
+        });
+
+        playControl.add([playB]).addInto(moreEl);
 
         bookContentEl.add(pel);
     }
