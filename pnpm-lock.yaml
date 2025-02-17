@@ -45,8 +45,8 @@ importers:
         specifier: ^1.4.0
         version: 1.4.0
       msedge-tts-browserify:
-        specifier: ^1.4.1
-        version: 1.4.1
+        specifier: ^1.4.2
+        version: 1.4.2
       peerjs:
         specifier: ^1.5.4
         version: 1.5.4
@@ -461,6 +461,9 @@ packages:
   core-util-is@1.0.3:
     resolution: {integrity: sha512-ZQBvi1DcpJ4GDqanjucZ2Hj3wEO5pZDS89BWbkcrvdxksJorwUDDZamX9ldFkp9aw2lmBDLgkObEA4DWNJ9FYQ==}
 
+  crypto-js@4.2.0:
+    resolution: {integrity: sha512-KALDyEYgpY+Rlob/iriUtjV6d5Eq+Y191A5g4UqLAi8CyGP9N1+FdVbkc1SxKc2r4YAYqG8JzO2KGL+AizD70Q==}
+
   csstype@3.1.3:
     resolution: {integrity: sha512-M1uQkMl8rQK/szD0LNhtqxIPLpimGm8sOBwU7lLnCpSbTyY3yeU1Vc7l4KT5zT4s/yOxHH5O7tIuuLOCnLADRw==}
 
@@ -749,8 +752,8 @@ packages:
     resolution: {integrity: sha512-j5EctnkH7amfV/q5Hgmoal1g2QHFJRraOtmx0JpIqkxhBhI/lJSl1nMpQ45hVarwNETOoWEimndZ4QK0RHxuxQ==}
     engines: {node: '>=4'}
 
-  msedge-tts-browserify@1.4.1:
-    resolution: {integrity: sha512-T0ilajpYKRz6Eh9WzNvP6AJ9LuWOnGYUZGrJECSQtTVeVZ1jh4rRky3k0xCZVfbNBGSe7PtZAyLTNE82ycdemA==}
+  msedge-tts-browserify@1.4.2:
+    resolution: {integrity: sha512-/FYamb4cQCEcS3czGli+jNC6SpUQvYGZ+4Fbu63S0JLvU/CMG1nuAujqDcrWeliqwYwWAxHcPMU5Q2ocalWr7g==}
 
   nanoid@3.3.7:
     resolution: {integrity: sha512-eSRppjcPIatRIMC1U6UngP8XFcz8MQWGQdt1MTBQ7NaAmvXDfvNxbvWV3x2y6CdEUciCSsDHDQZbhYaB8QEo2g==}
@@ -1322,6 +1325,8 @@ snapshots:
 
   core-util-is@1.0.3: {}
 
+  crypto-js@4.2.0: {}
+
   csstype@3.1.3: {}
 
   decode-uri-component@0.2.2: {}
@@ -1631,9 +1636,10 @@ snapshots:
 
   mimic-response@1.0.1: {}
 
-  msedge-tts-browserify@1.4.1:
+  msedge-tts-browserify@1.4.2:
     dependencies:
       buffer: 6.0.3
+      crypto-js: 4.2.0
 
   nanoid@3.3.7: {}
 

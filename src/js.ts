@@ -29,6 +29,7 @@ import { extendPrototype } from "localforage-setitems";
 extendPrototype(localforage);
 import { dicParse, dic, type dicMap } from "../dic/src/main";
 import { hyphenate } from "hyphen/en";
+import { MsEdgeTTS, OUTPUT_FORMAT } from "msedge-tts-browserify";
 import { type Card, createEmptyCard, generatorParameters, FSRS, Rating, State } from "ts-fsrs";
 import spark from "spark-md5";
 import WaveSurfer from "wavesurfer.js";
@@ -40,6 +41,8 @@ import Fuse from "fuse.js";
 import diff_match_patch, { type Diff } from "diff-match-patch";
 import "diff-match-patch-line-and-word";
 import autoFun from "auto-fun";
+import fixWebmDuration from "webm-duration-fix";
+
 import Sortable from "sortablejs";
 import { encode } from "js-base64";
 
@@ -133,6 +136,8 @@ type tagMap = { [key: string]: TAG };
 type senNode = ({ text: senNode; isPost: boolean } | string)[];
 
 type AIm = { role: "system" | "user" | "assistant"; content: string }[];
+
+type D = Parameters<Parameters<ReturnType<typeof tts.toStream>["onEnd"]>[0]>["0"];
 
 type FlatWord = {
     index: number;
@@ -526,6 +531,8 @@ const reviewHotkey: { [key: string]: { f: () => void; key: string } } = {
 };
 
 const synth = window.speechSynthesis;
+
+const tts = new MsEdgeTTS();
 
 const localForage = {
     createInstance: <data = any>(
@@ -1449,44 +1456,46 @@ async function getTtsConfig() {
     };
 }
 
+async function ttsNormalize(text: string) {
+    const posi = (((await setting.getItem(ttsVoiceConfig)) as string) || "en-GB-LibbyNeural").slice(0, 2);
+    if (posi === "zh" || posi === "ja" || posi === "ko") return text;
+    return text.normalize("NFKC");
+}
+
 async function getOnlineTTS(text: string) {
-    const b = await ttsCache.getItem(text);
+    await tts.setMetadata(
+        (await setting.getItem(ttsVoiceConfig)) || "en-GB-LibbyNeural",
+        OUTPUT_FORMAT.WEBM_24KHZ_16BIT_MONO_OPUS,
+    );
+    const nText = await ttsNormalize(text);
+    const b = await ttsCache.getItem(nText);
     if (b) {
-        return { url: URL.createObjectURL(b.blob) };
+        return { url: URL.createObjectURL(b.blob), metadata: b.data };
     }
 
-    const hexToUint8ArrayFast = (hexStr: string) => {
-        const bytes = new Uint8Array(hexStr.length / 2);
-        for (let i = 0; i < hexStr.length; i += 2) {
-            bytes[i / 2] = Number.parseInt(hexStr.substr(i, 2), 16);
-        }
-        return bytes;
-    };
+    const readable = tts.toStream(nText);
+    let base = new Uint8Array();
+    readable.onData((data) => {
+        console.log("DATA RECEIVED");
+        // raw audio file data
+        base = concat(base, data);
+    });
+    function concat(array1: Uint8Array, array2: Uint8Array) {
+        const mergedArray = new Uint8Array(array1.length + array2.length);
+        mergedArray.set(array1);
+        mergedArray.set(array2, array1.length);
+        return mergedArray;
+    }
 
-    const url = `https://api.minimax.chat/v1/t2a_v2?GroupId=${(await getTtsConfig()).groupId}`;
-    const options = {
-        method: "POST",
-        headers: {
-            Authorization: `Bearer ${(await getTtsConfig()).apiKey}`,
-            "content-type": "application/json",
-        },
-        body: JSON.stringify({
-            model: "speech-01-turbo",
-            text: text,
-            stream: false,
-            voice_setting: { voice_id: "Sweet_Girl", speed: 0.9, vol: 1, pitch: 0 },
-            audio_setting: { format: "wav" },
-        }),
-    };
-
-    const response = await fetch(url, options);
-    const r = await response.json();
-    const base64 = r.data.audio;
-
-    const u = hexToUint8ArrayFast(base64);
-    const blob = new Blob([u], { type: "audio/wav" });
-    if (blob.size > 0) ttsCache.setItem(text, { blob });
-    return { url: URL.createObjectURL(blob) };
+    return new Promise((re: (x: { metadata: D; url: string }) => void, rj) => {
+        readable.onEnd(async (data) => {
+            console.log("STREAM end");
+            let blob = new Blob([base], { type: "audio/webm" });
+            blob = await fixWebmDuration(blob);
+            if (blob.size > 0) ttsCache.setItem(text, { blob, data });
+            re({ url: URL.createObjectURL(blob), metadata: data });
+        });
+    });
 }
 
 async function setReviewCard(id: string, card: Card, rating: Rating, duration: number) {
@@ -3284,9 +3293,7 @@ async function showNormalBook(book: Book, s: Section) {
         const playB = check("p", [iconEl("pause"), iconEl("recume")]).on("input", async () => {
             if (playB.gv === true) {
                 if (!audioEl.src) {
-                    audioEl.src =
-                        "https://paddlespeech.bj.bcebos.com/Parakeet/docs/demos/tacotron2_ljspeech_waveflow_samples_0.2/sentence_1.wav";
-                    //  (await getOnlineTTS(pText)).url;
+                    audioEl.src = (await getOnlineTTS(pText)).url;
                     playControl.add(playJdt);
                 }
                 audioEl.play();
@@ -6418,7 +6425,7 @@ const cardActionsStore = localForage.createInstance<[string] | [string, Rating, 
 });
 
 const transCache = localForage.createInstance<string>({ name: "aiCache", storeName: "trans" });
-const ttsCache = localForage.createInstance<{ blob: Blob }>({ name: "aiCache", storeName: "tts" });
+const ttsCache = localForage.createInstance<{ blob: Blob; data: D }>({ name: "aiCache", storeName: "tts" });
 const lijuCache = localForage.createInstance<string[]>({ name: "aiCache", storeName: "liju" });
 
 const allData2Store: { [key: string]: LocalForage } = {
@@ -7133,7 +7140,7 @@ settingEl.add(
 
 const ttsEngineEl = select<"browser" | "ms">([
     { value: "browser", name: "浏览器" },
-    { value: "ms", name: "海螺AI" },
+    { value: "ms", name: "微软" },
 ]).data({ path: ttsEngineConfig });
 
 const loadTTSVoicesEl = button("load");
@@ -7148,24 +7155,22 @@ loadTTSVoicesEl.on("click", async () => {
             voicesListEl.add(op);
         }
     } else {
+        const list = await tts.getVoices();
+        for (const v of list) {
+            const text = `${v.Gender === "Male" ? "♂️" : "♀️"} ${v.FriendlyName.replace(/Microsoft (\w+) Online \(Natural\)/, "$1")}`;
+            const op = ele("option").add(text).attr({ value: v.ShortName });
+            voicesListEl.add(op);
+        }
     }
     voicesListEl.sv(await setting.getItem(ttsVoiceConfig)).on("change", () => {
         const name = voicesListEl.gv;
+        tts.setMetadata(name, OUTPUT_FORMAT.WEBM_24KHZ_16BIT_MONO_OPUS);
         setting.setItem(ttsVoiceConfig, name);
         ttsCache.clear();
     });
 });
 
-settingEl.add(
-    view().add([
-        ele("h2").add("tts"),
-        ttsEngineEl,
-        loadTTSVoicesEl,
-        voicesListEl,
-        label([input().data({ path: ttsConfig.hlgroupid }), "group id"]),
-        label([input().data({ path: ttsConfig.hlapikey }), "api key"]),
-    ]),
-);
+settingEl.add(view().add([ele("h2").add("tts"), ttsEngineEl, loadTTSVoicesEl, voicesListEl]));
 
 settingEl.add(
     view().add([
