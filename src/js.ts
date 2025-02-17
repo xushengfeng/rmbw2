@@ -286,13 +286,9 @@ let reviewType: Review = "word";
 
 let reviewCount = 0;
 
-const ttsVoiceConfig = "tts.voice";
-const ttsEngineConfig = "tts.engine";
 const ttsConfig = {
     voice: "tts.voice",
     engine: "tts.engine",
-    hlgroupid: "tts.hlgroupid",
-    hlapikey: "tts.hlapikey",
 } as const;
 
 const SHOWPTTS = "pTTS_show";
@@ -1450,29 +1446,24 @@ async function getReadTime(text: string) {
 async function getTtsConfig() {
     return {
         engine: ((await setting.getItem(ttsConfig.engine)) || "browser") as "browser" | "ms",
-        voice: (await setting.getItem(ttsConfig.voice)) || "",
-        groupId: (await setting.getItem(ttsConfig.hlgroupid)) || "",
-        apiKey: (await setting.getItem(ttsConfig.hlapikey)) || "",
+        voice: (await setting.getItem(ttsConfig.voice)) || "en-GB-LibbyNeural",
     };
 }
 
 async function ttsNormalize(text: string) {
-    const posi = (((await setting.getItem(ttsVoiceConfig)) as string) || "en-GB-LibbyNeural").slice(0, 2);
+    const posi = (await getTtsConfig()).voice.slice(0, 2);
     if (posi === "zh" || posi === "ja" || posi === "ko") return text;
     return text.normalize("NFKC");
 }
 
 async function getOnlineTTS(text: string) {
-    await tts.setMetadata(
-        (await setting.getItem(ttsVoiceConfig)) || "en-GB-LibbyNeural",
-        OUTPUT_FORMAT.WEBM_24KHZ_16BIT_MONO_OPUS,
-    );
     const nText = await ttsNormalize(text);
     const b = await ttsCache.getItem(nText);
     if (b) {
         return { url: URL.createObjectURL(b.blob), metadata: b.data };
     }
 
+    await tts.setMetadata((await getTtsConfig()).voice, OUTPUT_FORMAT.WEBM_24KHZ_16BIT_MONO_OPUS);
     const readable = tts.toStream(nText);
     let base = new Uint8Array();
     readable.onData((data) => {
@@ -6075,7 +6066,7 @@ async function runTTS(text: string): Promise<{ cancel: () => void }> {
 async function localTTS(text: string) {
     const utterThis = new SpeechSynthesisUtterance(text);
     const voices = window.speechSynthesis.getVoices();
-    const sv = ((await setting.getItem(ttsVoiceConfig)) as string) || "en-GB-LibbyNeural";
+    const sv = (await getTtsConfig()).voice;
     for (let i = 0; i < voices.length; i++) {
         if (voices[i].name === sv) {
             utterThis.voice = voices[i];
@@ -7141,7 +7132,7 @@ settingEl.add(
 const ttsEngineEl = select<"browser" | "ms">([
     { value: "browser", name: "浏览器" },
     { value: "ms", name: "微软" },
-]).data({ path: ttsEngineConfig });
+]).data({ path: ttsConfig.engine });
 
 const loadTTSVoicesEl = button("load");
 const voicesListEl = select([]);
@@ -7162,10 +7153,10 @@ loadTTSVoicesEl.on("click", async () => {
             voicesListEl.add(op);
         }
     }
-    voicesListEl.sv(await setting.getItem(ttsVoiceConfig)).on("change", () => {
+    voicesListEl.sv((await getTtsConfig()).voice).on("change", () => {
         const name = voicesListEl.gv;
         tts.setMetadata(name, OUTPUT_FORMAT.WEBM_24KHZ_16BIT_MONO_OPUS);
-        setting.setItem(ttsVoiceConfig, name);
+        setting.setItem(ttsConfig.voice, name);
         ttsCache.clear();
     });
 });
