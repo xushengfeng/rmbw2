@@ -2723,6 +2723,136 @@ async function showWordBook(book: Book, s: Section) {
         ]);
     });
 
+    async function showWord(item: (typeof wordList)[0], index: number, _autoNext?: boolean) {
+        const pEl = tmpDicEl;
+        let autoNext = Boolean(_autoNext);
+        let timer = 0;
+
+        function next(a: boolean) {
+            const ni = Math.min(index + 1, wordList.length - 1);
+            showWord(wordList[ni], ni, a);
+            clearTimeout(timer);
+        }
+
+        play(item.text);
+        pEl.clear();
+        pEl.add(
+            view("x").add([
+                txt(item.text).on("click", () => {
+                    play(item.text);
+                }),
+                spacer(),
+                iconEl("left").on("click", () => {
+                    const ni = Math.max(0, index - 1);
+                    showWord(wordList[ni], ni);
+                    clearTimeout(timer);
+                }),
+                iconEl("recume").on("click", () => {
+                    autoNext = !autoNext;
+                    if (autoNext) {
+                        next(true);
+                    }
+                }),
+                iconEl("right").on("click", () => {
+                    next(autoNext);
+                }),
+            ]),
+        );
+        const books = await wordBooksByWord(item.text);
+        const booksEl = view();
+        for (const i of books) {
+            const bookN = (await getBooksById(i.book))?.name;
+            const s = (await getSection(i.section))?.title;
+            booksEl.add(txt(s).attr({ title: bookN }));
+        }
+        pEl.add(booksEl);
+        if (item.c?.note) {
+            const note = p(item.c.note);
+            pEl.add(
+                view().add([
+                    iconEl("pen").on("click", (_, el) => {
+                        addP(
+                            // @ts-ignore
+                            item.c.note,
+                            item.id,
+                            null,
+                            null,
+                            null,
+                            (text) => {
+                                // @ts-ignore
+                                item.c.note = text.trim();
+                                // @ts-ignore
+                                wordsStore.setItem(item.id, item.c);
+                                showWord(item, index);
+                            },
+                            el,
+                        );
+                    }),
+                    note,
+                ]),
+            );
+        }
+        const onlineList = onlineDicL(item.text);
+        pEl.add(onlineList);
+        if (item.c)
+            for (const i of item.c.means) {
+                const pel = view().add([
+                    iconEl("pen").on("click", (_, el) => {
+                        addP(
+                            i.text,
+                            item.id,
+                            "",
+                            null,
+                            null,
+                            (text) => {
+                                i.text = text.trim();
+                                // @ts-ignore
+                                wordsStore.setItem(item.id, item.c);
+                                showWord(item, index);
+                            },
+                            el,
+                        );
+                    }),
+                    view().add(await disCard2(i)),
+                ]);
+                pEl.add(pel);
+                const reviewEl = view();
+                pel.add(reviewEl);
+                const card = await cardsStore.getItem(i.card_id);
+                if (!card) return;
+                const map: { [k in State]: string } = {
+                    "0": "新",
+                    "1": "学习中",
+                    "2": "复习",
+                    "3": "重新学习",
+                };
+                const stateEl = txt(map[card.state]);
+                reviewEl.add(stateEl);
+                if (card.due.getTime() < time()) stateEl.class(TODOMARK);
+                const buttons = getReviewCardButtons(
+                    i.card_id,
+                    card,
+                    i.text + i.contexts.map((x) => x.text).join(""),
+                    (_, first) => {
+                        if (!first) {
+                            buttons.buttons.el.remove();
+                            stateEl.el.classList.remove(TODOMARK);
+                        }
+                    },
+                );
+                reviewEl.add(buttons.buttons);
+            }
+
+        timer = setTimeout(
+            () => {
+                if (autoNext && pEl.el.offsetHeight > 0) {
+                    next(true);
+                }
+            },
+            item.type === "ignore" ? 2000 : item.type === "learn" ? 2500 : 3000,
+        );
+    }
+
     const show = vlist(
         bookContentContainerEl,
         wordList,
@@ -2778,97 +2908,8 @@ async function showWordBook(book: Book, s: Section) {
             iEl.el.onclick = () => {
                 const pEl = tmpDicEl;
                 pEl.el.showPopover();
-                show();
-                play(item.text);
-                async function show() {
-                    pEl.clear();
-                    pEl.add(view().add(item.text));
-                    const books = await wordBooksByWord(item.text);
-                    const booksEl = view();
-                    for (const i of books) {
-                        const bookN = (await getBooksById(i.book))?.name;
-                        const s = (await getSection(i.section))?.title;
-                        booksEl.add(txt(s).attr({ title: bookN }));
-                    }
-                    pEl.add(booksEl);
-                    if (item.c?.note) {
-                        const note = p(item.c.note);
-                        pEl.add(
-                            view().add([
-                                iconEl("pen").on("click", (_, el) => {
-                                    addP(
-                                        // @ts-ignore
-                                        item.c.note,
-                                        item.id,
-                                        null,
-                                        null,
-                                        null,
-                                        (text) => {
-                                            // @ts-ignore
-                                            item.c.note = text.trim();
-                                            // @ts-ignore
-                                            wordsStore.setItem(item.id, item.c);
-                                            show();
-                                        },
-                                        el,
-                                    );
-                                }),
-                                note,
-                            ]),
-                        );
-                    }
-                    const onlineList = onlineDicL(item.text);
-                    pEl.add(onlineList);
-                    if (item.c)
-                        for (const i of item.c.means) {
-                            const pel = view().add([
-                                iconEl("pen").on("click", (_, el) => {
-                                    addP(
-                                        i.text,
-                                        item.id,
-                                        "",
-                                        null,
-                                        null,
-                                        (text) => {
-                                            i.text = text.trim();
-                                            // @ts-ignore
 
-                                            wordsStore.setItem(item.id, item.c);
-                                            show();
-                                        },
-                                        el,
-                                    );
-                                }),
-                                view().add(await disCard2(i)),
-                            ]);
-                            pEl.add(pel);
-                            const reviewEl = view();
-                            pel.add(reviewEl);
-                            const card = await cardsStore.getItem(i.card_id);
-                            if (!card) return;
-                            const map: { [k in State]: string } = {
-                                "0": "新",
-                                "1": "学习中",
-                                "2": "复习",
-                                "3": "重新学习",
-                            };
-                            const stateEl = txt(map[card.state]);
-                            reviewEl.add(stateEl);
-                            if (card.due.getTime() < time()) stateEl.class(TODOMARK);
-                            const buttons = getReviewCardButtons(
-                                i.card_id,
-                                card,
-                                i.text + i.contexts.map((x) => x.text).join(""),
-                                (_, first) => {
-                                    if (!first) {
-                                        buttons.buttons.el.remove();
-                                        stateEl.el.classList.remove(TODOMARK);
-                                    }
-                                },
-                            );
-                            reviewEl.add(buttons.buttons);
-                        }
-                }
+                showWord(item, i);
             };
             return iEl;
         },
