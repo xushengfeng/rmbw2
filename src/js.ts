@@ -5734,7 +5734,10 @@ async function showWordReview(x: { id: string; card: Card }, isAi: boolean) {
 
     const wordEl = view()
         .add(wordid.split("").map((i) => txt(i)))
-        .class("main_word");
+        .class("main_word")
+        .on("click", () => {
+            play(wordRecord.word);
+        });
 
     div.add([wordEl, context, dic.el, buttons.buttons]).class("review_word");
     reviewViewEl.clear();
