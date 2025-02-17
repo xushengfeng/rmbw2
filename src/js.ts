@@ -7477,12 +7477,13 @@ uploadDicEl.on("change", () => {
 
 setFontElF(bookStyle.fontFamily);
 
-for (const el of settingEl.queryAll("[data-path]")) {
-    const path = el.el.getAttribute("data-path");
+for (const _el of settingEl.queryAll("[data-path]")) {
+    const el = _el.el;
+    const path = el.getAttribute("data-path");
     if (!path) continue;
     const value = await setting.getItem(path);
-    if (el.el.tagName === "INPUT") {
-        const iel = el.el as HTMLInputElement;
+    if (el.tagName === "INPUT") {
+        const iel = el as HTMLInputElement;
         if (iel.type === "checkbox") {
             iel.checked = value as boolean;
             iel.addEventListener("input", () => {
@@ -7501,9 +7502,9 @@ for (const el of settingEl.queryAll("[data-path]")) {
         }
     } else if ("value" in el) {
         el.value = value as string;
-        el.el.onchange = () => {
+        el.addEventListener("input", () => {
             setting.setItem(path, el.value);
-        };
+        });
     }
 }
 
