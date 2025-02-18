@@ -6491,9 +6491,9 @@ const variant = await variantStore.getItem("en");
 
 let usSpell = (await wordMapStore.getItem("en")) || [];
 
-const fsrsWordW = JSON.parse(await setting.getItem("fsrs.word.w")) as number[];
-const fsrsSpellW = JSON.parse(await setting.getItem("fsrs.spell.w")) as number[];
-const fsrsSenW = JSON.parse(await setting.getItem("fsrs.sen.w")) as number[];
+const fsrsWordW = JSON.parse((await setting.getItem("fsrs.word.w")) || "{}") as number[];
+const fsrsSpellW = JSON.parse((await setting.getItem("fsrs.spell.w")) || "{}") as number[];
+const fsrsSenW = JSON.parse((await setting.getItem("fsrs.sen.w")) || "{}") as number[];
 
 const fsrs = new FSRS(generatorParameters(fsrsWordW?.length === 17 ? { w: fsrsWordW } : {}));
 const fsrsSpell = new FSRS(generatorParameters(fsrsSpellW?.length === 17 ? { w: fsrsSpellW } : {}));
