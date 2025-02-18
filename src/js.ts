@@ -2728,6 +2728,21 @@ async function showWordBook(book: Book, s: Section) {
         let autoNext = Boolean(_autoNext);
         let timer = 0;
 
+        tmpDicLastF = () => {
+            const ni = Math.max(0, index - 1);
+            showWord(wordList[ni], ni);
+            clearTimeout(timer);
+        };
+        tmpDicStopF = () => {
+            autoNext = !autoNext;
+            if (autoNext) {
+                next(true);
+            }
+        };
+        tmpDicNextF = () => {
+            next(autoNext);
+        };
+
         function next(a: boolean) {
             const ni = Math.min(index + 1, wordList.length - 1);
             showWord(wordList[ni], ni, a);
@@ -2743,18 +2758,13 @@ async function showWordBook(book: Book, s: Section) {
                 }),
                 spacer(),
                 iconEl("left").on("click", () => {
-                    const ni = Math.max(0, index - 1);
-                    showWord(wordList[ni], ni);
-                    clearTimeout(timer);
+                    tmpDicLastF();
                 }),
                 iconEl("recume").on("click", () => {
-                    autoNext = !autoNext;
-                    if (autoNext) {
-                        next(true);
-                    }
+                    tmpDicStopF();
                 }),
                 iconEl("right").on("click", () => {
-                    next(autoNext);
+                    tmpDicNextF();
                 }),
             ]),
         );
@@ -6629,6 +6639,25 @@ const reviewReflashEl = iconEl("reload").addInto(reviewButtonsEl);
 const reviewModeEl = view().attr({ id: "review_mode" }).addInto(reviewButtonsEl);
 
 const tmpDicEl = view().attr({ popover: "auto" }).class("tmp_dic").addInto();
+
+let tmpDicLastF = () => {};
+let tmpDicStopF = () => {};
+let tmpDicNextF = () => {};
+
+document.addEventListener("keydown", (e) => {
+    if (tmpDicEl.el.offsetHeight) {
+        if (e.key === "ArrowLeft") {
+            e.preventDefault();
+            tmpDicLastF();
+        } else if (e.key === " ") {
+            e.preventDefault();
+            tmpDicStopF();
+        } else if (e.key === "ArrowRight") {
+            e.preventDefault();
+            tmpDicNextF();
+        }
+    }
+});
 
 const fontListEl = view().attr({ popover: "auto" }).class("font_list").addInto();
 
