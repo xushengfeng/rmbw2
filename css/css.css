@@ -894,6 +894,7 @@ div:has(> .translate) > :not(.translate) {
     & > :nth-child(1) {
         font-weight: bolder;
         font-size: large;
+        font-family: var(--font-family);
         margin-bottom: 8px;
     }
     & > :nth-child(2) {
