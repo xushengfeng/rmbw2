@@ -2605,10 +2605,11 @@ async function showWordBook(book: Book, s: Section) {
     const rawWordList: WordBookList = [];
     let wordList: typeof rawWordList = [];
     const l = new Set(s.text.split("\n").filter((i) => i.trim()));
-    const cards: Map<string, Card> = new Map();
+    const cards = new Map<string, Card>();
     await cardsStore.iterate((v, k) => {
         cards.set(k, v);
     });
+    const cardHas = new Map<string, Card>();
     const words: Map<string, record> = new Map();
     const mayMapWords: Map<string, record> = new Map();
     const usS = usSpell.flat();
@@ -2638,6 +2639,7 @@ async function showWordBook(book: Book, s: Section) {
             let r = 0;
             for (const j of c.means) {
                 const x = cards.get(j.card_id) as Card;
+                cardHas.set(j.card_id, x);
                 r += fsrs.get_retrievability(x, now, false) || 0;
             }
             means = r / c.means.length;
@@ -2711,7 +2713,7 @@ async function showWordBook(book: Book, s: Section) {
             spellC,
         ])
         .on("click", () => {
-            showWordBookMore(wordList, cards, chartEl);
+            showWordBookMore(wordList, cardHas, chartEl);
         });
     bookContentContainerEl.add(
         view().class("words_book_top").add([chartEl, search, sortEl]).attr({ lang: navigator.language }),
@@ -2985,8 +2987,9 @@ async function showWordBookMore(wordList: WordBookList, cards: Map<string, Card>
     d.add([p("单词来源"), pEl]);
 
     const count: CardPercent = { 0: 0, 1: 0, 2: 0, 3: 0 };
-    for (const c of cards.values()) {
+    for (const [i, c] of cards) {
         count[c.state]++;
+        if (c.state === 0) console.log(i);
     }
     d.add([p("记忆"), renderCardPercent(count)]);
 
