@@ -3015,17 +3015,20 @@ async function showWordBookMore(wordList: WordBookList, cards: Map<string, Card>
 
     const maxMeans = allMeans(new Date());
     const canvas = ele("canvas").el;
-    for (let i = 0; i < 36; i++) {}
-    const meansList = Array.from(
-        { length: 36 },
-        (_v, i) => maxMeans - allMeans(new Date(new Date().getTime() + timeD.d(i * 30.5))),
-    );
+    const xCount = 12 * 3;
+    const means = new Map<number, number>();
+    const xs = Array.from(Array(xCount).keys()).flatMap((i) => [i, i + 0.5]);
+    xs.push(0.2, 0.75);
+    xs.sort((a, b) => a - b);
+    for (const i of xs) {
+        means.set(i, maxMeans - allMeans(new Date(new Date().getTime() + timeD.d(i * 30.5))));
+    }
     const pxPm = 10;
     const pxPw = 0.5;
-    const maxV = Math.ceil(meansList.at(-1) ?? 1);
-    canvas.width = meansList.length * pxPm * devicePixelRatio;
+    const maxV = Math.ceil(means.get(xCount - 1) ?? 1);
+    canvas.width = xCount * pxPm * devicePixelRatio;
     canvas.height = maxV * pxPw * devicePixelRatio;
-    canvas.style.width = `${meansList.length * pxPm}px`;
+    canvas.style.width = `${xCount * pxPm}px`;
     const ctx = canvas.getContext("2d") as CanvasRenderingContext2D;
     ctx.scale(devicePixelRatio, devicePixelRatio);
     // x
@@ -3039,7 +3042,7 @@ async function showWordBookMore(wordList: WordBookList, cards: Map<string, Card>
         ctx.closePath();
     }
     // y
-    for (const [i, _v] of meansList.entries()) {
+    for (let i = 0; i < xCount; i++) {
         if (i % 12 === 0) {
             ctx.strokeStyle = "#00f";
         } else {
@@ -3054,13 +3057,13 @@ async function showWordBookMore(wordList: WordBookList, cards: Map<string, Card>
     ctx.strokeStyle = "#000";
     ctx.beginPath();
     ctx.moveTo(0, 0);
-    for (const [i, v] of meansList.entries()) {
+    for (const [i, v] of means.entries()) {
         ctx.lineTo(i * pxPm, v * pxPw);
     }
     ctx.stroke();
     const kl: number[] = [];
     let t = 100;
-    for (const [i, k] of meansList.entries()) {
+    for (const [i, k] of means.entries()) {
         if (k > t) {
             kl.push(i);
             t += 100;
@@ -3070,7 +3073,7 @@ async function showWordBookMore(wordList: WordBookList, cards: Map<string, Card>
     d.add([
         p("预测"),
         txt(
-            `${"(1y, 100词)"} ${kl.map((i) => `${i}m`).join(" ")} 一年保持：${(1 - meansList[12] / wordList.filter((i) => i.type).length).toFixed(2)}`,
+            `${"(1y, 100词)"} ${kl.map((i) => `${i}m`).join(" ")} 一年保持：${(1 - (means.get(12) ?? 0) / wordList.filter((i) => i.type).length).toFixed(2)}`,
         ),
         view().add(canvas),
     ]);
