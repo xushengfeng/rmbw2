@@ -2569,6 +2569,16 @@ async function showBookSections(book: Book) {
 
 let reflashSectionEl = (words: Section["words"]) => {};
 
+function cardState(s: State) {
+    const cardStateMap: { [k in State]: string } = {
+        "0": "新",
+        "1": "学习中",
+        "2": "复习",
+        "3": "重新学习",
+    };
+    return cardStateMap[s] || "未知";
+}
+
 async function showBookContent(book: Book, id: string) {
     const s = await getSection(id);
     if (!s) return;
@@ -2831,13 +2841,8 @@ async function showWordBook(book: Book, s: Section) {
                 pel.add(reviewEl);
                 const card = await cardsStore.getItem(i.card_id);
                 if (!card) return;
-                const map: { [k in State]: string } = {
-                    "0": "新",
-                    "1": "学习中",
-                    "2": "复习",
-                    "3": "重新学习",
-                };
-                const stateEl = txt(map[card.state]);
+
+                const stateEl = txt(cardState(card.state));
                 reviewEl.add(stateEl);
                 if (card.due.getTime() < time()) stateEl.class(TODOMARK);
                 const buttons = getReviewCardButtons(
@@ -2977,6 +2982,12 @@ async function showWordBookMore(wordList: WordBookList, cards: Map<string, Card>
     }
     pEl.add([txt("忽略"), txt(ignore.toString()), view().style({ width: `${(ignore / max) * 100}%` })]);
     d.add([p("单词来源"), pEl]);
+
+    const count: CardPercent = { "0": 0, 1: 0, 2: 0, 3: 0 };
+    for (const c of cards.values()) {
+        count[c.state]++;
+    }
+    d.add([p("记忆"), renderCardPercent(count)]);
 
     function allMeans(now: Date) {
         let means1 = 0;
@@ -6241,9 +6252,13 @@ function renderCardDue(text: string, data: number[]) {
 function renderCardPercent(p: CardPercent) {
     const sum = Object.values(p).reduce((a, b) => a + b, 0);
     const el = view("x").class("cardPercent");
-    for (const i of Object.keys(p)) {
-        // @ts-ignore
-        el.add(view().style({ width: `${(p[i] / sum) * 100}%` }));
+    for (const [n, i] of Object.entries(p)) {
+        el.add(
+            view()
+                .style({ width: `${(i / sum) * 100}%` })
+                // @ts-ignore
+                .attr({ title: cardState(n as State) }),
+        );
     }
     return el;
 }
