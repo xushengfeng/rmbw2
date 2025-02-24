@@ -2984,7 +2984,7 @@ async function showWordBookMore(wordList: WordBookList, cards: Map<string, Card>
     pEl.add([txt("忽略"), txt(ignore.toString()), view().style({ width: `${(ignore / max) * 100}%` })]);
     d.add([p("单词来源"), pEl]);
 
-    const count: CardPercent = { "0": 0, 1: 0, 2: 0, 3: 0 };
+    const count: CardPercent = { 0: 0, 1: 0, 2: 0, 3: 0 };
     for (const c of cards.values()) {
         count[c.state]++;
     }
@@ -6260,7 +6260,7 @@ function renderCardPercent(p: CardPercent) {
             view()
                 .style({ width: `${(i / sum) * 100}%` })
                 // @ts-ignore
-                .attr({ title: cardState(n as State) }),
+                .attr({ title: `${cardState(n as State)} ${i}` }),
         );
     }
     return el;
