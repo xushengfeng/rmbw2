@@ -286,6 +286,9 @@ let reviewType: Review = "word";
 
 let reviewCount = 0;
 
+const startYear = 2024;
+const nowYear = new Date().getFullYear();
+
 const ttsConfig = {
     voice: "tts.voice",
     engine: "tts.engine",
@@ -1917,7 +1920,7 @@ function trackAnimate(el: ElType<HTMLElement>, from: ElType<HTMLElement>, to = e
 function popoverX(el: ElType<HTMLElement>, fromEl: ElType<HTMLElement>) {
     el.el.showPopover();
     trackAnimate(el, fromEl);
-    renderCharts(new Date().getFullYear());
+    renderCharts();
     el.on(
         "beforetoggle",
         () => {
@@ -6230,7 +6233,7 @@ async function renderCardDueAll() {
     cardDue.add(renderCardPercent(sentenceP));
 }
 
-async function renderCharts(y: number) {
+async function renderCharts() {
     renderCardDueAll();
     cal1.els.title.svc = cal2.els.title.svc = "加载中……";
 
@@ -6244,8 +6247,9 @@ async function renderCharts(y: number) {
             reviewCard.push(date);
         }
     });
-    renderCal(y, newCard, cal1);
-    renderCal(y, reviewCard, cal2);
+
+    renderCal(newCard, cal1);
+    renderCal(reviewCard, cal2);
 }
 
 function renderCardDue(text: string, data: number[]) {
@@ -6269,13 +6273,17 @@ function renderCardPercent(p: CardPercent) {
     return el;
 }
 
-function newCal() {
-    const f = view().class("cal_plot");
+function newCal(count: number) {
+    const f = view()
+        .class("cal_plot")
+        .style({
+            gridTemplateColumns: `repeat(${53 * count}, 16px)`,
+        });
     const title = view().bindSet((v: string, el) => {
         el.innerText = v;
     });
     const list: Array<ElType<HTMLDivElement>> = [];
-    for (let x = 1; x <= 53; x++) {
+    for (let x = 1; x <= 53 * count; x++) {
         for (let y = 1; y <= 7; y++) {
             const item = view();
             list.push(item);
@@ -6294,7 +6302,7 @@ function newCal() {
     });
     return div;
 }
-function renderCal(year: number, data: Date[], el: typeof cal1) {
+function renderCal(data: Date[], el: typeof cal1) {
     const count = new Map<string, number>();
     for (const d of data) {
         const id = d.toDateString();
@@ -6306,7 +6314,7 @@ function renderCal(year: number, data: Date[], el: typeof cal1) {
     const width = Math.floor(rl.length / (c - 1)) || 1;
     for (let i = 0; i < rl.length; i += width) l.push(rl[i]);
     l.push((rl.at(-1) ?? 0) + 1);
-    const firstDate = new Date(year, 0, 1);
+    const firstDate = new Date(startYear, 0, 1);
     const zero2first = (firstDate.getDay() + 1) * timeD.d(1);
     const s_date = new Date(firstDate.getTime() - zero2first + timeD.d(1));
 
@@ -6338,17 +6346,15 @@ function renderCal(year: number, data: Date[], el: typeof cal1) {
         }
     }
 
-    if (isToday && el.els.plot.el.getAttribute("data-y") === String(year)) {
+    if (isToday) {
         renderDay(Math.floor((new Date().getTime() - s_date.getTime()) / timeD.d(1)));
     } else
-        for (let x = 1; x <= 53; x++) {
+        for (let x = 1; x <= 53 * (nowYear - startYear + 1); x++) {
             for (let y = 1; y <= 7; y++) {
                 const offsetDay = 7 * (x - 1) + y - 1;
                 renderDay(offsetDay);
             }
         }
-
-    el.els.plot.data({ y: String(year) });
 }
 
 //###### setting
@@ -6888,8 +6894,8 @@ pttsEl.add([autoPlayTTSEl, pTTSEl]);
 
 const plotEl = view().attr({ popover: "auto" }).class("plot");
 const cardDue = view();
-const cal1 = newCal();
-const cal2 = newCal();
+const cal1 = newCal(nowYear - startYear + 1);
+const cal2 = newCal(nowYear - startYear + 1);
 plotEl
     .add([
         cardDue,
@@ -6898,13 +6904,6 @@ plotEl
             cal1.el,
             ele("h2").attr({ innerText: "已复习" }),
             cal2.el,
-            view("x").add(
-                Array.from({ length: new Date().getFullYear() - 2024 + 1 }, (_, i) => i + 2024).map((i) =>
-                    button(String(i)).on("click", () => {
-                        renderCharts(i);
-                    }),
-                ),
-            ),
         ]),
     ])
     .addInto();
