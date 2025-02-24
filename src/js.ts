@@ -566,6 +566,7 @@ function time() {
 }
 
 function getSetting(p: string) {
+    if (!p) return "";
     return JSON.parse(localStorage.getItem(`setting/${p}`) as string);
 }
 
@@ -5342,13 +5343,15 @@ function ai(m: AIm, text?: string) {
         presence_penalty: 1,
         messages: m,
     };
-    let userConfig = localStorage.getItem("setting/ai.config");
+    const userConfig = getSetting("ai.config");
     if (userConfig) {
-        const c = JSON.parse(userConfig);
-        c.messages = m;
-        userConfig = JSON.stringify(c);
-    } else {
-        userConfig = JSON.stringify(config);
+        try {
+            const c = JSON.parse(userConfig);
+            for (const [k, v] of Object.entries(c)) {
+                // @ts-ignore
+                if (k !== "messages") config[k] = v;
+            }
+        } catch (error) {}
     }
     const abort = new AbortController();
     const stopEl = iconEl("close").on("click", () => {
@@ -5367,7 +5370,7 @@ function ai(m: AIm, text?: string) {
                 Authorization: `Bearer ${key}`,
                 "content-type": "application/json",
             },
-            body: userConfig,
+            body: JSON.stringify(config),
             signal: abort.signal,
         })
             .then((v) => {
@@ -7433,11 +7436,11 @@ dicMinEl.on("click", () => {
 
 autoFun.config({
     type: "chatgpt",
-    url: (await setting.getItem("ai.url")) as string,
-    key: await setting.getItem("ai.key"),
+    url: getSetting("ai.url") as string,
+    key: getSetting("ai.key"),
     option: {
         model: "gpt-4o-mini",
-        ...JSON.parse(await setting.getItem("ai.config")),
+        ...JSON.parse(getSetting("ai.config") || "{}"),
     },
 });
 
