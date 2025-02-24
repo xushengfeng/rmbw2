@@ -240,6 +240,10 @@ body {
     color: #2735bb;
 }
 
+.button_highlight {
+    background-color: var(--hover-color);
+}
+
 #book_nav {
     --w: min(60vw, 300px);
     position: absolute;

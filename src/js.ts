@@ -351,6 +351,7 @@ const DICDIALOG = "dic_dialog";
 const SELECTEDITEM = "selected_item";
 const LITLEPROGRESS = "litle_progress";
 const SHOWMARKLIST = "show_mark_word_list";
+const BUTTONHIGHTLIGHT = "button_highlight";
 
 // const fun
 
@@ -5809,13 +5810,14 @@ function getReviewCardButtons(id: string, card: Card, readText: string, f?: (rat
                 if (f) f(r, false);
                 return;
             }
-            await firstClick();
+            await firstClick(icon);
             if (f) f(rating, true);
         };
         const b = icon.on("click", reviewHotkey[rating].f);
         return b;
     };
-    async function firstClick() {
+    async function firstClick(el?: ElType<HTMLElement>) {
+        el?.class(BUTTONHIGHTLIGHT);
         hasClick = true;
         finishTime = time();
         quickly = finishTime - showTime < (await getReadTime(readText)) + 800;
