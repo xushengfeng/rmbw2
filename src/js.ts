@@ -6189,6 +6189,7 @@ async function renderCardDueAll() {
     const wordDue = new Set<string>();
     const spellDue: number[] = [];
     const sentenceDue: string[] = [];
+    const now = time();
 
     const wordP: CardPercent = { "0": 0, "1": 0, "2": 0, "3": 0 };
     const sentenceP: CardPercent = { "0": 0, "1": 0, "2": 0, "3": 0 };
@@ -6207,6 +6208,7 @@ async function renderCardDueAll() {
     });
     await spellStore.iterate((v, k: string) => {
         if (!filterWithScope(k, wordsScope.words)) return;
+        if (v.due.getTime() >= now) return;
         spellDue.push(v.due.getTime());
         spellP[v.state]++;
     });
@@ -6216,13 +6218,14 @@ async function renderCardDueAll() {
     const wordDue1: number[] = [];
     const sentenceDue1: number[] = [];
     await cardsStore.iterate((v, k) => {
-        if (wordDue.has(k)) {
-            wordDue1.push(v.due.getTime());
+        const t = v.due.getTime();
+        if (wordDue.has(k) && t < now) {
+            wordDue1.push(t);
             wordP[v.state]++;
             return;
         }
-        if (sentenceDue.includes(k)) {
-            sentenceDue1.push(v.due.getTime());
+        if (sentenceDue.includes(k) && t < now) {
+            sentenceDue1.push(t);
             sentenceP[v.state]++;
         }
     });
@@ -6256,8 +6259,7 @@ async function renderCharts() {
 }
 
 function renderCardDue(text: string, data: number[]) {
-    const now = time();
-    const c = data.filter((i) => i < now).length;
+    const c = data.length;
     const f = view().add([text, String(c)]);
     return f;
 }
