@@ -3195,7 +3195,7 @@ async function showNormalBook(book: Book, s: Section) {
                         text: word.segment,
                         start: s,
                         end: s + word.segment.length,
-                        isWord: Boolean(word.isWordLike),
+                        isWord: word.isWordLike === undefined || word.isWordLike,
                     });
             }
         }
