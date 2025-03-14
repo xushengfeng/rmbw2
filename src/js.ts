@@ -3254,15 +3254,18 @@ async function showNormalBook(book: Book, s: Section) {
         const moreEl = view("x").class("p_more");
         pel.add(moreEl);
 
+        const sens: ElType<HTMLElement>[] = [];
+
         for (const si in paragraph) {
             const sen = paragraph[si];
             const senEl = txt();
+            const words: ElType<HTMLElement>[] = [];
             for (const i in sen) {
                 const word = sen[i];
                 if (si === "0" && Number(i) < t) continue;
                 const span = txt(await textTransformer(word.text));
                 span.data({ s: String(word.start), e: String(word.end), w: String(word.isWord), t: word.text });
-                senEl.add(span);
+                words.push(span);
 
                 const src = lemmatizer(word.text.toLocaleLowerCase());
                 if (wordFreq[src]) wordFreq[src]++;
@@ -3270,6 +3273,7 @@ async function showNormalBook(book: Book, s: Section) {
 
                 if (!t && i !== "0" && word.text.match(/^[A-Z]/)) properN.push(word.text);
             }
+            senEl.add(words);
             senEl
                 .on("click", async (ev) => {
                     const span = ev.target as HTMLSpanElement;
@@ -3320,9 +3324,9 @@ async function showNormalBook(book: Book, s: Section) {
                         text.el.focus();
                     }
                 });
-
-            pel.add(senEl);
+            sens.push(senEl);
         }
+        pel.add(sens);
 
         const pText = editText.slice(paragraph[0]?.[0]?.start ?? null, paragraph.at(-1)?.at(-1)?.end ?? 0);
         if (pText) {
