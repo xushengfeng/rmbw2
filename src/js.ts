@@ -5486,7 +5486,7 @@ async function getNewWords() {
         if (w.match(/[0-9]/)) continue;
         if (w.trim() === "") continue;
         if (w === "") continue;
-        if (w.match(/[`~!@#$%^&*()_\-+=<>?:"{}|,.\/;'\\[\]·！#￥（——）：；“”‘’、，|《。》？、【】[\]]/)) continue;
+        if (w.match(/[`~!@#$%^&*()_\-+=<>?:"{}|,./;'\\[\]·！#￥（——）：；“”‘’、，|《。》？、【】[\]]/)) continue;
         if (properN1.includes(w)) continue;
         const r = lemmatizer(w);
         if (!hasLentWords.includes(r) && !willShowWords.includes(r)) {
