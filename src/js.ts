@@ -7613,3 +7613,5 @@ if ("serviceWorker" in navigator) {
 }
 
 navigator?.storage?.persist(); // 下次再说，所以不用await
+
+booksEl.el.showModal();
