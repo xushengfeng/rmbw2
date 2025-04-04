@@ -2357,6 +2357,9 @@ async function showLocalBooks() {
     });
 
     localBookEl.add(l);
+    if (bookList.length === 0) {
+        localBookEl.add("暂无书籍，请上传或添加在线书籍");
+    }
 }
 
 async function showLocalBooksL(bookList: Book[]) {
