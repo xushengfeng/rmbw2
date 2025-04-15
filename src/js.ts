@@ -6297,6 +6297,7 @@ function newCal(count: number) {
     const title = view().bindSet((v: string, el) => {
         el.innerText = v;
     });
+    let lastClick: HTMLElement | null = null;
     const list: Array<ElType<HTMLDivElement>> = [];
     for (let x = 1; x <= 53 * count; x++) {
         for (let y = 1; y <= 7; y++) {
@@ -6308,7 +6309,21 @@ function newCal(count: number) {
     f.on("click", (e) => {
         if (e.target === f.el) return;
         const EL = e.target as HTMLElement;
-        title.sv(EL.title);
+        if (e.shiftKey) {
+            let count = 0;
+            let start = false;
+            for (const el of list) {
+                if (el.el === lastClick) start = true;
+                if (start) count += Number(el.el.getAttribute("data-v")) ?? 0;
+                if (el.el === EL) {
+                    title.sv(`${lastClick?.getAttribute("data-date")}~${EL.getAttribute("data-date")} ${count}`);
+                    break;
+                }
+            }
+        } else {
+            title.sv(EL.title);
+        }
+        lastClick = EL;
     });
     const div = frame("cal", {
         _: view(),
@@ -6341,9 +6356,11 @@ function renderCal(data: Date[], el: typeof cal1) {
     function renderDay(offsetDay: number) {
         const date = new Date(s_date.getTime() + timeD.d(offsetDay));
         const v = count.get(date.toDateString()) ?? 0;
-        const item = pack(els[offsetDay]).attr({
-            title: `${date.toLocaleDateString()}  ${v}`,
-        });
+        const item = pack(els[offsetDay])
+            .attr({
+                title: `${date.toLocaleDateString()}  ${v}`,
+            })
+            .data({ v: String(v), date: date.toLocaleDateString() });
         if (v) {
             const nvi = l.findIndex((i) => i > v) - 1;
             const nv = (100 / c) * nvi + (100 / c) * ((v - l[nvi]) / (l[nvi + 1] - l[nvi])); // 赋分算法，但平均分割区间
