@@ -4007,6 +4007,9 @@ function setBookStyle() {
         },
         bookContentContainerEl.el,
     );
+    setProperties({
+        "--content-width": `${bookStyleList.contentWidth[bookStyle.contentWidth]}em`,
+    });
     bookContentContainerEl.style({ background: bookStyle.paper ? "" : "none" });
     setting.setItem("style.default", bookStyle);
 }
@@ -5778,7 +5781,7 @@ async function showWordReview(x: { id: string; card: Card }, isAi: boolean) {
         return;
     }
     play(wordRecord.word);
-    const div = view();
+    const div = view().style({ alignItems: "center" });
     const context = await crContext(wordRecord, x.id, isAi);
     async function showAnswer() {
         const word = await card2word.getItem(x.id);
@@ -5824,7 +5827,12 @@ async function showWordReview(x: { id: string; card: Card }, isAi: boolean) {
             play(wordRecord.word);
         });
 
-    div.add([wordEl, context, dic.el, buttons.buttons]).class("review_word");
+    div.add([
+        wordEl,
+        context.style({ width: "var(--content-width)" }),
+        dic.style({ width: "var(--content-width)" }),
+        buttons.buttons.style({ width: "100%" }),
+    ]).class("review_word");
     reviewViewEl.clear();
     reviewViewEl.add(div);
 }
@@ -6011,7 +6019,7 @@ async function showSpellReview(x: { id: string; card: Card }) {
         context.add(view().add(view().add(p(text))));
     }
     const div = view()
-        .add([input, wordEl, context])
+        .add([input, wordEl, context.style({ width: "var(--content-width)" })])
         .class("review_spell")
         .data({ state: String(x.card.state) });
     reviewViewEl.clear().add(div);
