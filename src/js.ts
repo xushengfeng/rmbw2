@@ -4008,7 +4008,7 @@ function setBookStyle() {
         bookContentContainerEl.el,
     );
     setProperties({
-        "--content-width": `${bookStyleList.contentWidth[bookStyle.contentWidth]}em`,
+        "--content-width": `min(${bookStyleList.contentWidth[bookStyle.contentWidth]}em, 100%)`,
     });
     bookContentContainerEl.style({ background: bookStyle.paper ? "" : "none" });
     setting.setItem("style.default", bookStyle);
@@ -6019,7 +6019,7 @@ async function showSpellReview(x: { id: string; card: Card }) {
         context.add(view().add(view().add(p(text))));
     }
     const div = view()
-        .add([input, wordEl, context.style({ width: "var(--content-width)" })])
+        .add([input, wordEl, context.style({ width: "var(--content-width)", margin: "auto" })])
         .class("review_spell")
         .data({ state: String(x.card.state) });
     reviewViewEl.clear().add(div);
