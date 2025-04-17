@@ -5878,7 +5878,8 @@ async function showSpellReview(x: { id: string; card: Card }) {
     const word = x.id;
     const wordSpells = mutiSpell(word);
     const maxWidth = Math.max(...wordSpells.map((w) => w.length));
-    const input = view().class("spell_input").style({ width: "min-content" }).attr({ innerText: word }); // 占位计算宽度
+    const input = view().class("spell_input").style({ width: "min-content" }).attr({ innerText: word, tabIndex: 1 }); // 占位计算宽度
+    input.el.focus();
     clearKeyboard();
     const SHOWSENWORD = "spell_sen_word_show";
     const BLURWORD = "blur_word";
@@ -5920,6 +5921,7 @@ async function showSpellReview(x: { id: string; card: Card }) {
         div.el.classList.remove(SHOWSENWORD);
         if (wordSpells.includes(inputWord)) {
             // 正确
+            clearKeyboard();
             const rightL = (await hyphenate(word, { hyphenChar })).split(hyphenChar);
             const ele = view().add(rightL.map((i) => txt(i)));
             input.clear().add(ele);
@@ -5930,10 +5932,10 @@ async function showSpellReview(x: { id: string; card: Card }) {
             spellResult = "right";
             const next = await nextDue(reviewType);
             showReview(next, reviewType);
-            clearKeyboard();
         }
         //错误归位
         if (inputWord.length === maxWidth && !wordSpells.includes(inputWord)) {
+            clearKeyboard();
             const diffEl = spellDiffWord(word, inputWord);
             input.clear().add([
                 diffEl.el,
@@ -5964,7 +5966,6 @@ async function showSpellReview(x: { id: string; card: Card }) {
                         );
                 }
             }
-            clearKeyboard();
             spellResult = "wrong";
         }
     };
