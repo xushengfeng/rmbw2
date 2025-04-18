@@ -3810,7 +3810,7 @@ async function exTrans(pEl: HTMLElement, i: number, book: Book) {
 
     span.classList.add("exTransHide");
 
-    f.els.text.on("input", () => {
+    function input() {
         let n = 0;
         const diff = dmp.diff_main(f.els.text.el.value, text);
         for (const i of diff) {
@@ -3819,7 +3819,9 @@ async function exTrans(pEl: HTMLElement, i: number, book: Book) {
             }
         }
         f.els.sum.sv(n / text.length);
-    });
+    }
+
+    f.els.text.on("input", input);
 
     function rm() {
         f.el.el.remove();
@@ -3943,6 +3945,7 @@ async function exTrans(pEl: HTMLElement, i: number, book: Book) {
                         .on("click", async () => {
                             textEl.setSelectionRange(x.index, x.index + x.segment.length);
                             textEl.setRangeText(i.item);
+                            input();
                             list.style({ display: "none" });
                             const xx = frame("ex_diff", {
                                 _: view(),
@@ -4006,6 +4009,7 @@ async function exTrans(pEl: HTMLElement, i: number, book: Book) {
             t.setRangeText(i);
             t.selectionStart = t.selectionEnd = f.els.text.el.value.length;
             t.focus();
+            input();
         }),
     );
     f.els.tips.add(tipEl);
