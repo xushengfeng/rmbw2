@@ -1263,8 +1263,8 @@ function flatWordCard(record: record | null, id: string) {
     return Word;
 }
 
-function fillMutiSpell(rl: string[]) {
-    const l: string[] = [];
+function fillMutiSpell(rl: Set<string>) {
+    const l = new Set<string>();
     const m: { [key: string]: string[] } = {};
     for (const i of usSpell) {
         for (const j of i) {
@@ -1273,9 +1273,9 @@ function fillMutiSpell(rl: string[]) {
     }
     for (const w of rl) {
         if (m[w]) {
-            l.push(...m[w]);
+            for (const x of m[w]) l.add(x);
         } else {
-            l.push(w);
+            l.add(w);
         }
     }
     return l;
@@ -1286,7 +1286,7 @@ function mutiSpell(word: string) {
 }
 
 async function getGoodLearntWords() {
-    const learnt: string[] = [];
+    const learnt = new Set<string>();
     const goodCards = new Set<string>();
     await cardsStore.iterate((card, k) => {
         if (card.state === State.Review) {
@@ -1295,7 +1295,7 @@ async function getGoodLearntWords() {
     });
     await wordsStore.iterate((v, k) => {
         if (v.means.some((i) => goodCards.has(i.card_id))) {
-            learnt.push(k);
+            learnt.add(k);
         }
     });
     return fillMutiSpell(learnt);
@@ -1303,8 +1303,8 @@ async function getGoodLearntWords() {
 
 async function getIgnoreWords() {
     const section = await getSection(ignoreWordSection);
-    if (!section) return [];
-    const rl = section.text.trim().split("\n");
+    if (!section) return new Set<string>();
+    const rl = new Set(section.text.trim().split("\n"));
     return fillMutiSpell(rl);
 }
 
@@ -1344,7 +1344,7 @@ async function getWordsScope() {
         const w = (await getSection(book))?.text.trim().split("\n") ?? [];
         words.push(...w);
     }
-    return { words, ignore: words.filter((i) => ignore.includes(i)), books: b };
+    return { words, ignore: words.filter((i) => ignore.has(i)), books: b };
 }
 
 function filterWithScope(word: string, scope: string[] | null, exScope?: string[]) {
@@ -1387,9 +1387,10 @@ async function getFutureReviewDue(days: number, ...types: Review[]) {
                 if (spellIgnore.el.value === "all")
                     if (filterWithScope(key, wordsScope)) spellList.push({ id: key, card: value });
                 if (spellIgnore.el.value === "exIgnore")
-                    if (filterWithScope(key, wordsScope, ws.ignore)) spellList.push({ id: key, card: value });
+                    if (filterWithScope(key, wordsScope, Array.from(ws.ignore)))
+                        spellList.push({ id: key, card: value });
                 if (spellIgnore.el.value === "ignore")
-                    if (filterWithScope(key, ws.ignore)) spellList.push({ id: key, card: value });
+                    if (filterWithScope(key, Array.from(ws.ignore))) spellList.push({ id: key, card: value });
             }
         });
     }
@@ -2666,7 +2667,7 @@ async function showWordBook(book: Book, s: Section) {
                 r += fsrs.get_retrievability(x, now, false) || 0;
             }
             means = r / c.means.length;
-        } else if (ignoreWords.includes(i)) {
+        } else if (ignoreWords.has(i)) {
             type = "ignore";
             matchWords++;
             means = 1;
@@ -2751,7 +2752,7 @@ async function showWordBook(book: Book, s: Section) {
                 nl[nl.indexOf(k)] = null;
             }
         });
-        for (const i of nl) if (i && ignoreWords.includes(i)) spell += 1;
+        for (const i of nl) if (i && ignoreWords.has(i)) spell += 1;
         spellC.clear().add([
             `拼写 ${spell.toFixed(1)}`,
             view()
@@ -3985,7 +3986,7 @@ async function exTrans(pEl: HTMLElement, i: number, book: Book) {
     const spellWord = await getIgnoreWords();
     await spellStore.iterate((v, k: string) => {
         if (v.state === State.Review) {
-            spellWord.push(k);
+            spellWord.add(k);
         }
     });
     const tipWord: string[] = [];
@@ -3993,9 +3994,9 @@ async function exTrans(pEl: HTMLElement, i: number, book: Book) {
         if (!i.isWordLike) continue;
         if (i.segment[0].match(/[A-Z]/)) {
             tipWord.push(i.segment);
-        } else if (!spellWord.includes(lemmatizer(i.segment))) {
+        } else if (!spellWord.has(lemmatizer(i.segment))) {
             tipWord.push(i.segment);
-        } else if (!spellWord.includes(i.segment)) {
+        } else if (!spellWord.has(i.segment)) {
             tipWord.push(i.segment);
         }
     }
@@ -5505,8 +5506,7 @@ async function getNewWords() {
         .filter((i) => i.type === "word")
         .map((i) => lemmatizer(i.id.toLocaleLowerCase()));
     const studyWords = await getGoodLearntWords();
-    const hasLentWords = (await getIgnoreWords())
-        .concat(studyWords)
+    const hasLentWords = Array.from((await getIgnoreWords()).union(studyWords))
         .map((w) => w.toLocaleLowerCase())
         .concat(markedWords);
     const newWords = words;
