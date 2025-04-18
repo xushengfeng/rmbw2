@@ -3996,9 +3996,7 @@ async function exTrans(pEl: HTMLElement, i: number, book: Book) {
         if (!i.isWordLike) continue;
         if (i.segment[0].match(/[A-Z]/)) {
             tipWord.push(i.segment);
-        } else if (!spellWord.has(lemmatizer(i.segment))) {
-            tipWord.push(i.segment);
-        } else if (!spellWord.has(i.segment)) {
+        } else if (!(spellWord.has(lemmatizer(i.segment)) || spellWord.has(i.segment))) {
             tipWord.push(i.segment);
         }
     }
