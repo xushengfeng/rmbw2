@@ -3737,7 +3737,7 @@ async function translateContext(p: HTMLElement) {
 }
 
 async function exTrans(pEl: HTMLElement, i: number, book: Book) {
-    const span = pEl.children[i] as HTMLSpanElement;
+    const span = pEl.children[i + 1] as HTMLSpanElement;
 
     const f = frame("exTrans", {
         _: view().style({
