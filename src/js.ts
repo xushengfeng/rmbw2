@@ -2183,7 +2183,7 @@ async function showOnlineBooksL(books: OnlineBook[]) {
                     count++;
                     const p = (count / book.sections.length) * 100;
                     bookCover?.style({ "clip-path": `xywh(0 ${100 - p}% 100% 100%)` });
-                    return { id, content, title };
+                    return { id, content, title, type: book.type };
                 });
                 Promise.all(fetchPromises)
                     .then(async (results) => {
@@ -2192,7 +2192,13 @@ async function showOnlineBooksL(books: OnlineBook[]) {
                             s.push(i.id);
                             const section = await sectionsStore.getItem(i.id);
                             if (section) {
-                                const s = changePosi(section, i.content);
+                                let s: Section;
+                                if (i.type === "text") {
+                                    s = changePosi(section, i.content);
+                                } else {
+                                    section.text = i.content;
+                                    s = section;
+                                }
                                 s.text = i.content;
                                 s.title = i.title;
                                 sectionsStore.setItem(i.id, s);
