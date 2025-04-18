@@ -2963,7 +2963,7 @@ async function showWordBook(book: Book, s: Section) {
 async function showWordBookMore(wordList: WordBookList, cards: Map<string, Card>, fromEl: ElType<HTMLElement>) {
     const d = ele("dialog");
     dialogX(d, fromEl);
-    const unlearnL = wordList.filter((w) => w.means === undefined);
+    const unlearnL = wordList.filter((w) => w.type === null);
     d.add([
         view()
             .style({ display: "flex", "flex-direction": "row-reverse" })
