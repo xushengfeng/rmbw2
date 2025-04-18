@@ -3983,9 +3983,8 @@ async function exTrans(pEl: HTMLElement, i: number, book: Book) {
     const text = span.innerText;
     const segmenter = Array.from(new Segmenter(book.language, { granularity: book.wordSplit || "word" }).segment(text));
     const spellWord = await getIgnoreWords();
-    const now = time();
     await spellStore.iterate((v, k: string) => {
-        if (v.due.getTime() > now) {
+        if (v.state === State.Review) {
             spellWord.push(k);
         }
     });
@@ -3995,6 +3994,8 @@ async function exTrans(pEl: HTMLElement, i: number, book: Book) {
         if (i.segment[0].match(/[A-Z]/)) {
             tipWord.push(i.segment);
         } else if (!spellWord.includes(lemmatizer(i.segment))) {
+            tipWord.push(i.segment);
+        } else if (!spellWord.includes(i.segment)) {
             tipWord.push(i.segment);
         }
     }
