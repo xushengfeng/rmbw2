@@ -3797,8 +3797,10 @@ async function exTrans(pEl: HTMLElement, i: number, book: Book) {
             },
             sum: txt()
                 .bindSet((v: number, el) => {
+                    el.setAttribute("data-v", String(v));
                     el.innerText = `${(v * 100).toFixed(1)}%`;
                 })
+                .bindGet((el) => Number(el.getAttribute("data-v") || 0))
                 .style({ padding: "4px" }),
             tips: view("x").style({ gap: "4px", "padding-right": "4px" }),
         },
@@ -3822,7 +3824,7 @@ async function exTrans(pEl: HTMLElement, i: number, book: Book) {
     function rm() {
         f.el.el.remove();
         span.className = "";
-        if (f.els.text.gv.trim()) {
+        if (f.els.text.gv.trim() && f.els.sum.gv > 0.95) {
             const now = time();
             const l = splitWord(f.els.text.gv, book).filter((i) => i.isWordLike);
             exTransLog.setItem(String(now), { count: l.length, section: nowBook.sections });
