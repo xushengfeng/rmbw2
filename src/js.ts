@@ -1285,8 +1285,19 @@ function mutiSpell(word: string) {
     return usSpell.find((m) => m.includes(word)) || [word];
 }
 
-async function getLearntWords() {
-    const learnt = await wordsStore.keys();
+async function getGoodLearntWords() {
+    const learnt: string[] = [];
+    const goodCards = new Set<string>();
+    await cardsStore.iterate((card, k) => {
+        if (card.state === State.Review) {
+            goodCards.add(k);
+        }
+    });
+    await wordsStore.iterate((v, k) => {
+        if (v.means.some((i) => goodCards.has(i.card_id))) {
+            learnt.push(k);
+        }
+    });
     return fillMutiSpell(learnt);
 }
 
@@ -5492,7 +5503,7 @@ async function getNewWords() {
     const markedWords = Object.values((await getSection(nowBook.sections))?.words || {})
         .filter((i) => i.type === "word")
         .map((i) => lemmatizer(i.id.toLocaleLowerCase()));
-    const studyWords = await getLearntWords();
+    const studyWords = await getGoodLearntWords();
     const hasLentWords = (await getIgnoreWords())
         .concat(studyWords)
         .map((w) => w.toLocaleLowerCase())
