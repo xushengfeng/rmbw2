@@ -1549,6 +1549,40 @@ async function saveDic(dic: object) {
     dics[id] = ndic.meta;
 }
 
+async function searchWord(words: Set<string>) {
+    const result = new Map<string, Set<{ bid: string; sid: string; index: [number, number] }>>();
+
+    const segmenter = new Segmenter(studyLan, { granularity: "word" });
+
+    const book = new Map<string, Book>();
+    const s2b = new Map<string, string>();
+    await bookshelfStore.iterate((v, k) => {
+        book.set(k, v);
+        for (const s of v.sections) s2b.set(s, k);
+    });
+
+    await sectionsStore.iterate((v, k) => {
+        if (!v) return;
+        const bid = s2b.get(k);
+        if (!bid) return;
+        const b = book.get(bid);
+        if (!(b && b.type === "text")) return;
+        const s = Array.from(segmenter.segment(v.text)).filter((i) => i.isWordLike !== false);
+        for (const w of s) {
+            const word = w.segment.toLocaleLowerCase();
+            const le = lemmatizer(word);
+            const targetWord = words.has(word) ? word : words.has(le) ? le : undefined;
+            if (targetWord) {
+                const b = result.get(targetWord) ?? new Set([]);
+                b.add({ bid, sid: k, index: [w.index, w.index + w.segment.length] });
+                result.set(targetWord, b);
+            }
+        }
+    });
+
+    return result;
+}
+
 async function getIPA(word: string) {
     if (!ipa) {
         const lan = studyLan || "en";
@@ -2099,7 +2133,7 @@ function putToast(ele: ElType<HTMLElement>, time = 2000) {
     observer.observe(toastEl.el, { childList: true });
 }
 
-async function getTitleEl(bookId: string, sectionN: string, markId: string, x?: string) {
+async function getTitleEl(bookId: string, sectionN: string, markId?: string, x?: string) {
     const book = await getBooksById(bookId);
     const section = await getSection(sectionN);
     if (!book || !section) return;
@@ -2107,6 +2141,7 @@ async function getTitleEl(bookId: string, sectionN: string, markId: string, x?: 
     const v = txt(title)
         .class("source_title")
         .on("click", async () => {
+            if (!markId) return;
             const book = await getBooksById(bookId);
             if (!book) return;
             await showBook(book, sectionN);
@@ -2976,6 +3011,46 @@ async function showWordBookMore(wordList: WordBookList, cards: Map<string, Card>
             }),
             button("复制").on("click", () => {
                 navigator.clipboard.writeText(unlearnL.map((i) => i.text).join("\n"));
+            }),
+            button("全书架搜索").on("click", async () => {
+                const r = await searchWord(new Set(unlearnL.map((i) => i.text.toLocaleLowerCase())));
+
+                const xEl = view()
+                    .style({
+                        zIndex: 99999,
+                        position: "fixed",
+                        bottom: 0,
+                        width: "80%",
+                        left: "10%",
+                        borderRadius: "var(--br2)",
+                        padding: "var(--p0)",
+                        background: "var(--bar-bg)",
+                        backdropFilter: "var(--blur)",
+                        boxShadow: "var(--box-shadow)",
+                    })
+                    .addInto();
+                xEl.add(iconEl("close").on("click", () => xEl.remove()));
+                const wordList = view("x").style({ gap: "4px", overflow: "auto" }).addInto(xEl);
+                const bookList = view().style({ maxHeight: "30vh", overflow: "auto" }).addInto(xEl);
+
+                for (const [w, v] of r) {
+                    wordList.add(
+                        txt(w).on("click", () => {
+                            bookList.clear().add(
+                                Array.from(v).map((x) => {
+                                    const el = view().on("click", async () => {
+                                        const book = await getBooksById(x.bid);
+                                        if (!book) return;
+                                        await showBook(book, x.sid);
+                                        jumpToMark(x.index);
+                                    });
+                                    getTitleEl(x.bid, x.sid).then((l) => el.add(l));
+                                    return el;
+                                }),
+                            );
+                        }),
+                    );
+                }
             }),
         ]),
     ]);
