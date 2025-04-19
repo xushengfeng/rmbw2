@@ -3205,6 +3205,7 @@ async function searchWordBar(words: string[]) {
             }),
         );
     }
+    (wordList.el.children[0] as HTMLElement).click();
 }
 
 async function ignoredWordSpell(list: string[]) {
