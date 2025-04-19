@@ -2958,7 +2958,7 @@ async function showWordBook(book: Book, s: Section) {
                                 item.type = null;
                                 if (item1) item1.type = null;
                                 if (item2) item2.type = null;
-                            }).el,
+                            }),
                     );
                 else
                     menuEl.add(
@@ -2982,6 +2982,11 @@ async function showWordBook(book: Book, s: Section) {
                                 }
                             }).el,
                     );
+                menuEl.add(
+                    view()
+                        .add("全书架搜索")
+                        .on("click", async () => await searchWordBar([item.text])),
+                );
             });
             iEl.el.onclick = () => {
                 const pEl = tmpDicEl;
@@ -3012,46 +3017,7 @@ async function showWordBookMore(wordList: WordBookList, cards: Map<string, Card>
             button("复制").on("click", () => {
                 navigator.clipboard.writeText(unlearnL.map((i) => i.text).join("\n"));
             }),
-            button("全书架搜索").on("click", async () => {
-                const r = await searchWord(new Set(unlearnL.map((i) => i.text.toLocaleLowerCase())));
-
-                const xEl = view()
-                    .style({
-                        zIndex: 99999,
-                        position: "fixed",
-                        bottom: 0,
-                        width: "80%",
-                        left: "10%",
-                        borderRadius: "var(--br2)",
-                        padding: "var(--p0)",
-                        background: "var(--bar-bg)",
-                        backdropFilter: "var(--blur)",
-                        boxShadow: "var(--box-shadow)",
-                    })
-                    .addInto();
-                xEl.add(iconEl("close").on("click", () => xEl.remove()));
-                const wordList = view("x").style({ gap: "4px", overflow: "auto" }).addInto(xEl);
-                const bookList = view().style({ maxHeight: "30vh", overflow: "auto" }).addInto(xEl);
-
-                for (const [w, v] of r) {
-                    wordList.add(
-                        txt(w).on("click", () => {
-                            bookList.clear().add(
-                                Array.from(v).map((x) => {
-                                    const el = view().on("click", async () => {
-                                        const book = await getBooksById(x.bid);
-                                        if (!book) return;
-                                        await showBook(book, x.sid);
-                                        jumpToMark(x.index);
-                                    });
-                                    getTitleEl(x.bid, x.sid).then((l) => el.add(l));
-                                    return el;
-                                }),
-                            );
-                        }),
-                    );
-                }
-            }),
+            button("全书架搜索").on("click", async () => await searchWordBar(unlearnL.map((i) => i.text))),
         ]),
     ]);
     const bookIds: { [id: string]: number } = {};
@@ -3198,6 +3164,47 @@ async function showWordBookMore(wordList: WordBookList, cards: Map<string, Card>
             );
         }),
     ]);
+}
+
+async function searchWordBar(words: string[]) {
+    const r = await searchWord(new Set(words.map((i) => i.toLocaleLowerCase())));
+
+    const xEl = view()
+        .style({
+            zIndex: 99999,
+            position: "fixed",
+            bottom: "8px",
+            width: "80%",
+            left: "10%",
+            borderRadius: "var(--br2)",
+            padding: "var(--p0)",
+            background: "var(--bar-bg)",
+            backdropFilter: "var(--blur)",
+            boxShadow: "var(--box-shadow)",
+        })
+        .addInto();
+    xEl.add(iconEl("close").on("click", () => xEl.remove()));
+    const wordList = view("x").style({ gap: "4px", overflow: "auto" }).addInto(xEl);
+    const bookList = view().style({ maxHeight: "30vh", overflow: "auto" }).addInto(xEl);
+
+    for (const [w, v] of r) {
+        wordList.add(
+            txt(w).on("click", () => {
+                bookList.clear().add(
+                    Array.from(v).map((x) => {
+                        const el = view().on("click", async () => {
+                            const book = await getBooksById(x.bid);
+                            if (!book) return;
+                            await showBook(book, x.sid);
+                            jumpToMark(x.index);
+                        });
+                        getTitleEl(x.bid, x.sid).then((l) => el.add(l));
+                        return el;
+                    }),
+                );
+            }),
+        );
+    }
 }
 
 async function ignoredWordSpell(list: string[]) {
