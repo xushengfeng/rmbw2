@@ -3196,7 +3196,7 @@ async function searchWordBar(words: string[]) {
                             const book = await getBooksById(x.bid);
                             if (!book) return;
                             await showBook(book, x.sid);
-                            jumpToMark(x.index);
+                            jumpToMark(x.index, true);
                         });
                         getTitleEl(x.bid, x.sid).then((l) => el.add(l));
                         return el;
@@ -4375,7 +4375,7 @@ async function showMarkList() {
     });
 }
 
-function jumpToMark([start, end]: [number, number]) {
+function jumpToMark([start, end]: [number, number], blink?: boolean) {
     bookContentContainerEl.style({ "scroll-behavior": "smooth" });
     const span = bookContentEl.query(`span[data-s="${start}"]`);
     const spanE = bookContentEl.query(`span[data-e="${end}"]`);
@@ -4383,6 +4383,17 @@ function jumpToMark([start, end]: [number, number]) {
         console.log(`no span ${start} ${end}`);
         return;
     }
+    if (blink)
+        span.el.animate(
+            [
+                { backgroundColor: "black", color: "white" },
+                { backgroundColor: "white", color: "black" },
+            ],
+            {
+                duration: 400,
+                iterations: 3,
+            },
+        );
     const e = getDicPosi();
     // 60是粗略计算dic高度
     const dicInView = e + 60 < window.innerHeight && e > 0;
