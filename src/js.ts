@@ -7605,8 +7605,6 @@ autoFun.config({
 reviewBEl.on("click", () => {
     reviewEl.el.classList.toggle("review_show");
     reviewBEl.el.classList.remove(TODOMARK);
-
-    reviewCount = 0;
 });
 
 sectionSelect(reviewScope);
