@@ -462,14 +462,16 @@ body {
                 }
             }
         }
-        & .ignore {
-            color: color-mix(in srgb, var(--color) 60%, transparent);
-        }
-        & .learn {
-            color: green;
-        }
     }
 }
+
+.ignore {
+    color: color-mix(in srgb, var(--color) 60%, transparent);
+}
+.learn {
+    color: green;
+}
+
 .mark_word {
     text-decoration: underline wavy #999 !important;
 }

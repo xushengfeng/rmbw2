@@ -1351,6 +1351,22 @@ async function removeIgnore(word: string) {
     }
 }
 
+function etymologyParse(word: string) {
+    const x = word.match(/(\(\w+\)|>\w+>|<\w+<)/g);
+    if (!x) return [];
+    return x.map((i) =>
+        i.startsWith(">")
+            ? { type: "suffix", t: i.slice(1, -1) }
+            : i.startsWith("<")
+              ? { type: "prefix", t: i.slice(1, -1) }
+              : { type: "root", t: i.slice(1, -1) },
+    ) as { type: "prefix" | "root" | "suffix"; t: string }[];
+}
+
+function etymologyParseMore(s: { type: "prefix" | "root" | "suffix"; t: string }[]) {
+    return s.map((i) => (i.type === "prefix" ? `${i.t}-` : i.type === "suffix" ? `-${i.t}` : `${i.t}`)).join(" ");
+}
+
 async function getWordsScope() {
     const books = getSelectBooks(reviewScope);
     const ignore = await getIgnoreWords();
@@ -2691,7 +2707,7 @@ async function showWordBook(book: Book, s: Section) {
     const usS = usSpell.flat();
     const wordMap: { [r: string]: string } = {};
     await wordsStore.iterate((v, k) => {
-        if (l.has(k)) words.set(k, v);
+        words.set(k, v);
         if (usS.includes(k)) mayMapWords.set(k, v);
     });
     for (const i of usS) if (l.has(i) && !words.has(i)) wordMap[i] = "";
@@ -2894,6 +2910,51 @@ async function showWordBook(book: Book, s: Section) {
         }
         const onlineList = onlineDicL(item.text);
         pEl.add(onlineList);
+
+        if (etymology.words.has(item.text) || etymology.roots.has(`(${item.text})`)) {
+            const etyEl = view("y");
+            const x = etymology.words.get(item.text);
+
+            const roots = (x?.match(/\(\w+\)/g) || []) as string[];
+            const base = x?.match(/\{(.*?)\}/)?.[1];
+
+            const baseEl = view("x")
+                .style({ gap: "16px" })
+                .add([
+                    x ? txt(etymologyParseMore(etymologyParse(x))) : null,
+                    base ? txt(etymologyParseMore(etymologyParse(base))) : null,
+                ]);
+
+            const rootsEl = view("x")
+                .style({ gap: "8px" })
+                .add(
+                    roots.concat([`(${item.text})`]).map((i) => {
+                        const t = i.slice(1, -1);
+                        const rl = view().style({ maxHeight: "180px", overflow: "auto" });
+                        const r = txt(t).on("click", () => {
+                            rl.clear().add(
+                                etymology.roots
+                                    .get(i)
+                                    ?.filter((x) => x !== item.text)
+                                    .map((i) => ({ v: ignoreWords.has(i) ? 1 : words.has(i) ? 0.5 : 0, t: i }))
+                                    .toSorted((a, b) => b.v - a.v)
+                                    .map((i) =>
+                                        view()
+                                            .add(i.t)
+                                            .class({ 1: "ignore", 0.5: "learn" }[i.v] || ""),
+                                    ),
+                            );
+                        });
+
+                        return etymology.roots.has(i) ? view("y").add([r, rl]) : null;
+                    }),
+                );
+
+            etyEl.add([baseEl, rootsEl]);
+
+            pEl.add(etyEl);
+        }
+
         if (item.c)
             for (const i of item.c.means) {
                 const pel = view().add([
