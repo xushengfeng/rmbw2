@@ -740,6 +740,23 @@ async function saveLanguagePackage(lan: string, section: { id: string; path: str
                 wordMapStore.setItem(lan, i.content);
                 usSpell = i.content;
             }
+
+            if (i.id === "etymology") {
+                const d = (await etymologyStore.getItem(lan)) || {
+                    words: new Map<string, string>(),
+                    roots: new Map<string, string[]>(),
+                };
+                d.words = map;
+                await etymologyStore.setItem(lan, d);
+            }
+            if (i.id === "etymology_root") {
+                const d = (await etymologyStore.getItem(lan)) || {
+                    words: new Map<string, string>(),
+                    roots: new Map<string, string[]>(),
+                };
+                d.roots = map;
+                await etymologyStore.setItem(lan, d);
+            }
         }
     });
 }
@@ -3024,6 +3041,8 @@ async function showWordBookMore(wordList: WordBookList, cards: Map<string, Card>
 
     const wordFamilyMap: Map<string, boolean> = new Map();
 
+    const wordRootReg = /\{(.*?)\}/g;
+
     for (const w of wordList) {
         if (w.type === "learn") {
             for (const m of w.c.means) {
@@ -3034,9 +3053,16 @@ async function showWordBookMore(wordList: WordBookList, cards: Map<string, Card>
                 }
             }
         }
-        const rootWord = lemmatizer(w.text);
-        if (wordFamilyMap.get(rootWord) !== true) wordFamilyMap.set(rootWord, Boolean(w.type));
+
+        // ---
+
+        const pure = lemmatizer(w.text);
+        const rootWords = etymology.words.get(pure)?.match(wordRootReg);
+        for (const rootWord of rootWords || []) {
+            if (wordFamilyMap.get(rootWord) !== true) wordFamilyMap.set(rootWord, Boolean(w.type));
+        }
     }
+
     const l = Object.entries(bookIds).sort((a, b) => b[1] - a[1]);
     const ignore = wordList.filter((w) => w.type === "ignore").length;
     const max = Math.max(l[0][1], ignore);
@@ -3142,7 +3168,7 @@ async function showWordBookMore(wordList: WordBookList, cards: Map<string, Card>
 
     const familyList = Array.from(wordFamilyMap.values());
     d.add([
-        p("部分词族"), // todo 需要真正的word family
+        p("词族"),
         txt(`${familyList.length} ${familyList.filter((i) => i).length}`),
         view()
             .class(LITLEPROGRESS)
@@ -6640,6 +6666,10 @@ const coverCache = localForage.createInstance<Blob>({ name: "cache", storeName: 
 const ipaStore = localForage.createInstance<Map<string, string | string[]>>({ name: "langPack", storeName: "ipa" });
 const variantStore = localForage.createInstance<Map<string, string>>({ name: "langPack", storeName: "variant" });
 const wordMapStore = localForage.createInstance<string[][]>({ name: "langPack", storeName: "map" });
+const etymologyStore = localForage.createInstance<{ words: Map<string, string>; roots: Map<string, string[]> }>({
+    name: "langPack",
+    storeName: "etymology",
+});
 
 const dicStore = localForage.createInstance<dicMap>({ name: "dic" });
 
@@ -6676,6 +6706,11 @@ const studyLan = ((await setting.getItem("lan.learn")) as string) || "en";
 const variant = await variantStore.getItem("en");
 
 let usSpell = (await wordMapStore.getItem("en")) || [];
+
+const etymology = (await etymologyStore.getItem("en")) || {
+    words: new Map<string, string>(),
+    roots: new Map<string, string[]>(),
+};
 
 const fsrsWordW = JSON.parse((await setting.getItem("fsrs.word.w")) || "{}") as number[];
 const fsrsSpellW = JSON.parse((await setting.getItem("fsrs.spell.w")) || "{}") as number[];
