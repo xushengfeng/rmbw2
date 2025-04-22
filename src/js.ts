@@ -3355,7 +3355,7 @@ async function showNormalBook(book: Book, s: Section) {
     const sxS = sx.map((i) => ` ${i}`);
     for (let i = 0; i < osL.length; i++) {
         const seg = osL[i].segment;
-        if (seg.endsWith(" ") && (sx.includes(seg) || sxS.some((i) => seg.endsWith(i)))) {
+        if (seg.endsWith(" ") && (sx.includes(seg) || sxS.some((i) => seg.endsWith(i)) || seg.match(/[A-Z]\. ?$/))) {
             const x = osL[i];
             const next = osL[i + 1];
             if (next) x.segment += next.segment;
