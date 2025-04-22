@@ -3118,8 +3118,8 @@ async function showWordBookMore(wordList: WordBookList, cards: Map<string, Card>
         // ---
 
         const pure = lemmatizer(w.text);
-        const rootWords = etymology.words.get(pure)?.match(wordRootReg);
-        for (const rootWord of rootWords || []) {
+        const rootWords = etymology.words.get(pure)?.match(wordRootReg) || [pure];
+        for (const rootWord of rootWords) {
             if (wordFamilyMap.get(rootWord) !== true) wordFamilyMap.set(rootWord, Boolean(w.type));
         }
     }
