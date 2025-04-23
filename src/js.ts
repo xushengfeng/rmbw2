@@ -1218,6 +1218,74 @@ function sentenceGm(t: senNode) {
     return get(t);
 }
 
+function getTextWordValue(words: string[]) {
+    const xw = [
+        "to",
+        "a",
+        "an",
+        "the",
+        "in",
+        "out",
+        "on",
+        "at",
+        "with",
+        "by",
+        "of",
+        "for",
+        "from",
+        "be",
+        "is",
+        "are",
+        "were",
+        "was",
+        "been",
+        "will",
+        "would",
+        "that",
+        "who",
+        "why",
+        "what",
+        "which",
+        "when",
+        "how",
+        "have",
+        "has",
+        "had",
+        "did",
+        "done",
+        "do",
+        "some",
+        "any",
+        "all",
+        "if",
+        "then",
+        "and",
+        "or",
+        "so",
+        "because",
+        "as",
+        "very",
+        "it",
+        "they",
+        "he",
+        "she",
+    ];
+
+    const output: { text: string; value: number }[] = [];
+    for (const _i of words) {
+        const i = _i.toLocaleLowerCase();
+        if (xw.includes(i)) {
+            output.push({ text: i, value: 0.2 });
+        } else if (i === " " || (i.length === 1 && i !== "i")) {
+            output.push({ text: i, value: 0 });
+        } else {
+            output.push({ text: i, value: 1 });
+        }
+    }
+
+    return output;
+}
+
 function setCardAction(cardId: string, time: Date, rating: Rating, state: State, duration: number) {
     const o: [string, Rating, State, number] = [cardId, rating, state, duration];
     cardActionsStore.setItem(String(time.getTime()), o);
@@ -3342,10 +3410,33 @@ async function showNormalBook(book: Book, s: Section) {
         }),
     );
 
+    function getWordValue() {
+        const sp = split;
+        const l = getTextWordValue(sp.map((i) => i.segment));
+        const x: { index: number; value: number }[] = [];
+        for (const [index, i] of l.entries()) {
+            // todo match
+            x.push({ index: sp[index].index, value: i.value });
+        }
+        console.log(x);
+        return x;
+    }
+
+    bookContentEl.add(
+        iconEl("search").on("click", () => {
+            const x = getWordValue();
+            for (const v of x) {
+                const el = bookContentEl.query(`[data-s="${v.index}"]`);
+                if (el) {
+                    el.style({ opacity: v.value });
+                }
+            }
+        }),
+    );
+
     const segmenter = new Segmenter(book.language, { granularity: book.wordSplit || "word" });
-    const wordCount = Array.from(segmenter.segment(s.text)).filter(
-        (w) => w.isWordLike === undefined || w.isWordLike,
-    ).length;
+    const split = Array.from(segmenter.segment(s.text));
+    const wordCount = split.filter((w) => w.isWordLike === undefined || w.isWordLike).length;
     const wordDanwei = (book.wordSplit || "word") === "word" ? "词" : "字";
     const osL = Array.from(new Segmenter(book.language, { granularity: "sentence" }).segment(s.text));
     const sL: Intl.SegmentData[] = [];
