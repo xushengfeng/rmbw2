@@ -6123,7 +6123,7 @@ async function showWordReview(x: { id: string; card: Card }, isAi: boolean) {
 
     div.add([
         wordEl,
-        context.style({ width: "var(--content-width)" }),
+        context.style({ width: "var(--content-width)", maxHeight: "50%" }),
         dic.style({ width: "var(--content-width)" }),
         buttons.buttons.style({ width: "100%" }),
     ]).class("review_word");
@@ -6314,7 +6314,7 @@ async function showSpellReview(x: { id: string; card: Card }) {
         context.add(view().add(view().add(p(text))));
     }
     const div = view()
-        .add([input, wordEl, context.style({ width: "var(--content-width)", margin: "auto" })])
+        .add([input, wordEl, context.style({ width: "var(--content-width)", margin: "auto", maxHeight: "50%" })])
         .class("review_spell")
         .data({ state: String(x.card.state) });
     reviewViewEl.clear().add(div);
