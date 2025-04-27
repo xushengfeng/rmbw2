@@ -6172,7 +6172,10 @@ async function showSpellReview(x: { id: string; card: Card }) {
     const word = x.id;
     const wordSpells = mutiSpell(word);
     const maxWidth = Math.max(...wordSpells.map((w) => w.length));
-    const input = view().class("spell_input").style({ width: "min-content" }).attr({ innerText: word, tabIndex: 1 }); // 占位计算宽度
+    const input = view()
+        .class("spell_input")
+        .style({ width: "min-content", whiteSpace: "nowrap" })
+        .attr({ innerText: word, tabIndex: 1 }); // 占位计算宽度
     input.el.focus();
     clearKeyboard();
     const SHOWSENWORD = "spell_sen_word_show";
@@ -6185,7 +6188,7 @@ async function showSpellReview(x: { id: string; card: Card }) {
     function matchCapital(input: string, word: string) {
         const l: string[] = [];
         for (let i = 0; i < input.length; i++) {
-            if (word[i].match(/[A-Z]/)) l.push(input[i].toLocaleUpperCase());
+            if (word[i]?.match(/[A-Z]/)) l.push(input[i].toLocaleUpperCase());
             else l.push(input[i]);
         }
         return l.join("");
@@ -6193,7 +6196,7 @@ async function showSpellReview(x: { id: string; card: Card }) {
     function matchSpecial(input: string, word: string) {
         const l: string[] = [];
         for (let i = 0; i < input.length; i++) {
-            if (word[i].match(/[-'’. ]/)) l.push(word[i]);
+            if (word[i]?.match(/[-'’. ]/)) l.push(word[i]);
             else l.push(input[i]);
         }
         return l.join("");
