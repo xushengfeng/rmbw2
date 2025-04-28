@@ -5832,7 +5832,10 @@ async function autoIgnore(fromEl: ElType<HTMLElement>) {
             iconEl("ok").on("click", async () => {
                 const words = f.queryAll("input:checked.ignore_word").map((el) => el.el.value);
                 addIgnore(words);
-                const wordsX = f.queryAll("input:checked:not(.ignore_word)").map((el) => el.el.value);
+                const wordsX = f
+                    .queryAll("input:checked:not(.ignore_word)")
+                    .map((el) => el.el.value)
+                    .filter((i) => !words.includes(i));
                 selectWord(wordsX);
                 dialog.el.close();
             }),
