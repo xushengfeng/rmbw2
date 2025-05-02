@@ -334,6 +334,14 @@ const GitHubConfigPath = {
     download: "webStore.github.download",
 };
 
+const ServerConfigPath = {
+    url: "webStore.server.url",
+    path: "webStore.server.path",
+    versionBase: "webStore.server.version.base",
+    versionUid: "webStore.server.version.uid",
+    versionChanged: "webStore.server.version.changed",
+};
+
 let isSetData = false;
 
 let willShowMenu = false;
@@ -1286,13 +1294,26 @@ function getTextWordValue(words: string[]) {
     return output;
 }
 
+function onCardChange() {
+    (async () => {
+        if (!(await setting.getItem(ServerConfigPath.versionChanged))) {
+            setting.setItem(ServerConfigPath.versionChanged, true);
+            const oldV = (await setting.getItem(ServerConfigPath.versionBase)) || 0;
+            setting.setItem(ServerConfigPath.versionBase, oldV + 1);
+            setting.setItem(ServerConfigPath.versionUid, uuid());
+        }
+    })();
+}
+
 function setCardAction(cardId: string, time: Date, rating: Rating, state: State, duration: number) {
     const o: [string, Rating, State, number] = [cardId, rating, state, duration];
     cardActionsStore.setItem(String(time.getTime()), o);
+    onCardChange();
 }
 function setCardAction2(cardId: string, time: Date) {
     const o: [string] = [cardId];
     cardActionsStore.setItem(String(time.getTime()), o);
+    onCardChange();
 }
 function newCardAction(id: string) {
     setCardAction2(id, new Date());
@@ -1908,6 +1929,62 @@ async function downloadGithub(fileName: string) {
     const config = await getGitHub(fileName);
     const data = await (await fetch(config.fileDownload)).json();
     return data;
+}
+
+async function getServer() {
+    const url = ((await setting.getItem(ServerConfigPath.url)) || "http://0.0.0.0:8000") as string;
+    const path = (await setting.getItem(ServerConfigPath.path)) as string;
+    const version = {
+        base: ((await setting.getItem(ServerConfigPath.versionBase)) || 0) as number,
+        uid: ((await setting.getItem(ServerConfigPath.versionUid)) || uuid()) as string,
+    };
+    await setting.setItem(ServerConfigPath.versionBase, version.base);
+    await setting.setItem(ServerConfigPath.versionUid, version.uid);
+    return {
+        url,
+        path,
+        version,
+    };
+}
+
+async function uploadServer(data: string, fileName: string) {
+    const config = await getServer();
+    fetch(config.url, {
+        method: "POST",
+        body: JSON.stringify({
+            action: "upload",
+            dir: config.path,
+            filename: fileName,
+            data: data,
+            version: config.version,
+        }),
+    });
+}
+
+async function downloadServer(fileName: string, force: true): Promise<string>;
+async function downloadServer(fileName: string): Promise<string | undefined>;
+async function downloadServer(fileName: string, force = false) {
+    const config = await getServer();
+    const data = await (
+        await fetch(config.url, {
+            method: "POST",
+            body: JSON.stringify({
+                action: "download",
+                dir: config.path,
+                filename: fileName,
+                version: force ? { base: 0, uid: "" } : config.version,
+            }),
+        })
+    ).json();
+    if (data.version) {
+        setting.setItem(ServerConfigPath.versionChanged, false);
+        setting.setItem(ServerConfigPath.versionBase, data.version.base);
+        setting.setItem(ServerConfigPath.versionUid, data.version.uid);
+    }
+    if (data.data || force) {
+        console.log(data);
+        return data.data as string;
+    }
 }
 
 async function getCSV(type: "word" | "spell" | "sen") {
@@ -7450,6 +7527,37 @@ const asyncEl = view().add([
             ),
             label([input().data({ path: GitHubConfigPath.path }), "path："], 1),
             label([input().data({ path: GitHubConfigPath.download }), "替换下载："], 1),
+        ]),
+        ele("h3").add("自建服务器"),
+        button("↓").on("click", async () => {
+            putToast(txt("下载开始"));
+            try {
+                const webdata = await downloadServer(rmbwGithub1);
+                if (!webdata) {
+                    putToast(txt("已是最新"));
+                    return;
+                }
+                const data = JSON.parse(webdata) as AllData;
+                setAllData(data);
+            } catch (error) {
+                putToast(txt("下载失败"), 6000);
+                throw error;
+            }
+        }),
+        button("↑").on("click", async () => {
+            putToast(txt("上传开始"));
+            try {
+                const x = await toAllData();
+                await uploadServer(formatAllData(x), rmbwGithub1);
+                putToast(txt("上传成功"));
+            } catch (error) {
+                putToast(txt("上传失败"), 6000);
+                throw error;
+            }
+        }),
+        ele("form").add([
+            label([input().data({ path: ServerConfigPath.url }), "url："], 1),
+            label([input().data({ path: ServerConfigPath.path }), "path："], 1),
         ]),
         ele("h3").add("P2P"),
         p2pIdShowEl,
