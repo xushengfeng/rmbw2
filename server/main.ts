@@ -5,9 +5,6 @@ type Version = { base: number; uid: string };
 
 const BASE_DIR = "./storage";
 
-// Ensure the base directory exists
-await ensureDir(BASE_DIR);
-
 async function getVersion(dir: string): Promise<Version> {
     const versionFilePath = join(BASE_DIR, dir, ".version");
     if (await exists(versionFilePath)) {
@@ -15,10 +12,10 @@ async function getVersion(dir: string): Promise<Version> {
         try {
             return JSON.parse(versionContent);
         } catch (error) {
-            return { base: 0, uid: "" };
+            return { base: -1, uid: "" };
         }
     }
-    return { base: 0, uid: "" };
+    return { base: -1, uid: "" };
 }
 async function setVersion(dir: string, version: Version): Promise<void> {
     const versionFilePath = join(BASE_DIR, dir, ".version");
@@ -134,10 +131,15 @@ const handler = async (req: Request): Promise<Response> => {
             console.error("Error processing request:", err);
             return new Response("Invalid request", { status: 400 });
         }
+    } else if (req.method === "GET") {
+        return new Response("Server is running", { status: 200 });
     } else {
         return new Response("Method not allowed", { status: 405 });
     }
 };
+
+// Ensure the base directory exists
+await ensureDir(BASE_DIR);
 
 console.log("File storage server is running on http://localhost:8000");
 Deno.serve({ port: 8000 }, async (req) => {
