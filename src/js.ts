@@ -1456,6 +1456,48 @@ function etymologyParseMore(s: { type: "prefix" | "root" | "suffix"; t: string }
     return s.map((i) => (i.type === "prefix" ? `${i.t}-` : i.type === "suffix" ? `-${i.t}` : `${i.t}`)).join(" ");
 }
 
+function analyzeMorphemes(components: string[], target: string) {
+    function find(item: string, l: string, start: number) {
+        let xv = 0;
+        let startIndex = start;
+        for (let i = 0; i < 3; i++) {
+            const clip = l.slice(i + start, i + start + item.length);
+            const diff = dmp.diff_main(item, clip);
+            const v =
+                diff
+                    .filter((i) => i[0] === 0)
+                    .map((i) => i[1])
+                    .reduce((a, b) => a + b.length, 0) / item.length;
+            if (v >= xv) {
+                xv = v;
+                startIndex = i + start;
+            }
+        }
+
+        return startIndex;
+    }
+
+    const l: number[] = [];
+
+    let index = 0;
+    for (const i of components) {
+        const x = find(i, target, index);
+        l.push(x);
+        index = x + i.length - 1;
+    }
+
+    const r: Diff[][] = [];
+
+    for (const [n, clipIndex] of l.entries()) {
+        const item = components.at(n)!;
+        const srcClip = target.slice(clipIndex, l.at(n + 1) ?? target.length);
+        const diff = dmp.diff_main(item, srcClip);
+        r.push(diff);
+    }
+
+    return r;
+}
+
 async function getWordsScope() {
     const books = getSelectBooks(reviewScope);
     const ignore = await getIgnoreWords();
@@ -3064,12 +3106,25 @@ async function showWordBook(book: Book, s: Section) {
             const roots = (x?.match(/\(\w+\)/g) || []) as string[];
             const base = x?.match(/\{(.*?)\}/)?.[1];
 
-            const baseEl = view("x")
-                .style({ gap: "16px" })
-                .add([
-                    x ? txt(etymologyParseMore(etymologyParse(x))) : null,
-                    base ? txt(etymologyParseMore(etymologyParse(base))) : null,
-                ]);
+            const baseEl = view("x").style({ gap: "16px" });
+
+            if (x) {
+                const xxx = etymologyParse(x);
+                const v = analyzeMorphemes(
+                    xxx.map((i) => i.t),
+                    item.text,
+                );
+
+                baseEl.add(
+                    view("x")
+                        .style({ gap: "4px" })
+                        .add(v.map((i) => showDiff(i))),
+                );
+            }
+
+            if (base) {
+                baseEl.add(txt(etymologyParseMore(etymologyParse(base))));
+            }
 
             const rootsEl = view("x")
                 .style({ gap: "8px" })
@@ -4352,6 +4407,20 @@ async function exTrans(pEl: HTMLElement, i: number, book: Book) {
         }),
     );
     f.els.tips.add(tipEl);
+}
+
+function showDiff(l: Diff[]) {
+    const diffEl = view();
+    for (const i of l) {
+        if (i[0] === 0) {
+            diffEl.add(txt(i[1]));
+        } else if (i[0] === 1) {
+            diffEl.add(txt(i[1]).class("diff_add"));
+        } else {
+            diffEl.add(txt(i[1]).class("diff_remove"));
+        }
+    }
+    return diffEl;
 }
 
 function setBookStyle() {
