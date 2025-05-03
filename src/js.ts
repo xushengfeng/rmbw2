@@ -1949,7 +1949,7 @@ async function getServer() {
 
 async function uploadServer(data: string, fileName: string) {
     const config = await getServer();
-    fetch(config.url, {
+    await fetch(config.url, {
         method: "POST",
         body: JSON.stringify({
             action: "upload",
@@ -1959,6 +1959,7 @@ async function uploadServer(data: string, fileName: string) {
             version: config.version,
         }),
     });
+    setting.setItem(ServerConfigPath.versionChanged, false);
 }
 
 async function downloadServer(fileName: string, force: true): Promise<string>;
