@@ -141,10 +141,13 @@ const handler = async (req: Request): Promise<Response> => {
 // Ensure the base directory exists
 await ensureDir(BASE_DIR);
 
-console.log("File storage server is running on http://localhost:8000");
-Deno.serve({ port: 8000 }, async (req) => {
-    const response = await handler(req);
-    response.headers.set("Access-Control-Allow-Origin", "*");
-    // response.headers.set("Access-Control-Allow-Methods", "POST, OPTIONS");
-    return response;
-});
+console.log("File storage server is running on https://localhost:8000");
+Deno.serve(
+    { port: 8000, cert: Deno.readTextFileSync("cert.pem"), key: Deno.readTextFileSync("key.pem") },
+    async (req) => {
+        const response = await handler(req);
+        response.headers.set("Access-Control-Allow-Origin", "*");
+        // response.headers.set("Access-Control-Allow-Methods", "POST, OPTIONS");
+        return response;
+    },
+);
