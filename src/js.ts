@@ -8205,4 +8205,32 @@ if ("serviceWorker" in navigator) {
 
 navigator?.storage?.persist(); // 下次再说，所以不用await
 
+if (await setting.getItem(ServerConfigPath.url)) {
+    putToast(txt("正在检查更新"));
+    try {
+        const webdata = await downloadServer(rmbwGithub1);
+        if (webdata) {
+            const data = JSON.parse(webdata) as AllData;
+            setAllData(data);
+        } else {
+            putToast(txt("本地是最新的"));
+        }
+    } catch (error) {
+        putToast(txt("无法检查"), 6000);
+    }
+
+    setInterval(
+        () =>
+            requestIdleCallback(async () => {
+                putToast(txt("上传开始"));
+                try {
+                    const x = await toAllData();
+                    await uploadServer(formatAllData(x), rmbwGithub1);
+                    putToast(txt("上传成功"));
+                } catch (error) {}
+            }),
+        timeD.m(10),
+    );
+}
+
 booksEl.el.showModal();
