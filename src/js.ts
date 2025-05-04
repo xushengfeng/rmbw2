@@ -1294,15 +1294,17 @@ function getTextWordValue(words: string[]) {
     return output;
 }
 
+async function updateVersion() {
+    if (!(await setting.getItem(ServerConfigPath.versionChanged))) {
+        setting.setItem(ServerConfigPath.versionChanged, true);
+        const oldV = (await setting.getItem(ServerConfigPath.versionBase)) || 0;
+        setting.setItem(ServerConfigPath.versionBase, oldV + 1);
+        setting.setItem(ServerConfigPath.versionUid, uuid());
+    }
+}
+
 function onCardChange() {
-    (async () => {
-        if (!(await setting.getItem(ServerConfigPath.versionChanged))) {
-            setting.setItem(ServerConfigPath.versionChanged, true);
-            const oldV = (await setting.getItem(ServerConfigPath.versionBase)) || 0;
-            setting.setItem(ServerConfigPath.versionBase, oldV + 1);
-            setting.setItem(ServerConfigPath.versionUid, uuid());
-        }
-    })();
+    updateVersion();
 }
 
 function setCardAction(cardId: string, time: Date, rating: Rating, state: State, duration: number) {
@@ -4724,6 +4726,7 @@ function wordMarkChanged(w: Section["words"] = {}, init?: boolean) {
     }
     reflashSectionEl(w);
     updateMark(w);
+    updateVersion();
 }
 
 async function showMarkList() {
