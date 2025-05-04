@@ -151,3 +151,25 @@ Deno.serve(
         return response;
     },
 );
+
+if (await exists(join(BASE_DIR, ".git"))) {
+    // 定时提交
+    console.log("Git auto commit every 3 hours");
+
+    Deno.cron("sample cron", { hour: { every: 3 } }, async () => {
+        const gitAdd = new Deno.Command(BASE_DIR, {
+            args: ["git", "add", "."],
+        });
+        const gitCommit = new Deno.Command(BASE_DIR, {
+            args: ["git", "commit", "-m", "auto commit"],
+        });
+
+        await gitAdd.output();
+        try {
+            await gitCommit.output();
+            console.log("Auto commit");
+        } catch (error) {
+            console.error("Auto commit error:", error);
+        }
+    });
+}
