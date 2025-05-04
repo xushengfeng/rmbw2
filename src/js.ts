@@ -5452,6 +5452,38 @@ async function showDic(id: string) {
             down.start = false;
             down.end = false;
         };
+        async function queryNearIndex() {
+            const allMarks = await getAllMarks();
+            const nowIndex = allMarks.findIndex((i) => i.id === id);
+            if (nowIndex === -1) return;
+
+            const c = allMarks
+                .slice(0, nowIndex)
+                .toReversed()
+                .concat(allMarks.slice(nowIndex + 1))
+                .find(({ s: { cIndex } }) => cIndex[0] <= wordx.index[0] && wordx.index[1] <= cIndex[1]);
+            console.log(c);
+
+            if (c) return c.s.cIndex;
+        }
+        startEl.el.oncontextmenu = async (e) => {
+            e.preventDefault();
+            const ni = await queryNearIndex();
+            if (ni) {
+                index.start = ni[0];
+                saveChange();
+                dicEl.class(DICSHOW);
+            }
+        };
+        endEl.el.oncontextmenu = async (e) => {
+            e.preventDefault();
+            const ni = await queryNearIndex();
+            if (ni) {
+                index.end = ni[1];
+                saveChange();
+                dicEl.class(DICSHOW);
+            }
+        };
         async function saveChange() {
             s.contextIndex.set([index.start, index.end] as TxtSlice);
             if (isSentence) {
