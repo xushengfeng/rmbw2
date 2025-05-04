@@ -165,6 +165,11 @@ type AllData = {
     logExTrans: object;
 };
 
+type CacheData = {
+    transCache: object;
+    lijuCache: object;
+};
+
 // data
 
 const hyphenChar = "·";
@@ -1810,20 +1815,15 @@ async function getIPA(word: string) {
         .join(",");
 }
 
-async function toAllData() {
-    const l: AllData = {
-        bookshelf: {},
-        sections: {},
-        cards: {},
-        words: {},
-        spell: {},
-        card2word: {},
-        card2sentence: {},
-        actions: {},
-        logExTrans: {},
-    };
-    for (const storeName in allData2Store) {
-        await allData2Store[storeName].iterate((v, k) => {
+async function toAllData(withCache: true): Promise<AllData & CacheData>;
+async function toAllData(withCache?: false): Promise<AllData>;
+async function toAllData(withCache = false) {
+    const l: Record<string, object> = {};
+    const stores = withCache ? { ...allData2Store, ...allDataCache } : allData2Store;
+    for (const [storeName, store] of Object.entries(stores)) {
+        await store.iterate((v, k) => {
+            // @ts-ignore
+            if (!l[storeName]) l[storeName] = {};
             // @ts-ignore
             l[storeName][k] = v;
         });
@@ -1842,7 +1842,7 @@ async function toAllData() {
     }
     return l;
 }
-function formatAllData(l: AllData) {
+function formatAllData(l: AllData | (AllData & CacheData)) {
     return jsonStringify(l, (path) => {
         if (path.length === 2 && (path[0] === "cards" || path[0] === "spell")) {
             return true;
@@ -1860,7 +1860,11 @@ function formatAllData(l: AllData) {
     });
 }
 async function getAllData() {
-    const l = await toAllData();
+    const l = await toAllData(false);
+    return formatAllData(l);
+}
+async function getAllDataWithCache() {
+    const l = await toAllData(true);
     return formatAllData(l);
 }
 
@@ -1885,8 +1889,9 @@ function jsonStringify(value: unknown, unBr: (path: string[]) => boolean) {
 
     function w(value: object, l: string[]) {
         const str: string[] = [];
-        for (const [i, v] of Object.entries(value)) {
-            const path = l.concat(i);
+        for (const [_i, v] of Object.entries(value)) {
+            const i = _i.replaceAll("\t", "\\t").replaceAll("\n", "\\n").replaceAll('"', '\\"');
+            const path = l.concat(_i);
             if (typeof v === "object" && v?.constructor === Object) {
                 const isBr = !unBr(path);
                 if (isBr) {
@@ -6965,7 +6970,7 @@ async function saveSortOnlineDics() {
     await setting.setItem(onlineDicsPath, dl);
 }
 
-async function setAllData(json: AllData, textId?: string) {
+async function setAllData(json: AllData | (AllData & CacheData), textId?: string) {
     if (isSetData) return;
     isSetData = true;
     const tip = txt("正在更新……");
@@ -6989,8 +6994,8 @@ async function setAllData(json: AllData, textId?: string) {
         }
     }
     const wrongL: { [name: string]: { n: number; o: number } } = {};
-    for (const storeName in allData2Store) {
-        const oldLength = await allData2Store[storeName].length();
+    for (const [storeName, store] of Object.entries(allData2Store)) {
+        const oldLength = await store.length();
         // @ts-ignore
         const newLength = Object.keys(json[storeName] ?? {}).length;
         if (oldLength > 10 && newLength < 0.5 * oldLength) {
@@ -7011,10 +7016,13 @@ async function setAllData(json: AllData, textId?: string) {
             return;
         }
     }
-    for (const storeName in allData2Store) {
-        await allData2Store[storeName].clear();
+    const stores = { ...allData2Store, ...allDataCache };
+    for (const [storeName, store] of Object.entries(stores)) {
         // @ts-ignore
-        await allData2Store[storeName].setItems(json[storeName]);
+        if (!json[storeName]) continue;
+        await store.clear();
+        // @ts-ignore
+        await store.setItems(json[storeName]);
     }
     await updataTextId(textId || "");
     requestIdleCallback(() => {
@@ -7071,7 +7079,7 @@ const transCache = localForage.createInstance<string>({ name: "aiCache", storeNa
 const ttsCache = localForage.createInstance<{ blob: Blob; data: D }>({ name: "aiCache", storeName: "tts" });
 const lijuCache = localForage.createInstance<string[]>({ name: "aiCache", storeName: "liju" });
 
-const allData2Store: { [key: string]: LocalForage } = {
+const allData2Store: { [key in keyof AllData]: LocalForage } = {
     bookshelf: bookshelfStore,
     sections: sectionsStore,
     cards: cardsStore,
@@ -7082,6 +7090,11 @@ const allData2Store: { [key: string]: LocalForage } = {
     actions: cardActionsStore,
     logExTrans: exTransLog,
 } as { [key in keyof AllData]: LocalForage };
+
+const allDataCache: { [key in keyof CacheData]: LocalForage } = {
+    transCache: transCache,
+    lijuCache: lijuCache,
+} as { [key in keyof CacheData]: LocalForage };
 
 const studyLan = ((await setting.getItem("lan.learn")) as string) || "en";
 
@@ -7593,7 +7606,7 @@ const asyncEl = view().add([
     ele("h2").add("数据"),
     view().add([
         button("导出数据").on("click", async () => {
-            const data = await getAllData();
+            const data = await getAllDataWithCache();
             download(data, rmbwJsonName);
         }),
         uploadDataEl,
@@ -7684,7 +7697,7 @@ const asyncEl = view().add([
                     putToast(txt("已是最新"));
                     return;
                 }
-                const data = JSON.parse(webdata) as AllData;
+                const data = JSON.parse(webdata) as AllData & CacheData;
                 setAllData(data);
             } catch (error) {
                 putToast(txt("下载失败"), 6000);
@@ -7694,8 +7707,7 @@ const asyncEl = view().add([
         button("↑").on("click", async () => {
             putToast(txt("上传开始"));
             try {
-                const x = await toAllData();
-                await uploadServer(formatAllData(x), rmbwGithub1);
+                await uploadServer(await getAllDataWithCache(), rmbwGithub1);
                 putToast(txt("上传成功"));
             } catch (error) {
                 putToast(txt("上传失败"), 6000);
@@ -8224,8 +8236,7 @@ if (await setting.getItem(ServerConfigPath.url)) {
             requestIdleCallback(async () => {
                 putToast(txt("上传开始"));
                 try {
-                    const x = await toAllData();
-                    await uploadServer(formatAllData(x), rmbwGithub1);
+                    await uploadServer(await getAllDataWithCache(), rmbwGithub1);
                     putToast(txt("上传成功"));
                 } catch (error) {}
             }),
