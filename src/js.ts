@@ -1498,6 +1498,44 @@ function analyzeMorphemes(components: string[], target: string) {
     return r;
 }
 
+function sortRootChanges(root: string, l: { t: string; morphems: string[] }[]) {
+    l.push({ t: root, morphems: [root] });
+    function smallInclude(a: string[], b: string[]): [boolean, number] {
+        const [long, short] = [a, b];
+        for (let start = 0; start <= long.length - short.length; start++) {
+            for (let s = 0; s < short.length; s++) {
+                if (long[start + s] !== short[s]) break;
+                if (s === short.length - 1) {
+                    if (start === 0 && long.length === short.length) return [false, 0];
+                    return [true, start];
+                }
+            }
+        }
+        return [false, 0];
+    }
+
+    const c2p = new Map<(typeof l)[number], { p: (typeof l)[number]; index: number }>();
+
+    for (const a of l) {
+        for (const b of l) {
+            const [is, index] = smallInclude(a.morphems, b.morphems);
+            if (is) {
+                if (c2p.has(a)) {
+                    const x = c2p.get(a)!;
+                    const [is2] = smallInclude(b.morphems, x.p.morphems);
+                    if (is2) {
+                        c2p.set(a, { p: b, index: index });
+                    }
+                } else {
+                    c2p.set(a, { p: b, index });
+                }
+            }
+        }
+    }
+
+    return c2p;
+}
+
 async function getWordsScope() {
     const books = getSelectBooks(reviewScope);
     const ignore = await getIgnoreWords();
@@ -3127,24 +3165,60 @@ async function showWordBook(book: Book, s: Section) {
             }
 
             const rootsEl = view("x")
-                .style({ gap: "8px" })
+                .style({ gap: "8px", overflowX: "auto" })
                 .add(
                     roots.concat([`(${item.text})`]).map((i) => {
                         const t = i.slice(1, -1);
                         const rl = view().style({ maxHeight: "180px", overflow: "auto" });
                         const r = txt(t).on("click", () => {
-                            rl.clear().add(
-                                etymology.roots
-                                    .get(i)
-                                    ?.filter((x) => x !== item.text)
-                                    .map((i) => ({ v: ignoreWords.has(i) ? 1 : words.has(i) ? 0.5 : 0, t: i }))
-                                    .toSorted((a, b) => b.v - a.v)
-                                    .map((i) =>
-                                        view()
-                                            .add(i.t)
-                                            .class({ 1: "ignore", 0.5: "learn" }[i.v] || ""),
-                                    ),
-                            );
+                            function learnClass(t: string) {
+                                return ignoreWords.has(t) ? "ignore" : words.has(t) ? "learn" : "";
+                            }
+
+                            const roots =
+                                etymology.roots.get(i)?.map((i) => ({
+                                    t: i,
+                                    morphems: etymologyParse(etymology.words.get(i) ?? "").map((i) => i.t) ?? [],
+                                })) ?? [];
+                            const rootChanges = sortRootChanges(t, roots);
+
+                            const rootEl = view("x").style({ gap: "4px" });
+                            const elMap = new Map<string, { m: ElType<HTMLElement>; c: ElType<HTMLElement> }>();
+                            for (const r of roots) {
+                                const m = view();
+                                const p = rootChanges.get(r);
+                                const xmor = p
+                                    ? [
+                                          ...r.morphems.slice(0, p.index),
+                                          p.p.t,
+                                          ...r.morphems.slice(p.index + p.p.morphems.length),
+                                      ]
+                                    : r.morphems;
+
+                                m.add([
+                                    txt(r.t).class(learnClass(r.t)),
+                                    view("x")
+                                        .style({ gap: "4px" })
+                                        .add(analyzeMorphemes(xmor, r.t).map((i) => showDiff(i)))
+                                        .on("click", () => {
+                                            console.log(xmor, p, r);
+                                        }),
+                                ]);
+                                const c = view("y").style({ gap: "4px" });
+                                const el = view("x").style({ gap: "8px" }).add([m, c]);
+                                elMap.set(r.t, { m: el, c: c });
+                            }
+
+                            rootEl.add(elMap.get(t)?.m);
+
+                            for (const [k, v] of rootChanges.entries()) {
+                                const pel = elMap.get(v.p.t);
+                                const el = elMap.get(k.t);
+                                if (!pel || !el) continue;
+                                pel.c.add(el.m);
+                            }
+
+                            rl.clear().add(rootEl);
                         });
 
                         return etymology.roots.has(i) ? view("y").add([r, rl]) : null;
