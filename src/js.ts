@@ -7759,6 +7759,18 @@ const asyncEl = view().add([
                 throw error;
             }
         }),
+        button("↓↓↓").on("click", async () => {
+            putToast(txt("下载开始"));
+            try {
+                const webdata = await downloadServer(rmbwGithub1, true);
+                if (!webdata) return;
+                const data = JSON.parse(webdata) as AllData & CacheData;
+                setAllData(data);
+            } catch (error) {
+                putToast(txt("下载失败"), 6000);
+                throw error;
+            }
+        }),
         button("↑").on("click", async () => {
             putToast(txt("上传开始"));
             try {
