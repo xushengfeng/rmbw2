@@ -8278,7 +8278,7 @@ if (await setting.getItem(ServerConfigPath.url)) {
         const webdata = await downloadServer(rmbwGithub1);
         if (webdata) {
             const data = JSON.parse(webdata) as AllData;
-            setAllData(data);
+            await setAllData(data);
         } else {
             putToast(txt("本地是最新的"));
         }
