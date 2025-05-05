@@ -7139,13 +7139,14 @@ const etymology = (await etymologyStore.getItem("en")) || {
     roots: new Map<string, string[]>(),
 };
 
-const fsrsWordW = JSON.parse((await setting.getItem("fsrs.word.w")) || "{}") as number[];
-const fsrsSpellW = JSON.parse((await setting.getItem("fsrs.spell.w")) || "{}") as number[];
-const fsrsSenW = JSON.parse((await setting.getItem("fsrs.sen.w")) || "{}") as number[];
+const fsrsWordW = JSON.parse((await setting.getItem("fsrs.word.w")) || "[]") as number[];
+const fsrsSpellW = JSON.parse((await setting.getItem("fsrs.spell.w")) || "[]") as number[];
+const fsrsSenW = JSON.parse((await setting.getItem("fsrs.sen.w")) || "[]") as number[];
+console.log(fsrsWordW, fsrsSpellW, fsrsSenW);
 
-const fsrs = new FSRS(generatorParameters(fsrsWordW?.length === 17 ? { w: fsrsWordW } : {}));
-const fsrsSpell = new FSRS(generatorParameters(fsrsSpellW?.length === 17 ? { w: fsrsSpellW } : {}));
-const fsrsSen = new FSRS(generatorParameters(fsrsSenW?.length === 17 ? { w: fsrsSenW } : {}));
+const fsrs = new FSRS(generatorParameters({ w: fsrsWordW }));
+const fsrsSpell = new FSRS(generatorParameters({ w: fsrsSpellW }));
+const fsrsSen = new FSRS(generatorParameters({ w: fsrsSenW }));
 
 const maxReviewCount = Number((await setting.getItem("review.maxCount")) || "30");
 
