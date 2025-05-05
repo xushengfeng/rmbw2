@@ -1761,7 +1761,8 @@ async function saveDic(dic: object) {
 async function searchWord(words: Set<string>) {
     const result = new Map<string, Set<{ bid: string; sid: string; index: [number, number] }>>();
 
-    const segmenter = new Segmenter(studyLan, { granularity: "word" });
+    const graSegmenter = new Segmenter(studyLan, { granularity: "grapheme" });
+    const wordSegmenter = new Segmenter(studyLan, { granularity: "word" });
 
     const book = new Map<string, Book>();
     const s2b = new Map<string, string>();
@@ -1776,6 +1777,7 @@ async function searchWord(words: Set<string>) {
         if (!bid) return;
         const b = book.get(bid);
         if (!(b && b.type === "text")) return;
+        const segmenter = b.wordSplit === "grapheme" ? graSegmenter : wordSegmenter;
         const s = Array.from(segmenter.segment(v.text)).filter((i) => i.isWordLike !== false);
         for (const w of s) {
             const word = w.segment.toLocaleLowerCase();
