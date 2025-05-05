@@ -161,11 +161,13 @@ if (await exists(join(BASE_DIR, ".git"))) {
         async () => {
             if (new Date().getHours() % 3 === 0 && new Date().getHours() !== lastHour) {
                 lastHour = new Date().getHours();
-                const gitAdd = new Deno.Command(BASE_DIR, {
-                    args: ["git", "add", "."],
+                const gitAdd = new Deno.Command("git", {
+                    args: ["add", "."],
+                    cwd: BASE_DIR,
                 });
-                const gitCommit = new Deno.Command(BASE_DIR, {
-                    args: ["git", "commit", "-m", "auto commit"],
+                const gitCommit = new Deno.Command("git", {
+                    args: ["commit", "-m", "auto commit"],
+                    cwd: BASE_DIR,
                 });
 
                 await gitAdd.output();
