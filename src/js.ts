@@ -2038,17 +2038,19 @@ async function getServer() {
 
 async function uploadServer(data: string, fileName: string) {
     const config = await getServer();
-    await fetch(config.url, {
-        method: "POST",
-        body: JSON.stringify({
-            action: "upload",
-            dir: config.path,
-            filename: fileName,
-            data: data,
-            version: config.version,
-        }),
-    });
-    setting.setItem(ServerConfigPath.versionChanged, false);
+    const r = await (
+        await fetch(config.url, {
+            method: "POST",
+            body: JSON.stringify({
+                action: "upload",
+                dir: config.path,
+                filename: fileName,
+                data: data,
+                version: config.version,
+            }),
+        })
+    ).json();
+    if (r.type === "newer") setting.setItem(ServerConfigPath.versionChanged, false);
 }
 
 async function downloadServer(fileName: string, force: true): Promise<string>;
@@ -2066,10 +2068,13 @@ async function downloadServer(fileName: string, force = false) {
             }),
         })
     ).json();
-    if (data.version) {
+    if (data.type === "newer") {
         setting.setItem(ServerConfigPath.versionChanged, false);
         setting.setItem(ServerConfigPath.versionBase, data.version.base);
         setting.setItem(ServerConfigPath.versionUid, data.version.uid);
+    }
+    if (data.type === "conflict") {
+        putToast(txt("版本冲突"), 6000);
     }
     if (data.data || force) {
         console.log(data);

@@ -5,6 +5,10 @@ type Version = { base: number; uid: string };
 
 const BASE_DIR = "./storage";
 
+const jsonHeaders = {
+    "Content-Type": "application/json",
+};
+
 const logs: { time: string; type: "download" | "upload"; dir: string; version: Version }[] = [];
 
 async function getVersion(dir: string): Promise<Version> {
@@ -90,8 +94,12 @@ const handler = async (req: Request): Promise<Response> => {
 
                 const versionType = checkVersion(oldVersion, version);
 
+                const returnJson = { type: versionType };
+
+                const returnResponse = new Response(JSON.stringify(returnJson), { status: 200, headers: jsonHeaders });
+
                 if (versionType === "same") {
-                    return new Response("No changes detected, file not uploaded", { status: 400 });
+                    return returnResponse;
                 }
 
                 if (versionType === "newer") {
@@ -101,19 +109,25 @@ const handler = async (req: Request): Promise<Response> => {
 
                     addLog("upload", dir, version);
 
-                    return new Response("File uploaded successfully", { status: 201 });
+                    return returnResponse;
                 }
 
                 if (versionType === "older") {
-                    return new Response("Web file is newer than local", { status: 400 });
+                    return returnResponse;
                 }
 
                 if (versionType === "conflict") {
-                    return new Response("File conflict", { status: 400 });
+                    return returnResponse;
                 }
             }
             if (action === "download") {
                 const webVersion = await getVersion(dir);
+
+                const returnResponse = (data: string | null) =>
+                    new Response(JSON.stringify({ data: data, version: webVersion, type: versionType }), {
+                        status: 200,
+                        headers: jsonHeaders,
+                    });
 
                 const versionType = checkVersion(version, webVersion);
                 if (versionType === "newer") {
@@ -121,20 +135,14 @@ const handler = async (req: Request): Promise<Response> => {
                     if (fileContent !== null) {
                         addLog("download", dir, webVersion);
 
-                        return new Response(JSON.stringify({ data: fileContent, version: webVersion }), {
-                            status: 200,
-                            headers: { "Content-Type": "application/json" },
-                        });
+                        return returnResponse(fileContent);
                     }
                     return new Response("File not found", { status: 404 });
                 }
                 if (versionType === "conflict") {
-                    return new Response("File conflict", { status: 400 });
+                    return returnResponse(null);
                 }
-                return new Response(JSON.stringify({ data: null, version: webVersion }), {
-                    status: 200,
-                    headers: { "Content-Type": "application/json" },
-                });
+                return returnResponse(null);
             }
             return new Response("Invalid action", { status: 400 });
         } catch (err) {
