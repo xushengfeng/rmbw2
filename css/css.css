@@ -132,6 +132,7 @@ input {
     color: var(--color);
     border: none;
     border-bottom: 1px solid var(--color);
+    max-width: 100%;
 }
 
 select {
@@ -775,7 +776,7 @@ div:has(> .translate) > :not(.translate) {
 }
 
 .note_dialog {
-    margin: 3rem;
+    margin: 8px;
     width: auto;
     height: auto;
     display: flex;

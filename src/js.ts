@@ -5719,13 +5719,7 @@ function addP(
     });
     const div = ele("dialog")
         .class(NOTEDIALOG)
-        .add([
-            pEl,
-            textEl,
-            view()
-                .style({ display: "flex" })
-                .add([...aiB, spacer(), okEl]),
-        ]);
+        .add([pEl, textEl, view("x", "wrap").add([...aiB, spacer(), okEl])]);
     textEl.on("keydown", (e) => {
         if (e.key === "Enter" && e.shiftKey) {
             e.preventDefault();
