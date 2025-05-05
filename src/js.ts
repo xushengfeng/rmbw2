@@ -5769,9 +5769,6 @@ function aiButtons(textEl: ReturnType<typeof textarea>, word: string, context: s
         button("基本意思").on("click", async () => {
             setText(wordAiText.mean((await wordAi.mean(studyLan, "zh").run({ word, context }).result) as any));
         }),
-        button("音标").on("click", async () => {
-            setText(await getIPA(word));
-        }),
         button("emoji").on("click", async () => {
             setText(wordAiText.meanEmoji((await wordAi.meanEmoji().run({ word }).result) as any));
         }),
