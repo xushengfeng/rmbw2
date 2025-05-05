@@ -179,6 +179,6 @@ if (await exists(join(BASE_DIR, ".git"))) {
                 }
             }
         },
-        1000 * 60 * 60,
+        1000 * 60 * 5,
     );
 }
