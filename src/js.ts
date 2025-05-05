@@ -3561,15 +3561,28 @@ async function searchWordBar(words: string[]) {
     for (const [w, v] of r) {
         wordList.add(
             txt(w).on("click", () => {
+                const xx = Map.groupBy(v, (i) => [i.bid, i.sid].join("-"));
                 bookList.clear().add(
-                    Array.from(v).map((x) => {
-                        const el = view().on("click", async () => {
-                            const book = await getBooksById(x.bid);
-                            if (!book) return;
-                            await showBook(book, x.sid);
-                            jumpToMark(x.index, true);
-                        });
-                        getTitleEl(x.bid, x.sid).then((l) => el.add(l));
+                    Array.from(xx.entries()).map(([_, x]) => {
+                        const el = view("x", "wrap").style({ borderBottom: "1px solid #ccc" });
+                        view("x", "wrap")
+                            .style({ gap: "4px" })
+                            .addInto(el)
+                            .add(
+                                x.map((x, index) =>
+                                    view()
+                                        .style({ cursor: "pointer", minWidth: "1em" })
+                                        .add(String(index + 1))
+                                        .on("click", async () => {
+                                            const book = await getBooksById(x.bid);
+                                            if (!book) return;
+                                            await showBook(book, x.sid);
+                                            jumpToMark(x.index, true);
+                                        }),
+                                ),
+                            );
+
+                        getTitleEl(x[0].bid, x[0].sid).then((l) => el.add(l));
                         return el;
                     }),
                 );
