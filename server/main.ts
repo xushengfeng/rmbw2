@@ -5,6 +5,8 @@ type Version = { base: number; uid: string };
 
 const BASE_DIR = "./storage";
 
+const logs: { time: string; type: "download" | "upload"; dir: string; version: Version }[] = [];
+
 async function getVersion(dir: string): Promise<Version> {
     const versionFilePath = join(BASE_DIR, dir, ".version");
     if (await exists(versionFilePath)) {
@@ -55,6 +57,16 @@ async function setFile(dir: string, filename: string, data: string): Promise<voi
     await Deno.writeTextFile(filePath, data);
 }
 
+function addLog(t: "download" | "upload", dir: string, version: Version) {
+    console.log(`${new Date().toLocaleString()}  ${t} ${dir}    ${version.base} ${version.uid}`);
+    logs.push({
+        time: new Date().toLocaleString(),
+        type: t,
+        dir,
+        version,
+    });
+}
+
 const handler = async (req: Request): Promise<Response> => {
     if (req.method === "POST") {
         try {
@@ -87,7 +99,7 @@ const handler = async (req: Request): Promise<Response> => {
 
                     await setVersion(dir, version);
 
-                    console.log(`File ${filename} uploaded to ${dir} with version ${JSON.stringify(version)}`);
+                    addLog("upload", dir, version);
 
                     return new Response("File uploaded successfully", { status: 201 });
                 }
@@ -107,9 +119,7 @@ const handler = async (req: Request): Promise<Response> => {
                 if (versionType === "newer") {
                     const fileContent = await getFile(dir, filename);
                     if (fileContent !== null) {
-                        console.log(
-                            `File ${filename} downloaded from ${dir} with version ${JSON.stringify(webVersion)}`,
-                        );
+                        addLog("download", dir, webVersion);
 
                         return new Response(JSON.stringify({ data: fileContent, version: webVersion }), {
                             status: 200,
@@ -132,7 +142,20 @@ const handler = async (req: Request): Promise<Response> => {
             return new Response("Invalid request", { status: 400 });
         }
     } else if (req.method === "GET") {
-        return new Response("Server is running", { status: 200 });
+        const dirs = await Promise.all(
+            Deno.readDirSync(BASE_DIR)
+                .filter((i) => i.name !== ".git")
+                .map(async (file) => ({ name: file.name, version: await getVersion(file.name) })),
+        );
+
+        return new Response(
+            `Server is running\n\n${dirs
+                .map((i) => `${i.name}    ${i.version.base} ${i.version.uid}`)
+                .join(
+                    "\n",
+                )}\n\n${logs.map((i) => `${i.time}  ${i.type} ${i.dir}    ${i.version.base} ${i.version.uid}`).join("\n")}`,
+            { status: 200 },
+        );
     } else {
         return new Response("Method not allowed", { status: 405 });
     }
