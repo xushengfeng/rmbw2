@@ -3574,9 +3574,11 @@ async function searchWordBar(words: string[]) {
                                         .style({ cursor: "pointer", minWidth: "1em" })
                                         .add(String(index + 1))
                                         .on("click", async () => {
-                                            const book = await getBooksById(x.bid);
-                                            if (!book) return;
-                                            await showBook(book, x.sid);
+                                            if (nowBook.sections !== x.sid) {
+                                                const book = await getBooksById(x.bid);
+                                                if (!book) return;
+                                                await showBook(book, x.sid);
+                                            }
                                             jumpToMark(x.index, true);
                                         }),
                                 ),
