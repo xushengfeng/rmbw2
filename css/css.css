@@ -158,13 +158,9 @@ option {
 textarea {
     outline: none;
     background-color: #0000;
-    color: var(--color);
-    border: none;
-    padding: 0;
 }
 
-[popover],
-dialog {
+:is([popover], dialog) {
     color: var(--color);
     background-color: var(--bg1);
     backdrop-filter: var(--blur);
@@ -173,7 +169,7 @@ dialog {
     border-radius: calc(1rem + var(--border-radius));
     outline: none;
 }
-[popover] {
+:is([popover]) {
     border: 1px solid var(--color);
     transition: var(--transition) allow-discrete;
 }
@@ -428,6 +424,16 @@ body {
     }
     & > textarea {
         height: calc(100dvh - 96px);
+    }
+    & h1 {
+        font-weight: bolder;
+        font-size: 1.8em;
+    }
+    & h2 {
+        font-size: 1.6em;
+    }
+    & > div > p {
+        margin-block: 1em;
     }
     &:has(.words_book_top) {
         & p {
@@ -891,6 +897,7 @@ div:has(> .translate) > :not(.translate) {
     & > a {
         color: var(--color);
         flex-shrink: 0;
+        text-decoration: solid underline;
     }
 }
 

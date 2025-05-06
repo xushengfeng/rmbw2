@@ -22,6 +22,7 @@ import {
     radioGroup,
     check,
     setProperties,
+    initDKH,
 } from "dkh-ui";
 
 import localforage from "localforage";
@@ -7171,6 +7172,8 @@ const maxReviewCount = Number((await setting.getItem("review.maxCount")) || "30"
 // ui
 
 if (import.meta.env.DEV) initDev();
+
+initDKH({ pureStyle: true });
 
 const bookStyle = ((await setting.getItem("style.default")) as typeof defaultBookStyle) || defaultBookStyle;
 
