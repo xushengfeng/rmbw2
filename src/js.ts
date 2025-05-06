@@ -6358,7 +6358,8 @@ async function showWordReview(x: { id: string; card: Card }, isAi: boolean) {
         const word = await card2word.getItem(x.id);
         if (word) {
             const d = await wordsStore.getItem(word);
-            for (const i of d?.means ?? []) {
+            const ms = d?.means ?? [];
+            for (const i of ms) {
                 if (i.card_id === x.id) {
                     const div = view().attr({ innerText: i.text });
                     dic.clear();
@@ -6366,6 +6367,10 @@ async function showWordReview(x: { id: string; card: Card }, isAi: boolean) {
                     dic.add(div);
                     break;
                 }
+            }
+            const otherM = view("y").style({ gap: "4px", opacity: 0.5, marginTop: "16px" }).addInto(dic);
+            for (const i of ms.filter((i) => i.card_id !== x.id)) {
+                otherM.add(await disCard2(i));
             }
         }
         spellAnimate(wordEl.el);
