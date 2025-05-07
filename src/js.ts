@@ -420,25 +420,6 @@ const wordAi = {
         });
         return f;
     },
-    fix: () => {
-        const f = new autoFun.def({
-            input: { word: "string 单词" },
-            output: { list: `{ type: "prefix" | "root" | "suffix"; t: string; dis: string }[]词根词缀列表` },
-            script: ["分析word词根词缀", "根据测试例,依次将词根词缀添加到list"],
-            test: {
-                input: "unbelievably",
-                output: {
-                    list: [
-                        { type: "prefix", t: "un", dis: "否定" },
-                        { type: "root", t: "believe", dis: "相信" },
-                        { type: "suffix", t: "able", dis: "能" },
-                        { type: "suffix", t: "ly", dis: "副词" },
-                    ],
-                },
-            },
-        });
-        return f;
-    },
     etymology: () => {
         const f = new autoFun.def({
             input: { word: "string 单词" },
@@ -5782,22 +5763,7 @@ function aiButtons(textEl: ReturnType<typeof textarea>, word: string, context: s
     ];
 }
 function aiButtons1(textEl: ReturnType<typeof textarea>, word: string) {
-    function setText(text: string) {
-        textEl.el.setRangeText(text);
-    }
-    return [
-        button("词根词缀").on("click", async () => {
-            setText(wordAiText.fix((await wordAi.fix().run({ word }).result) as any));
-        }),
-        button("音节分词").on("click", async () => {
-            setText(await hyphenate(word, { hyphenChar }));
-        }),
-        button("词源").on("click", async () => {
-            setText(wordAiText.etymology((await wordAi.fix().run({ word }).result) as any));
-        }),
-        tmpAiB(textEl, `$这里有个单词${word}`),
-        dicB(textEl, word),
-    ];
+    return [tmpAiB(textEl, `$这里有个单词${word}`), dicB(textEl, word)];
 }
 
 function aiButtons2(textEl: ReturnType<typeof textarea>, sentence: string) {
