@@ -895,7 +895,7 @@ div:has(> .translate) > :not(.translate) {
     gap: 4px;
     overflow-x: auto;
     & > a {
-        color: var(--color);
+        color: color-mix(in srgb, transparent 60%, var(--color));
         flex-shrink: 0;
         text-decoration: solid underline;
     }

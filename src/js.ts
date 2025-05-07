@@ -6362,7 +6362,7 @@ async function showWordReview(x: { id: string; card: Card }, isAi: boolean) {
             const ms = d?.means ?? [];
             for (const i of ms) {
                 if (i.card_id === x.id) {
-                    const div = view().attr({ innerText: i.text });
+                    const div = view().attr({ innerText: i.text }).style({ fontSize: "1.2em", margin: "16px" });
                     dic.clear();
                     dic.add(onlineDicL(word));
                     dic.add(div);
