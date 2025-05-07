@@ -1327,6 +1327,15 @@ div:has(> .translate) > :not(.translate) {
     box-sizing: border-box;
     width: 100dvw;
 
+    & h2 {
+        margin-block: 1em;
+        font-size: 1.2em;
+    }
+
+    & button {
+        background: var(--bg);
+    }
+
     & > .setting_dic {
         & ul {
             padding-left: 0;
