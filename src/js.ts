@@ -6292,13 +6292,23 @@ async function showReview(x: { id: string; card: Card }, type: Review) {
 }
 async function crContext(word: record, id: string, isAi?: boolean) {
     const context = view();
-    if (!word) return context;
+    const r = { el: context, text: "" };
+    if (!word) return r;
     const ai = isAi && aiContexts[id]?.text;
     if (ai) context.add(await aiContext(id));
     const i = word.means.find((x) => x.card_id === id);
-    if (!i) return context;
+    if (!i) return r;
     context.add((await dicSentences(i.contexts.toReversed())).class(ai ? "sen_under_ai" : ""));
-    return context;
+    return {
+        el: context,
+        text:
+            ai ||
+            i.contexts
+                .toReversed()
+                .slice(0, 2)
+                .map((i) => i.text)
+                .join("\n"),
+    };
 }
 async function aiContext(id: string) {
     const context = view();
@@ -6320,7 +6330,7 @@ async function showWordReview(x: { id: string; card: Card }, isAi: boolean) {
     }
     play(wordRecord.word);
     const div = view().style({ alignItems: "center" });
-    const context = await crContext(wordRecord, x.id, isAi);
+    const { el: context, text: contextText } = await crContext(wordRecord, x.id, isAi);
     async function showAnswer() {
         const word = await card2word.getItem(x.id);
         if (word) {
@@ -6348,20 +6358,15 @@ async function showWordReview(x: { id: string; card: Card }, isAi: boolean) {
         buttons.finish();
     };
     const dic = view().on("click", reviewHotkey.show.f);
-    const buttons = getReviewCardButtons(
-        x.id,
-        x.card,
-        context.el.children[0].textContent || context.el.children[1].textContent || "", // ai例句优先
-        async (_, first) => {
-            if (first) {
-                showAnswer();
-            } else {
-                lijuCache.removeItem(x.id);
-                const next = await nextDue(reviewType);
-                showReview(next, reviewType);
-            }
-        },
-    );
+    const buttons = getReviewCardButtons(x.id, x.card, contextText, async (_, first) => {
+        if (first) {
+            showAnswer();
+        } else {
+            lijuCache.removeItem(x.id);
+            const next = await nextDue(reviewType);
+            showReview(next, reviewType);
+        }
+    });
 
     const wordEl = view()
         .add(wordid.split("").map((i) => txt(i)))
