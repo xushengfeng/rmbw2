@@ -1528,14 +1528,15 @@ function sortRootChanges(root: string, l: { t: string; morphems: string[] }[]) {
 async function getWordsScope() {
     const books = getSelectBooks(reviewScope);
     const ignore = await getIgnoreWords();
+    const infinityDue = getIsInfinityDue();
     const b = books.book;
-    if (books.word.length === 0) return { words: null, ignore, books: b };
+    if (books.word.length === 0) return { words: null, ignore, books: b, infinity: infinityDue };
     const words: string[] = [];
     for (const book of books.word) {
         const w = (await getSection(book))?.text.trim().split("\n") ?? [];
         words.push(...w);
     }
-    return { words, ignore: words.filter((i) => ignore.has(i)), books: b };
+    return { words, ignore: words.filter((i) => ignore.has(i)), books: b, infinity: infinityDue };
 }
 
 function filterWithScope(word: string, scope: string[] | null, exScope?: string[]) {
@@ -1555,7 +1556,7 @@ async function getFutureReviewDue(days: number, ...types: Review[]) {
 
     const dueL: Map<string, Card> = new Map();
     await cardsStore.iterate((card, k) => {
-        if (card.due.getTime() < now) {
+        if (card.due.getTime() < now || ws.infinity) {
             dueL.set(k, card);
         }
     });
@@ -1574,7 +1575,7 @@ async function getFutureReviewDue(days: number, ...types: Review[]) {
         });
     if (types.includes("spell")) {
         await spellStore.iterate((value, key) => {
-            if (value.due.getTime() < now) {
+            if (value.due.getTime() < now || ws.infinity) {
                 if (spellIgnore.el.value === "all")
                     if (filterWithScope(key, wordsScope)) spellList.push({ id: key, card: value });
                 if (spellIgnore.el.value === "exIgnore")
@@ -1596,24 +1597,9 @@ async function getFutureReviewDue(days: number, ...types: Review[]) {
 }
 async function getReviewDue(type: Review) {
     const now = new Date().getTime();
-    const wordList: { id: string; card: Card }[] = [];
-    const spellList: { id: string; card: Card }[] = [];
-    const sentenceList: { id: string; card: Card }[] = [];
-    for (const i of due.word) {
-        if (i.card.due.getTime() < now) {
-            wordList.push(i);
-        }
-    }
-    for (const i of due.spell) {
-        if (i.card.due.getTime() < now) {
-            spellList.push(i);
-        }
-    }
-    for (const i of due.sentence) {
-        if (i.card.due.getTime() < now) {
-            sentenceList.push(i);
-        }
-    }
+    const wordList = [...due.word];
+    const spellList = [...due.spell];
+    const sentenceList = [...due.sentence];
     for (const x of [wordList, spellList, sentenceList]) x.sort((a, b) => a.card.due.getTime() - b.card.due.getTime());
     if (reviewSortType === "学习")
         for (const x of [wordList, spellList, sentenceList])
@@ -4728,6 +4714,10 @@ function getSelectBooks(el: ElType<HTMLElement>) {
     };
 }
 
+function getIsInfinityDue() {
+    return reviewInfinity.gv;
+}
+
 function wordMarkChanged(w: Section["words"] = {}, init?: boolean) {
     console.log(w, Object.values(w).length);
     if (!init) {
@@ -6778,7 +6768,7 @@ async function renderCardDueAll() {
     });
     await spellStore.iterate((v, k: string) => {
         if (!filterWithScope(k, wordsScope.words)) return;
-        if (v.due.getTime() >= now) return;
+        if (v.due.getTime() >= now || !wordsScope.infinity) return;
         spellDue.push(v.due.getTime());
         spellP[v.state]++;
     });
@@ -6789,12 +6779,13 @@ async function renderCardDueAll() {
     const sentenceDue1: number[] = [];
     await cardsStore.iterate((v, k) => {
         const t = v.due.getTime();
-        if (wordDue.has(k) && t < now) {
+        const nowFilter = wordsScope.infinity || t < now;
+        if (wordDue.has(k) && nowFilter) {
             wordDue1.push(t);
             wordP[v.state]++;
             return;
         }
-        if (sentenceDue.includes(k) && t < now) {
+        if (sentenceDue.includes(k) && nowFilter) {
             sentenceDue1.push(t);
             sentenceP[v.state]++;
         }
@@ -7402,6 +7393,7 @@ const reviewAi = input("checkbox");
 reviewButtonsEl.add(label([reviewAi, "ai"]));
 
 const reviewScope = view();
+const reviewInfinity = label([check("inf"), "无限复习"]);
 const spellIgnore = select([
     { name: "全部", value: "all" },
     { name: "排除忽略词", value: "exIgnore" },
@@ -7424,6 +7416,7 @@ const reviewMoreEl = view()
         txt("过滤与排序"),
         view("y").add([
             reviewScope.style({ "max-height": "400px", overflow: "auto" }),
+            reviewInfinity,
             spellIgnore,
             reviewSortEl,
             button("🎲跳转到陌生文章").on("click", async () => {
