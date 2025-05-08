@@ -1536,12 +1536,17 @@ async function getWordsScope() {
         const w = (await getSection(book))?.text.trim().split("\n") ?? [];
         words.push(...w);
     }
-    return { words, ignore: words.filter((i) => ignore.has(i)), books: b, infinity: infinityDue };
+    return {
+        words: fillMutiSpell(new Set(words)),
+        ignore: fillMutiSpell(new Set(words.filter((i) => ignore.has(i)))),
+        books: b,
+        infinity: infinityDue,
+    };
 }
 
-function filterWithScope(word: string, scope: string[] | null, exScope?: string[]) {
+function filterWithScope(word: string, scope: Set<string> | null, exScope?: string[]) {
     if (exScope?.includes(word)) return false;
-    return !scope || scope.includes(word);
+    return !scope || scope.has(word);
 }
 
 async function getFutureReviewDue(days: number, ...types: Review[]) {
@@ -1582,7 +1587,7 @@ async function getFutureReviewDue(days: number, ...types: Review[]) {
                     if (filterWithScope(key, wordsScope, Array.from(ws.ignore)))
                         spellList.push({ id: key, card: value });
                 if (spellIgnore.el.value === "ignore")
-                    if (filterWithScope(key, Array.from(ws.ignore))) spellList.push({ id: key, card: value });
+                    if (filterWithScope(key, ws.ignore)) spellList.push({ id: key, card: value });
             }
         });
     }
@@ -6768,7 +6773,7 @@ async function renderCardDueAll() {
     });
     await spellStore.iterate((v, k: string) => {
         if (!filterWithScope(k, wordsScope.words)) return;
-        if (v.due.getTime() >= now || !wordsScope.infinity) return;
+        if (v.due.getTime() >= now && !wordsScope.infinity) return;
         spellDue.push(v.due.getTime());
         spellP[v.state]++;
     });
