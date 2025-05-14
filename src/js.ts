@@ -563,6 +563,14 @@ function time() {
     return new Date().getTime();
 }
 
+function sleep(ms: number) {
+    return new Promise((re) => {
+        setTimeout(() => {
+            re(null);
+        }, ms);
+    });
+}
+
 function getSetting(p: string) {
     if (!p) return "";
     return JSON.parse(localStorage.getItem(`setting/${p}`) as string);
@@ -6326,6 +6334,8 @@ async function showWordReview(x: { id: string; card: Card }, isAi: boolean) {
     play(wordRecord.word);
     const div = view().style({ alignItems: "center" });
     const { el: context, text: contextText } = await crContext(wordRecord, x.id, isAi);
+    let onlineDic = view();
+    const otherM = view("y").style({ gap: "4px", opacity: 0.5, marginTop: "16px" });
     async function showAnswer() {
         const word = await card2word.getItem(x.id);
         if (word) {
@@ -6335,12 +6345,13 @@ async function showWordReview(x: { id: string; card: Card }, isAi: boolean) {
                 if (i.card_id === x.id) {
                     const div = view().attr({ innerText: i.text }).style({ fontSize: "1.2em", margin: "16px" });
                     dic.clear();
-                    dic.add(onlineDicL(word));
+                    onlineDic = onlineDicL(word);
+                    dic.add(onlineDic);
                     dic.add(div);
                     break;
                 }
             }
-            const otherM = view("y").style({ gap: "4px", opacity: 0.5, marginTop: "16px" }).addInto(dic);
+            otherM.addInto(dic);
             for (const i of ms.filter((i) => i.card_id !== x.id)) {
                 otherM.add(await disCard2(i));
             }
@@ -6353,10 +6364,16 @@ async function showWordReview(x: { id: string; card: Card }, isAi: boolean) {
         buttons.finish();
     };
     const dic = view().on("click", reviewHotkey.show.f);
-    const buttons = getReviewCardButtons(x.id, x.card, contextText, async (_, first) => {
+    const buttons = getReviewCardButtons(x.id, x.card, contextText, async (type, first) => {
         if (first) {
             showAnswer();
         } else {
+            if (type === Rating.Again || type === Rating.Hard) {
+                onlineDic.remove();
+                context.clear();
+                otherM.clear();
+                await sleep(2000);
+            }
             lijuCache.removeItem(x.id);
             const next = await nextDue(reviewType);
             showReview(next, reviewType);
@@ -6603,13 +6620,6 @@ function spellDiffWord(rightWord: string, wrongWord: string) {
 }
 
 async function spellAnimate(el: HTMLElement) {
-    function sleep(ms: number) {
-        return new Promise((re) => {
-            setTimeout(() => {
-                re(null);
-            }, ms);
-        });
-    }
     for (const nel of Array.from(el.children) as HTMLElement[]) {
         nel.style.opacity = "0.6";
         nel.style.filter = "blur(2px)";
