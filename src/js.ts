@@ -6408,7 +6408,13 @@ function getReviewCardButtons(id: string, card: Card, readText: string, f?: (rat
                 let r = rating;
                 if (rating === Rating.Good && quickly) r = Rating.Easy;
                 await setReviewCard(id, card, r, finishTime - showTime);
-                if (f) f(r, false);
+                if (f) {
+                    for (const v of Object.values(reviewHotkey)) {
+                        v.f = () => {};
+                    }
+
+                    f(r, false);
+                }
                 return;
             }
             await firstClick(icon);
