@@ -1086,6 +1086,7 @@ div:has(> .translate) > :not(.translate) {
     & .main_word {
         text-align: center;
         transition: var(--transition);
+        font-size: 1.4em;
     }
 }
 .review_word > :nth-child(2) {
