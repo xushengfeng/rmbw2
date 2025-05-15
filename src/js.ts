@@ -6356,7 +6356,6 @@ async function showWordReview(x: { id: string; card: Card }, isAi: boolean) {
                 otherM.add(await disCard2(i));
             }
         }
-        spellAnimate(wordEl.el);
         context.query(".sen_under_ai")?.el.classList.remove("sen_under_ai");
     }
     reviewHotkey.show.f = () => {
@@ -6372,6 +6371,8 @@ async function showWordReview(x: { id: string; card: Card }, isAi: boolean) {
                 onlineDic.remove();
                 context.clear();
                 otherM.clear();
+                play(wordRecord.word);
+                await spellAnimate(wordEl.el);
                 await sleep(2000);
             }
             lijuCache.removeItem(x.id);
