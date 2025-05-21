@@ -6479,7 +6479,21 @@ async function showSpellReview(x: { id: string; card: Card }) {
         if (x.card.state === State.New) {
             input.add([inputWord, txt(word.slice(inputWord.length)).style({ opacity: "0.5" })]);
         } else if (x.card.state === State.Learning) {
-            input.add([inputWord, txt(word.slice(inputWord.length)).class(BLURWORD)]);
+            let matchW = wordSpells[0];
+            let matchLenght = 0;
+            for (let i = inputWord.length; i > 0; i--) {
+                const m = wordSpells.find((w) => w.startsWith(inputWord.slice(0, i)));
+                if (m) {
+                    matchW = m;
+                    matchLenght = i;
+                    break;
+                }
+            }
+            input.add([
+                inputWord.slice(0, matchLenght),
+                txt(matchW.slice(matchLenght, inputWord.length)).class(BLURWORD),
+                txt(matchW.slice(inputWord.length)).style({ color: "transparent" }),
+            ]);
         } else {
             input.attr({ innerText: inputWord || "|" });
         }
