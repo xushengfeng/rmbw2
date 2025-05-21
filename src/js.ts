@@ -6563,6 +6563,9 @@ async function showSpellReview(x: { id: string; card: Card }) {
             play(word);
             div.el.classList.add(SHOWSENWORD);
         }
+        if (button === "{bksp}") {
+            isPerfect = false;
+        }
         if (button === "{audio}") {
             // 发音
             play(word);
