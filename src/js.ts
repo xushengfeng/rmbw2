@@ -6476,8 +6476,9 @@ async function showSpellReview(x: { id: string; card: Card }) {
     }
     function inputContent(inputWord: string) {
         input.clear();
+        const inputTip = "|";
         if (x.card.state === State.New) {
-            input.add([inputWord, txt(word.slice(inputWord.length)).style({ opacity: "0.5" })]);
+            input.add([inputWord, txt(word.slice(inputWord.length)).class(BLURWORD)]);
         } else if (x.card.state === State.Learning) {
             let matchW = wordSpells[0];
             let matchLenght = 0;
@@ -6489,13 +6490,17 @@ async function showSpellReview(x: { id: string; card: Card }) {
                     break;
                 }
             }
-            input.add([
-                inputWord.slice(0, matchLenght),
-                txt(matchW.slice(matchLenght, inputWord.length)).class(BLURWORD),
-                txt(matchW.slice(inputWord.length)).style({ color: "transparent" }),
-            ]);
+            input.add(
+                inputWord
+                    ? [
+                          inputWord.slice(0, matchLenght),
+                          txt(matchW.slice(matchLenght, inputWord.length)).class(BLURWORD),
+                          txt(matchW.slice(inputWord.length)).style({ color: "transparent" }),
+                      ]
+                    : inputTip,
+            );
         } else {
-            input.attr({ innerText: inputWord || "|" });
+            input.attr({ innerText: inputWord || inputTip });
         }
     }
     spellCheckF = async (rawInputWord: string) => {
