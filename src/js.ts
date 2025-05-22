@@ -6382,9 +6382,7 @@ async function showWordReview(x: { id: string; card: Card }, isAi: boolean) {
         } else {
             if (type === Rating.Again || type === Rating.Hard) {
                 context.clear();
-                for (const el of dic.el.children) {
-                    if (el !== mainAnswer.el) el.remove();
-                }
+                dic.clear().add(mainAnswer);
                 play(wordRecord.word);
                 await spellAnimate(wordEl.el);
                 await sleep(2000);
