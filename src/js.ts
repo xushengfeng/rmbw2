@@ -3136,7 +3136,11 @@ async function showWordBook(book: Book, s: Section) {
             const etyEl = view("y");
             const x = etymology.words.get(item.text);
 
-            const roots = (x?.match(/\(\w+\)/g) || []) as string[];
+            const roots = x
+                ? etymologyParse(x)
+                      .filter((i) => i.type === "root")
+                      .map((i) => i.t)
+                : [];
             const base = x?.match(/\{(.*?)\}/)?.[1];
 
             const baseEl = view("x").style({ gap: "16px" });
@@ -3162,8 +3166,9 @@ async function showWordBook(book: Book, s: Section) {
             const rootsEl = view("x")
                 .style({ gap: "8px", overflowX: "auto" })
                 .add(
-                    roots.concat([`(${item.text})`]).map((i) => {
-                        const t = i.slice(1, -1);
+                    roots.concat([item.text]).map((i) => {
+                        const t = i;
+                        const k = `(${t})`;
                         const rl = view().style({ maxHeight: "180px", overflow: "auto" });
                         const r = txt(t).on("click", () => {
                             function learnClass(t: string) {
@@ -3171,7 +3176,7 @@ async function showWordBook(book: Book, s: Section) {
                             }
 
                             const roots =
-                                etymology.roots.get(i)?.map((i) => ({
+                                etymology.roots.get(k)?.map((i) => ({
                                     t: i,
                                     morphems: etymologyParse(etymology.words.get(i) ?? "").map((i) => i.t) ?? [],
                                 })) ?? [];
@@ -3216,7 +3221,7 @@ async function showWordBook(book: Book, s: Section) {
                             rl.clear().add(rootEl);
                         });
 
-                        return etymology.roots.has(i) ? view("y").add([r, rl]) : null;
+                        return etymology.roots.has(k) ? view("y").add([r, rl]) : null;
                     }),
                 );
 
