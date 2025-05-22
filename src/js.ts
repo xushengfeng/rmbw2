@@ -6339,6 +6339,7 @@ async function showWordReview(x: { id: string; card: Card }, isAi: boolean) {
     const { el: context, text: contextText } = await crContext(wordRecord, x.id, isAi);
     let mainAnswer = view();
     async function showAnswer() {
+        reviewHotkey.show.f = () => {};
         const word = await card2word.getItem(x.id);
         if (word) {
             const d = await wordsStore.getItem(word);
@@ -6373,7 +6374,6 @@ async function showWordReview(x: { id: string; card: Card }, isAi: boolean) {
     reviewHotkey.show.f = () => {
         showAnswer();
         buttons.finish();
-        reviewHotkey.show.f = () => {};
     };
     const dic = view().on("click", () => reviewHotkey.show.f());
     const buttons = getReviewCardButtons(x.id, x.card, contextText, async (type, first) => {
