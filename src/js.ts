@@ -6354,7 +6354,7 @@ async function showWordReview(x: { id: string; card: Card }, isAi: boolean) {
                     break;
                 }
             }
-            const roots = etymologyParse(word)
+            const roots = etymologyParse(etymology.words.get(word) ?? "")
                 .filter((i) => i.type === "root")
                 .map((i) => i.t);
             const rootsEl = getRootListUi(roots.concat(word), (t) => {
