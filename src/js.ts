@@ -6358,8 +6358,19 @@ async function showWordReview(x: { id: string; card: Card }, isAi: boolean) {
             const roots = etymologyParse(etymology.words.get(word) ?? "")
                 .filter((i) => i.type === "root")
                 .map((i) => i.t);
-            const rootsEl = getRootListUi(roots.concat(word), (t) => {
-                // t.class(ignoreWords.has(t.gv) ? "ignore" : words.has(t.gv) ? "learn" : "");
+            const rootsEl = getRootListUi(roots.concat(word), async (t) => {
+                if ((await getIgnoreWords()).has(t.gv)) {
+                    t.class("ignore");
+                } else {
+                    let c = "";
+                    for (const w of fillMutiSpell(new Set([t.gv]))) {
+                        if (await wordsStore.getItem(w)) {
+                            c = "learn";
+                            break;
+                        }
+                    }
+                    t.class(c);
+                }
             });
             rootsEl.addInto(dic);
 
