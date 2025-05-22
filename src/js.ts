@@ -6371,6 +6371,65 @@ async function showWordReview(x: { id: string; card: Card }, isAi: boolean) {
                     }
                     t.class(c);
                 }
+                t.on("click", async () => {
+                    const w = t.gv;
+                    const pEl = view()
+                        .attr({ popover: "auto" })
+                        .addInto()
+                        .on("toggle", (e) => {
+                            // @ts-ignore
+                            if (e.newState === "closed") {
+                                pEl.remove();
+                            }
+                        });
+
+                    play(w);
+                    pEl.clear();
+                    pEl.add(
+                        view("x").add([
+                            txt(w)
+                                .on("click", () => {
+                                    play(w);
+                                })
+                                .style({ fontWeight: "bolder" }),
+                        ]),
+                    );
+                    const books = await wordBooksByWord(w);
+                    const booksEl = view("x").style({ gap: "4px" });
+                    for (const i of books) {
+                        const bookN = (await getBooksById(i.book))?.name;
+                        const s = (await getSection(i.section))?.title;
+                        booksEl.add(txt(s).attr({ title: bookN }));
+                    }
+                    pEl.add(booksEl);
+
+                    const onlineList = onlineDicL(w);
+                    pEl.add(onlineList);
+
+                    let r: record | null = null;
+                    for (const i of fillMutiSpell(new Set([w]))) {
+                        r = await wordsStore.getItem(i);
+                        if (r) {
+                            break;
+                        }
+                    }
+
+                    if (r)
+                        for (const i of r.means) {
+                            const pel = view().add([view().add(await disCard2(i))]);
+                            pEl.add(pel);
+                            const reviewEl = view();
+                            pel.add(reviewEl);
+                            const card = await cardsStore.getItem(i.card_id);
+                            if (!card) return;
+
+                            const stateEl = txt(cardState(card.state));
+                            reviewEl.add(stateEl);
+                            if (card.due.getTime() < time()) stateEl.class(TODOMARK);
+                        }
+
+                    pEl.el.showPopover();
+                });
             });
             rootsEl.addInto(dic);
 
