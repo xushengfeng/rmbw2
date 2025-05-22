@@ -6337,8 +6337,7 @@ async function showWordReview(x: { id: string; card: Card }, isAi: boolean) {
     play(wordRecord.word);
     const div = view().style({ alignItems: "center" });
     const { el: context, text: contextText } = await crContext(wordRecord, x.id, isAi);
-    let onlineDic = view();
-    const otherM = view("y").style({ gap: "4px", opacity: 0.5, marginTop: "16px" });
+    let mainAnswer = view();
     async function showAnswer() {
         const word = await card2word.getItem(x.id);
         if (word) {
@@ -6347,8 +6346,9 @@ async function showWordReview(x: { id: string; card: Card }, isAi: boolean) {
             for (const i of ms) {
                 if (i.card_id === x.id) {
                     const div = view().attr({ innerText: i.text }).style({ fontSize: "1.2em", margin: "16px" });
+                    mainAnswer = div;
                     dic.clear();
-                    onlineDic = onlineDicL(word);
+                    const onlineDic = onlineDicL(word);
                     dic.add(onlineDic);
                     dic.add(div);
                     break;
@@ -6362,6 +6362,7 @@ async function showWordReview(x: { id: string; card: Card }, isAi: boolean) {
             });
             rootsEl.addInto(dic);
 
+            const otherM = view("y").style({ gap: "4px", opacity: 0.5, marginTop: "16px" });
             otherM.addInto(dic);
             for (const i of ms.filter((i) => i.card_id !== x.id)) {
                 otherM.add(await disCard2(i));
@@ -6380,9 +6381,10 @@ async function showWordReview(x: { id: string; card: Card }, isAi: boolean) {
             showAnswer();
         } else {
             if (type === Rating.Again || type === Rating.Hard) {
-                onlineDic.remove();
                 context.clear();
-                otherM.clear();
+                for (const el of dic.el.children) {
+                    if (el !== mainAnswer.el) el.remove();
+                }
                 play(wordRecord.word);
                 await spellAnimate(wordEl.el);
                 await sleep(2000);
