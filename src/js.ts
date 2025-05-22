@@ -6374,7 +6374,7 @@ async function showWordReview(x: { id: string; card: Card }, isAi: boolean) {
         buttons.finish();
         reviewHotkey.show.f = () => {};
     };
-    const dic = view().on("click", reviewHotkey.show.f);
+    const dic = view().on("click", () => reviewHotkey.show.f());
     const buttons = getReviewCardButtons(x.id, x.card, contextText, async (type, first) => {
         if (first) {
             showAnswer();
