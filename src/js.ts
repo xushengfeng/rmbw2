@@ -6457,6 +6457,8 @@ async function showWordReview(x: { id: string; card: Card }, isAi: boolean) {
                 play(wordRecord.word);
                 await spellAnimate(wordEl.el);
                 await sleep(2000);
+                reviewViewEl.clear();
+                await sleep(2000);
             }
             lijuCache.removeItem(x.id);
             const next = await nextDue(reviewType);
