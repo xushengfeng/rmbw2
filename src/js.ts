@@ -48,6 +48,7 @@ import Sortable from "sortablejs";
 import { encode } from "js-base64";
 
 import very_ok_svg from "../assets/icons/very_ok.svg";
+import half_ok_svg from "../assets/icons/half.ok.svg";
 import githubIcon from "../assets/other/Github.svg";
 
 type Book = {
@@ -6484,12 +6485,14 @@ function getReviewCardButtons(id: string, card: Card, readText: string, f?: (rat
     const showTime = new Date().getTime();
     let hasClick = false;
     let finishTime = showTime;
-    let quickly = false;
+    let quickly: "hard" | "good" | "easy" = "hard";
     const b = (rating: Rating, icon: ElType<HTMLElement>) => {
         reviewHotkey[rating].f = async () => {
             if (hasClick) {
                 let r = rating;
-                if (rating === Rating.Good && quickly) r = Rating.Easy;
+                if (rating === Rating.Good) {
+                    r = Rating.Easy;
+                }
                 await setReviewCard(id, card, r, finishTime - showTime);
                 if (f) {
                     for (const v of Object.values(reviewHotkey)) {
@@ -6506,17 +6509,26 @@ function getReviewCardButtons(id: string, card: Card, readText: string, f?: (rat
         const b = icon.on("click", reviewHotkey[rating].f);
         return b;
     };
+    function measureLevel(dt: number, baseDT: number): typeof quickly {
+        if (dt < baseDT + 800) {
+            return "easy";
+        }
+        if (dt < baseDT + 8000) {
+            return "good";
+        }
+        return "hard";
+    }
     async function firstClick(el?: ElType<HTMLElement>) {
         el?.class(BUTTONHIGHTLIGHT);
         hasClick = true;
         finishTime = time();
-        quickly = finishTime - showTime < (await getReadTime(readText)) + 800;
-        if (quickly) (goodB.el.querySelector("img") as HTMLImageElement).src = very_ok_svg;
+        quickly = measureLevel(finishTime - showTime, await getReadTime(readText));
+        if (quickly === "easy") (goodB.el.querySelector("img") as HTMLImageElement).src = very_ok_svg;
+        if (quickly === "hard") (goodB.el.querySelector("img") as HTMLImageElement).src = half_ok_svg;
     }
-    const againB = b(Rating.Again, iconEl("close"));
-    const hardB = b(Rating.Hard, iconEl("help"));
+    const againB = b(Rating.Again, iconEl("help"));
     const goodB = b(Rating.Good, iconEl("ok"));
-    const buttons = view().add([againB, hardB, goodB]).class("review_b");
+    const buttons = view().add([againB, goodB]).class("review_b");
     return {
         buttons,
         finish: () => firstClick(),
