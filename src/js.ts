@@ -1508,6 +1508,23 @@ function analyzeMorphemes(components: string[], target: string) {
         r.push(diff);
     }
 
+    for (const [i, d] of r.entries()) {
+        const next = r[i + 1];
+        if (!next) continue;
+        const thisLast = d.at(-1);
+        if (!thisLast) continue;
+        const nextFirst = next[0];
+        if (!nextFirst) continue;
+        if (thisLast[0] === 0 || nextFirst[0] === 0) continue;
+        if (thisLast[0] === 1 && nextFirst[0] === -1 && thisLast[1].at(-1) === nextFirst[1]) {
+            // like inmm(1) m(-1)igrant
+            thisLast[1] = thisLast[1].slice(0, -1);
+            nextFirst[0] = 0;
+            continue;
+        }
+        console.log("can opt", structuredClone(r));
+    }
+
     return r;
 }
 
