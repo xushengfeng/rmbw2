@@ -1389,6 +1389,18 @@ function mutiSpell(word: string) {
     return usSpell.find((m) => m.includes(word)) || [word];
 }
 
+function getWord<X extends { get: (word: string) => any }>(t: X): (word: string) => ReturnType<X["get"]> | undefined {
+    return (word: string) => {
+        const words = mutiSpell(word); // 假设 mutiSpell 已定义
+        for (const w of words) {
+            const r = t.get(w);
+            if (r) {
+                return r;
+            }
+        }
+        return undefined;
+    };
+}
 async function getGoodLearntWords() {
     const learnt = new Set<string>();
     const goodCards = new Set<string>();
@@ -3134,9 +3146,9 @@ async function showWordBook(book: Book, s: Section) {
         const onlineList = onlineDicL(item.text);
         pEl.add(onlineList);
 
-        if (etymology.words.has(item.text) || etymology.roots.has(`(${item.text})`)) {
+        if (getWord(etymology.words)(item.text) || etymology.roots.has(`(${item.text})`)) {
             const etyEl = view("y");
-            const x = etymology.words.get(item.text);
+            const x = getWord(etymology.words)(item.text);
 
             const roots = etymologyParse(x || "")
                 .filter((i) => i.type === "root")
@@ -3392,7 +3404,7 @@ async function showWordBookMore(wordList: WordBookList, cards: Map<string, Card>
         // ---
 
         const pure = lemmatizer(w.text);
-        const rootWords = etymology.words.get(pure)?.match(wordRootReg) || [pure];
+        const rootWords = getWord(etymology.words)(pure)?.match(wordRootReg) || [pure];
         for (const rootWord of rootWords) {
             if (wordFamilyMap.get(rootWord) !== true) wordFamilyMap.set(rootWord, Boolean(w.type));
         }
@@ -5217,9 +5229,12 @@ async function showDic(id: string) {
 
         ttsWordEl.el.innerText = await getIPA(word);
 
-        const lword = lemmatizer(sourceWord.toLocaleLowerCase());
         moreWordsEl.clear();
-        const l = Array.from(new Set([sourceWord, sourceWord.toLocaleLowerCase(), lword, word, ...mutiSpell(word)]));
+        const baseW = Array.from(new Set([sourceWord.toLocaleLowerCase(), word.toLocaleLowerCase()]));
+        const muSpell = baseW.flatMap((w) => mutiSpell(w));
+        const l = Array.from(new Set([sourceWord, ...baseW, ...muSpell, ...muSpell.map((i) => lemmatizer(i))]));
+        console.log(l, sourceWord);
+
         if (l.length !== 1)
             for (const w of l) {
                 const div = txt(w).on("click", async () => {
@@ -6043,12 +6058,16 @@ async function getNewWords() {
         if (w === "") continue;
         if (w.match(/[`~!@#$%^&*()_\-+=<>?:"{}|,./;'\\[\]·！#￥（——）：；“”‘’、，|《。》？、【】[\]]/)) continue;
         if (properN1.includes(w)) continue;
-        const r = lemmatizer(w);
-        if (!hasLentWords.includes(r) && !willShowWords.includes(r)) {
-            wordsWithRoot.push({ src: w, show: r });
-            willShowWords.push(r);
+        const lw = mutiSpell(w).map((i) => lemmatizer(i));
+        const rs = lw.filter((r) => !hasLentWords.includes(r) && !willShowWords.includes(r));
+        if (rs.length === lw.length) {
+            for (const r of rs) {
+                wordsWithRoot.push({ src: w, show: r });
+                willShowWords.push(r);
+            }
         }
     }
+
     return wordsWithRoot;
 }
 
@@ -6356,7 +6375,7 @@ async function showWordReview(x: { id: string; card: Card }, isAi: boolean) {
                     break;
                 }
             }
-            const roots = etymologyParse(etymology.words.get(word) ?? "")
+            const roots = etymologyParse(getWord(etymology.words)(word) ?? "")
                 .filter((i) => i.type === "root")
                 .map((i) => i.t);
             const rootsEl = getRootListUi(roots.concat(word), async (t) => {
