@@ -1497,6 +1497,8 @@ function analyzeMorphemes(components: string[], target: string) {
         index = x + i.length - 1;
     }
 
+    l[0] = 0;
+
     const r: Diff[][] = [];
 
     for (const [n, clipIndex] of l.entries()) {
