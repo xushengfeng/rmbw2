@@ -1467,7 +1467,7 @@ function etymologyParseMore(s: { type: "prefix" | "root" | "suffix"; t: string }
     return s.map((i) => (i.type === "prefix" ? `${i.t}-` : i.type === "suffix" ? `-${i.t}` : `${i.t}`)).join(" ");
 }
 
-function analyzeMorphemes(components: string[], target: string) {
+function analyzeMorphemes(_components: string[], target: string) {
     function find(item: string, l: string, start: number) {
         let xv = 0;
         let startIndex = start;
@@ -1489,6 +1489,8 @@ function analyzeMorphemes(components: string[], target: string) {
     }
 
     const l: number[] = [];
+
+    const components = _components.map((i) => i.replace("_", " ")); // root会通过_来区分同型不同义
 
     let index = 0;
     for (const i of components) {
@@ -3329,7 +3331,7 @@ async function showWordBook(book: Book, s: Section) {
 }
 
 function getRootListUi(roots: string[], itemF: (i: ReturnType<typeof txt>) => void) {
-    const x = roots.map((i) => {
+    const x = Array.from(new Set(roots)).map((i) => {
         const t = i;
         const k = `(${t})`;
         const rl = view().style({ maxHeight: "180px", overflow: "auto" });
@@ -3372,7 +3374,9 @@ function getRootListUi(roots: string[], itemF: (i: ReturnType<typeof txt>) => vo
                 const pel = elMap.get(v.p.t);
                 const el = elMap.get(k.t);
                 if (!pel || !el) continue;
-                pel.c.add(el.m);
+                try {
+                    pel.c.add(el.m);
+                } catch (error) {}
             }
 
             rl.clear().add(rootEl);
