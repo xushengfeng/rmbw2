@@ -3475,15 +3475,35 @@ async function showWordBookMore(wordList: WordBookList, cards: Map<string, Card>
     const canvas = ele("canvas").el;
     const xCount = 12 * 3;
     const means = new Map<number, number>();
-    const xs = Array.from(Array(xCount).keys()).flatMap((i) => [i, i + 0.5]);
-    xs.push(0.2, 0.75);
-    xs.sort((a, b) => a - b);
-    for (const i of xs) {
-        means.set(i, maxMeans - allMeans(new Date(new Date().getTime() + timeD.d(i * 30.5))));
+    function getY(i: number) {
+        const c = yCache.get(i);
+        if (c !== undefined) return c;
+        const nc = maxMeans - allMeans(new Date(new Date().getTime() + timeD.d(i * 30.5)));
+        yCache.set(i, nc);
+        return nc;
+    }
+    const yCache = new Map<number, number>();
+    const xValues: number[] = [0, 12, xCount];
+    while (yCache.size < 1000) {
+        let hasGap = false;
+        for (const [i, x] of xValues.entries()) {
+            if (!xValues.at(i + 1)) continue;
+            const ny = getY(xValues.at(i + 1)!);
+            const thisy = getY(x);
+            if (ny - thisy > 40) {
+                hasGap = true;
+                xValues.push((xValues.at(i + 1)! + x) / 2);
+            }
+        }
+        xValues.sort((a, b) => a - b);
+        if (!hasGap) break;
+    }
+    for (const i of xValues) {
+        means.set(i, getY(i));
     }
     const pxPm = 10;
     const pxPw = 0.5;
-    const maxV = Math.ceil(means.get(xCount - 1) ?? 1);
+    const maxV = Math.ceil(Array.from(means.values()).at(-1) ?? 1);
     canvas.width = xCount * pxPm * devicePixelRatio;
     canvas.height = maxV * pxPw * devicePixelRatio;
     canvas.style.width = `${xCount * pxPm}px`;
@@ -3528,10 +3548,22 @@ async function showWordBookMore(wordList: WordBookList, cards: Map<string, Card>
         }
     }
 
+    function timeName(m: number) {
+        let t = m;
+        if (t > 1) return `${t.toFixed(2)}月`;
+        t *= 30.5;
+        if (t > 1) return `${t.toFixed(2)}天`;
+        t *= 24;
+        if (t > 1) return `${t.toFixed(2)}小时`;
+        t *= 60;
+        if (t > 1) return `${t.toFixed(2)}分钟`;
+        return `${t.toFixed(2)}秒`;
+    }
+
     d.add([
         p("预测"),
         txt(
-            `${"(1y, 100词)"} ${kl.map((i) => `${i}m`).join(" ")} 一年保持：${(1 - (means.get(12) ?? 0) / wordList.filter((i) => i.type).length).toFixed(2)}`,
+            `${"(1y, 100词)"} ${kl.map((i, n) => `(${timeName(i)} -${(n + 1) * 100})`).join(", ")} 一年保持：${(1 - (means.get(12) ?? 0) / wordList.filter((i) => i.type).length).toFixed(2)}`,
         ),
         view().add(canvas),
     ]);
