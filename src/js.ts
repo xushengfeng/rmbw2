@@ -6329,6 +6329,7 @@ async function showReview(x: { id: string; card: Card }, type: Review) {
     }
     const isAi = reviewAi.el.checked;
     console.log(x);
+    reviewCardDetailsEl.sv(x.card);
     if (type === "word") {
         showWordReview(x, isAi);
     }
@@ -7626,6 +7627,19 @@ reviewButtonsEl.add(
 reviewButtonsEl.add(
     iconEl("chart").on("click", (_, el) => {
         popoverX(plotEl, el);
+    }),
+);
+
+const reviewCardDetailsEl = view()
+    .attr({ popover: "auto" })
+    .addInto()
+    .bindSet((v: Card) => {
+        reviewCardDetailsEl.clear();
+        reviewCardDetailsEl.add(pText(JSON.stringify(v, null, 2)));
+    });
+reviewButtonsEl.add(
+    iconEl("more").on("click", (_, el) => {
+        popoverX(reviewCardDetailsEl, el);
     }),
 );
 
