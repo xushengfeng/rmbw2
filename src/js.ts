@@ -3487,13 +3487,13 @@ async function showWordBookMore(wordList: WordBookList, cards: Map<string, Card>
     while (yCache.size < 1000) {
         let hasGap = false;
         for (const [i, x] of xValues.entries()) {
-            if (!xValues.at(i + 1)) continue;
+            if (!xValues.at(i + 1)) break;
             const ny = getY(xValues.at(i + 1)!);
             const thisy = getY(x);
             if (ny - thisy > 40) {
                 hasGap = true;
                 xValues.push((xValues.at(i + 1)! + x) / 2);
-            }
+            } else break; // 由于单调且导数在减小，所以但某个区间差值在接受范围内，那就可以认为后面的区间都在接受范围内
         }
         xValues.sort((a, b) => a - b);
         if (!hasGap) break;
