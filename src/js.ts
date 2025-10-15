@@ -1671,7 +1671,12 @@ async function getReviewDue(type: Review) {
         }
     }
     if (reviewSortType === "随机") randomList(list);
-    if (reviewSortType === "未来") list = list.filter((i) => i.card.due.getTime() >= now);
+    if (reviewSortType === "未来") {
+        const n = list.filter((i) => i.card.due.getTime() >= now - timeD.d(5));
+        if (n.length < 100) {
+            list = list.slice(list.length - 100, list.length);
+        } else list = n;
+    }
 
     return list[0];
 }
