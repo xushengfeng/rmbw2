@@ -1644,32 +1644,35 @@ async function getFutureReviewDue(days: number, ...types: Review[]) {
     return { word: wordList, spell: spellList, sentence: sentenceList };
 }
 async function getReviewDue(type: Review) {
-    const now = new Date().getTime();
-    const wordList = [...due.word];
-    const spellList = [...due.spell];
-    const sentenceList = [...due.sentence];
-    for (const x of [wordList, spellList, sentenceList]) x.sort((a, b) => a.card.due.getTime() - b.card.due.getTime());
-    if (reviewSortType === "学习")
-        for (const x of [wordList, spellList, sentenceList])
-            x.reverse().sort((a, b) => (a.card.state === State.New ? -1 : 1));
-    if (reviewSortType === "学习1")
-        for (const x of [wordList, spellList, sentenceList]) x.sort((a, b) => (a.card.state === State.New ? -1 : 1));
+    const now = Date.now();
+    let list: typeof due.word = [];
+    if (type === "word") {
+        list = [...due.word];
+    } else if (type === "spell") {
+        list = [...due.spell];
+    } else {
+        list = [...due.sentence];
+    }
+    list.sort((a, b) => a.card.due.getTime() - b.card.due.getTime());
+    if (reviewSortType === "学习") list.reverse().sort((a, b) => (a.card.state === State.New ? -1 : 1));
+    if (reviewSortType === "学习1") list.sort((a, b) => (a.card.state === State.New ? -1 : 1));
     if (reviewSortType === "紧急") {
         function gRe(fsrs: FSRS, c: Card) {
             return fsrs.get_retrievability(c, now, false) ?? 0;
         }
-        wordList.sort((a, b) => gRe(fsrs, a.card) - gRe(fsrs, b.card));
-        spellList.sort((a, b) => gRe(fsrsSpell, a.card) - gRe(fsrsSpell, b.card));
-        sentenceList.sort((a, b) => gRe(fsrsSen, a.card) - gRe(fsrsSen, b.card));
+        if (type === "word") {
+            list.sort((a, b) => gRe(fsrs, a.card) - gRe(fsrs, b.card));
+        }
+        if (type === "spell") {
+            list.sort((a, b) => gRe(fsrsSpell, a.card) - gRe(fsrsSpell, b.card));
+        }
+        if (type === "sentence") {
+            list.sort((a, b) => gRe(fsrsSen, a.card) - gRe(fsrsSen, b.card));
+        }
     }
-    if (reviewSortType === "随机") for (const x of [wordList, spellList, sentenceList]) randomList(x);
-    if (type === "word") {
-        return wordList[0];
-    }
-    if (type === "spell") {
-        return spellList[0];
-    }
-    return sentenceList[0];
+    if (reviewSortType === "随机") randomList(list);
+
+    return list[0];
 }
 
 async function nextDue(type: Review) {
