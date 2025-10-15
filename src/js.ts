@@ -262,7 +262,7 @@ const checkVisit = {
 
 let aiContexts: Record<string, { text: string }> = {};
 
-let reviewSortType: "正常" | "学习" | "学习1" | "紧急" | "随机" = "正常";
+let reviewSortType: "正常" | "学习" | "学习1" | "紧急" | "随机" | "未来" = "正常";
 
 const KEYBOARDDISPLAYPATH = "spell.keyboard.display";
 const KEYBOARDHEIGHTPATH = "spell.keyboard.height";
@@ -1671,6 +1671,7 @@ async function getReviewDue(type: Review) {
         }
     }
     if (reviewSortType === "随机") randomList(list);
+    if (reviewSortType === "未来") list = list.filter((i) => i.card.due.getTime() >= now);
 
     return list[0];
 }
@@ -7623,6 +7624,7 @@ const reviewSortEl = select([
     { name: "学习 从旧开始", value: "学习" },
     { name: "学习 趁热打铁", value: "学习1" },
     { name: "紧急", value: "紧急" },
+    { name: "未来（不学习以前堆积）", value: "未来" },
     { name: "随机", value: "随机" },
 ]).on("change", () => {
     reviewSortType = reviewSortEl.el.value as typeof reviewSortType;
