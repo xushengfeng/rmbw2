@@ -5695,7 +5695,7 @@ async function dicSentences(contexts: record["means"][0]["contexts"]) {
                         .on("click", () => {
                             runTTS(s.text);
                         })
-                        .style({ height: "1lh" }),
+                        .style({ height: "1lh", maxHeight: "var(--size0)" }),
                     iconEl("translate")
                         .on("click", async () => {
                             const output = await translate(s.text, false);
@@ -5704,7 +5704,7 @@ async function dicSentences(contexts: record["means"][0]["contexts"]) {
                                 transEl.clear().add(text);
                             }
                         })
-                        .style({ height: "1lh" }),
+                        .style({ height: "1lh", maxHeight: "var(--size0)" }),
                     iconEl("text")
                         .on("click", async () => {
                             const text = await getSection(source.sections);
@@ -5740,7 +5740,7 @@ async function dicSentences(contexts: record["means"][0]["contexts"]) {
                                 text.text.slice(x.index[1], contextEnd),
                             ]);
                         })
-                        .style({ height: "1lh" }),
+                        .style({ height: "1lh", maxHeight: "var(--size0)" }),
                     t,
                 ]),
             ),
