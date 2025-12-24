@@ -5681,19 +5681,30 @@ async function dicSentences(contexts: record["means"][0]["contexts"]) {
     for (const s of contexts) {
         const source = s.source;
         const t = await getTitleEl(source.book, source.sections, source.id);
+        const ssEl = p().add([
+            s.text.slice(0, s.index[0]),
+            txt(s.text.slice(...s.index)).class(MARKWORD),
+            s.text.slice(s.index[1]),
+        ]);
+        const transEl = p();
         sen.add(
             view().add(
                 p().add([
-                    view()
-                        .add([
-                            s.text.slice(0, s.index[0]),
-                            txt(s.text.slice(...s.index)).class(MARKWORD),
-                            s.text.slice(s.index[1]),
-                        ])
+                    view().add([ssEl, transEl]),
+                    iconEl("recume")
                         .on("click", () => {
                             runTTS(s.text);
-                        }),
-                    // @ts-ignore
+                        })
+                        .style({ height: "1lh" }),
+                    iconEl("translate")
+                        .on("click", async () => {
+                            const output = await translate(s.text, false);
+                            const text = await output.text;
+                            if (text) {
+                                transEl.clear().add(text);
+                            }
+                        })
+                        .style({ height: "1lh" }),
                     t,
                 ]),
             ),
