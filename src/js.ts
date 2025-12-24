@@ -5705,6 +5705,42 @@ async function dicSentences(contexts: record["means"][0]["contexts"]) {
                             }
                         })
                         .style({ height: "1lh" }),
+                    iconEl("text")
+                        .on("click", async () => {
+                            const text = await getSection(source.sections);
+                            if (!text) return;
+                            const x = text.words[source.id];
+                            if (!x) return;
+                            const seg = new Segmenter(studyLan, { granularity: "sentence" }); // todo book lan
+                            const splitPoint = Array.from(
+                                new Set([
+                                    0,
+                                    ...Array.from(seg.segment(text.text)).map((i) => i.index),
+                                    text.text.length,
+                                ]),
+                            ).toSorted((a, b) => a - b);
+                            const contextStartSplit = splitPoint.findLast((i) => i < x.cIndex[0]) ?? splitPoint[0];
+                            const contextEndSplit = splitPoint.find((i) => i > x.cIndex[1]) ?? splitPoint.at(-1)!;
+
+                            const contextStart = Math.max(
+                                0,
+                                Math.abs(contextStartSplit - x.cIndex[0]) === 1
+                                    ? (splitPoint[splitPoint.indexOf(contextStartSplit) - 1] ?? 0)
+                                    : contextStartSplit,
+                            );
+                            const contextEnd = Math.min(
+                                text.text.length,
+                                Math.abs(contextEndSplit - x.cIndex[1]) === 1
+                                    ? (splitPoint[splitPoint.indexOf(contextEndSplit) + 1] ?? text.text.length)
+                                    : contextEndSplit,
+                            );
+                            ssEl.clear().add([
+                                text.text.slice(contextStart, x.index[0]),
+                                txt(text.text.slice(...x.index)).class(MARKWORD),
+                                text.text.slice(x.index[1], contextEnd),
+                            ]);
+                        })
+                        .style({ height: "1lh" }),
                     t,
                 ]),
             ),
