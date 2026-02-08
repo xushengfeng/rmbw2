@@ -1816,7 +1816,7 @@ async function searchWord(words: Set<string>) {
         }
     });
 
-    return result;
+    return { result, unSearch: new Set(Array.from(words).filter((w) => !result.has(w))) };
 }
 
 async function getIPA(word: string) {
@@ -3604,7 +3604,7 @@ async function showWordBookMore(wordList: WordBookList, cards: Map<string, Card>
 }
 
 async function searchWordBar(words: string[]) {
-    const r = await searchWord(new Set(words.map((i) => i.toLocaleLowerCase())));
+    const { result: r, unSearch } = await searchWord(new Set(words.map((i) => i.toLocaleLowerCase())));
 
     const xEl = view()
         .style({
@@ -3620,7 +3620,17 @@ async function searchWordBar(words: string[]) {
             boxShadow: "var(--box-shadow)",
         })
         .addInto();
-    xEl.add(iconEl("close").on("click", () => xEl.remove()));
+    xEl.add(iconEl("close").on("click", () => xEl.remove())).add(
+        unSearch.size > 0
+            ? view("x")
+                  .add(txt("找不到：").style({ flexShrink: 0 }))
+                  .add(
+                      view("x")
+                          .style({ overflow: "auto", gap: "4px" })
+                          .add(Array.from(unSearch).map((i) => txt(i))),
+                  )
+            : undefined,
+    );
     const wordList = view("x").style({ gap: "4px", overflow: "auto" }).addInto(xEl);
     const bookList = view().style({ maxHeight: "30vh", overflow: "auto" }).addInto(xEl);
 
