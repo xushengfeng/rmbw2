@@ -1819,6 +1819,43 @@ async function searchWord(words: Set<string>) {
     return { result, unSearch: new Set(Array.from(words).filter((w) => !result.has(w))) };
 }
 
+function ipa2normal(ipa: string) {
+    const lan = studyLan || "en";
+
+    if (lan === "en") {
+        return ipa2dj(ipa);
+    }
+    return ipa;
+}
+
+function ipa2dj(ipa: string) {
+    // 1. 清理零宽连字符（U+200D）
+    const cleaned = ipa
+        .replace(/\u200D/g, "")
+        .replaceAll("ʲ", "")
+        .replaceAll("̃", "");
+
+    // 2. IPA -> DJ 映射表
+    const map: Record<string, string> = {
+        ɫ: "l", // 软腭化边音 -> 常规 l
+        ɹ: "r", // 齿龈近音 -> 常规 r
+        ɝ: "ɜːr", // 卷舌元音 -> 英式 ɜːr
+        ɛ: "e", // 半开前元音 -> 英式 e
+        ɐ: "ə", // 开央元音 -> 中央元音 ə
+        // 其他相同符号（如 ɒ, ɔ, ɑ, ɪ, ʊ, ɜ, θ, ð, ʃ, ʒ, ŋ 等）无需转换
+        ɬ: "l",
+        x: "k",
+        g: "ɡ",
+    };
+
+    let result = cleaned;
+    for (const [ipaChar, djChar] of Object.entries(map)) {
+        // 全局替换
+        result = result.replace(new RegExp(ipaChar, "g"), djChar);
+    }
+    return result;
+}
+
 async function getIPA(word: string) {
     if (!ipa) {
         const lan = studyLan || "en";
@@ -5301,7 +5338,9 @@ async function showDic(id: string) {
 
         play(s.word.get());
 
-        ttsWordEl.el.innerText = await getIPA(word);
+        const ipa = await getIPA(word);
+        ttsWordEl.el.innerText = ipa2normal(ipa);
+        ttsWordEl.el.title = ipa;
 
         moreWordsEl.clear();
         const baseW = Array.from(new Set([sourceWord.toLocaleLowerCase(), word.toLocaleLowerCase()]));
@@ -6813,7 +6852,8 @@ async function showSpellReview(x: { id: string; card: Card }) {
             play(word);
         }
     };
-    const context = view().add(view().add(await getIPA(word)));
+    const ipa = await getIPA(word);
+    const context = view().add(view().add(ipa2normal(ipa)).attr({ title: ipa }));
     const r = await wordsStore.getItem(word);
     if (r) {
         context
