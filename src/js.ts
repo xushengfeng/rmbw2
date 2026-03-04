@@ -3176,6 +3176,11 @@ async function showWordBook(book: Book, s: Section) {
                 }),
             ]),
         );
+        pEl.add(
+            txt(ipa2normal(await getIPA(item.text))).on("click", () => {
+                play(item.text);
+            }),
+        );
         const books = await wordBooksByWord(item.text);
         const booksEl = view();
         for (const i of books) {

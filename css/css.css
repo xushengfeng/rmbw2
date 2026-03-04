@@ -913,7 +913,7 @@ div:has(> .translate) > :not(.translate) {
         font-family: var(--font-family);
         margin-bottom: 8px;
     }
-    & > :nth-child(2) {
+    & > :nth-child(3) {
         display: flex;
         gap: 1em;
         overflow-x: scroll;
@@ -921,7 +921,7 @@ div:has(> .translate) > :not(.translate) {
             flex-shrink: 0;
         }
     }
-    & > :not(:nth-child(1), :nth-child(2), .online_dic) {
+    & > :not(:nth-child(1), :nth-child(2), :nth-child(3), .online_dic) {
         display: grid;
         grid-template-columns: 32px auto;
         & > :nth-child(3) {
